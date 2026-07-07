@@ -1,6 +1,6 @@
 {
-  "name": "Legacy Protocol V2",
-  "short_name": "Legacy V2",
+  "name": "Legacy Protocol",
+  "short_name": "Legacy Protocol",
   "description": "Father Empowering client fitness protocol, check-in, progress, and Week 0 portal.",
   "start_url": "./index.html",
   "scope": "./",

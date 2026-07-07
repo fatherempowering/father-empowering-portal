@@ -1,4 +1,4 @@
-const CACHE_NAME='legacy-protocol-v2-cache-2026-07-06-drag-scroll';
+const CACHE_NAME='legacy-protocol-cache-2026-07-07-install-name';
 const APP_SHELL=[
   './',
   './index.html',
