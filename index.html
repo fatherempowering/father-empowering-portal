@@ -159,6 +159,14 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 #panel-entrainement .sub-btn.active .day-card-sub{color:rgba(255,255,255,.78)}
 #panel-entrainement .sub-btn.active .day-card-status{background:#FFF;border-color:#FFF;color:var(--orange)}
 #panel-entrainement .sub-btn.done:not(.active) .day-card-status{background:var(--green);border-color:var(--green);color:#FFF}
+#panel-entrainement.week-zero-mode .ent-side,#panel-entrainement.week-zero-mode .training-dash-grid,#panel-entrainement.week-zero-mode .training-archive-btn{display:none}
+#panel-entrainement.week-zero-mode .ent-wrap{display:block;padding-right:0}
+#panel-entrainement.week-zero-mode .ent-main{max-width:980px;margin:0 auto}
+#panel-entrainement.week-zero-mode .sub-nav{position:sticky;top:214px;z-index:145;background:var(--bg);padding-top:10px;padding-bottom:10px;box-shadow:0 12px 24px rgba(0,0,0,.08)}
+.wz-step-status{font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1.3px;color:var(--txt3);border:1px solid var(--br);border-radius:999px;padding:4px 7px;background:var(--card2);line-height:1;white-space:nowrap}
+#panel-entrainement .sub-btn.complete:not(.active) .wz-step-status,#panel-entrainement .sub-btn.sent:not(.active) .wz-step-status{background:var(--green);border-color:var(--green);color:#FFF}
+#panel-entrainement .sub-btn.in-progress:not(.active) .wz-step-status{background:var(--tint);border-color:rgba(232,118,26,.34);color:var(--orange)}
+#panel-entrainement .sub-btn.active .wz-step-status{background:#FFF;border-color:#FFF;color:var(--orange)}
 .lock-icon{font-size:10px;opacity:0.6}
 .warmup{background:var(--black);border-radius:12px;padding:13px 16px;margin:14px 14px 0;border:1px solid var(--br)}
 .warmup-label{font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.65);font-weight:700;margin-bottom:7px;font-family:'Bebas Neue',sans-serif}
@@ -175,8 +183,10 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .ex-row:last-child{border-bottom:none}
 .ex-name{font-size:13px;font-weight:700;color:var(--txt);line-height:1.3}
 .ex-note{font-size:10px;color:var(--txt3);margin-top:2px;line-height:1.4}
-.ex-editable{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--orange);text-align:center;border:none;background:transparent;width:100%;outline:none}
-.ex-editable-rep{font-size:15px;color:var(--txt2);font-weight:600;text-align:center;border:none;background:transparent;width:100%;outline:none;font-family:'DM Sans',sans-serif}
+.ex-editable{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--orange);text-align:center;border:1px solid transparent;border-radius:8px;background:transparent;width:100%;outline:none;padding:6px 2px;box-sizing:border-box}
+.ex-editable-rep{font-size:15px;color:var(--txt2);font-weight:600;text-align:center;border:1px solid transparent;border-radius:8px;background:transparent;width:100%;outline:none;font-family:'DM Sans',sans-serif;padding:6px 2px;box-sizing:border-box}
+.ex-editable:focus,.ex-editable-rep:focus{border-color:var(--orange);background:var(--card2)}
+.ex-editable::placeholder,.ex-editable-rep::placeholder{color:var(--txt3)}
 .ex-target{font-size:12px;font-weight:700;color:var(--txt);text-align:center;background:var(--card2);border-radius:8px;padding:7px 4px;border:1px solid var(--br)}
 .ex-input-wrap{background:var(--card2);border:1.5px solid var(--br);border-radius:8px;padding:5px 4px;text-align:center;transition:border-color .15s}
 .ex-input-wrap:focus-within{border-color:var(--orange)}
@@ -540,6 +550,7 @@ canvas{display:block;width:100%!important}
   .sidebar{display:flex}
   .week-nav{position:static;top:auto}
   #panel-entrainement .sub-nav{max-width:900px;margin:14px auto 0;padding-left:14px;padding-right:14px}
+  #panel-entrainement.week-zero-mode .sub-nav{top:46px}
   .nav{top:0}
   .hdr{position:static}
   .coach-banner{top:46px}
@@ -659,7 +670,7 @@ canvas{display:block;width:100%!important}
 
 <div class="nav">
   <button class="nav-btn active" onclick="showPanel('accueil',this)"><span class="nav-ic">⌂</span>HOME</button>
-  <button class="nav-btn" onclick="showPanel('entrainement',this)"><span class="nav-ic">⚒</span>TRAINING</button>
+  <button class="nav-btn" data-panel-nav="training" onclick="showPanel('entrainement',this)"><span class="nav-ic">⚒</span>TRAINING</button>
   <button class="nav-btn" onclick="showPanel('nutrition',this)"><span class="nav-ic">♨</span>NUTRITION</button>
   <button class="nav-btn" onclick="showPanel('checkin',this)"><span class="nav-ic">☑</span>CHECK-IN</button>
   <button class="nav-btn" data-panel-nav="progression" onclick="showPanel('progression',this)"><span class="nav-ic">▲</span>PROGRESSION</button>
@@ -755,11 +766,12 @@ canvas{display:block;width:100%!important}
   <div class="weekzero-shell">
     <section class="wz-card wz-card-dark" id="wz-onboarding-state">
       <div class="wz-pad">
-        <div class="wz-kicker">LEGACY PROTOCOL</div>
-        <div class="wz-title">Welcome to the Legacy Protocol</div>
-        <div class="wz-sub">Before we build the full protocol, complete your initial onboarding.</div>
+        <div class="wz-kicker">FATHER EMPOWERING — WEEK ZERO</div>
+        <div class="wz-title">WEEK 0 — ONBOARDING</div>
+        <div class="wz-sub">Complete your onboarding before data acquisition begins.</div>
+        <div class="wz-section-copy" style="margin-top:14px;color:rgba(255,255,255,.84)">This first step gives Coach Max the context needed to build your protocol correctly.</div>
         <div class="wz-actions">
-          <button class="wz-btn wz-btn-primary" type="button" onclick="openOnboardingForm()">COMPLETE MY ONBOARDING</button>
+          <button class="wz-btn wz-btn-primary" type="button" onclick="openOnboardingForm()">COMPLETE ONBOARDING</button>
           <button class="wz-btn wz-btn-secondary" type="button" onclick="markOnboardingComplete()">I COMPLETED MY ONBOARDING</button>
         </div>
       </div>
@@ -768,33 +780,16 @@ canvas{display:block;width:100%!important}
     <section id="wz-active-state" style="display:none">
       <div class="wz-card wz-card-dark">
         <div class="wz-pad">
-          <div class="wz-kicker">WEEK 0</div>
+          <div class="wz-kicker">FATHER EMPOWERING — WEEK ZERO</div>
           <div class="wz-title">DATA ACQUISITION</div>
-          <div class="wz-sub">This is the starting point of your protocol.</div>
+          <div class="wz-sub">This is the starting point of your protocol. Complete each step below so Coach Max can build your plan with precision.</div>
           <div class="wz-section-copy" style="margin-top:14px;color:rgba(255,255,255,.84)">
-            Week 0 is where we collect your baseline data so Coach Max can build your protocol with precision.<br><br>
-            No max. No failure. No guessing.<br><br>
-            Keep two to four reps in reserve on the calibration lift.
+            No maxes. No failure. No guessing.<br><br>
+            Keep 2 to 4 reps in reserve on calibration lifts.
           </div>
           <div class="wz-rule"><strong>Move clean. Record honest data.</strong><br><br>Coach Max needs the right starting point, not max effort.</div>
         </div>
       </div>
-      <div class="wz-status">
-        <div>
-          <div class="wz-status-label">STATUS</div>
-          <div class="wz-status-value" id="wz-submit-status">SAVED LOCALLY</div>
-        </div>
-        <button class="wz-btn wz-btn-primary" type="button" style="padding:10px 12px" onclick="openWeekZeroReview()">REVIEW & SEND</button>
-      </div>
-      <div class="wz-nav" id="wz-nav">
-        <button class="wz-tab active" data-wz-tab="directives" onclick="showWeekZeroTab('directives',this)"><span class="wz-tab-num">01</span><span class="wz-tab-label">Directives</span></button>
-        <button class="wz-tab" data-wz-tab="photos" onclick="showWeekZeroTab('photos',this)"><span class="wz-tab-num">02</span><span class="wz-tab-label">Photos</span></button>
-        <button class="wz-tab" data-wz-tab="measurements" onclick="showWeekZeroTab('measurements',this)"><span class="wz-tab-num">03</span><span class="wz-tab-label">Measurements</span></button>
-        <button class="wz-tab" data-wz-tab="loads" onclick="showWeekZeroTab('loads',this)"><span class="wz-tab-num">04</span><span class="wz-tab-label">Loads</span></button>
-        <button class="wz-tab" data-wz-tab="cardio" onclick="showWeekZeroTab('cardio',this)"><span class="wz-tab-num">05</span><span class="wz-tab-label">Cardio</span></button>
-        <button class="wz-tab" data-wz-tab="mobility" onclick="showWeekZeroTab('mobility',this)"><span class="wz-tab-num">06</span><span class="wz-tab-label">Mobility</span></button>
-      </div>
-
       <div class="wz-panel active" id="wz-panel-directives">
         <div class="wz-card"><div class="wz-pad">
           <div class="wz-section-title">READ THIS</div>
@@ -810,8 +805,6 @@ canvas{display:block;width:100%!important}
             <li>Mobility and pain notes</li>
           </ul>
           <div class="wz-rule"><strong>Important:</strong><br>If something hurts, do not force it.<br>If you don't know a movement, contact Max on Telegram.<br>If you are unsure about a load, choose lighter and keep control.<br><br>Coach Max needs clean data, not max effort.</div>
-          <div class="wz-section-copy" style="margin-top:14px">Start by taking your photo.</div>
-          <button class="wz-btn wz-btn-primary" type="button" style="margin-top:12px;width:100%" onclick="showWeekZeroTab('photos')">OPEN PHOTOS</button>
         </div></div>
       </div>
 
@@ -890,6 +883,19 @@ canvas{display:block;width:100%!important}
         </div></div>
       </div>
 
+      <div class="wz-panel" id="wz-panel-review">
+        <div class="wz-card"><div class="wz-pad">
+          <div class="wz-section-title">Review / Send</div>
+          <div class="wz-section-copy">Review your Week 0 acquisition data before sending it to Coach Max. Your answers stay saved locally on this device.</div>
+          <div class="wz-summary" id="wz-summary-inline-output" style="margin-top:14px"></div>
+          <div class="wz-actions">
+            <button class="wz-btn wz-btn-quiet" type="button" onclick="copyWeekZeroSummary()">COPY SUMMARY</button>
+            <button class="wz-btn wz-btn-primary" type="button" onclick="sendWeekZeroToCoachMax()">SEND TO MAX</button>
+          </div>
+          <div class="wz-submit-note" id="wz-submit-note-inline">Your data is saved automatically on this page.</div>
+        </div></div>
+      </div>
+
     </section>
   </div>
 </div>
@@ -916,6 +922,7 @@ canvas{display:block;width:100%!important}
         <button class="sub-btn" onclick="showSeance('f',this)">SAT &middot; LONG RUN</button>
         <button class="sub-btn" onclick="showSeance('g',this)">SUN &middot; RECOVERY</button>
       </div>
+      <div class="sub-panel" id="sub-weekzero"></div>
       <div class="sub-panel active" id="sub-a"></div>
       <div class="sub-panel" id="sub-b"></div>
       <div class="sub-panel" id="sub-c"></div>
@@ -923,9 +930,9 @@ canvas{display:block;width:100%!important}
       <div class="sub-panel" id="sub-e"></div>
       <div class="sub-panel" id="sub-f"></div>
       <div class="sub-panel" id="sub-g"></div>
-      <button class="archive-btn" onclick="showPanel('checkin',document.querySelectorAll('.nav-btn')[3])">ARCHIVE WEEK — CHECK-IN</button>
+      <button class="archive-btn training-archive-btn" onclick="showPanel('checkin',document.querySelectorAll('.nav-btn')[3])">ARCHIVE WEEK — CHECK-IN</button>
       <!-- DASHBOARD STATS -->
-      <div class="dash-grid">
+      <div class="dash-grid training-dash-grid">
         <div class="dash-card">
         <div class="dash-hd"><div class="dash-title">TRAINING VOLUME</div><div class="dash-unit">(LBS)</div></div>
           <div class="dash-big" id="dash-vol-total">0</div>
@@ -1613,10 +1620,19 @@ function buildWeeks(){
 const WEEKS=buildWeeks();
 
 /* ═════════ ÉTAT ═════════ */
-let currentWeek=1;
+let currentWeek=0;
 let currentSeance='a';
 let coachPreview=false;
 let forceWeekZeroIntro=false;
+const WEEK_ZERO_STEPS=[
+  {key:'directives',num:'01',title:'DIRECTIVES',desc:'Understand what to complete.'},
+  {key:'photos',num:'02',title:'PHOTOS',desc:'Front, side, and back.'},
+  {key:'measurements',num:'03',title:'MEASUREMENTS',desc:'Weight and body measurements.'},
+  {key:'loads',num:'04',title:'LOADS',desc:'Calibration loads only.'},
+  {key:'cardio',num:'05',title:'CARDIO',desc:'One easy baseline test.'},
+  {key:'mobility',num:'06',title:'MOBILITY',desc:'Pain and movement notes.'},
+  {key:'review',num:'07',title:'REVIEW / SEND',desc:'Send data to Coach Max.'}
+];
 const WEEK_ZERO_LIFTS=[
   ['squat','Squat or variation'],
   ['deadlift','Deadlift / Trap Bar / RDL'],
@@ -1645,7 +1661,25 @@ function normalizeUnlockedWeek(data){
 function getActiveWeek(){
   return normalizeUnlockedWeek(D);
 }
-function isWeekUnlocked(w){ return coachPreview || (w>=1 && w<=getActiveWeek()); }
+function hasTrainingProgramContent(){
+  for(let w=1;w<=TOTAL_WEEKS;w++){
+    const W=WEEKS[w]; if(!W||!W.seances)continue;
+    if(SEANCE_IDS.some(sid=>sessionHasProgramContent(W.seances[sid])))return true;
+  }
+  return false;
+}
+function getPortalActiveWeek(){
+  D.weekZero=normalizeWeekZero(D.weekZero);
+  if(!D.weekZero.submitted)return 0;
+  return hasTrainingProgramContent()?getActiveWeek():0;
+}
+function isWeekUnlocked(w){
+  if(parseInt(w)===0)return true;
+  D.weekZero=normalizeWeekZero(D.weekZero);
+  if(!D.weekZero.submitted)return !!coachPreview;
+  if(!hasTrainingProgramContent())return !!coachPreview;
+  return coachPreview || (w>=1 && w<=getActiveWeek());
+}
 
 /* ═════════ WEEK ZERO / ONBOARDING ═════════ */
 function normalizeWeekZero(wz){
@@ -1667,6 +1701,53 @@ function normalizeWeekZero(wz){
     base.data.loads[key]=Object.assign({exercise:'',load:'',reps:'',rir:'',note:''},loads[key]||{});
   });
   return base;
+}
+function weekZeroData(){
+  D.weekZero=normalizeWeekZero(D.weekZero);
+  return D.weekZero.data;
+}
+function weekZeroLoadEntryCount(data){
+  return Object.values((data&&data.loads)||{}).reduce((n,item)=>{
+    return n+((item&&[item.exercise,item.load,item.reps,item.rir,item.note].some(v=>String(v||'').trim()))?1:0);
+  },0);
+}
+function weekZeroStepHasAnyData(step,data){
+  data=data||weekZeroData();
+  if(step==='photos')return !!(data.photos&&(data.photos.face||data.photos.side||data.photos.back||data.photos.comment||data.photos.link));
+  if(step==='measurements')return !!(data.measurements&&Object.values(data.measurements).some(v=>String(v||'').trim()));
+  if(step==='loads')return weekZeroLoadEntryCount(data)>0;
+  if(step==='cardio')return !!(data.cardio&&Object.values(data.cardio).some(v=>String(v||'').trim()));
+  if(step==='mobility')return !!(data.mobility&&(
+    ['painSquat','painHinge','painPush','painPull','painCardio'].some(k=>data.mobility[k]==='Yes')||
+    ['limitedMovement','comfortableMovement','tightZone','mainPain','painIntensity'].some(k=>String(data.mobility[k]||'').trim())
+  ));
+  return false;
+}
+function getWeekZeroStepStatus(step){
+  D.weekZero=normalizeWeekZero(D.weekZero);
+  const data=D.weekZero.data;
+  if(D.weekZero.submitted)return step==='review'?'sent':'complete';
+  if(!D.weekZero.onboardingComplete)return 'locked';
+  if(step==='directives')return 'complete';
+  if(step==='photos')return data.photos.face&&data.photos.side&&data.photos.back?'complete':(weekZeroStepHasAnyData(step,data)?'in-progress':'pending');
+  if(step==='measurements')return data.measurements.weight&&data.measurements.waist?'complete':(weekZeroStepHasAnyData(step,data)?'in-progress':'pending');
+  if(step==='loads')return weekZeroLoadEntryCount(data)>=3?'complete':(weekZeroLoadEntryCount(data)>0?'in-progress':'pending');
+  if(step==='cardio')return (data.cardio.option||data.cardio.modality)&&data.cardio.duration?'complete':(weekZeroStepHasAnyData(step,data)?'in-progress':'pending');
+  if(step==='mobility')return weekZeroStepHasAnyData(step,data)?'complete':'pending';
+  if(step==='review')return WEEK_ZERO_STEPS.filter(s=>!['review','directives'].includes(s.key)).every(s=>getWeekZeroStepStatus(s.key)==='complete')?'complete':'pending';
+  return 'pending';
+}
+function weekZeroOverallStatus(){
+  D.weekZero=normalizeWeekZero(D.weekZero);
+  if(D.weekZero.submitted)return 'SENT TO COACHMAX';
+  if(!D.weekZero.onboardingComplete)return 'ONBOARDING NEEDED';
+  return getWeekZeroStepStatus('review')==='complete'?'READY TO SEND':'IN PROGRESS';
+}
+function weekZeroStatusIcon(status){
+  if(status==='sent'||status==='complete')return '✓';
+  if(status==='in-progress')return '…';
+  if(status==='locked')return '🔒';
+  return '○';
 }
 function weekZeroLoadCardHTML(key,label){
   const repsLabel=key==='splitSquat'?'REPS PER SIDE':'REPS';
@@ -1695,7 +1776,11 @@ function markOnboardingComplete(){
   D.weekZero=normalizeWeekZero(D.weekZero);
   D.weekZero.onboardingComplete=true;
   save();
+  currentWeek=0;
   renderWeekZero();
+  buildWeekNav();
+  renderEntrainementWeek();
+  showPanel('entrainement',getMainNavButton('training'),{keepSelectedWeek:true});
   showWeekZeroTab('directives');
 }
 function isTallyCompletionReturn(){
@@ -1736,8 +1821,11 @@ async function handleTallyCompletionReturn(){
   D.weekZero.onboardingComplete=true;
   D.weekZero.tallyCompletedAt=D.weekZero.tallyCompletedAt||new Date().toISOString();
   save();
+  currentWeek=0;
   renderWeekZero();
-  showPanel('weekzero',getMainNavButton('progression'));
+  buildWeekNav();
+  renderEntrainementWeek();
+  showPanel('entrainement',getMainNavButton('training'),{keepSelectedWeek:true});
   showWeekZeroTab('directives');
   const notifyPromise=(async()=>{
     const alreadyNotified=(()=>{try{return localStorage.getItem(TALLY_COMPLETION_KEY)==='1';}catch(e){return false;}})();
@@ -1754,7 +1842,10 @@ async function handleTallyCompletionReturn(){
     }
   })();
   await showWeekZeroAcquisitionIntro();
-  showPanel('weekzero',getMainNavButton('progression'));
+  currentWeek=0;
+  buildWeekNav();
+  renderEntrainementWeek();
+  showPanel('entrainement',getMainNavButton('training'),{keepSelectedWeek:true});
   showWeekZeroTab('directives');
   await notifyPromise;
 }
@@ -1871,6 +1962,7 @@ function saveWeekZeroData(){
   save();
   renderWeekZeroSummary();
   renderWeekZeroStatus();
+  renderWeekZeroStepNav();
   if(window.saveWeekZeroStartData)window.saveWeekZeroStartData();
 }
 function queueWeekZeroSave(){
@@ -1878,27 +1970,62 @@ function queueWeekZeroSave(){
   weekZeroSaveTimer=setTimeout(saveWeekZeroData,350);
 }
 function wireWeekZeroInputs(){
-  const panel=el('panel-weekzero'); if(!panel)return;
-  panel.querySelectorAll('[data-wz-field]').forEach(node=>{
+  const shell=document.querySelector('.weekzero-shell'); if(!shell)return;
+  shell.querySelectorAll('[data-wz-field]').forEach(node=>{
     if(node.dataset.wired==='1')return;
     node.dataset.wired='1';
     node.addEventListener('input',queueWeekZeroSave);
     node.addEventListener('change',queueWeekZeroSave);
   });
 }
+function renderWeekZeroStepNav(){
+  const nav=document.querySelector('#panel-entrainement .sub-nav');
+  if(!nav||currentWeek!==0)return;
+  D.weekZero=normalizeWeekZero(D.weekZero);
+  if(!D.weekZero.onboardingComplete&&!D.weekZero.submitted){
+    nav.innerHTML='';
+    return;
+  }
+  nav.innerHTML=WEEK_ZERO_STEPS.map(step=>{
+    const status=getWeekZeroStepStatus(step.key);
+    const label=status==='sent'?'SENT':(status==='complete'?'DONE':(status==='in-progress'?'IN PROGRESS':(status==='locked'?'LOCKED':'PENDING')));
+    return '<button class="sub-btn '+escapeHTML(status)+'" data-wz-step="'+escapeHTML(step.key)+'" onclick="showWeekZeroTab(\''+escapeHTML(step.key)+'\',this)">'
+      +'<span class="day-card-top"><span class="day-card-day">'+escapeHTML(step.num)+'</span><span class="wz-step-status">'+escapeHTML(label)+'</span></span>'
+      +'<span class="day-card-title">'+escapeHTML(step.title)+'</span>'
+      +'<span class="day-card-sub">'+escapeHTML(step.desc)+'</span>'
+    +'</button>';
+  }).join('');
+  const active=document.querySelector('.wz-panel.active');
+  const activeKey=active?String(active.id||'').replace('wz-panel-',''):(D.weekZero&&D.weekZero.onboardingComplete?'directives':'');
+  const btn=activeKey&&nav.querySelector('[data-wz-step="'+activeKey+'"]');
+  if(btn)btn.classList.add('active');
+}
 function renderWeekZeroStatus(){
   D.weekZero=normalizeWeekZero(D.weekZero);
   const status=el('wz-submit-status');
   const note=el('wz-submit-note');
+  const inlineNote=el('wz-submit-note-inline');
   const header=el('wz-header-status');
+  const action=el('wz-review-action-btn');
+  const activeTitle=document.querySelector('#wz-active-state .wz-title');
+  const activeSub=document.querySelector('#wz-active-state .wz-sub');
+  const overall=weekZeroOverallStatus();
   if(D.weekZero.submitted){
-    if(status)status.textContent='SENT TO MAX';
-    if(header)header.textContent='SENT';
+    if(status)status.textContent='SENT TO COACHMAX';
+    if(header)header.textContent='SENT TO COACHMAX';
     if(note)note.textContent='Your Week 0 data has been sent to Max.';
+    if(inlineNote)inlineNote.textContent='Your Week 0 data has been sent to Coach Max.';
+    if(action)action.textContent='SENT TO COACHMAX';
+    if(activeTitle)activeTitle.textContent='SENT TO COACHMAX';
+    if(activeSub)activeSub.textContent='Your Week 0 data has been sent. Coach Max will now build your personalized protocol.';
   }else{
-    if(status)status.textContent=D.weekZero.onboardingComplete?'SAVED LOCALLY':'ONBOARDING NEEDED';
+    if(status)status.textContent=overall;
     if(header)header.textContent=D.weekZero.onboardingComplete?'DATA ACQUISITION':'ONBOARDING';
     if(note)note.textContent='Your data is saved automatically on this page.';
+    if(inlineNote)inlineNote.textContent='Your data is saved automatically on this page.';
+    if(action)action.textContent=overall==='READY TO SEND'?'REVIEW & SEND':'REVIEW';
+    if(activeTitle)activeTitle.textContent='DATA ACQUISITION';
+    if(activeSub)activeSub.textContent='This is the starting point of your protocol. Complete each step below so Coach Max can build your plan with precision.';
   }
 }
 function renderWeekZero(){
@@ -1912,6 +2039,7 @@ function renderWeekZero(){
   if(onboarding)onboarding.style.display=complete?'none':'block';
   if(active)active.style.display=complete?'block':'none';
   renderWeekZeroStatus();
+  renderWeekZeroStepNav();
   renderWeekZeroSummary();
 }
 function showWeekZeroTab(tab,btn){
@@ -1923,6 +2051,10 @@ function showWeekZeroTab(tab,btn){
   document.querySelectorAll('.wz-tab').forEach(b=>b.classList.remove('active'));
   const target=btn||document.querySelector('[data-wz-tab="'+tab+'"]');
   if(target)target.classList.add('active');
+  document.querySelectorAll('[data-wz-step]').forEach(b=>b.classList.remove('active'));
+  const stepTarget=document.querySelector('[data-wz-step="'+tab+'"]');
+  if(stepTarget)stepTarget.classList.add('active');
+  if(tab==='review')renderWeekZeroSummary();
 }
 function openWeekZeroReview(){
   saveWeekZeroData();
@@ -2003,8 +2135,11 @@ function buildCoachMaxMessage(data){
   return L.join('\n');
 }
 function renderWeekZeroSummary(){
+  const text=buildCoachMaxMessage(collectWeekZeroData());
   const output=el('wz-summary-output');
-  if(output)output.textContent=buildCoachMaxMessage(collectWeekZeroData());
+  const inline=el('wz-summary-inline-output');
+  if(output)output.textContent=text;
+  if(inline)inline.textContent=text;
 }
 function copyTextFallback(text){
   const ta=document.createElement('textarea');
@@ -2067,9 +2202,13 @@ async function sendWeekZeroToCoachMax(){
     D.weekZero.submitted=true;
     D.weekZero.submittedAt=new Date().toISOString();
     save();
+    currentWeek=0;
     renderWeekZero();
+    buildWeekNav();
+    renderEntrainementWeek();
     closeWeekZeroReview();
-    showPanel('accueil',document.querySelectorAll('.nav-btn')[0]);
+    showPanel('entrainement',getMainNavButton('training'),{keepSelectedWeek:true});
+    showWeekZeroTab('review');
     await appAlert('WORKOUT BEING CREATED',"Your workout is being created.\n\nYou'll hear from Coach Max as soon as it's ready.",{kicker:'WEEK 0',confirmClass:'app-btn-success'});
   }catch(e){
     await appAlert('SEND FAILED','The send did not work. Your data is saved on this page.\n\nClick “Copy Summary” and send it directly to Max.\n\nError: '+e.message,{kicker:'WEEK 0'});
@@ -2098,15 +2237,20 @@ function actualInputHTML(ex){
   if(isDurationUnit(ex.unit||''))return durationControlHTML(ex);
   return '<div class="ex-input-wrap"><input class="ex-input" inputmode="decimal" data-key="'+escapeHTML(ex.key)+'" placeholder="'+escapeHTML(ex.unit||'lbs')+'"></div>';
 }
+function actualSetsRepsHTML(ex){
+  const safeName=escapeHTML(ex.name);
+  return '<input class="ex-editable ex-sets-input" inputmode="numeric" data-key="'+escapeHTML(ex.key)+'" data-prescribed="'+escapeHTML(ex.sets)+'" value="'+escapeHTML(ex.sets)+'" aria-label="Sets completed for '+safeName+'">'
+    +'<input class="ex-editable-rep ex-reps-input" inputmode="text" data-key="'+escapeHTML(ex.key)+'" data-prescribed="'+escapeHTML(ex.reps)+'" value="'+escapeHTML(ex.reps)+'" aria-label="Reps completed for '+safeName+'">';
+}
 function buildExCard(bloc,week,sid){
   let h='<div class="bloc-hdr"><div class="bloc-line"></div><div class="bloc-label">'+escapeHTML(bloc.label)+'</div><div class="bloc-line"></div></div>';
   h+='<div class="ex-card"><div class="ex-thead"><div class="ex-th">EXERCISE</div><div class="ex-th">SETS</div><div class="ex-th">REPS</div><div class="ex-th">TARGET LOAD</div><div class="ex-th th-reel">ACTUAL LOAD</div></div>';
   bloc.exs.forEach(ex=>{
+    const actualFields=actualSetsRepsHTML(ex);
     const rowClass=isDurationUnit(ex.unit||'')?'ex-row duration-row':'ex-row';
     h+='<div class="'+rowClass+'">'
       +'<div><div class="ex-name">'+escapeHTML(ex.name)+'<button class="timer-btn" style="display:inline-flex;vertical-align:middle;width:24px;height:24px;font-size:11px;margin-left:6px" onclick="startTimer(\''+escapeHTML(ex.name).replace(/'/g,"\\'")+'\')" title="Timer repos">⏱</button></div><div class="ex-note">'+escapeHTML(ex.note)+'</div></div>'
-      +'<div class="ex-editable">'+escapeHTML(ex.sets)+'</div>'
-      +'<div class="ex-editable-rep">'+escapeHTML(ex.reps)+'</div>'
+      +actualFields
       +'<div class="ex-target">'+(ex.target?escapeHTML(ex.target):'—')+'</div>'
       +actualInputHTML(ex)
       +'</div>';
@@ -2150,11 +2294,13 @@ function plannedSessionIdsForWeek(week){
   return SEANCE_IDS.filter(sid=>sessionHasProgramContent(W.seances[sid]));
 }
 function weekDoneCount(week){
+  if(parseInt(week)===0)return WEEK_ZERO_STEPS.filter(s=>['complete','sent'].includes(getWeekZeroStepStatus(s.key))).length;
   return plannedSessionIdsForWeek(week).reduce((n,sid)=>n+(D.seances[seanceKey(week,sid)]&&D.seances[seanceKey(week,sid)].done?1:0),0);
 }
 function renderDayNav(){
   const nav=document.querySelector('#panel-entrainement .sub-nav');
   if(!nav)return;
+  if(currentWeek===0){renderWeekZeroStepNav();return;}
   nav.innerHTML='';
   SEANCE_IDS.forEach(sid=>{
     const S=WEEKS[currentWeek].seances[sid]||blankSession(sid);
@@ -2170,7 +2316,31 @@ function renderDayNav(){
     nav.appendChild(b);
   });
 }
+function attachWeekZeroShellToTraining(){
+  const host=el('sub-weekzero');
+  const shell=document.querySelector('.weekzero-shell');
+  if(host&&shell&&!host.contains(shell))host.appendChild(shell);
+}
+function renderTrainingWeekZero(){
+  const panel=el('panel-entrainement');
+  if(panel)panel.classList.add('week-zero-mode');
+  const protocol=el('ent-protocol'),title=el('ent-title'),phase=el('ent-phase'),desc=el('ent-desc');
+  D.weekZero=normalizeWeekZero(D.weekZero);
+  if(protocol)protocol.textContent='FATHER EMPOWERING — WEEK ZERO';
+  if(title)title.textContent='WEEK 0';
+  if(phase)phase.textContent=D.weekZero.submitted?'SENT TO COACHMAX':(D.weekZero.onboardingComplete?'DATA ACQUISITION':'ONBOARDING');
+  if(desc)desc.textContent=D.weekZero.submitted?'Your Week 0 data has been sent. Coach Max will now build your personalized protocol.':(D.weekZero.onboardingComplete?'Collect your starting data so Coach Max can build your protocol with precision.':'Complete your onboarding before data acquisition begins.');
+  document.querySelectorAll('#panel-entrainement .sub-panel').forEach(p=>p.classList.remove('active'));
+  const host=el('sub-weekzero');
+  attachWeekZeroShellToTraining();
+  if(host)host.classList.add('active');
+  renderWeekZero();
+  if(D.weekZero.onboardingComplete&&!document.querySelector('.wz-panel.active'))showWeekZeroTab('directives');
+}
 function renderEntrainementWeek(){
+  if(currentWeek===0){renderTrainingWeekZero();return;}
+  const panel=el('panel-entrainement');
+  if(panel)panel.classList.remove('week-zero-mode');
   const W=WEEKS[currentWeek];
   el('ent-protocol').textContent=CLIENT_PROFILE.homeKicker+' — '+W.phase;
   el('ent-title').textContent='WEEK '+currentWeek;
@@ -2186,29 +2356,45 @@ function restoreSeanceFields(sid){
   const rec=D.seances[seanceKey(currentWeek,sid)]||D.drafts[seanceKey(currentWeek,sid)];
   if(!rec)return;
   const panel=el('sub-'+sid);
+  const actuals=rec.actuals||{};
+  panel.querySelectorAll('.ex-sets-input').forEach(inp=>{ const k=inp.dataset.key; if(actuals[k]&&actuals[k].sets!=null) inp.value=actuals[k].sets; });
+  panel.querySelectorAll('.ex-reps-input').forEach(inp=>{ const k=inp.dataset.key; if(actuals[k]&&actuals[k].reps!=null) inp.value=actuals[k].reps; });
   panel.querySelectorAll('.ex-input').forEach(inp=>{ const k=inp.dataset.key; if(rec.charges&&rec.charges[k]!=null) inp.value=rec.charges[k]; });
   panel.querySelectorAll('.duration-control').forEach(ctrl=>{ const k=ctrl.dataset.key; if(rec.charges&&rec.charges[k]!=null) setDurationControl(ctrl,rec.charges[k]); });
   const notes=el('notes-'+sid); if(notes&&rec.notes) notes.value=rec.notes;
 }
 function persistSeanceFields(sid){
-  const panel=el('sub-'+sid); const charges={};
+  const panel=el('sub-'+sid); const charges={},actuals={};
+  panel.querySelectorAll('.ex-sets-input').forEach(inp=>{
+    const k=inp.dataset.key;
+    const sets=(inp.value||'').trim();
+    let repsInput=null;
+    panel.querySelectorAll('.ex-reps-input').forEach(node=>{if(node.dataset.key===k)repsInput=node;});
+    const reps=repsInput?(repsInput.value||'').trim():'';
+    const prescribedSets=(inp.dataset.prescribed||'').trim();
+    const prescribedReps=repsInput?(repsInput.dataset.prescribed||'').trim():'';
+    if((sets&&sets!==prescribedSets)||(reps&&reps!==prescribedReps)){
+      actuals[k]={sets:sets||prescribedSets,reps:reps||prescribedReps};
+    }
+  });
   panel.querySelectorAll('.ex-input').forEach(inp=>{ if(inp.value.trim()!=='') charges[inp.dataset.key]=inp.value.trim(); });
   panel.querySelectorAll('.duration-control').forEach(ctrl=>{ const total=readDurationControl(ctrl); if(total!=null)charges[ctrl.dataset.key]=String(total); });
   const notes=(el('notes-'+sid)||{}).value||'';
-  return {charges,notes};
+  return {charges,actuals,notes};
 }
 let _draftTimer=null;
 function autosaveDraft(sid){
   clearTimeout(_draftTimer);
   _draftTimer=setTimeout(()=>{
     const k=seanceKey(currentWeek,sid);
-    if(D.seances[k]&&D.seances[k].done){ const f=persistSeanceFields(sid); D.seances[k].charges=f.charges; D.seances[k].notes=f.notes; }
+    if(D.seances[k]&&D.seances[k].done){ const f=persistSeanceFields(sid); D.seances[k].charges=f.charges; D.seances[k].actuals=f.actuals; D.seances[k].notes=f.notes; }
     else{ D.drafts[k]=persistSeanceFields(sid); }
     save();
   },600);
 }
 function wireSeanceInputs(sid){
   const panel=el('sub-'+sid);
+  panel.querySelectorAll('.ex-sets-input,.ex-reps-input').forEach(inp=>{ inp.addEventListener('input',()=>autosaveDraft(sid)); });
   panel.querySelectorAll('.ex-input').forEach(inp=>{ inp.addEventListener('input',()=>autosaveDraft(sid)); });
   panel.querySelectorAll('.duration-control').forEach(ctrl=>{
     ctrl.querySelectorAll('.duration-input').forEach(inp=>{ inp.addEventListener('input',()=>autosaveDraft(sid)); });
@@ -2219,6 +2405,17 @@ function goToWeeklyCheckin(){
   showPanel('checkin',document.querySelectorAll('.nav-btn')[3]);
 }
 function showLockedWeekModal(){
+  if(!hasTrainingProgramContent()){
+    D.weekZero=normalizeWeekZero(D.weekZero);
+    const title=D.weekZero.submitted?'PROTOCOL BEING CREATED':'WEEK 0 REQUIRED';
+    const message=D.weekZero.submitted
+      ?'Your Week 0 data has been sent. Coach Max will build your personalized protocol before Week 1 opens.'
+      :'Complete Week 0 data acquisition before the training weeks open.';
+    appConfirm(title,message,{kicker:'WEEK 0',confirmText:'GO TO W0'}).then(ok=>{
+      if(ok){currentWeek=0;buildWeekNav();renderEntrainementWeek();showPanel('entrainement',getMainNavButton('training'),{keepSelectedWeek:true});}
+    });
+    return;
+  }
   if(window.feShowCheckinRequired){window.feShowCheckinRequired();return;}
   appConfirm(
     'CHECK-IN REQUIRED',
@@ -2230,7 +2427,7 @@ function saveSeance(sid){
   if(!isWeekUnlocked(currentWeek)){showLockedWeekModal();return;}
   const k=seanceKey(currentWeek,sid);
   const f=persistSeanceFields(sid);
-  D.seances[k]={done:true,date:new Date().toISOString().slice(0,10),charges:f.charges,notes:f.notes};
+  D.seances[k]={done:true,date:new Date().toISOString().slice(0,10),charges:f.charges,actuals:f.actuals,notes:f.notes};
   delete D.drafts[k];
   save(); updateStatus(sid); renderDayNav(); buildWeekNav(); updateHomeStats(); renderDash();
   const btn=el('save-'+sid); if(btn){btn.style.background='var(--green)'; btn.querySelector('.save-btn-label').textContent='SAVED ✓ — SESSION COMPLETED';}
@@ -2249,9 +2446,10 @@ function todayNutritionDay(){
   return ['dim','lun','mar','mer','jeu','ven','sam'][new Date().getDay()];
 }
 function selectTrainingDayForToday(){
-  currentWeek=getActiveWeek();
+  currentWeek=getPortalActiveWeek();
   buildWeekNav();
   renderEntrainementWeek();
+  if(currentWeek===0)return;
   const sid=todaySeanceId();
   const idx=SEANCE_IDS.indexOf(sid);
   const btn=document.querySelectorAll('#panel-entrainement .sub-nav .sub-btn')[idx];
@@ -2275,13 +2473,22 @@ function getMainNavButton(name){
 }
 function getPanelNavButton(name,btn){
   if(btn)return btn;
-  if(name==='weekzero'||name==='resultposter')return getMainNavButton('progression');
+  if(name==='weekzero')return getMainNavButton('training');
+  if(name==='resultposter')return getMainNavButton('progression');
   return null;
 }
 function openProgressionSubPanel(name){
   showPanel(name,getMainNavButton('progression'));
 }
 function showPanel(name,btn,opts){
+  if(name==='weekzero'){
+    currentWeek=0;
+    buildWeekNav();
+    renderEntrainementWeek();
+    name='entrainement';
+    btn=btn||getMainNavButton('training');
+    opts=Object.assign({},opts||{},{keepSelectedWeek:true});
+  }
   if(name==='resultposter'&&typeof injectResultPosterPanel==='function')injectResultPosterPanel();
   const panel=el('panel-'+name);
   if(!panel)return;
@@ -2306,6 +2513,7 @@ function showPanel(name,btn,opts){
   if(name==='accueil'){updateHomeStats(); renderHomeChart();}
 }
 function showSeance(sid,btn){
+  if(currentWeek===0)return;
   currentSeance=sid;
   document.querySelectorAll('#panel-entrainement .sub-panel').forEach(p=>p.classList.remove('active'));
   el('sub-'+sid).classList.add('active');
@@ -2334,11 +2542,29 @@ function showNutri(day,btn,plan){
 }
 function buildWeekNav(){
   const act=getActiveWeek();
+  const portalAct=getPortalActiveWeek();
+  if(!isWeekUnlocked(currentWeek))currentWeek=portalAct;
   if(!coachPreview&&currentWeek>act)currentWeek=act;
   // mobile horizontal
   const nav=el('week-nav-entrainement'); nav.innerHTML='';
   // desktop sidebar
   const sb=el('sidebar-weeks'); sb.innerHTML='';
+  const wzDone=weekDoneCount(0);
+  const wzTotal=WEEK_ZERO_STEPS.length;
+  const wzPct=Math.round(wzDone/wzTotal*100);
+  const wzStatus=weekZeroOverallStatus();
+  const wzBtn=document.createElement('button');
+  wzBtn.className='week-nav-btn'+(currentWeek===0?' active':'');
+  wzBtn.innerHTML='<span class="week-card-top"><span>W0</span><span class="week-card-count">'+(D.weekZero&&D.weekZero.submitted?'SENT':(wzDone+'/'+wzTotal))+'</span></span>'
+    +'<span class="week-card-phase">'+escapeHTML(wzStatus)+'</span>'
+    +'<span class="week-card-bar"><span class="week-card-fill" style="width:'+wzPct+'%"></span></span>';
+  wzBtn.onclick=()=>{currentWeek=0;buildWeekNav();renderEntrainementWeek();showPanel('entrainement',getMainNavButton('training'),{keepSelectedWeek:true});};
+  nav.appendChild(wzBtn);
+  const wzSide=document.createElement('div');
+  wzSide.className='sb-week'+(currentWeek===0?' active':'');
+  wzSide.innerHTML='<div><div class="sbw-name">WEEK 0</div><div class="sbw-phase">'+escapeHTML(wzStatus)+'</div></div>';
+  wzSide.onclick=()=>{currentWeek=0;buildWeekNav();renderEntrainementWeek();showPanel('entrainement',getMainNavButton('training'),{keepSelectedWeek:true});};
+  sb.appendChild(wzSide);
   for(let w=1;w<=TOTAL_WEEKS;w++){
     const unlocked=isWeekUnlocked(w);
     const doneCount=weekDoneCount(w);
@@ -2365,13 +2591,44 @@ function buildWeekNav(){
 function renderHomeWeekStatus(){
   const box=document.querySelector('.week-status');
   if(!box)return;
+  if(getPortalActiveWeek()===0){
+    box.innerHTML=WEEK_ZERO_STEPS.map(step=>{
+      const status=getWeekZeroStepStatus(step.key);
+      return '<div class="ws-card"><div class="ws-label">'+escapeHTML(step.title)+'</div><div class="ws-indicator '+(['complete','sent'].includes(status)?'ws-done':'')+'" id="ws-wz-'+escapeHTML(step.key)+'">'+escapeHTML(weekZeroStatusIcon(status))+'</div></div>';
+    }).join('');
+    return;
+  }
   box.innerHTML=SEANCE_IDS.map(sid=>{
     const label=splitSessionLabel(SEANCE_DAYS[sid]||sid.toUpperCase());
     return '<div class="ws-card"><div class="ws-label">'+escapeHTML(label.day)+'</div><div class="ws-indicator" id="ws-'+escapeHTML(sid)+'">&#9711;</div></div>';
   }).join('');
 }
 function updateHomeStats(){
-  const act=getActiveWeek();
+  const act=getPortalActiveWeek();
+  const startLabel=document.querySelector('.home-btn-dark .home-btn-label');
+  const startSub=document.querySelector('.home-btn-dark .home-btn-sub');
+  if(act===0){
+    D.weekZero=normalizeWeekZero(D.weekZero);
+    el('home-week-label').textContent='WEEK 0';
+    el('home-phase-label').textContent=weekZeroOverallStatus();
+    el('week-msg-body').textContent=D.weekZero.submitted?'Your Week 0 data has been sent. Coach Max will now build your personalized protocol.':(D.weekZero.onboardingComplete?'Complete each Week 0 step so Coach Max can build your protocol with precision.':'Complete your onboarding to begin Week 0 data acquisition.');
+    WEEK_ZERO_STEPS.forEach(step=>{
+      const ws=el('ws-wz-'+step.key);
+      if(!ws)return;
+      const status=getWeekZeroStepStatus(step.key);
+      if(['complete','sent'].includes(status)){ws.classList.add('ws-done');}else{ws.classList.remove('ws-done');}
+      ws.textContent=weekZeroStatusIcon(status);
+    });
+    el('stat-seances').textContent=Object.values(D.seances).filter(s=>s.done).length;
+    el('stat-checkins').textContent=checkinCount();
+    el('stat-poids').textContent='--';
+    if(startLabel)startLabel.textContent='OPEN WEEK 0';
+    if(startSub)startSub.textContent=D.weekZero.onboardingComplete?'Continue data acquisition':'Complete onboarding';
+    updateHomeFocus();
+    return;
+  }
+  if(startLabel)startLabel.textContent="START TODAY'S SESSION";
+  if(startSub)startSub.textContent="Open today's training";
   el('home-week-label').textContent='WEEK '+act;
   el('home-phase-label').textContent=WEEKS[act].phase;
   el('week-msg-body').textContent=WEEKS[act].msg;
@@ -2389,7 +2646,22 @@ function updateHomeStats(){
   updateHomeFocus();
 }
 function updateHomeFocus(){
-  const act=getActiveWeek();
+  const act=getPortalActiveWeek();
+  if(act===0){
+    const doneCount=weekDoneCount(0);
+    const total=WEEK_ZERO_STEPS.length;
+    const pct=Math.round(doneCount/total*100);
+    const title=el('v2-today-title'),sub=el('v2-today-sub'),pill=el('v2-today-pill');
+    if(title)title.textContent=D.weekZero&&D.weekZero.onboardingComplete?'DATA ACQUISITION':'ONBOARDING';
+    if(sub)sub.textContent=D.weekZero&&D.weekZero.submitted?'Sent to Coach Max.':(D.weekZero&&D.weekZero.onboardingComplete?'Continue your Week 0 steps.':'Complete your onboarding first.');
+    if(pill)pill.textContent=D.weekZero&&D.weekZero.submitted?'SENT':'W0';
+    const weekPill=el('v2-week-pill'),weekTitle=el('v2-week-title'),fill=el('v2-week-fill'),weekSub=el('v2-week-sub');
+    if(weekPill)weekPill.textContent=pct+'%';
+    if(weekTitle)weekTitle.textContent=doneCount+' / '+total+' DONE';
+    if(fill)fill.style.width=pct+'%';
+    if(weekSub)weekSub.textContent=weekZeroOverallStatus();
+    return;
+  }
   const sid=todaySeanceId();
   const S=WEEKS[act]&&WEEKS[act].seances[sid];
   const label=splitSessionLabel((S&&S.day)||SEANCE_DAYS[sid]||sid.toUpperCase());
@@ -2420,10 +2692,23 @@ function renderHomeChart(){
 
 /* ═════════ DASHBOARD STATS (design photo) ═════════ */
 function repsNum(r){const m=String(r||'').match(/\d+/);return m?parseInt(m[0]):1;}
+function setsNum(v,fallback){const m=String(v==null?'':v).replace(',','.').match(/\d+(\.\d+)?/);return m?parseFloat(m[0]):fallback;}
+function exerciseByKey(week,key){
+  const W=WEEKS[week]; if(!W||!W.seances)return null;
+  for(const sid of SEANCE_IDS){
+    const S=W.seances[sid]; if(!S||!S.blocs)continue;
+    for(const b of S.blocs){
+      const found=(b.exs||[]).find(ex=>ex.key===key);
+      if(found)return found;
+    }
+  }
+  return null;
+}
 function exMap(week){
   const map={};
-  SEANCE_IDS.forEach(sid=>{ const S=WEEKS[week].seances[sid]; if(!S)return;
-    S.blocs.forEach(b=>b.exs.forEach(ex=>{map[ex.key]={sets:(typeof ex.sets==='number')?ex.sets:1,reps:repsNum(ex.reps),sid,unit:ex.unit||'lbs'};}));});
+  const W=WEEKS[week]; if(!W||!W.seances)return map;
+  SEANCE_IDS.forEach(sid=>{ const S=W.seances[sid]; if(!S)return;
+    S.blocs.forEach(b=>b.exs.forEach(ex=>{map[ex.key]={name:ex.name,sets:setsNum(ex.sets,1),reps:repsNum(ex.reps),rawSets:ex.sets,rawReps:ex.reps,sid,unit:ex.unit||'lbs'};}));});
   return map;
 }
 function formatRecordedField(week,key,value){
@@ -2450,14 +2735,35 @@ function formatRecordedFieldHTML(week,key,value){
   }
   return escapeHTML(value);
 }
+function actualSetRepSummary(week,key,actual){
+  const ex=exerciseByKey(week,key);
+  const name=ex?ex.name:key;
+  const planned=ex?(String(ex.sets||'')+' x '+String(ex.reps||'')):'planned';
+  const done=String((actual&&actual.sets)||'')+' x '+String((actual&&actual.reps)||'');
+  return {name,planned,done};
+}
+function formatActualsHTML(week,actuals){
+  const entries=Object.entries(actuals||{});
+  if(!entries.length)return '';
+  return '<div style="padding:10px 16px;font-size:12px;color:var(--txt2);line-height:1.8;border-top:1px solid var(--br)"><strong>SETS / REPS ADJUSTED</strong><br>'
+    +entries.map(([k,v])=>{const s=actualSetRepSummary(week,k,v);return escapeHTML(s.name)+' : '+escapeHTML(s.done)+' <span style="color:var(--txt3)">(planned '+escapeHTML(s.planned)+')</span>';}).join('<br>')
+    +'</div>';
+}
 function seanceVolume(week,sid){
+  if(parseInt(week)===0)return 0;
   const rec=D.seances[seanceKey(week,sid)]; if(!rec||!rec.charges)return 0;
   const map=exMap(week); let vol=0;
   Object.entries(rec.charges).forEach(([k,v])=>{ const n=parseFloat(String(v).replace(',','.')); if(isNaN(n))return;
-    const m=map[k]||{sets:1,reps:1}; if(m.sid&&m.sid!==sid)return; if(isDurationUnit(m.unit))return; vol+=n*m.sets*m.reps; });
+    const m=map[k]||{sets:1,reps:1}; if(m.sid&&m.sid!==sid)return; if(isDurationUnit(m.unit))return;
+    const actual=(rec.actuals&&rec.actuals[k])||{};
+    const sets=setsNum(actual.sets,m.sets);
+    const reps=repsNum(actual.reps||m.rawReps||m.reps);
+    vol+=n*sets*reps;
+  });
   return Math.round(vol);
 }
 function weekCharge(week){
+  if(parseInt(week)===0)return 0;
   let tot=0; SEANCE_IDS.forEach(sid=>{ const rec=D.seances[seanceKey(week,sid)]; if(!rec||!rec.charges)return;
     const map=exMap(week);
     Object.entries(rec.charges).forEach(([k,v])=>{if(isDurationUnit((map[k]||{}).unit))return;const n=parseFloat(String(v).replace(',','.'));if(!isNaN(n))tot+=n;});});
@@ -2467,6 +2773,7 @@ let _volChart=null,_chargeChart=null;
 function renderDash(){
   const cvV=el('dashVolChart'),cvC=el('dashChargeChart'); if(!cvV)return;
   if(!window.Chart)return;
+  if(currentWeek===0)return;
   const dashGridColor='rgba(0,0,0,0.07)';
   const dashTickColor='#666666';
   // VOLUME — par jour de la semaine courante
@@ -2934,11 +3241,13 @@ function renderHistorique(){
       const nCharges=rec.charges?Object.keys(rec.charges).length:0;
       let chargesHTML='';
       if(nCharges){chargesHTML='<div style="padding:10px 16px;font-size:12px;color:var(--txt2);line-height:1.8">'+Object.entries(rec.charges).map(([k,v])=>'<strong>'+escapeHTML(k)+'</strong> : '+formatRecordedFieldHTML(w,k,v)).join(' · ')+'</div>';}
+      const actualsHTML=formatActualsHTML(w,rec.actuals);
       e.innerHTML='<div class="hist-seance-hdr"><div class="hist-seance-label">'+escapeHTML(formatSeanceLabel(w,sid))+'</div><div class="hist-seance-date">'+escapeHTML(rec.date||'')+'</div></div>'
         +'<div class="hist-seance-stats"><div class="hist-seance-stat"><div class="hist-seance-stat-n">✓</div><div class="hist-seance-stat-l">COMPLETED</div></div>'
         +'<div class="hist-seance-stat"><div class="hist-seance-stat-n">'+nCharges+'</div><div class="hist-seance-stat-l">LOADS NOTED</div></div>'
         +'<div class="hist-seance-stat"><div class="hist-seance-stat-n">'+seanceVolume(w,sid).toLocaleString('fr-CA')+'</div><div class="hist-seance-stat-l">VOLUME LBS</div></div></div>'
         +chargesHTML
+        +actualsHTML
         +(rec.notes?'<div style="padding:0 16px 12px;font-size:12px;color:var(--txt2);line-height:1.6">'+escapeHTML(rec.notes)+'</div>':'');
       c.appendChild(e);
     });
@@ -3017,6 +3326,8 @@ function handleWeekZeroPhoto(ev){
       save();
       loadWeekZeroPhotos();
       renderWeekZeroSummary();
+      renderWeekZeroStatus();
+      renderWeekZeroStepNav();
       if(window.saveWeekZeroStartData)window.saveWeekZeroStartData();
     });
   };
@@ -3035,7 +3346,7 @@ function loadWeekZeroPhotos(){
         if(slot===2&&!D.weekZero.data.photos.back){D.weekZero.data.photos.back=true;changed=true;}
       }
     });
-    if(changed){save();renderWeekZeroSummary();}
+    if(changed){save();renderWeekZeroSummary();renderWeekZeroStatus();renderWeekZeroStepNav();}
   });
 }
 function collectWeekZeroPhotos(){
@@ -3249,6 +3560,13 @@ function buildReportLines(checkin,week){
       if(rec.charges&&Object.keys(rec.charges).length){
         Object.entries(rec.charges).forEach(([k,v])=>L.push('   · '+k+' : '+formatRecordedField(week,k,v)));
       }
+      if(rec.actuals&&Object.keys(rec.actuals).length){
+        L.push('   · Sets / reps adjusted:');
+        Object.entries(rec.actuals).forEach(([k,v])=>{
+          const s=actualSetRepSummary(week,k,v);
+          L.push('      - '+s.name+' : '+s.done+' (planned '+s.planned+')');
+        });
+      }
       if(rec.notes)L.push('   📝 '+rec.notes);
     } else {
       L.push('⬜ '+S.day);
@@ -3390,7 +3708,7 @@ function renderPersonalNutritionPanel(){
 
 function openHomeOnLoad(){
   const homeBtn=document.querySelectorAll('.nav-btn')[0];
-  const progressionBtn=getMainNavButton('progression');
+  const trainingBtn=getMainNavButton('training');
   const weekZeroCfg=TEMPLATE_CONFIG.weekZero||{};
   D.weekZero=normalizeWeekZero(D.weekZero);
   const onboardingComplete=!!D.weekZero.onboardingComplete;
@@ -3398,7 +3716,10 @@ function openHomeOnLoad(){
   const shouldOpenWeekZero=!weekZeroSubmitted&&!!weekZeroCfg.openOnLoad;
   forceWeekZeroIntro=!!(weekZeroCfg.showIntroOnLoad&&shouldOpenWeekZero&&!onboardingComplete);
   if(shouldOpenWeekZero){
-    showPanel('weekzero',progressionBtn);
+    currentWeek=0;
+    buildWeekNav();
+    renderEntrainementWeek();
+    showPanel('entrainement',trainingBtn,{keepSelectedWeek:true});
     if(onboardingComplete)showWeekZeroTab('directives');
   }
   else{showPanel('accueil',homeBtn);}
@@ -3442,7 +3763,7 @@ function restore(){
   load();
   renderPersonalNutritionPanel();
   try{coachPreview=sessionStorage.getItem(COACH_SESSION_KEY)==='1';}catch(e){}
-  currentWeek=getActiveWeek();
+  currentWeek=getPortalActiveWeek();
   applyTheme((function(){try{return localStorage.getItem(THEME_KEY)||'dark';}catch(e){return 'dark';}})());
   tickClock();
   buildWeekNav();

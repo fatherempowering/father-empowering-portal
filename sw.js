@@ -1,4 +1,4 @@
-const CACHE_NAME='legacy-protocol-cache-2026-07-07-install-name';
+const CACHE_NAME='legacy-protocol-cache-2026-07-08-week-zero-sticky-tabs';
 const APP_SHELL=[
   './',
   './index.html',
