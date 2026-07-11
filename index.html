@@ -2908,6 +2908,13 @@ function selectNutritionDayForToday(){
 function getMainNavButton(name){
   return document.querySelector('[data-panel-nav="'+name+'"]');
 }
+function centerMainNavButton(btn){
+  if(!btn)return;
+  const nav=btn.closest('.nav');
+  if(!nav||nav.scrollWidth<=nav.clientWidth)return;
+  const left=btn.offsetLeft-(nav.clientWidth-btn.offsetWidth)/2;
+  nav.scrollTo({left:Math.max(0,left),behavior:'smooth'});
+}
 function getPanelNavButton(name,btn){
   if(btn)return btn;
   if(name==='weekzero')return getMainNavButton('training');
@@ -2933,7 +2940,10 @@ function showPanel(name,btn,opts){
   panel.classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   const activeBtn=getPanelNavButton(name,btn);
-  if(activeBtn)activeBtn.classList.add('active');
+  if(activeBtn){
+    activeBtn.classList.add('active');
+    requestAnimationFrame(()=>centerMainNavButton(activeBtn));
+  }
   window.scrollTo({top:0});
   if(name==='entrainement'&&!(opts&&opts.keepSelectedWeek)){selectTrainingDayForToday();}
   if(name==='nutrition'&&!(opts&&opts.keepSelectedDay)){selectNutritionDayForToday();}

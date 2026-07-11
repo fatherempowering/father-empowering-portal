@@ -1,4 +1,4 @@
-const CACHE_NAME = 'legacy-protocol-v3.0-premium-mobile-polish';
+const CACHE_NAME = 'legacy-protocol-v3.1-main-nav-centering';
 const APP_SHELL=[
   './',
   './index.html',
