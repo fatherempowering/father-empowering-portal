@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "config": {
+    "client": {
+      "athleteName": "JOHN DOE",
+      "shortName": "John",
+      "clientSlug": "john-doe-2026",
+      "programSlug": "protocol-100d-jul2026",
+      "documentTitle": "Father Empowering Protocol — John Doe",
+      "sidebarSubtitle": "JOHN DOE · 100-DAY PROTOCOL",
+      "totalWeeks": 14
+    },
+    "storage": {
+      "reportEndpoint": "https://YOUR-RELAY.example.com/api/send-report",
+      "coachMaxEndpoint": "https://YOUR-RELAY.example.com/api/send-report",
+      "programUrl": ""
+    },
+    "weekZero": {
+      "openOnLoad": true,
+      "showIntroOnLoad": true
+    },
+    "training": {
+      "defaultPhase": "FOUNDATION",
+      "weeks": [
+        {
+          "week": 1,
+          "phase": "FOUNDATION",
+          "desc": "Strength base · habits · technique",
+          "msg": "Week 1: we rebuild the base. Every rep controlled. Log everything.",
+          "sessions": {
+            "a": {
+              "day": "MON · UPPER A",
+              "title": "UPPER A",
+              "warmup": "5 min bike · band pull-aparts x20 · shoulder circles",
+              "blocks": [
+                {
+                  "label": "BLOCK 1",
+                  "exercises": [
+                    { "name": "Barbell Bench Press", "note": "3s descent, full pause", "sets": 4, "reps": "6", "key": "w1_bench", "target": "135 lbs", "unit": "lbs" },
+                    { "name": "One-Arm DB Row", "note": "Squeeze 1s at top", "sets": 3, "reps": "10", "key": "w1_db_row", "target": "50 lbs", "unit": "lbs" }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nutrition": {
+      "phase": "FAT LOSS — PHASE 1",
+      "desc": "Simple structure. Protein first. No perfection required — execution required.",
+      "targets": [
+        { "value": "2200", "label": "DAILY CALORIES" },
+        { "value": "190g", "label": "PROTEIN" }
+      ],
+      "rules": [
+        { "title": "Protein at every meal", "detail": "40g minimum per meal. Non-negotiable." }
+      ],
+      "meals": []
+    }
+  }
+}
