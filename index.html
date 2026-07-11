@@ -72,11 +72,12 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 @media(max-width:520px){.clock{font-size:21px}.clock-date{font-size:8px}.hdr{padding:12px 14px 10px}.hdr-name{font-size:18px}.settings-sheet{padding-top:68px}.hdr-welcome{font-size:10px}}
 
 /* ═══ TOP NAV ═══ */
-.nav{display:flex;overflow-x:auto;background:var(--black2);border-bottom:1px solid rgba(255,255,255,0.07);position:sticky;top:96px;z-index:200;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x;user-select:none}
+.nav{display:flex;gap:8px;overflow-x:auto;background:var(--black2);border-bottom:1px solid rgba(255,255,255,0.07);position:sticky;top:96px;z-index:200;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x;user-select:none;padding:10px 12px}
 .nav::-webkit-scrollbar{display:none}
-.nav-btn{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;padding:13px 18px;white-space:nowrap;cursor:pointer;color:#FFF;border-bottom:3px solid transparent;transition:all .2s;flex-shrink:0;background:none;border-top:none;border-left:none;border-right:none;display:flex;align-items:center;gap:7px}
-.nav-btn .nav-ic{font-size:13px;opacity:0.75}
-.nav-btn.active{color:var(--orange);border-bottom-color:var(--orange)}
+.nav-btn{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.65px;min-height:46px;padding:12px 17px;white-space:nowrap;cursor:pointer;color:rgba(255,255,255,.76);border:1px solid rgba(255,255,255,.10);border-radius:14px;transition:all .2s;flex-shrink:0;background:rgba(255,255,255,.045);display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+.nav-btn .nav-ic{font-size:14px;opacity:.8}
+.nav-btn.active{color:#fff;border-color:rgba(232,118,26,.72);background:rgba(232,118,26,.18);box-shadow:0 8px 20px rgba(0,0,0,.16),inset 0 0 0 1px rgba(232,118,26,.12)}
+@media(max-width:520px){.nav{gap:7px;padding:9px 10px}.nav-btn{min-height:48px;padding:12px 16px;font-size:15px;border-radius:15px}}
 /* ═══ SIDEBAR (DESKTOP) ═══ */
 .sidebar{display:none;position:fixed;left:0;top:0;bottom:0;width:232px;background:var(--black2);border-right:1px solid rgba(255,255,255,0.08);z-index:400;flex-direction:column;overflow-y:auto;scrollbar-width:thin}
 .sb-head{padding:18px 16px 14px;border-bottom:3px solid var(--orange);background:var(--black)}
@@ -442,9 +443,11 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .wz-review-box .wz-summary{max-height:46vh;margin-top:14px;background:rgba(255,255,255,.045)}
 .wz-review-note{font-size:12px;color:rgba(255,255,255,.58);line-height:1.65;margin-top:10px;text-align:center}
 @media(max-width:640px){
-  .wz-photo-grid{grid-template-columns:1fr;gap:14px;width:100%;min-width:0}
-  .wz-photo-grid .photo-slot{width:min(100%,340px);min-width:0;min-height:0;margin:0 auto;aspect-ratio:3/4}
+  .wz-photo-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;min-width:0}
+  .wz-photo-grid .photo-slot{width:100%;min-width:0;min-height:0;margin:0;aspect-ratio:3/4;border-radius:12px}
   .wz-photo-grid .photo-slot img{max-width:100%}
+  .wz-photo-grid .photo-slot-plus{font-size:22px}
+  .wz-photo-grid .photo-slot-label{font-size:8.5px;letter-spacing:1px;margin-top:5px;text-align:center;padding:0 3px;line-height:1.15}
 }
 @media(min-width:760px){
   .wz-actions.wz-actions-multi{flex-wrap:nowrap}
@@ -651,9 +654,8 @@ canvas{display:block;width:100%!important}
 .faem-logo-wrap::before{content:'';position:absolute;inset:-18% -12%;z-index:-1;border-radius:24px;background:radial-gradient(60% 60% at 50% 45%,rgba(232,118,26,.26),rgba(232,118,26,0) 72%);filter:blur(8px);animation:fe-logo-bloom 5.5s ease-in-out infinite}
 @keyframes fe-logo-bloom{0%,100%{opacity:.55}50%{opacity:1}}
 .nav-btn{position:relative}
-.nav-btn::after{content:'';position:absolute;left:14px;right:14px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--orange);transform:scaleX(0);transform-origin:center;transition:transform .26s cubic-bezier(.4,0,.1,1)}
-.nav-btn.active{border-bottom-color:transparent}
-.nav-btn.active::after{transform:scaleX(1)}
+.nav-btn::after{content:none}
+.nav-btn.active{border-bottom-color:rgba(232,118,26,.72)}
 .panel.active .card,.panel.active .week-msg,.panel.active .v2-focus-card,.panel.active .stats-row,.panel.active .week-status{animation:fe-card-in .42s cubic-bezier(.2,.7,.2,1) both}
 @keyframes fe-card-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .home-btn{transition:transform .14s ease,box-shadow .18s ease}
@@ -725,7 +727,6 @@ canvas{display:block;width:100%!important}
       <div class="appearance-row">
         <button class="appearance-btn" data-theme-choice="light" onclick="setThemePreference('light')">LIGHT</button>
         <button class="appearance-btn" data-theme-choice="dark" onclick="setThemePreference('dark')">DARK</button>
-        <button class="appearance-btn" data-theme-choice="system" onclick="setThemePreference('system')">SYSTEM</button>
       </div>
       <button class="settings-item" onclick="showAbout()"><span><span>About</span><span class="settings-sub">Portal and protocol information</span></span><span class="settings-chevron">›</span></button>
     </div>
@@ -890,7 +891,7 @@ canvas{display:block;width:100%!important}
           <div class="wz-section-copy">Take your front, side, and back photos in consistent lighting.</div>
           <div class="photo-grid wz-photo-grid">
             <div class="photo-slot" onclick="triggerWeekZeroPhoto(0)"><img id="wz-photo-img-0" alt="Front"><div class="photo-slot-plus">+</div><div class="photo-slot-label">FRONT</div></div>
-            <div class="photo-slot" onclick="triggerWeekZeroPhoto(1)"><img id="wz-photo-img-1" alt="Side"><div class="photo-slot-plus">+</div><div class="photo-slot-label">SIDE / BEFORE</div></div>
+            <div class="photo-slot" onclick="triggerWeekZeroPhoto(1)"><img id="wz-photo-img-1" alt="Side"><div class="photo-slot-plus">+</div><div class="photo-slot-label">SIDE</div></div>
             <div class="photo-slot" onclick="triggerWeekZeroPhoto(2)"><img id="wz-photo-img-2" alt="Back"><div class="photo-slot-plus">+</div><div class="photo-slot-label">BACK</div></div>
           </div>
           <input type="file" accept="image/*" id="wz-photo-input" style="display:none" onchange="handleWeekZeroPhoto(event)">
