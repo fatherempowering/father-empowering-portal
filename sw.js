@@ -1,4 +1,7 @@
-const CACHE_NAME = 'legacy-protocol-v3.2.3-week-zero-absolute-top-fix';
+const CACHE_VERSION = 'v3.2.3-week-zero-absolute-top-fix';
+const CACHE_SCOPE_KEY = self.registration.scope.replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase()||'root';
+const CACHE_PREFIX = 'legacy-protocol-'+CACHE_SCOPE_KEY+'-';
+const CACHE_NAME = CACHE_PREFIX+CACHE_VERSION;
 const APP_SHELL=[
   './',
   './index.html',
@@ -30,7 +33,7 @@ self.addEventListener('install',event=>{
 self.addEventListener('activate',event=>{
   event.waitUntil(
     caches.keys()
-      .then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key))))
+      .then(keys=>Promise.all(keys.filter(key=>key.startsWith(CACHE_PREFIX)&&key!==CACHE_NAME).map(key=>caches.delete(key))))
       .then(()=>self.clients.claim())
   );
 });

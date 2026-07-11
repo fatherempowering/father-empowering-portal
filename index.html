@@ -1469,6 +1469,8 @@ const TRAINING_PLAN_CACHE_KEY='faem_'+STORAGE_NAMESPACE+'_training_plan_v1';
 const NUTRITION_PLAN_CACHE_KEY='faem_'+STORAGE_NAMESPACE+'_nutrition_plan_v1';
 const PLAN_META_KEY='faem_'+STORAGE_NAMESPACE+'_plan_meta_v1';
 const PLAN_NOTICE_KEY='faem_'+STORAGE_NAMESPACE+'_last_update_notice_v1';
+const CORRUPT_STORAGE_BACKUP_KEY=SK+'_corrupt_backup_v1';
+const REPORT_TIMEOUT_MS=30000;
 let pendingPortalUpdate=null;
 let portalPlansReady=false;
 let saveStatusTimer=null;
@@ -1494,6 +1496,15 @@ function readJSONStorage(key){
 }
 function writeJSONStorage(key,value){
   try{localStorage.setItem(key,JSON.stringify(value));return true;}catch(e){return false;}
+}
+function preserveCorruptStorage(raw,error){
+  if(!raw)return false;
+  return writeJSONStorage(CORRUPT_STORAGE_BACKUP_KEY,{
+    key:SK,
+    savedAt:new Date().toISOString(),
+    error:String(error&&error.message?error.message:error||'Unknown parse error'),
+    raw:raw
+  });
 }
 function normalizeTrainingPlan(payload){
   const plan=payload&&payload.training?payload.training:payload;
@@ -1617,9 +1628,9 @@ async function checkForPortalUpdate(options){
     }
     pendingPortalUpdate=remote;
     const fp=planFingerprint(remote);
-    const alreadyNotified=localStorage.getItem(PLAN_NOTICE_KEY)===fp;
-    if(!silent||!alreadyNotified){
-      localStorage.setItem(PLAN_NOTICE_KEY,fp);
+    const currentFp=planFingerprint(current);
+    const alreadyApplied=localStorage.getItem(PLAN_NOTICE_KEY)===fp&&currentFp===fp;
+    if(!silent||!alreadyApplied){
       await confirmAndApplyPendingUpdate();
     }
     return true;
@@ -1784,7 +1795,8 @@ function defaultData(){return {seances:{},checkins:[],drafts:{},unlockedWeek:1,w
 let D=defaultData();
 function load(){
   migrateStorageKeys();
-  try{const raw=localStorage.getItem(SK); if(raw){const p=JSON.parse(raw); D=normalizeImportedData(Object.assign(defaultData(),p));}}catch(e){D=defaultData();}
+  let raw=null;
+  try{raw=localStorage.getItem(SK); if(raw){const p=JSON.parse(raw); D=normalizeImportedData(Object.assign(defaultData(),p));}}catch(e){preserveCorruptStorage(raw,e);D=defaultData();}
   if(!D.seances)D.seances={}; if(!D.checkins)D.checkins=[]; if(!D.drafts)D.drafts={}; if(!D.unlockedWeek)D.unlockedWeek=1;
   D.unlockedWeek=normalizeUnlockedWeek(D);
   D.weekZero=normalizeWeekZero(D.weekZero);
@@ -1841,8 +1853,11 @@ function migrateLegacyPhotoDbs(){return openIDB().then(db=>{
   return Promise.all(LEGACY_PHOTO_DBS.map(name=>copyPhotoDb(name,db))).then(()=>true);
 });}
 function idbSet(k,v){return openIDB().then(db=>new Promise(res=>{ if(!db)return res(false);
-  const tx=db.transaction('photos','readwrite'); tx.objectStore('photos').put(v,k);
-  tx.oncomplete=()=>res(true); tx.onerror=()=>res(false);}));}
+  try{
+    const tx=db.transaction('photos','readwrite'); tx.objectStore('photos').put(v,k);
+    tx.oncomplete=()=>res(true); tx.onerror=()=>res(false);
+  }catch(e){res(false);}
+}));}
 function idbGet(k){return openIDB().then(db=>new Promise(res=>{ if(!db)return res(null);
   const tx=db.transaction('photos','readonly'); const rq=tx.objectStore('photos').get(k);
   rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>res(null);}));}
@@ -2620,7 +2635,7 @@ function buildWeekZeroBackupAttachment(){
       schema:BACKUP_SCHEMA,
       type:'week_zero_onboarding',
       generatedAt:new Date().toISOString(),
-      portal:{title:document.title,athlete:CLIENT_PROFILE.athleteName,totalWeeks:TOTAL_WEEKS},
+      portal:{title:document.title,athlete:CLIENT_PROFILE.athleteName,clientSlug:CLIENT_PROFILE.clientSlug||'',totalWeeks:TOTAL_WEEKS},
       backupNote:'Text data only. Week 0 photos are sent separately and are not stored inside this JSON backup.',
       data:normalizeImportedData(JSON.parse(JSON.stringify(D)))
     }
@@ -3747,7 +3762,8 @@ function handlePhoto(ev){
     cv.getContext('2d').drawImage(img,0,0,w,h);
     const data=cv.toDataURL('image/jpeg',0.75);
     URL.revokeObjectURL(url);
-    idbSet(photoKey(getActiveWeek(),_photoSlot),data).then(()=>{
+    idbSet(photoKey(getActiveWeek(),_photoSlot),data).then(async ok=>{
+      if(!ok){await showPhotoSaveError('PHOTO');return;}
       loadPhotos();
       if(window.saveWeek12FinalData)window.saveWeek12FinalData();
     });
@@ -3766,6 +3782,9 @@ function loadPhotos(){
 function collectWeeklyPhotos(week){
   return Promise.all([0,1,2].map(s=>idbGet(photoKey(week,s)))).then(arr=>arr.filter(Boolean));
 }
+async function showPhotoSaveError(kicker){
+  await appAlert('PHOTO SAVE FAILED','This photo could not be saved on this device. Storage may be full or private browsing may be blocking photo storage.\n\nYour text data was not erased. Free up storage or try again with a smaller image.',{kicker:kicker||'PHOTO',confirmClass:'app-btn-danger'});
+}
 let _weekZeroPhotoSlot=0;
 function weekZeroPhotoKey(slot){return 'week_zero_start_photo_'+slot;}
 function triggerWeekZeroPhoto(slot){
@@ -3783,7 +3802,8 @@ function handleWeekZeroPhoto(ev){
     cv.getContext('2d').drawImage(img,0,0,w,h);
     const data=cv.toDataURL('image/jpeg',0.75);
     URL.revokeObjectURL(url);
-    idbSet(weekZeroPhotoKey(_weekZeroPhotoSlot),data).then(()=>{
+    idbSet(weekZeroPhotoKey(_weekZeroPhotoSlot),data).then(async ok=>{
+      if(!ok){await showPhotoSaveError('WEEK 0 PHOTO');return;}
       D.weekZero=normalizeWeekZero(D.weekZero);
       if(_weekZeroPhotoSlot===0)D.weekZero.data.photos.face=true;
       if(_weekZeroPhotoSlot===1)D.weekZero.data.photos.side=true;
@@ -3933,6 +3953,21 @@ function extractImportedPortalData(payload){
   }
   return payload;
 }
+function validateBackupForImport(payload,imported){
+  if(payload&&typeof payload==='object'){
+    const structuredBackup=!!(payload.data&&typeof payload.data==='object');
+    if(structuredBackup&&!payload.schema)throw new Error('Backup schema is missing.');
+    if(payload.schema&&payload.schema!==BACKUP_SCHEMA)throw new Error('Backup schema does not match this portal.');
+    const portal=payload.portal&&typeof payload.portal==='object'?payload.portal:null;
+    if(portal){
+      const backupSlug=String(portal.clientSlug||'').trim();
+      const currentSlug=String(CLIENT_PROFILE.clientSlug||'').trim();
+      if(backupSlug&&currentSlug&&storageSlug(backupSlug)!==storageSlug(currentSlug))throw new Error('Backup client does not match this portal.');
+    }
+  }
+  if(!imported||typeof imported!=='object')throw new Error('Invalid backup data.');
+  if(!(imported.seances||imported.checkins||imported.weekZero||imported.drafts||imported.unlockedWeek))throw new Error('Backup data does not match Legacy Protocol.');
+}
 function importData(ev){
   const f=ev.target.files&&ev.target.files[0]; ev.target.value=''; if(!f)return;
   const r=new FileReader();
@@ -3940,13 +3975,13 @@ function importData(ev){
     try{
       const p=JSON.parse(r.result);
       const imported=extractImportedPortalData(p);
-      if(!imported||typeof imported!=='object')throw new Error('Invalid backup');
+      validateBackupForImport(p,imported);
       const ok=await appConfirm('IMPORT BACKUP','This replaces the local portal data on this device.\n\nExport first if you want a copy of the current state.',{kicker:'BACKUP',confirmText:'IMPORT'});
       if(!ok)return;
       D=normalizeImportedData(imported); save();
       buildWeekNav(); updateHomeStats(); renderHistorique(); renderCharts(); renderWeekZero(); restoreCheckinDraft();
       await appAlert('IMPORT COMPLETE','Backup restored successfully.',{kicker:'BACKUP',confirmClass:'app-btn-success'});
-    }catch(e){await appAlert('IMPORT FAILED','This file could not be imported.',{kicker:'BACKUP',confirmClass:'app-btn-danger'});}
+    }catch(e){await appAlert('IMPORT FAILED',(e&&e.message)||'This file could not be imported.',{kicker:'BACKUP',confirmClass:'app-btn-danger'});}
   };
   r.readAsText(f);
 }
@@ -3966,6 +4001,7 @@ function buildRestoreBackup(week){
     portal:{
       title:document.title,
       athlete:CLIENT_PROFILE.athleteName,
+      clientSlug:CLIENT_PROFILE.clientSlug||'',
       block:CLIENT_PROFILE.protocolLabel,
       totalWeeks:TOTAL_WEEKS
     },
@@ -3982,14 +4018,25 @@ function buildBackupAttachment(week){
   };
 }
 async function postReportToEndpoint(endpoint,payload){
-  const r=await fetch(endpoint,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
-  });
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok||data.error)throw new Error(data.error||('Report failed with '+r.status));
-  return data;
+  const controller=typeof AbortController!=='undefined'?new AbortController():null;
+  const timer=controller?setTimeout(()=>controller.abort(),REPORT_TIMEOUT_MS):null;
+  try{
+    const options={
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    };
+    if(controller)options.signal=controller.signal;
+    const r=await fetch(endpoint,options);
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok||data.error)throw new Error(data.error||('Report failed with '+r.status));
+    return data;
+  }catch(e){
+    if(e&&e.name==='AbortError')throw new Error('Request timed out. Your data was saved locally.');
+    throw e;
+  }finally{
+    if(timer)clearTimeout(timer);
+  }
 }
 async function postWeeklyReport(payload){
   return postReportToEndpoint(REPORT_ENDPOINT,payload);
@@ -4841,8 +4888,9 @@ function saveWeekZeroStartData(opts){
   saveClientProgressData(data);
   return idbGet(weekZeroPhotoKey(1)).then(function(sidePhoto){
     if(sidePhoto&&!data.manualBeforePhoto){
-      data.startSidePhoto='idb:'+RESULT_BEFORE_PHOTO_KEY;
-      return idbSet(RESULT_BEFORE_PHOTO_KEY,sidePhoto).then(function(){
+      return idbSet(RESULT_BEFORE_PHOTO_KEY,sidePhoto).then(function(ok){
+        if(!ok)return false;
+        data.startSidePhoto='idb:'+RESULT_BEFORE_PHOTO_KEY;
         saveClientProgressData(data);
         if(!opts.skipRender)renderResultPosterPanel();
       });
@@ -4863,8 +4911,9 @@ function saveWeek12FinalData(entry,opts){
   saveClientProgressData(data);
   return idbGet(photoKey(RESULT_WEEK,1)).then(function(sidePhoto){
     if(sidePhoto&&!data.manualAfterPhoto){
-      data.week12SidePhoto='idb:'+RESULT_AFTER_PHOTO_KEY;
-      return idbSet(RESULT_AFTER_PHOTO_KEY,sidePhoto).then(function(){
+      return idbSet(RESULT_AFTER_PHOTO_KEY,sidePhoto).then(function(ok){
+        if(!ok)return false;
+        data.week12SidePhoto='idb:'+RESULT_AFTER_PHOTO_KEY;
         saveClientProgressData(data);
         if(!opts.skipRender)renderResultPosterPanel();
       });
@@ -5316,7 +5365,8 @@ function replacePosterPhoto(ev,which){
   resizeImageForStorage(file,1200,0.85).then(function(dataUrl){
     var data=loadClientProgressData();
     var key=which==='before'?RESULT_BEFORE_PHOTO_KEY:RESULT_AFTER_PHOTO_KEY;
-    return idbSet(key,dataUrl).then(function(){
+    return idbSet(key,dataUrl).then(async function(ok){
+      if(!ok){await showPhotoSaveError('RESULT POSTER');return;}
       if(which==='before'){data.startSidePhoto='idb:'+key;data.manualBeforePhoto=true;}
       else{data.week12SidePhoto='idb:'+key;data.manualAfterPhoto=true;}
       saveClientProgressData(data);
