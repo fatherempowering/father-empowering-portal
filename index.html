@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -33,7 +33,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .hdr-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--wh);line-height:1;position:relative;user-select:none;-webkit-user-select:none}
 .hdr-name.pressing::after{content:'';position:absolute;bottom:-3px;left:0;height:2px;background:var(--red);border-radius:2px;animation:pressbar 3s linear forwards}
 @keyframes pressbar{from{width:0}to{width:100%}}
-.hdr-right{display:flex;align-items:flex-start;gap:12px}
+.hdr-right{display:flex;align-items:center;gap:10px}
 .hdr-status{display:flex;align-items:center;gap:7px;margin-top:8px;flex-wrap:wrap}
 .hdr-chip{min-height:22px;display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,0.14);border-radius:999px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.62);font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1.5px;padding:4px 8px;line-height:1}
 .hdr-chip.good{color:#8FE4A2;border-color:rgba(63,164,86,.42);background:rgba(63,164,86,.12)}
@@ -41,12 +41,38 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .hdr-chip.offline{color:#F6A39B;border-color:rgba(224,85,69,.38);background:rgba(224,85,69,.12)}
 .install-btn{display:none;border:1px solid rgba(232,118,26,.5);border-radius:999px;background:rgba(232,118,26,.14);color:var(--orange);font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1.6px;padding:5px 9px;cursor:pointer;line-height:1}
 .install-btn.show{display:inline-flex}
+.update-btn{display:inline-flex;border:1px solid rgba(232,118,26,.62);border-radius:999px;background:var(--orange);color:#111;font-family:'Bebas Neue',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.6px;padding:5px 10px;cursor:pointer;line-height:1;transition:opacity .15s,transform .15s}
+.update-btn:active{transform:scale(.98)}
+.update-btn[disabled]{opacity:.5;cursor:wait}
 .clock{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--wh);letter-spacing:2px;line-height:1;text-align:right}
 .clock-date{font-size:9px;color:var(--orange);letter-spacing:1.5px;margin-top:2px;font-family:'Bebas Neue',sans-serif;text-align:right}
 .theme-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:9px;width:34px;height:34px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
 .theme-btn:active{background:rgba(255,255,255,0.18)}
+.settings-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#fff;border-radius:10px;width:38px;height:38px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,transform .15s}
+.settings-btn:active{background:rgba(255,255,255,0.18);transform:scale(.97)}
+.hdr-welcome{font-size:11px;color:rgba(255,255,255,.62);margin-top:5px;letter-spacing:.2px}
+.net-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.72);font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1.5px;padding:5px 9px;line-height:1}
+.net-dot{width:7px;height:7px;border-radius:50%;background:#3FA456;box-shadow:0 0 0 3px rgba(63,164,86,.14)}
+.net-pill.offline{color:#F6A39B;border-color:rgba(224,85,69,.38);background:rgba(224,85,69,.12)}
+.net-pill.offline .net-dot{background:#E05545;box-shadow:0 0 0 3px rgba(224,85,69,.14)}
+.settings-sheet{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:610;align-items:flex-start;justify-content:flex-end;padding:76px 14px 20px;backdrop-filter:blur(6px)}
+.settings-sheet.show{display:flex}
+.settings-card{width:min(360px,calc(100vw - 28px));background:var(--card);border:1px solid var(--br);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.28);overflow:hidden}
+.settings-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--br);background:var(--card2)}
+.settings-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--txt)}
+.settings-close{border:0;background:transparent;color:var(--txt2);font-size:24px;line-height:1;cursor:pointer;padding:2px 4px}
+.settings-list{padding:8px}
+.settings-item{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;border:0;background:transparent;color:var(--txt);padding:14px 12px;border-radius:12px;cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600}
+.settings-item:active{background:var(--tint)}
+.settings-sub{display:block;font-size:11px;color:var(--txt3);font-weight:500;margin-top:3px}
+.settings-chevron{font-size:18px;color:var(--txt3)}
+.appearance-row{display:flex;gap:6px;padding:0 12px 14px}
+.appearance-btn{flex:1;border:1px solid var(--br);background:var(--card2);color:var(--txt2);border-radius:10px;padding:9px 6px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer}
+.appearance-btn.active{border-color:var(--orange);background:var(--tint);color:var(--orange)}
+@media(max-width:520px){.clock{font-size:21px}.clock-date{font-size:8px}.hdr{padding:12px 14px 10px}.hdr-name{font-size:18px}.settings-sheet{padding-top:68px}.hdr-welcome{font-size:10px}}
+
 /* ═══ TOP NAV ═══ */
-.nav{display:flex;overflow-x:auto;background:var(--black2);border-bottom:1px solid rgba(255,255,255,0.07);position:sticky;top:88px;z-index:200;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x;user-select:none}
+.nav{display:flex;overflow-x:auto;background:var(--black2);border-bottom:1px solid rgba(255,255,255,0.07);position:sticky;top:96px;z-index:200;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x;user-select:none}
 .nav::-webkit-scrollbar{display:none}
 .nav-btn{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;padding:13px 18px;white-space:nowrap;cursor:pointer;color:#FFF;border-bottom:3px solid transparent;transition:all .2s;flex-shrink:0;background:none;border-top:none;border-left:none;border-right:none;display:flex;align-items:center;gap:7px}
 .nav-btn .nav-ic{font-size:13px;opacity:0.75}
@@ -354,7 +380,9 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .wz-card-dark .wz-title{color:#fff}
 .wz-sub{font-size:13px;color:var(--txt2);line-height:1.8;margin-top:9px}
 .wz-card-dark .wz-sub{color:rgba(255,255,255,.84);font-size:14px;line-height:1.9}
-.wz-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:18px}
+.wz-actions{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap;text-align:center}
+.wz-actions .wz-btn{width:min(100%,420px);margin-left:auto;margin-right:auto}
+.wz-actions.wz-actions-multi .wz-btn{width:min(100%,320px)}
 .wz-btn{border-radius:12px;border:1px solid var(--br);padding:14px 16px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;cursor:pointer;transition:opacity .15s,transform .15s;text-align:center}
 .wz-btn:active{opacity:.86;transform:scale(.99)}
 .wz-btn-primary{background:var(--orange);border-color:var(--orange);color:#fff}
@@ -363,6 +391,20 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .wz-status{display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--black);border:1px solid rgba(255,255,255,.08);border-radius:14px;margin:14px 14px 0;padding:13px 16px}
 .wz-status-label{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:rgba(255,255,255,.58)}
 .wz-status-value{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--orange);text-align:right}
+.wz-progress{background:var(--card);border:1px solid var(--br);border-radius:14px;margin:10px 14px 0;padding:14px 16px;box-shadow:var(--shadow)}
+.wz-progress-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.wz-progress-title{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:var(--txt)}
+.wz-progress-percent{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.5px;color:var(--orange)}
+.wz-progress-bar{height:7px;background:var(--card2);border-radius:999px;overflow:hidden;margin-top:10px}
+.wz-progress-fill{height:100%;width:0;background:var(--orange);border-radius:999px;transition:width .2s ease}
+.wz-progress-list{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-top:11px}
+.wz-progress-item{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;background:var(--card2);border:1px solid var(--br);border-radius:10px;padding:8px 6px;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1px;color:var(--txt3);text-align:center}
+.wz-progress-item.done{border-color:rgba(63,164,86,.45);background:rgba(63,164,86,.11);color:var(--green)}
+.wz-progress-item.missing{border-color:rgba(232,118,26,.32);color:var(--orange)}
+.wz-progress-dot{font-size:12px;line-height:1}
+.wz-btn[disabled]{opacity:.42;cursor:not-allowed;transform:none}
+.wz-validation-note{font-size:11px;line-height:1.55;text-align:center;color:var(--orange);margin-top:9px}
+@media(max-width:680px){.wz-progress-list{grid-template-columns:repeat(2,minmax(0,1fr))}.wz-progress-item:last-child{grid-column:1/-1}}
 .wz-nav{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x;margin:14px 0 0;padding:0 14px 4px}
 .wz-nav::-webkit-scrollbar{display:none}
 .wz-tab{min-width:146px;flex:0 0 146px;background:var(--card);border:1px solid var(--br);border-radius:12px;box-shadow:var(--shadow);padding:12px;color:var(--txt);text-align:left;cursor:pointer}
@@ -399,8 +441,13 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .wz-review-box{width:min(760px,100%);max-height:88vh;overflow:auto;background:var(--black);border:2px solid var(--orange);border-radius:20px;box-shadow:0 28px 80px rgba(0,0,0,.55);padding:22px}
 .wz-review-box .wz-summary{max-height:46vh;margin-top:14px;background:rgba(255,255,255,.045)}
 .wz-review-note{font-size:12px;color:rgba(255,255,255,.58);line-height:1.65;margin-top:10px;text-align:center}
+@media(max-width:640px){
+  .wz-photo-grid{grid-template-columns:1fr;gap:14px;width:100%;min-width:0}
+  .wz-photo-grid .photo-slot{width:min(100%,340px);min-width:0;min-height:0;margin:0 auto;aspect-ratio:3/4}
+  .wz-photo-grid .photo-slot img{max-width:100%}
+}
 @media(min-width:760px){
-  .wz-actions{grid-template-columns:1.2fr .8fr}
+  .wz-actions.wz-actions-multi{flex-wrap:nowrap}
   .wz-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
   .wz-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
   .wz-card{margin-left:14px;margin-right:14px}
@@ -650,11 +697,11 @@ canvas{display:block;width:100%!important}
 <div class="hdr">
   <div class="hdr-row">
     <div>
-      <div class="hdr-protocol">FATHER EMPOWERING — CLIENT PROTOCOL</div>
+      <div class="hdr-protocol">LEGACY PROTOCOL</div>
       <div class="hdr-name" id="hdr-name" ontouchstart="startPress()" ontouchend="endPress()" onmousedown="startPress()" onmouseup="endPress()">CLIENT NAME</div>
+      <div class="hdr-welcome" id="hdr-welcome">Welcome back.</div>
       <div class="hdr-status" aria-live="polite">
-        <span class="hdr-chip good" id="save-status">SAVED</span>
-        <span class="hdr-chip" id="net-status">ONLINE</span>
+        <span class="net-pill" id="net-status"><span class="net-dot"></span><span id="net-status-label">ONLINE</span></span>
         <button class="install-btn" id="install-btn" type="button" onclick="installApp()">INSTALL</button>
       </div>
     </div>
@@ -663,7 +710,24 @@ canvas{display:block;width:100%!important}
         <div class="clock" id="clock">--:--</div>
         <div class="clock-date" id="clock-date">---</div>
       </div>
-      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Switch theme">☀</button>
+      <button class="settings-btn" id="settings-btn" onclick="openSettings()" title="Settings" aria-label="Open settings">⚙</button>
+    </div>
+  </div>
+</div>
+
+<div class="settings-sheet" id="settings-sheet" aria-hidden="true" onclick="settingsBackdropClose(event)">
+  <div class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div class="settings-head"><div class="settings-title" id="settings-title">SETTINGS</div><button class="settings-close" onclick="closeSettings()" aria-label="Close settings">×</button></div>
+    <div class="settings-list">
+      <button class="settings-item" onclick="manualUpdateCheck()"><span><span>Check for updates</span><span class="settings-sub">Refresh training and nutrition plans</span></span><span class="settings-chevron">›</span></button>
+      <button class="settings-item" onclick="settingsExportData()"><span><span>Export my data</span><span class="settings-sub">Download a private backup of your progress</span></span><span class="settings-chevron">›</span></button>
+      <div class="settings-item" style="cursor:default"><span><span>Appearance</span><span class="settings-sub">Choose how Legacy Protocol looks</span></span></div>
+      <div class="appearance-row">
+        <button class="appearance-btn" data-theme-choice="light" onclick="setThemePreference('light')">LIGHT</button>
+        <button class="appearance-btn" data-theme-choice="dark" onclick="setThemePreference('dark')">DARK</button>
+        <button class="appearance-btn" data-theme-choice="system" onclick="setThemePreference('system')">SYSTEM</button>
+      </div>
+      <button class="settings-item" onclick="showAbout()"><span><span>About</span><span class="settings-sub">Portal and protocol information</span></span><span class="settings-chevron">›</span></button>
     </div>
   </div>
 </div>
@@ -778,40 +842,52 @@ canvas{display:block;width:100%!important}
     </section>
 
     <section id="wz-active-state" style="display:none">
-      <div class="wz-card wz-card-dark">
+      <div class="wz-card wz-card-dark" id="wz-global-hero">
         <div class="wz-pad">
-          <div class="wz-kicker">FATHER EMPOWERING — WEEK ZERO</div>
+          <div class="wz-kicker">WEEK 0</div>
           <div class="wz-title">DATA ACQUISITION</div>
-          <div class="wz-sub">This is the starting point of your protocol. Complete each step below so Coach Max can build your plan with precision.</div>
-          <div class="wz-section-copy" style="margin-top:14px;color:rgba(255,255,255,.84)">
-            No maxes. No failure. No guessing.<br><br>
-            Keep 2 to 4 reps in reserve on calibration lifts.
-          </div>
-          <div class="wz-rule"><strong>Move clean. Record honest data.</strong><br><br>Coach Max needs the right starting point, not max effort.</div>
+          <div class="wz-sub">This is the starting point of your protocol. Complete each step below so CoachMax can build your plan with precision.</div>
+          <div class="wz-rule"><strong>No maxes. No failure. No guessing.</strong><br><br>Keep 2 to 4 reps in reserve on calibration lifts.</div>
         </div>
       </div>
+
+      <div class="wz-status" id="wz-global-status">
+        <div class="wz-status-label">WEEK 0 STATUS</div>
+        <div class="wz-status-value" id="wz-submit-status">IN PROGRESS</div>
+      </div>
+      <div class="wz-progress" id="wz-progress-card">
+        <div class="wz-progress-head">
+          <div class="wz-progress-title">WEEK 0 PROGRESS</div>
+          <div class="wz-progress-percent" id="wz-progress-percent">0%</div>
+        </div>
+        <div class="wz-progress-bar" aria-hidden="true"><div class="wz-progress-fill" id="wz-progress-fill"></div></div>
+        <div class="wz-progress-list" id="wz-progress-list"></div>
+      </div>
+
       <div class="wz-panel active" id="wz-panel-directives">
         <div class="wz-card"><div class="wz-pad">
-          <div class="wz-section-title">READ THIS</div>
-          <div class="wz-section-copy">
-            <strong>Directive:</strong> before your protocol is built, we need your starting point.<br><br>
-            Complete each section below as accurately as possible. The goal is not perfection, the goal is honest data.
+          <div class="wz-section-title">START HERE</div>
+          <div class="wz-section-copy"><strong>Your onboarding is complete. Now we need your starting data.</strong><br><br>Complete the steps in order. This should be simple. Take your photos, enter your measurements, record clean calibration loads, complete one easy cardio baseline, then send everything to CoachMax.</div>
+          <ol class="wz-list">
+            <li>Take your photos</li>
+            <li>Enter your measurements</li>
+            <li>Record calibration loads</li>
+            <li>Complete baseline cardio</li>
+            <li>Add mobility and pain notes</li>
+            <li>Review and send to CoachMax</li>
+          </ol>
+          <div class="wz-rule"><strong>Important:</strong><br>Do not chase numbers. Week 0 is not a test. It is a baseline.</div>
+          <div class="wz-actions">
+            <button class="wz-btn wz-btn-primary" type="button" onclick="showWeekZeroTab('photos')">START HERE — TAKE PHOTOS</button>
           </div>
-          <ul class="wz-list">
-            <li>Starting photo</li>
-            <li>Body measurement</li>
-            <li>Calibration load</li>
-            <li>Baseline cardio</li>
-            <li>Mobility and pain notes</li>
-          </ul>
-          <div class="wz-rule"><strong>Important:</strong><br>If something hurts, do not force it.<br>If you don't know a movement, contact Max on Telegram.<br>If you are unsure about a load, choose lighter and keep control.<br><br>Coach Max needs clean data, not max effort.</div>
+          <div class="wz-submit-note" style="text-align:center">Start with front, side, and back photos.</div>
         </div></div>
       </div>
 
       <div class="wz-panel" id="wz-panel-photos">
         <div class="wz-card"><div class="wz-pad">
-          <div class="wz-section-title">Starting Photos</div>
-          <div class="wz-section-copy">Upload your photos the same way you do in the weekly check-in: same lighting, same place, ideally in the morning. The side photo becomes your BEFORE poster photo.</div>
+          <div class="wz-section-title">PHOTOS</div>
+          <div class="wz-section-copy">Take your front, side, and back photos in consistent lighting.</div>
           <div class="photo-grid wz-photo-grid">
             <div class="photo-slot" onclick="triggerWeekZeroPhoto(0)"><img id="wz-photo-img-0" alt="Front"><div class="photo-slot-plus">+</div><div class="photo-slot-label">FRONT</div></div>
             <div class="photo-slot" onclick="triggerWeekZeroPhoto(1)"><img id="wz-photo-img-1" alt="Side"><div class="photo-slot-plus">+</div><div class="photo-slot-label">SIDE / BEFORE</div></div>
@@ -819,13 +895,14 @@ canvas{display:block;width:100%!important}
           </div>
           <input type="file" accept="image/*" id="wz-photo-input" style="display:none" onchange="handleWeekZeroPhoto(event)">
           <div class="wz-field" style="margin-top:12px"><label>PHOTO NOTES</label><textarea id="wz-photo-comment" data-wz-field placeholder="Lighting, timing, posture, anything to note..."></textarea></div>
+          <div class="wz-actions"><button class="wz-btn wz-btn-primary" type="button" onclick="showWeekZeroTab('measurements')">NEXT — MEASUREMENTS</button></div>
         </div></div>
       </div>
 
       <div class="wz-panel" id="wz-panel-measurements">
         <div class="wz-card"><div class="wz-pad">
-          <div class="wz-section-title">Measurements</div>
-          <div class="wz-section-copy">Take your measurements without chasing perfection. What matters most is repeating them the same way in the future.</div>
+          <div class="wz-section-title">MEASUREMENTS</div>
+          <div class="wz-section-copy">Take your measurements consistently. Repeat the same method in future check-ins.</div>
           <div class="wz-grid two" style="margin-top:14px">
             <div class="wz-field"><label>MORNING BODYWEIGHT (LB)</label><input id="wz-m-weight" data-wz-field type="number" inputmode="decimal" step="0.1" placeholder="lbs"></div>
             <div class="wz-field"><label>WAIST AT NAVEL (IN)</label><input id="wz-m-waist" data-wz-field type="number" inputmode="decimal" step="0.25" placeholder="in"></div>
@@ -835,64 +912,73 @@ canvas{display:block;width:100%!important}
             <div class="wz-field"><label>RIGHT THIGH (IN)</label><input id="wz-m-thigh" data-wz-field type="number" inputmode="decimal" step="0.25" placeholder="in"></div>
             <div class="wz-field" style="grid-column:1/-1"><label>OTHER IMPORTANT MEASUREMENTS</label><textarea id="wz-m-other" data-wz-field placeholder="Neck, calf, hips details, or anything useful..."></textarea></div>
           </div>
+          <div class="wz-actions"><button class="wz-btn wz-btn-primary" type="button" onclick="showWeekZeroTab('loads')">NEXT — LOADS</button></div>
         </div></div>
       </div>
 
       <div class="wz-panel" id="wz-panel-loads">
         <div class="wz-card"><div class="wz-pad">
-          <div class="wz-section-title">Calibration Loads</div>
-          <div class="wz-section-copy">Choose a comfortable load. Keep 2 to 4 reps in reserve. I do not want your max. I want a clean load you can control.</div>
+          <div class="wz-section-title">CALIBRATION LOADS</div>
+          <div class="wz-section-copy">Choose a comfortable load you can control while keeping 2 to 4 reps in reserve.</div>
           <div class="wz-grid two" id="wz-loads-grid" style="margin-top:14px"></div>
           <div class="wz-rule">If you do not know an exercise or you are not sure, ask Max. Do not attempt something that could get you injured.</div>
+          <div class="wz-actions"><button class="wz-btn wz-btn-primary" type="button" onclick="showWeekZeroTab('cardio')">NEXT — CARDIO</button></div>
         </div></div>
       </div>
 
       <div class="wz-panel" id="wz-panel-cardio">
         <div class="wz-card"><div class="wz-pad">
-          <div class="wz-section-title">Baseline Cardio</div>
-          <div class="wz-section-copy">Choose one option. The goal is to create an easy starting point. You should finish under control. This is not a max test.</div>
+          <div class="wz-section-title">CONCEPT2 ROWER — 2000 M TEST</div>
+          <div class="wz-section-copy">Complete a best-effort 2000 metre test on a Concept2 rower. Enter the monitor result below. The portal uses the official Concept2 VO₂ max formula.</div>
+          <div class="wz-rule"><strong>Before starting:</strong><br>Warm up properly. Use the damper setting that lets you produce your best safe result. Stop if you feel chest pain, dizziness, or unusual shortness of breath.</div>
           <div class="wz-grid two" style="margin-top:14px">
-            <div class="wz-field"><label>SELECTED OPTION</label><select id="wz-cardio-option" data-wz-field><option value="">Choose one</option><option>Fast walk 20 minutes</option><option>Bike 20 minutes</option><option>Easy run 20 minutes</option><option>Rower 20 minutes</option><option>Other</option></select></div>
-            <div class="wz-field"><label>DETAILS (OPTIONAL)</label><input id="wz-cardio-modality" data-wz-field type="text" placeholder="Only if needed: treadmill, bike model, route..."></div>
-            <div class="wz-field"><label>DURATION</label><input id="wz-cardio-duration" data-wz-field type="text" placeholder="20 min, 0h20, etc."></div>
-            <div class="wz-field"><label>DISTANCE, IF KNOWN</label><input id="wz-cardio-distance" data-wz-field type="text" placeholder="km, miles, or blank"></div>
-            <div class="wz-field"><label>CALORIES, IF KNOWN</label><input id="wz-cardio-calories" data-wz-field type="text" placeholder="optional"></div>
-            <div class="wz-field"><label>PACE / SPEED / WATTS</label><input id="wz-cardio-pace" data-wz-field type="text" placeholder="optional"></div>
-            <div class="wz-field"><label>DIFFICULTY /10</label><select id="wz-cardio-difficulty" data-wz-field><option value="">Choose</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
-            <div class="wz-field"><label>COMMENT</label><textarea id="wz-cardio-comment" data-wz-field placeholder="Breathing, legs, HR, effort..."></textarea></div>
+            <div class="wz-field"><label>AGE</label><input id="wz-cardio-age" data-wz-field type="number" inputmode="numeric" min="16" max="100" placeholder="years"></div>
+            <div class="wz-field"><label>BODYWEIGHT (LB)</label><input id="wz-cardio-weight" data-wz-field type="number" inputmode="decimal" min="70" max="700" step="0.1" placeholder="Auto-filled from Measurements"></div>
+            <div class="wz-field"><label>SEX</label><select id="wz-cardio-sex" data-wz-field><option value="">Choose</option><option value="male">Male</option><option value="female">Female</option></select></div>
+            <div class="wz-field"><label>TRAINING LEVEL</label><select id="wz-cardio-training" data-wz-field><option value="">Choose</option><option value="not_highly_trained">Not highly trained</option><option value="highly_trained">Highly trained</option></select></div>
+            <div class="wz-field"><label>2000 M TIME — MINUTES</label><input id="wz-cardio-minutes" data-wz-field type="number" inputmode="numeric" min="4" max="20" placeholder="7"></div>
+            <div class="wz-field"><label>2000 M TIME — SECONDS</label><input id="wz-cardio-seconds" data-wz-field type="number" inputmode="decimal" min="0" max="59.9" step="0.1" placeholder="30.0"></div>
+            <div class="wz-field"><label>AVERAGE PACE / 500 M</label><input id="wz-cardio-pace" type="text" readonly placeholder="Calculated automatically"></div>
+            <div class="wz-field"><label>AVERAGE POWER</label><input id="wz-cardio-watts" type="text" readonly placeholder="Calculated automatically"></div>
+            <div class="wz-field"><label>ESTIMATED VO₂ MAX</label><input id="wz-cardio-vo2" type="text" readonly placeholder="Calculated automatically"></div>
+            <div class="wz-field"><label>FITNESS CLASSIFICATION</label><input id="wz-cardio-classification" type="text" readonly placeholder="Calculated from age and sex"></div>
+            <div class="wz-field" style="grid-column:1/-1"><label>COACHMAX INTERPRETATION</label><textarea id="wz-cardio-interpretation" readonly placeholder="Calculated automatically"></textarea></div>
+            <div class="wz-field" style="grid-column:1/-1"><label>COMMENT</label><textarea id="wz-cardio-comment" data-wz-field placeholder="Pacing, breathing, legs, monitor details, anything CoachMax should know..."></textarea></div>
           </div>
+          <div class="wz-actions"><button class="wz-btn wz-btn-primary" type="button" onclick="showWeekZeroTab('mobility')">NEXT — MOBILITY</button></div>
         </div></div>
       </div>
 
       <div class="wz-panel" id="wz-panel-mobility">
         <div class="wz-card"><div class="wz-pad">
-          <div class="wz-section-title">Mobility / Pain</div>
-          <div class="wz-grid two">
+          <div class="wz-section-title">MOBILITY &amp; PAIN</div>
+          <div class="wz-section-copy">Record any movement limitations, stiffness, or pain CoachMax should account for.</div>
+          <div class="wz-grid two" style="margin-top:14px">
             <div class="wz-field"><label>PAIN DURING SQUAT OR LEG WORK?</label><select id="wz-pain-squat" data-wz-field><option>No</option><option>Yes</option></select></div>
             <div class="wz-field"><label>PAIN DURING HINGE / RDL / DEADLIFT?</label><select id="wz-pain-hinge" data-wz-field><option>No</option><option>Yes</option></select></div>
             <div class="wz-field"><label>PAIN DURING PUSH / PRESS?</label><select id="wz-pain-push" data-wz-field><option>No</option><option>Yes</option></select></div>
             <div class="wz-field"><label>PAIN DURING PULL / ROW?</label><select id="wz-pain-pull" data-wz-field><option>No</option><option>Yes</option></select></div>
             <div class="wz-field"><label>PAIN DURING CARDIO?</label><select id="wz-pain-cardio" data-wz-field><option>No</option><option>Yes</option></select></div>
-            <div class="wz-field"><label>MAX INTENSITY /10</label><select id="wz-pain-intensity" data-wz-field><option value="">Choose</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
-            <div class="wz-field"><label>MOST LIMITED MOVEMENT</label><input id="wz-limited-movement" data-wz-field type="text"></div>
+            <div class="wz-field"><label>MOST LIMITED MOVEMENT</label><input id="wz-limited-movement" data-wz-field type="text" placeholder="Enter N.A. if not applicable"></div>
             <div class="wz-field"><label>MOST COMFORTABLE MOVEMENT</label><input id="wz-comfortable-movement" data-wz-field type="text"></div>
-            <div class="wz-field"><label>TIGHT / STIFF AREA</label><input id="wz-tight-zone" data-wz-field type="text"></div>
-            <div class="wz-field"><label>MAIN PAIN TO MONITOR</label><input id="wz-main-pain" data-wz-field type="text"></div>
+            <div class="wz-field"><label>TIGHT / STIFF AREA</label><input id="wz-tight-zone" data-wz-field type="text" placeholder="Enter N.A. if not applicable"></div>
           </div>
           <div class="wz-rule">If pain goes above 4/10 or feels sharp, stop the movement and write it down.</div>
+          <div class="wz-actions"><button class="wz-btn wz-btn-primary" type="button" onclick="showWeekZeroTab('review')">NEXT — REVIEW &amp; SEND</button></div>
         </div></div>
       </div>
 
       <div class="wz-panel" id="wz-panel-review">
         <div class="wz-card"><div class="wz-pad">
-          <div class="wz-section-title">Review / Send</div>
-          <div class="wz-section-copy">Review your Week 0 acquisition data before sending it to Coach Max. Your answers stay saved locally on this device.</div>
+          <div class="wz-section-title">REVIEW &amp; SEND</div>
+          <div class="wz-section-copy">Review your Week 0 data before sending it to CoachMax. Your answers stay saved locally on this device.</div>
           <div class="wz-summary" id="wz-summary-inline-output" style="margin-top:14px"></div>
-          <div class="wz-actions">
+          <div class="wz-actions wz-actions-multi">
             <button class="wz-btn wz-btn-quiet" type="button" onclick="copyWeekZeroSummary()">COPY SUMMARY</button>
-            <button class="wz-btn wz-btn-primary" type="button" onclick="sendWeekZeroToCoachMax()">SEND TO MAX</button>
+            <button class="wz-btn wz-btn-primary" id="wz-send-inline" type="button" onclick="sendWeekZeroToCoachMax()">SEND TO COACHMAX</button>
           </div>
           <div class="wz-submit-note" id="wz-submit-note-inline">Your data is saved automatically on this page.</div>
+          <div class="wz-validation-note" id="wz-validation-note-inline"></div>
         </div></div>
       </div>
 
@@ -1214,12 +1300,13 @@ canvas{display:block;width:100%!important}
     <div class="app-title">REVIEW & SEND</div>
     <div class="app-message" style="margin-bottom:0">Quick review before sending the acquisition data directly to Max on Telegram.</div>
     <div class="wz-summary" id="wz-summary-output"></div>
-    <div class="wz-actions">
+    <div class="wz-actions wz-actions-multi">
       <button class="wz-btn wz-btn-quiet" type="button" onclick="copyWeekZeroSummary()">COPY SUMMARY</button>
-      <button class="wz-btn wz-btn-primary" type="button" onclick="sendWeekZeroToCoachMax()">SEND TO MAX</button>
+      <button class="wz-btn wz-btn-primary" id="wz-send-modal" type="button" onclick="sendWeekZeroToCoachMax()">SEND TO MAX</button>
     </div>
     <button class="wz-btn wz-btn-secondary" type="button" style="width:100%;margin-top:10px;color:rgba(255,255,255,.68);border-color:rgba(255,255,255,.18)" onclick="closeWeekZeroReview()">EDIT ANSWERS</button>
     <div class="wz-review-note" id="wz-submit-note">Your data is saved automatically on this page.</div>
+    <div class="wz-validation-note" id="wz-validation-note-modal"></div>
   </div>
 </div>
 <script>
@@ -1238,7 +1325,10 @@ const TEMPLATE_CONFIG={
     sidebarTitleHtml:'FE<br>PROTOCOL',
     sidebarSubtitle:'CLIENT NAME · PROGRAM TEMPLATE',
     messageSignature:'— Coach',
-    totalWeeks:12
+    totalWeeks:12,
+    portalVersion:'1.0',
+    protocolVersion:'Phase 1 — Fat Loss',
+    lastUpdated:'July 11, 2026'
   },
   branding:{
     footerText:'FATHER EMPOWERING · LEGACY PROTOCOL',
@@ -1336,10 +1426,10 @@ const TEMPLATE_CONFIG={
 const CLIENT_PROFILE=TEMPLATE_CONFIG.client;
 const BRANDING_CONFIG=TEMPLATE_CONFIG.branding;
 const STORAGE_CONFIG=TEMPLATE_CONFIG.storage;
-const TRAINING_CONFIG=TEMPLATE_CONFIG.training;
+let TRAINING_CONFIG=TEMPLATE_CONFIG.training;
 const CHECKIN_CONFIG=TEMPLATE_CONFIG.checkin;
 const MEASUREMENT_CONFIG=TEMPLATE_CONFIG.measurements;
-const NUTRITION_CONFIG=TEMPLATE_CONFIG.nutrition;
+let NUTRITION_CONFIG=TEMPLATE_CONFIG.nutrition;
 
 /* ========= SYSTEM CONSTANTS — usually do not edit below ========= */
 function storageSlug(s){
@@ -1348,16 +1438,19 @@ function storageSlug(s){
 function uniqueList(items){
   return [...new Set((items||[]).filter(Boolean))];
 }
-const STORAGE_NAMESPACE=storageSlug(STORAGE_CONFIG.keyPrefix||((CLIENT_PROFILE.clientSlug||CLIENT_PROFILE.athleteName)+'_'+(CLIENT_PROFILE.programSlug||CLIENT_PROFILE.documentTitle)));
+// Client identity is permanent. Program phases may change without changing storage.
+const CLIENT_STORAGE_ID=storageSlug(STORAGE_CONFIG.keyPrefix||(CLIENT_PROFILE.clientSlug||CLIENT_PROFILE.athleteName));
+const LEGACY_STORAGE_ID=storageSlug((CLIENT_PROFILE.clientSlug||CLIENT_PROFILE.athleteName)+'_'+(CLIENT_PROFILE.programSlug||CLIENT_PROFILE.documentTitle));
+const STORAGE_NAMESPACE=CLIENT_STORAGE_ID;
 const SK=STORAGE_CONFIG.dataKey||('faem_'+STORAGE_NAMESPACE+'_data_v1');
 const THEME_KEY=STORAGE_CONFIG.themeKey||('faem_'+STORAGE_NAMESPACE+'_theme');
 const COACH_SESSION_KEY=STORAGE_CONFIG.coachSessionKey||('faem_'+STORAGE_NAMESPACE+'_manual_mode');
 const PHOTO_DB=STORAGE_CONFIG.photoDb||('faem_'+STORAGE_NAMESPACE+'_photos_v1');
-const LEGACY_MIGRATION_ENABLED=(CLIENT_PROFILE.clientSlug==='client-template')||STORAGE_CONFIG.enableLegacyMigration===true;
-const LEGACY_DATA_KEYS=LEGACY_MIGRATION_ENABLED?uniqueList((STORAGE_CONFIG.legacyDataKeys||[]).filter(k=>k!==SK)):[];
-const LEGACY_THEME_KEYS=LEGACY_MIGRATION_ENABLED?uniqueList((STORAGE_CONFIG.legacyThemeKeys||[]).filter(k=>k!==THEME_KEY)):[];
-const LEGACY_COACH_SESSION_KEYS=LEGACY_MIGRATION_ENABLED?uniqueList((STORAGE_CONFIG.legacyCoachSessionKeys||[]).filter(k=>k!==COACH_SESSION_KEY)):[];
-const LEGACY_PHOTO_DBS=LEGACY_MIGRATION_ENABLED?uniqueList((STORAGE_CONFIG.legacyPhotoDbs||[]).filter(k=>k!==PHOTO_DB)):[];
+const LEGACY_MIGRATION_ENABLED=true;
+const LEGACY_DATA_KEYS=uniqueList([...(STORAGE_CONFIG.legacyDataKeys||[]),'faem_'+LEGACY_STORAGE_ID+'_data_v1'].filter(k=>k!==SK));
+const LEGACY_THEME_KEYS=uniqueList([...(STORAGE_CONFIG.legacyThemeKeys||[]),'faem_'+LEGACY_STORAGE_ID+'_theme'].filter(k=>k!==THEME_KEY));
+const LEGACY_COACH_SESSION_KEYS=uniqueList([...(STORAGE_CONFIG.legacyCoachSessionKeys||[]),'faem_'+LEGACY_STORAGE_ID+'_manual_mode'].filter(k=>k!==COACH_SESSION_KEY));
+const LEGACY_PHOTO_DBS=uniqueList([...(STORAGE_CONFIG.legacyPhotoDbs||[]),'faem_'+LEGACY_STORAGE_ID+'_photos_v1'].filter(k=>k!==PHOTO_DB));
 const REPORT_ENDPOINT=STORAGE_CONFIG.reportEndpoint;
 const COACHMAX_ENDPOINT=STORAGE_CONFIG.coachMaxEndpoint||REPORT_ENDPOINT;
 const BACKUP_SCHEMA=STORAGE_CONFIG.backupSchema;
@@ -1365,10 +1458,18 @@ const TALLY_ONBOARDING_URL='https://tally.so/r/44zdvk';
 const TALLY_COMPLETION_KEY='faem_'+STORAGE_NAMESPACE+'_tally_completion_notified_v1';
 const TOTAL_WEEKS=CLIENT_PROFILE.totalWeeks;
 const MAX_CHECKINS=CHECKIN_CONFIG.maxCheckins;
-const SEANCE_IDS=TRAINING_CONFIG.sessionIds;
-const SEANCE_DAYS=TRAINING_CONFIG.sessionDays;
+let SEANCE_IDS=TRAINING_CONFIG.sessionIds;
+let SEANCE_DAYS=TRAINING_CONFIG.sessionDays;
 const el=id=>document.getElementById(id);
-const APP_VERSION='2.0.0';
+const APP_VERSION='2.8.0';
+const TRAINING_PLAN_URL=(STORAGE_CONFIG.trainingProgramUrl||'training-program.json');
+const NUTRITION_PLAN_URL=(STORAGE_CONFIG.nutritionProgramUrl||'nutrition-program.json');
+const TRAINING_PLAN_CACHE_KEY='faem_'+STORAGE_NAMESPACE+'_training_plan_v1';
+const NUTRITION_PLAN_CACHE_KEY='faem_'+STORAGE_NAMESPACE+'_nutrition_plan_v1';
+const PLAN_META_KEY='faem_'+STORAGE_NAMESPACE+'_plan_meta_v1';
+const PLAN_NOTICE_KEY='faem_'+STORAGE_NAMESPACE+'_last_update_notice_v1';
+let pendingPortalUpdate=null;
+let portalPlansReady=false;
 let saveStatusTimer=null;
 let deferredInstallPrompt=null;
 function markSaveStatus(state,msg){
@@ -1381,11 +1482,167 @@ function markSaveStatus(state,msg){
   }
 }
 function updateNetworkStatus(){
-  const node=el('net-status'); if(!node)return;
   const online=navigator.onLine!==false;
-  node.className='hdr-chip '+(online?'good':'offline');
-  node.textContent=online?'ONLINE':'OFFLINE';
+  const node=el('net-status'); if(!node)return;
+  const label=el('net-status-label'); if(label)label.textContent=online?'ONLINE':'OFFLINE';
+  node.className='net-pill'+(online?'':' offline');
 }
+
+function readJSONStorage(key){
+  try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):null;}catch(e){return null;}
+}
+function writeJSONStorage(key,value){
+  try{localStorage.setItem(key,JSON.stringify(value));return true;}catch(e){return false;}
+}
+function normalizeTrainingPlan(payload){
+  const plan=payload&&payload.training?payload.training:payload;
+  if(!plan||typeof plan!=='object'||!Array.isArray(plan.weeks))throw new Error('Invalid training program file');
+  return {plan:plan,version:String((payload&&payload.programVersion)||plan.programVersion||'unversioned'),updatedAt:(payload&&payload.updatedAt)||'',updateTitle:String((payload&&payload.updateTitle)||''),updateMessage:String((payload&&payload.updateMessage)||''),releaseNotes:Array.isArray(payload&&payload.releaseNotes)?payload.releaseNotes:[]};
+}
+function normalizeNutritionPlan(payload){
+  const plan=payload&&payload.nutrition?payload.nutrition:payload;
+  if(!plan||typeof plan!=='object'||!Array.isArray(plan.targets)||!Array.isArray(plan.rules)||!Array.isArray(plan.meals))throw new Error('Invalid nutrition program file');
+  return {plan:plan,version:String((payload&&payload.programVersion)||plan.programVersion||'unversioned'),updatedAt:(payload&&payload.updatedAt)||'',updateTitle:String((payload&&payload.updateTitle)||''),updateMessage:String((payload&&payload.updateMessage)||''),releaseNotes:Array.isArray(payload&&payload.releaseNotes)?payload.releaseNotes:[]};
+}
+function applyPortalPlans(trainingRecord,nutritionRecord){
+  if(trainingRecord&&trainingRecord.plan){
+    TRAINING_CONFIG=trainingRecord.plan;
+    TEMPLATE_CONFIG.training=TRAINING_CONFIG;
+    SEANCE_IDS=Array.isArray(TRAINING_CONFIG.sessionIds)&&TRAINING_CONFIG.sessionIds.length?TRAINING_CONFIG.sessionIds:['a','b','c','d','e','f','g'];
+    SEANCE_DAYS=TRAINING_CONFIG.sessionDays||{};
+  }
+  if(nutritionRecord&&nutritionRecord.plan){
+    NUTRITION_CONFIG=nutritionRecord.plan;
+    TEMPLATE_CONFIG.nutrition=NUTRITION_CONFIG;
+  }
+  portalPlansReady=true;
+}
+async function fetchPlanJSON(url){
+  const join=url.includes('?')?'&':'?';
+  const res=await fetch(url+join+'v='+Date.now(),{cache:'no-store',headers:{'Accept':'application/json'}});
+  if(!res.ok)throw new Error('HTTP '+res.status+' for '+url);
+  return res.json();
+}
+async function fetchRemotePortalPlans(){
+  const results=await Promise.allSettled([fetchPlanJSON(TRAINING_PLAN_URL),fetchPlanJSON(NUTRITION_PLAN_URL)]);
+  const errors=[];
+  let trainingRecord=null,nutritionRecord=null;
+  if(results[0].status==='fulfilled')trainingRecord=normalizeTrainingPlan(results[0].value);else errors.push('training');
+  if(results[1].status==='fulfilled')nutritionRecord=normalizeNutritionPlan(results[1].value);else errors.push('nutrition');
+  return {training:trainingRecord,nutrition:nutritionRecord,errors:errors};
+}
+function currentPlanRecords(){
+  return {
+    training:readJSONStorage(TRAINING_PLAN_CACHE_KEY),
+    nutrition:readJSONStorage(NUTRITION_PLAN_CACHE_KEY)
+  };
+}
+function planFingerprint(records){
+  return [records&&records.training&&records.training.version||'',records&&records.nutrition&&records.nutrition.version||''].join('|');
+}
+function hasNewPortalPlans(remote,current){
+  return !!((remote.training&&(!current.training||remote.training.version!==current.training.version))||(remote.nutrition&&(!current.nutrition||remote.nutrition.version!==current.nutrition.version)));
+}
+function updateMessageFor(records){
+  const all=[records.training,records.nutrition].filter(Boolean);
+  const title=all.map(r=>r.updateTitle).find(Boolean)||'CoachMax has prepared an update for your protocol.';
+  const custom=all.map(r=>r.updateMessage).find(Boolean)||'Your training and nutrition plan can now be refreshed.';
+  const notes=uniqueList(all.flatMap(r=>r.releaseNotes||[]));
+  return title+'\n\n'+custom+(notes.length?'\n\n'+notes.map(n=>'• '+n).join('\n'):'')+'\n\nYour history, photos, measurements, check-ins and progress will remain intact.';
+}
+function applyAndStorePortalUpdate(records){
+  if(records.training)writeJSONStorage(TRAINING_PLAN_CACHE_KEY,records.training);
+  if(records.nutrition)writeJSONStorage(NUTRITION_PLAN_CACHE_KEY,records.nutrition);
+  const current=currentPlanRecords();
+  if(!current.training)current.training={plan:TEMPLATE_CONFIG.training,version:'embedded'};
+  if(!current.nutrition)current.nutrition={plan:TEMPLATE_CONFIG.nutrition,version:'embedded'};
+  applyPortalPlans(current.training,current.nutrition);
+  writeJSONStorage(PLAN_META_KEY,{trainingVersion:current.training.version,nutritionVersion:current.nutrition.version,lastChecked:new Date().toISOString()});
+  pendingPortalUpdate=null;
+  return current;
+}
+async function loadPortalPlans(){
+  let current=currentPlanRecords();
+  if(current.training||current.nutrition){
+    applyPortalPlans(current.training||{plan:TEMPLATE_CONFIG.training,version:'embedded'},current.nutrition||{plan:TEMPLATE_CONFIG.nutrition,version:'embedded'});
+    return {source:'cache',training:current.training,nutrition:current.nutrition};
+  }
+  if(location.protocol==='file:'){
+    applyPortalPlans({plan:TEMPLATE_CONFIG.training,version:'embedded'},{plan:TEMPLATE_CONFIG.nutrition,version:'embedded'});
+    return {source:'embedded'};
+  }
+  const remote=await fetchRemotePortalPlans();
+  if(remote.training||remote.nutrition){
+    applyAndStorePortalUpdate(remote);
+    return {source:remote.errors.length?'mixed':'network',...remote};
+  }
+  applyPortalPlans({plan:TEMPLATE_CONFIG.training,version:'embedded'},{plan:TEMPLATE_CONFIG.nutrition,version:'embedded'});
+  return {source:'embedded',errors:remote.errors};
+}
+function refreshPortalAfterPlanUpdate(){
+  try{
+    currentWeek=Math.min(currentWeek,getPortalActiveWeek());
+    buildWeekNav();
+    renderEntrainementWeek();
+    renderPersonalNutritionPanel();
+    updateHomeStats();
+    renderHomeWeekStatus();
+    renderHomeChart();
+    if(document.querySelector('#panel-nutrition.active'))selectNutritionDayForToday();
+  }catch(e){console.error('Plan refresh error',e);}
+}
+async function confirmAndApplyPendingUpdate(){
+  if(!pendingPortalUpdate)return false;
+  const ok=await appConfirm('PROTOCOL UPDATE',updateMessageFor(pendingPortalUpdate),{kicker:'COACHMAX UPDATE',confirmText:'UPDATE NOW',confirmClass:'app-btn-success'});
+  if(!ok)return false;
+  const applied=applyAndStorePortalUpdate(pendingPortalUpdate);
+  refreshPortalAfterPlanUpdate();
+  if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update();}
+  localStorage.setItem(PLAN_NOTICE_KEY,planFingerprint(applied));
+  markSaveStatus('saved','UPDATED');
+  await appAlert('PORTAL UPDATED','Your protocol is up to date. Your history, photos, measurements, check-ins and progress were preserved.',{kicker:'UPDATE COMPLETE',confirmClass:'app-btn-success'});
+  return true;
+}
+async function checkForPortalUpdate(options){
+  const silent=!!(options&&options.silent);
+  if(location.protocol==='file:'||navigator.onLine===false)return false;
+  try{
+    const remote=await fetchRemotePortalPlans();
+    const current=currentPlanRecords();
+    if(!hasNewPortalPlans(remote,current)){
+      pendingPortalUpdate=null;
+      if(!silent)await appAlert('NO UPDATE AVAILABLE','Your training and nutrition plans are already current.',{kicker:'COACHMAX UPDATE',confirmClass:'app-btn-success'});
+      return false;
+    }
+    pendingPortalUpdate=remote;
+    const fp=planFingerprint(remote);
+    const alreadyNotified=localStorage.getItem(PLAN_NOTICE_KEY)===fp;
+    if(!silent||!alreadyNotified){
+      localStorage.setItem(PLAN_NOTICE_KEY,fp);
+      await confirmAndApplyPendingUpdate();
+    }
+    return true;
+  }catch(error){
+    console.error('Update check failed',error);
+    if(!silent)await appAlert('UPDATE CHECK FAILED','Check your internet connection and try again. No client data was changed.',{kicker:'COACHMAX UPDATE',confirmClass:'app-btn-danger'});
+    return false;
+  }
+}
+async function updatePortal(){
+  const btn=el('update-btn');
+  if(btn){btn.disabled=true;btn.textContent='CHECKING…';}
+  markSaveStatus('saving','CHECKING');
+  try{
+    if(pendingPortalUpdate)await confirmAndApplyPendingUpdate();
+    else await checkForPortalUpdate({silent:false});
+    if(!pendingPortalUpdate)markSaveStatus('saved','SAVED');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='UPDATE';}
+  }
+}
+window.updatePortal=updatePortal;
+window.checkForPortalUpdate=checkForPortalUpdate;
+
 function initAppShell(){
   updateNetworkStatus();
   window.addEventListener('online',updateNetworkStatus);
@@ -1413,8 +1670,9 @@ function applyTemplateConfig(){
   const sidebarTitle=document.querySelector('.sb-title'); if(sidebarTitle)sidebarTitle.innerHTML=CLIENT_PROFILE.sidebarTitleHtml;
   const sidebarSub=document.querySelector('.sb-sub'); if(sidebarSub)sidebarSub.textContent=CLIENT_PROFILE.sidebarSubtitle;
   const sidebarFoot=document.querySelector('.sb-foot'); if(sidebarFoot)sidebarFoot.textContent=BRANDING_CONFIG.footerText;
-  const headerProtocol=document.querySelector('.hdr-protocol'); if(headerProtocol)headerProtocol.textContent=CLIENT_PROFILE.protocolLabel;
+  const headerProtocol=document.querySelector('.hdr-protocol'); if(headerProtocol)headerProtocol.textContent='LEGACY PROTOCOL';
   const headerName=el('hdr-name'); if(headerName)headerName.textContent=CLIENT_PROFILE.athleteName;
+  const headerWelcome=el('hdr-welcome'); if(headerWelcome)headerWelcome.textContent='Welcome back, '+CLIENT_PROFILE.athleteName+'.';
   const homeSub=document.querySelector('.home-sub'); if(homeSub)homeSub.textContent=CLIENT_PROFILE.homeKicker;
   const weekSig=document.querySelector('.week-msg-sig'); if(weekSig)weekSig.textContent=CLIENT_PROFILE.messageSignature;
   const logo=el('brand-logo'); if(logo){logo.setAttribute('src',BRANDING_CONFIG.logoSrc);logo.setAttribute('alt',BRANDING_CONFIG.logoAlt);}
@@ -1423,23 +1681,54 @@ function applyTemplateConfig(){
 let checkinSlidersPrimed=false;
 
 /* ═════════ THÈME ═════════ */
-function applyTheme(t){
-  document.documentElement.setAttribute('data-theme',t);
-  try{localStorage.setItem(THEME_KEY,t);}catch(e){}
-  const b=el('theme-btn'); if(b) b.textContent = t==='dark' ? '☀' : '☾';
-  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content', t==='dark' ? '#0D0D0D' : '#1C1C1C');
-  // re-render charts with theme-aware colors
+let systemThemeListenerBound=false;
+function resolveThemePreference(pref){
+  if(pref==='system')return (window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  return pref==='dark'?'dark':'light';
+}
+function updateAppearanceButtons(pref){
+  document.querySelectorAll('[data-theme-choice]').forEach(btn=>btn.classList.toggle('active',btn.getAttribute('data-theme-choice')===pref));
+}
+function applyTheme(t,preference){
+  const resolved=resolveThemePreference(t);
+  document.documentElement.setAttribute('data-theme',resolved);
+  const pref=preference||t;
+  try{localStorage.setItem(THEME_KEY,pref);}catch(e){}
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content', resolved==='dark' ? '#0D0D0D' : '#1C1C1C');
+  updateAppearanceButtons(pref);
   try{renderHomeChart();}catch(e){}
   try{renderCharts();}catch(e){}
   try{renderDash();}catch(e){}
 }
+function setThemePreference(pref){applyTheme(pref,pref);}
 function toggleTheme(){
-  const cur=document.documentElement.getAttribute('data-theme')||'dark';
-  applyTheme(cur==='dark'?'light':'dark');
+  const cur=document.documentElement.getAttribute('data-theme')||'light';
+  setThemePreference(cur==='dark'?'light':'dark');
 }
-function isDark(){return (document.documentElement.getAttribute('data-theme')||'dark')==='dark';}
+function isDark(){return (document.documentElement.getAttribute('data-theme')||'light')==='dark';}
 function gridColor(){return isDark()?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';}
 function tickColor(){return isDark()?'#9a9a9a':'#888';}
+
+function openSettings(){
+  const sheet=el('settings-sheet'); if(!sheet)return;
+  const pref=(function(){try{return localStorage.getItem(THEME_KEY)||'light';}catch(e){return 'light';}})();
+  updateAppearanceButtons(pref);
+  sheet.classList.add('show'); sheet.setAttribute('aria-hidden','false');
+}
+function closeSettings(){const sheet=el('settings-sheet');if(sheet){sheet.classList.remove('show');sheet.setAttribute('aria-hidden','true');}}
+function settingsBackdropClose(event){if(event&&event.target===el('settings-sheet'))closeSettings();}
+async function manualUpdateCheck(){closeSettings();await updatePortal();}
+function settingsExportData(){closeSettings();exportData();}
+function showAbout(){
+  closeSettings();
+  const training=currentPlanRecords().training;
+  const nutrition=currentPlanRecords().nutrition;
+  const dates=[training&&training.updatedAt,nutrition&&nutrition.updatedAt].filter(Boolean).map(v=>new Date(v)).filter(d=>!isNaN(d));
+  const last=dates.length?new Date(Math.max(...dates)).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}):(CLIENT_PROFILE.lastUpdated||'July 11, 2026');
+  const message='Legacy Protocol\n\nPortal Version\n'+(CLIENT_PROFILE.portalVersion||'1.0')+'\n\nProtocol Version\n'+(CLIENT_PROFILE.protocolVersion||'Phase 1 — Fat Loss')+'\n\nLast Updated\n'+last+'\n\nDesigned by Father Empowering.\n\nLegacy Protocol is a high-performance coaching platform built to help you execute your training, nutrition, and recovery with precision. Every update is designed to improve your coaching experience while preserving your progress.\n\nPowered by CoachMax';
+  return appAlert('ABOUT LEGACY PROTOCOL',message,{kicker:'LEGACY PROTOCOL',confirmClass:'app-btn-success'});
+}
+window.openSettings=openSettings;window.closeSettings=closeSettings;window.setThemePreference=setThemePreference;window.manualUpdateCheck=manualUpdateCheck;window.settingsExportData=settingsExportData;window.showAbout=showAbout;
 
 /* ═════════ HORLOGE ═════════ */
 function tickClock(){
@@ -1484,7 +1773,7 @@ function defaultWeekZeroData(){
       photos:{face:false,side:false,back:false,link:'',comment:''},
       measurements:{weight:'',waist:'',chest:'',hips:'',arm:'',thigh:'',other:''},
       loads:{},
-      cardio:{option:'',modality:'',duration:'',distance:'',calories:'',pace:'',difficulty:'',comment:''},
+      cardio:{option:'',modality:'',duration:'',distance:'',calories:'',pace:'',difficulty:'',age:'',weight:'',sex:'',trainingLevel:'',minutes:'',seconds:'',watts:'',vo2max:'',classification:'',interpretation:'',comment:''},
       mobility:{painSquat:'No',painHinge:'No',painPush:'No',painPull:'No',painCardio:'No',limitedMovement:'',comfortableMovement:'',tightZone:'',mainPain:'',painIntensity:''},
       schedule:{days:[],bestTime:'',sessionDuration:'',sessionCount:'',constraints:'',coachNote:''}
     }
@@ -1634,14 +1923,14 @@ const WEEK_ZERO_STEPS=[
   {key:'review',num:'07',title:'REVIEW / SEND',desc:'Send data to Coach Max.'}
 ];
 const WEEK_ZERO_LIFTS=[
-  ['squat','Squat or variation'],
-  ['deadlift','Deadlift / Trap Bar / RDL'],
-  ['bench','Bench Press / DB Press'],
-  ['overhead','Overhead Press / Shoulder Press'],
-  ['row','Row'],
-  ['pulldown','Lat Pulldown / Pull-up'],
-  ['splitSquat','Split Squat / Lunge / Step-up'],
-  ['legPress','Leg Press, if available']
+  ['squat','Squat','fixed'],
+  ['deadlift','Deadlift','fixed'],
+  ['bench','Horizontal Press','choice',['Bench Press','Dumbbell Press']],
+  ['overhead','Vertical Press','choice',['Overhead Press','Shoulder Press']],
+  ['row','Cable Row','fixed'],
+  ['pulldown','Pull-ups','fixed'],
+  ['splitSquat','Lunge','fixed'],
+  ['legPress','Leg Press','fixed']
 ];
 const WEEK_ZERO_DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
@@ -1697,8 +1986,9 @@ function normalizeWeekZero(wz){
   base.data.schedule=Object.assign(base.data.schedule,data.schedule||{});
   if(!Array.isArray(base.data.schedule.days))base.data.schedule.days=[];
   const loads=data.loads||{};
-  WEEK_ZERO_LIFTS.forEach(([key])=>{
+  WEEK_ZERO_LIFTS.forEach(([key,label,mode])=>{
     base.data.loads[key]=Object.assign({exercise:'',load:'',reps:'',rir:'',note:''},loads[key]||{});
+    if(mode==='fixed')base.data.loads[key].exercise=label;
   });
   return base;
 }
@@ -1708,7 +1998,9 @@ function weekZeroData(){
 }
 function weekZeroLoadEntryCount(data){
   return Object.values((data&&data.loads)||{}).reduce((n,item)=>{
-    return n+((item&&[item.exercise,item.load,item.reps,item.rir,item.note].some(v=>String(v||'').trim()))?1:0);
+    // Fixed exercise names are prefilled by the template and must not count as client data.
+    // A calibration entry only counts once the client enters an actual result or note.
+    return n+((item&&[item.load,item.reps,item.rir,item.note].some(v=>String(v||'').trim()))?1:0);
   },0);
 }
 function weekZeroStepHasAnyData(step,data){
@@ -1719,9 +2011,47 @@ function weekZeroStepHasAnyData(step,data){
   if(step==='cardio')return !!(data.cardio&&Object.values(data.cardio).some(v=>String(v||'').trim()));
   if(step==='mobility')return !!(data.mobility&&(
     ['painSquat','painHinge','painPush','painPull','painCardio'].some(k=>data.mobility[k]==='Yes')||
-    ['limitedMovement','comfortableMovement','tightZone','mainPain','painIntensity'].some(k=>String(data.mobility[k]||'').trim())
+    ['limitedMovement','comfortableMovement','tightZone'].some(k=>String(data.mobility[k]||'').trim())
   ));
   return false;
+}
+const WEEK_ZERO_REQUIRED_STEPS=['photos','measurements','loads','cardio','mobility'];
+function weekZeroCompletionDetails(){
+  D.weekZero=normalizeWeekZero(D.weekZero);
+  const data=D.weekZero.data;
+  const details={
+    photos:{label:'Photos',complete:!!(data.photos.face&&data.photos.side&&data.photos.back),message:'Add front, side, and back photos.'},
+    measurements:{label:'Measurements',complete:!!(String(data.measurements.weight||'').trim()&&String(data.measurements.waist||'').trim()),message:'Enter bodyweight and waist measurement.'},
+    loads:{label:'Loads',complete:weekZeroLoadEntryCount(data)>=3,message:'Record at least three calibration loads.'},
+    cardio:{label:'Cardio',complete:!!(data.cardio.age&&data.cardio.weight&&data.cardio.sex&&data.cardio.trainingLevel&&data.cardio.minutes&&data.cardio.vo2max),message:'Complete the Concept2 2000 m result and calculated VO₂ max.'},
+    mobility:{label:'Mobility',complete:!!(String(data.mobility.limitedMovement||'').trim()&&String(data.mobility.comfortableMovement||'').trim()&&String(data.mobility.tightZone||'').trim()),message:'Complete the mobility fields. Use N.A. where needed.'}
+  };
+  const missing=WEEK_ZERO_REQUIRED_STEPS.filter(key=>!details[key].complete);
+  return {details,missing,complete:missing.length===0,completed:WEEK_ZERO_REQUIRED_STEPS.length-missing.length,total:WEEK_ZERO_REQUIRED_STEPS.length};
+}
+function firstIncompleteWeekZeroStep(){
+  const result=weekZeroCompletionDetails();
+  return result.missing[0]||'review';
+}
+function renderWeekZeroProgress(){
+  const result=weekZeroCompletionDetails();
+  const percent=Math.round((result.completed/result.total)*100);
+  const pct=el('wz-progress-percent');
+  const fill=el('wz-progress-fill');
+  const list=el('wz-progress-list');
+  if(pct)pct.textContent=percent+'%';
+  if(fill)fill.style.width=percent+'%';
+  if(list)list.innerHTML=WEEK_ZERO_REQUIRED_STEPS.map(key=>{
+    const item=result.details[key];
+    return '<div class="wz-progress-item '+(item.complete?'done':'missing')+'"><span class="wz-progress-dot">'+(item.complete?'✓':'○')+'</span><span>'+escapeHTML(item.label)+'</span></div>';
+  }).join('');
+  const ready=result.complete&&!D.weekZero.submitted;
+  ['wz-send-inline','wz-send-modal'].forEach(id=>{const btn=el(id);if(btn){btn.disabled=!ready;btn.setAttribute('aria-disabled',ready?'false':'true');}});
+  const note=result.complete?'All required Week 0 data is complete. Ready to send.':'Complete: '+result.missing.map(key=>result.details[key].label).join(', ')+'.';
+  const inline=el('wz-validation-note-inline');
+  const modal=el('wz-validation-note-modal');
+  if(inline)inline.textContent=D.weekZero.submitted?'Week 0 has been sent.':note;
+  if(modal)modal.textContent=D.weekZero.submitted?'Week 0 has been sent.':note;
 }
 function getWeekZeroStepStatus(step){
   D.weekZero=normalizeWeekZero(D.weekZero);
@@ -1732,9 +2062,9 @@ function getWeekZeroStepStatus(step){
   if(step==='photos')return data.photos.face&&data.photos.side&&data.photos.back?'complete':(weekZeroStepHasAnyData(step,data)?'in-progress':'pending');
   if(step==='measurements')return data.measurements.weight&&data.measurements.waist?'complete':(weekZeroStepHasAnyData(step,data)?'in-progress':'pending');
   if(step==='loads')return weekZeroLoadEntryCount(data)>=3?'complete':(weekZeroLoadEntryCount(data)>0?'in-progress':'pending');
-  if(step==='cardio')return (data.cardio.option||data.cardio.modality)&&data.cardio.duration?'complete':(weekZeroStepHasAnyData(step,data)?'in-progress':'pending');
-  if(step==='mobility')return weekZeroStepHasAnyData(step,data)?'complete':'pending';
-  if(step==='review')return WEEK_ZERO_STEPS.filter(s=>!['review','directives'].includes(s.key)).every(s=>getWeekZeroStepStatus(s.key)==='complete')?'complete':'pending';
+  if(step==='cardio')return data.cardio.age&&data.cardio.weight&&data.cardio.sex&&data.cardio.trainingLevel&&data.cardio.minutes&&data.cardio.vo2max?'complete':(weekZeroStepHasAnyData(step,data)?'in-progress':'pending');
+  if(step==='mobility')return weekZeroCompletionDetails().details.mobility.complete?'complete':(weekZeroStepHasAnyData(step,data)?'in-progress':'pending');
+  if(step==='review')return weekZeroCompletionDetails().complete?'complete':'pending';
   return 'pending';
 }
 function weekZeroOverallStatus(){
@@ -1749,12 +2079,15 @@ function weekZeroStatusIcon(status){
   if(status==='locked')return '🔒';
   return '○';
 }
-function weekZeroLoadCardHTML(key,label){
+function weekZeroLoadCardHTML(key,label,mode,choices){
   const repsLabel=key==='splitSquat'?'REPS PER SIDE':'REPS';
+  const exerciseField=mode==='choice'
+    ?'<div class="wz-field"><label>EXERCISE USED</label><select id="wz-load-'+key+'-exercise" data-wz-field><option value="">Choose one</option>'+choices.map(v=>'<option>'+escapeHTML(v)+'</option>').join('')+'</select></div>'
+    :'<div class="wz-field"><label>EXERCISE</label><input id="wz-load-'+key+'-exercise" data-wz-field type="text" value="'+escapeHTML(label)+'" readonly></div>';
   return '<div class="wz-lift-card">'
     +'<div class="wz-lift-title">'+escapeHTML(label)+'</div>'
     +'<div class="wz-grid two">'
-      +'<div class="wz-field"><label>EXERCISE USED</label><input id="wz-load-'+key+'-exercise" data-wz-field type="text" placeholder="'+escapeHTML(label)+'"></div>'
+      +exerciseField
       +'<div class="wz-field"><label>LOAD</label><input id="wz-load-'+key+'-load" data-wz-field type="text" placeholder="lbs, bodyweight, machine setting..."></div>'
       +'<div class="wz-field"><label>'+repsLabel+'</label><input id="wz-load-'+key+'-reps" data-wz-field type="text" placeholder="reps"></div>'
       +'<div class="wz-field"><label>ESTIMATED RIR</label><select id="wz-load-'+key+'-rir" data-wz-field><option value="">Choose</option><option>RIR 4</option><option>RIR 3</option><option>RIR 2</option><option>RIR 1</option><option>RIR 0</option><option>I am not sure</option></select></div>'
@@ -1765,7 +2098,7 @@ function weekZeroLoadCardHTML(key,label){
 function buildWeekZeroLoadCards(){
   const grid=el('wz-loads-grid');
   if(!grid||grid.dataset.ready==='1')return;
-  grid.innerHTML=WEEK_ZERO_LIFTS.map(([key,label])=>weekZeroLoadCardHTML(key,label)).join('');
+  grid.innerHTML=WEEK_ZERO_LIFTS.map(([key,label,mode,choices])=>weekZeroLoadCardHTML(key,label,mode,choices||[])).join('');
   grid.dataset.ready='1';
 }
 function openOnboardingForm(){
@@ -1782,6 +2115,7 @@ function markOnboardingComplete(){
   renderEntrainementWeek();
   showPanel('entrainement',getMainNavButton('training'),{keepSelectedWeek:true});
   showWeekZeroTab('directives');
+  scrollWeekZeroToTop('auto');
 }
 function isTallyCompletionReturn(){
   try{
@@ -1847,12 +2181,81 @@ async function handleTallyCompletionReturn(){
   renderEntrainementWeek();
   showPanel('entrainement',getMainNavButton('training'),{keepSelectedWeek:true});
   showWeekZeroTab('directives');
+  scrollWeekZeroToTop('auto');
   await notifyPromise;
 }
 function wzVal(id){const node=el(id);return node?node.value.trim():'';}
 function wzChecked(id){const node=el(id);return !!(node&&node.checked);}
 function setWzVal(id,value){const node=el(id);if(node)node.value=value==null?'':value;}
 function setWzChecked(id,value){const node=el(id);if(node)node.checked=!!value;}
+function formatRowerTime(minutes,seconds){
+  const m=parseInt(minutes,10), sec=parseFloat(seconds);
+  if(!Number.isFinite(m)||!Number.isFinite(sec)||m<0||sec<0||sec>=60)return '';
+  return m+':'+sec.toFixed(1).padStart(4,'0');
+}
+function formatPace500(totalSeconds){
+  if(!Number.isFinite(totalSeconds)||totalSeconds<=0)return '';
+  const pace=totalSeconds/4;
+  const m=Math.floor(pace/60),sec=pace-(m*60);
+  return m+':'+sec.toFixed(1).padStart(4,'0')+' /500 m';
+}
+function calculateConcept2Watts(totalSeconds){
+  if(!Number.isFinite(totalSeconds)||totalSeconds<=0)return null;
+  const pace500=totalSeconds/4;
+  return 2.8/Math.pow(pace500/500,3);
+}
+function calculateConcept2Vo2(totalSeconds,weightLb,sex,trainingLevel){
+  const totalMinutes=totalSeconds/60;
+  const kg=weightLb/2.2046226218;
+  if(!Number.isFinite(totalMinutes)||totalMinutes<=0||!Number.isFinite(kg)||kg<=0||!sex||!trainingLevel)return null;
+  let y=null;
+  if(trainingLevel==='highly_trained'){
+    if(sex==='female')y=(kg<=61.36?14.6:14.9)-(1.5*totalMinutes);
+    else y=(kg<=75?15.1:15.7)-(1.5*totalMinutes);
+  }else{
+    y=(sex==='female'?10.26-(0.93*totalMinutes):10.7-(0.9*totalMinutes));
+  }
+  return (y*1000)/kg;
+}
+function concept2FitnessClassification(vo2,age,sex){
+  age=parseInt(age,10);
+  if(!Number.isFinite(vo2)||!Number.isFinite(age)||!sex)return '';
+  if(age>=70)return 'Classification unavailable for age 70+';
+  const band=age<=29?0:age<=39?1:age<=49?2:age<=59?3:4;
+  const male=[[25,34,44,53],[23,31,42,50],[20,27,39,45],[18,25,38,43],[16,23,36,41]];
+  const female=[[24,31,39,50],[20,28,37,45],[17,25,35,42],[15,22,34,40],[13,21,33,37]];
+  const t=(sex==='female'?female:male)[band];
+  return vo2<t[0]?'Poor':vo2<t[1]?'Fair':vo2<t[2]?'Average':vo2<t[3]?'Good':'Excellent';
+}
+function coachMaxVo2Interpretation(vo2,classification,trainingLevel){
+  if(!Number.isFinite(vo2))return '';
+  const trained=trainingLevel==='highly_trained';
+  if(classification==='Excellent')return trained?'Excellent aerobic engine. Preserve it while rebuilding training volume progressively.':'Excellent aerobic capacity. Maintain it with structured Zone 2 work and selective high-intensity intervals.';
+  if(classification==='Good')return trained?'Strong aerobic base after the training break. Rebuild workload gradually before pushing maximal intervals.':'Good aerobic base. Continue building Zone 2 capacity and rowing efficiency.';
+  if(classification==='Average')return 'Functional aerobic baseline. Prioritize consistent Zone 2 work and progressive rowing technique before adding harder intervals.';
+  if(classification==='Fair')return 'Aerobic capacity needs development. Start with low-impact Zone 2 work, controlled progression, and repeat the test later.';
+  if(classification==='Poor')return 'Aerobic capacity is a priority. Begin conservatively with sustainable low-intensity work and build consistency first.';
+  return 'VO₂ max estimated. Use the result as a rowing baseline and track change over time under similar test conditions.';
+}
+function updateRowerVo2Calculation(){
+  const min=parseFloat(wzVal('wz-cardio-minutes'));
+  const sec=parseFloat(wzVal('wz-cardio-seconds'));
+  const age=parseInt(wzVal('wz-cardio-age'),10);
+  const weightLb=parseFloat(wzVal('wz-cardio-weight')||wzVal('wz-m-weight'));
+  const sex=wzVal('wz-cardio-sex');
+  const training=wzVal('wz-cardio-training');
+  const total=(Number.isFinite(min)?min:0)*60+(Number.isFinite(sec)?sec:0);
+  const watts=calculateConcept2Watts(total);
+  const vo2=calculateConcept2Vo2(total,weightLb,sex,training);
+  const classification=concept2FitnessClassification(vo2,age,sex);
+  const interpretation=coachMaxVo2Interpretation(vo2,classification,training);
+  const paceNode=el('wz-cardio-pace'),wattsNode=el('wz-cardio-watts'),vo2Node=el('wz-cardio-vo2'),classNode=el('wz-cardio-classification'),interpretNode=el('wz-cardio-interpretation');
+  if(paceNode)paceNode.value=total>0?formatPace500(total):'';
+  if(wattsNode)wattsNode.value=watts?watts.toFixed(1)+' W':'';
+  if(vo2Node)vo2Node.value=vo2&&vo2>0?vo2.toFixed(1)+' mL/kg/min':'';
+  if(classNode)classNode.value=classification;
+  if(interpretNode)interpretNode.value=interpretation;
+}
 function collectWeekZeroData(){
   const loads={};
   const previousPhotos=(D.weekZero&&D.weekZero.data&&D.weekZero.data.photos)||{};
@@ -1888,13 +2291,19 @@ function collectWeekZeroData(){
     },
     loads,
     cardio:{
-      option:wzVal('wz-cardio-option'),
-      modality:wzVal('wz-cardio-modality'),
-      duration:wzVal('wz-cardio-duration'),
-      distance:wzVal('wz-cardio-distance'),
-      calories:wzVal('wz-cardio-calories'),
-      pace:wzVal('wz-cardio-pace'),
-      difficulty:wzVal('wz-cardio-difficulty'),
+      option:'Concept2 Rower 2000 m',
+      age:wzVal('wz-cardio-age'),
+      weight:wzVal('wz-cardio-weight'),
+      sex:wzVal('wz-cardio-sex'),
+      trainingLevel:wzVal('wz-cardio-training'),
+      minutes:wzVal('wz-cardio-minutes'),
+      seconds:wzVal('wz-cardio-seconds'),
+      duration:formatRowerTime(wzVal('wz-cardio-minutes'),wzVal('wz-cardio-seconds')),
+      pace:wzVal('wz-cardio-pace').replace(' /500 m',''),
+      watts:wzVal('wz-cardio-watts').replace(' W',''),
+      vo2max:wzVal('wz-cardio-vo2').replace(' mL/kg/min',''),
+      classification:wzVal('wz-cardio-classification'),
+      interpretation:wzVal('wz-cardio-interpretation'),
       comment:wzVal('wz-cardio-comment')
     },
     mobility:{
@@ -1905,9 +2314,7 @@ function collectWeekZeroData(){
       painCardio:wzVal('wz-pain-cardio'),
       limitedMovement:wzVal('wz-limited-movement'),
       comfortableMovement:wzVal('wz-comfortable-movement'),
-      tightZone:wzVal('wz-tight-zone'),
-      mainPain:wzVal('wz-main-pain'),
-      painIntensity:wzVal('wz-pain-intensity')
+      tightZone:wzVal('wz-tight-zone')
     }
   };
 }
@@ -1936,24 +2343,22 @@ function restoreWeekZeroForm(){
     setWzVal('wz-load-'+key+'-rir',load.rir);
     setWzVal('wz-load-'+key+'-note',load.note);
   });
-  setWzVal('wz-cardio-option',data.cardio.option);
-  setWzVal('wz-cardio-modality',data.cardio.modality);
-  setWzVal('wz-cardio-duration',data.cardio.duration);
-  setWzVal('wz-cardio-distance',data.cardio.distance);
-  setWzVal('wz-cardio-calories',data.cardio.calories);
-  setWzVal('wz-cardio-pace',data.cardio.pace);
-  setWzVal('wz-cardio-difficulty',data.cardio.difficulty);
+  setWzVal('wz-cardio-age',data.cardio.age);
+  setWzVal('wz-cardio-weight',data.cardio.weight||data.measurements.weight);
+  setWzVal('wz-cardio-sex',data.cardio.sex);
+  setWzVal('wz-cardio-training',data.cardio.trainingLevel);
+  setWzVal('wz-cardio-minutes',data.cardio.minutes);
+  setWzVal('wz-cardio-seconds',data.cardio.seconds);
   setWzVal('wz-cardio-comment',data.cardio.comment);
+  updateRowerVo2Calculation();
   setWzVal('wz-pain-squat',data.mobility.painSquat);
   setWzVal('wz-pain-hinge',data.mobility.painHinge);
   setWzVal('wz-pain-push',data.mobility.painPush);
   setWzVal('wz-pain-pull',data.mobility.painPull);
   setWzVal('wz-pain-cardio',data.mobility.painCardio);
-  setWzVal('wz-pain-intensity',data.mobility.painIntensity);
   setWzVal('wz-limited-movement',data.mobility.limitedMovement);
   setWzVal('wz-comfortable-movement',data.mobility.comfortableMovement);
   setWzVal('wz-tight-zone',data.mobility.tightZone);
-  setWzVal('wz-main-pain',data.mobility.mainPain);
 }
 let weekZeroSaveTimer=null;
 function saveWeekZeroData(){
@@ -1976,6 +2381,10 @@ function wireWeekZeroInputs(){
     node.dataset.wired='1';
     node.addEventListener('input',queueWeekZeroSave);
     node.addEventListener('change',queueWeekZeroSave);
+    if(['wz-cardio-age','wz-cardio-weight','wz-cardio-sex','wz-cardio-training','wz-cardio-minutes','wz-cardio-seconds','wz-m-weight'].includes(node.id)){
+      node.addEventListener('input',()=>{if(node.id==='wz-m-weight'&&!wzVal('wz-cardio-weight'))setWzVal('wz-cardio-weight',node.value);updateRowerVo2Calculation();});
+      node.addEventListener('change',updateRowerVo2Calculation);
+    }
   });
 }
 function renderWeekZeroStepNav(){
@@ -2027,6 +2436,7 @@ function renderWeekZeroStatus(){
     if(activeTitle)activeTitle.textContent='DATA ACQUISITION';
     if(activeSub)activeSub.textContent='This is the starting point of your protocol. Complete each step below so Coach Max can build your plan with precision.';
   }
+  renderWeekZeroProgress();
 }
 function renderWeekZero(){
   buildWeekZeroLoadCards();
@@ -2038,9 +2448,19 @@ function renderWeekZero(){
   const complete=!!(D.weekZero&&D.weekZero.onboardingComplete)&&!forceWeekZeroIntro;
   if(onboarding)onboarding.style.display=complete?'none':'block';
   if(active)active.style.display=complete?'block':'none';
+  const globalHero=el('wz-global-hero');
+  if(globalHero)globalHero.style.display=(complete&&!D.weekZero.submitted)?'block':'none';
   renderWeekZeroStatus();
   renderWeekZeroStepNav();
   renderWeekZeroSummary();
+}
+function scrollWeekZeroToTop(behavior){
+  const section=el('panel-weekzero');
+  if(!section)return;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const top=section.getBoundingClientRect().top+window.scrollY;
+    window.scrollTo({top:Math.max(0,top),left:0,behavior:behavior||'auto'});
+  }));
 }
 function showWeekZeroTab(tab,btn){
   if(!tab)tab='directives';
@@ -2053,7 +2473,16 @@ function showWeekZeroTab(tab,btn){
   if(target)target.classList.add('active');
   document.querySelectorAll('[data-wz-step]').forEach(b=>b.classList.remove('active'));
   const stepTarget=document.querySelector('[data-wz-step="'+tab+'"]');
-  if(stepTarget)stepTarget.classList.add('active');
+  if(stepTarget){
+    stepTarget.classList.add('active');
+    requestAnimationFrame(()=>{
+      const nav=stepTarget.parentElement;
+      if(nav&&nav.scrollWidth>nav.clientWidth){
+        const left=stepTarget.offsetLeft-(nav.clientWidth-stepTarget.offsetWidth)/2;
+        nav.scrollTo({left:Math.max(0,left),behavior:'smooth'});
+      }
+    });
+  }
   if(tab==='review')renderWeekZeroSummary();
 }
 function openWeekZeroReview(){
@@ -2083,9 +2512,7 @@ function buildCoachMaxMessage(data){
   const L=[];
   L.push('NEW WEEK 0 — FATHER EMPOWERING');
   L.push('');
-  L.push('CLIENT :');
   L.push('Name : '+(data.client.name||CLIENT_PROFILE.athleteName||''));
-  L.push('Email : '+(data.client.email||''));
   L.push('Date : '+new Date().toISOString().slice(0,10));
   L.push('');
   L.push('ONBOARDING :');
@@ -2109,13 +2536,17 @@ function buildCoachMaxMessage(data){
   L.push('CALIBRATION LOADS :');
   WEEK_ZERO_LIFTS.forEach(([key,label])=>{L.push(...loadLines(data,key,label));L.push('');});
   L.push('BASELINE CARDIO :');
-  L.push('Option : '+(data.cardio.option||''));
-  L.push('Details : '+(data.cardio.modality||''));
-  L.push('Duration : '+(data.cardio.duration||''));
-  L.push('Distance : '+(data.cardio.distance||''));
-  L.push('Calories : '+(data.cardio.calories||''));
-  L.push('Pace / speed / watts : '+(data.cardio.pace||''));
-  L.push('Difficulty /10 : '+(data.cardio.difficulty||''));
+  L.push('Test : Concept2 Rower 2000 m');
+  L.push('Age : '+(data.cardio.age||''));
+  L.push('Bodyweight : '+(data.cardio.weight||'')+(data.cardio.weight?' lbs':''));
+  L.push('Sex : '+(data.cardio.sex||''));
+  L.push('Training level : '+(data.cardio.trainingLevel||''));
+  L.push('2000 m time : '+(data.cardio.duration||''));
+  L.push('Average pace : '+(data.cardio.pace||'')+(data.cardio.pace?' /500 m':''));
+  L.push('Average power : '+(data.cardio.watts||'')+(data.cardio.watts?' W':''));
+  L.push('Estimated VO2 max : '+(data.cardio.vo2max||'')+(data.cardio.vo2max?' mL/kg/min':''));
+  L.push('Fitness classification : '+(data.cardio.classification||''));
+  L.push('CoachMax interpretation : '+(data.cardio.interpretation||''));
   L.push('Comment : '+(data.cardio.comment||''));
   L.push('');
   L.push('MOBILITY / PAIN :');
@@ -2127,8 +2558,6 @@ function buildCoachMaxMessage(data){
   L.push('Most limited movement : '+(data.mobility.limitedMovement||''));
   L.push('Most comfortable movement : '+(data.mobility.comfortableMovement||''));
   L.push('Tight / stiff area : '+(data.mobility.tightZone||''));
-  L.push('Main pain to monitor : '+(data.mobility.mainPain||''));
-  L.push('Max intensity /10 : '+(data.mobility.painIntensity||''));
   L.push('');
   L.push('DECISION :');
   L.push('Ready for Coach Summary and personalized protocol creation.');
@@ -2182,6 +2611,14 @@ async function postCoachMaxReport(payload){
 }
 async function sendWeekZeroToCoachMax(){
   saveWeekZeroData();
+  const completion=weekZeroCompletionDetails();
+  if(!completion.complete){
+    const missingText=completion.missing.map(key=>'• '+completion.details[key].message).join('\n');
+    await appAlert('WEEK 0 NOT COMPLETE','Complete the following before sending:\n\n'+missingText,{kicker:'WEEK 0'});
+    closeWeekZeroReview();
+    showWeekZeroTab(completion.missing[0]||'directives');
+    return;
+  }
   if(!isCoachMaxEndpointConfigured()){
     await appAlert('TELEGRAM NOT CONFIGURED','The send did not work. Your data is saved on this page.\n\nClick “Copy Summary” and send it directly to Max.',{kicker:'WEEK 0'});
     return;
@@ -2207,9 +2644,8 @@ async function sendWeekZeroToCoachMax(){
     buildWeekNav();
     renderEntrainementWeek();
     closeWeekZeroReview();
-    showPanel('entrainement',getMainNavButton('training'),{keepSelectedWeek:true});
-    showWeekZeroTab('review');
     await appAlert('WORKOUT BEING CREATED',"Your workout is being created.\n\nYou'll hear from Coach Max as soon as it's ready.",{kicker:'WEEK 0',confirmClass:'app-btn-success'});
+    showPanel('accueil',getMainNavButton('home'));
   }catch(e){
     await appAlert('SEND FAILED','The send did not work. Your data is saved on this page.\n\nClick “Copy Summary” and send it directly to Max.\n\nError: '+e.message,{kicker:'WEEK 0'});
   }
@@ -2679,6 +3115,15 @@ function updateHomeFocus(){
   if(fill)fill.style.width=pct+'%';
   if(weekSub)weekSub.textContent=planned.length?'Week '+act+' execution':'Week '+act+' protocol build pending';
 }
+function orangeChartGradient(context,topAlpha){
+  const chart=context.chart;
+  const area=chart.chartArea;
+  if(!area)return 'rgba(232,118,26,0.12)';
+  const gradient=chart.ctx.createLinearGradient(0,area.top,0,area.bottom);
+  gradient.addColorStop(0,'rgba(232,118,26,'+(topAlpha||0.34)+')');
+  gradient.addColorStop(1,'rgba(232,118,26,0)');
+  return gradient;
+}
 let _homeChart=null;
 function renderHomeChart(){
   const cv=el('homeWeightChart'); if(!cv)return;
@@ -2686,7 +3131,7 @@ function renderHomeChart(){
   const data=D.checkins.filter(c=>c.poids).map(c=>({w:c.week,p:parseFloat(c.poids)}));
   if(_homeChart){_homeChart.destroy();_homeChart=null;}
   if(!data.length){return;}
-  _homeChart=new Chart(cv,{type:'line',data:{labels:data.map(d=>'W'+d.w),datasets:[{data:data.map(d=>d.p),borderColor:'#E8761A',backgroundColor:'rgba(232,118,26,0.12)',fill:true,tension:0.35,pointBackgroundColor:'#E8761A',pointRadius:4}]},
+  _homeChart=new Chart(cv,{type:'line',data:{labels:data.map(d=>'W'+d.w),datasets:[{data:data.map(d=>d.p),borderColor:'#E8761A',backgroundColor:(context)=>orangeChartGradient(context,0.34),fill:true,tension:0.35,pointBackgroundColor:'#E8761A',pointBorderColor:'#FFFFFF',pointBorderWidth:1.5,pointRadius:3,pointHoverRadius:5}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:10}}},y:{grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:10}}}}}});
 }
 
@@ -2795,7 +3240,7 @@ function renderDash(){
     el('dash-charge-sub').innerHTML='<span class="'+(pct>=0?'up':'down')+'">'+(pct>=0?'▲ +':'▼ ')+pct.toFixed(1)+'%</span> vs week '+(currentWeek-1);}
   else el('dash-charge-sub').textContent='Sum of entered loads · week '+currentWeek;
   if(_chargeChart){_chargeChart.destroy();_chargeChart=null;}
-  _chargeChart=new Chart(cvC,{type:'line',data:{labels,datasets:[{data:charges,borderColor:'#E8761A',backgroundColor:'rgba(232,118,26,0.12)',fill:true,tension:0.3,pointBackgroundColor:'#E8761A',pointRadius:3}]},
+  _chargeChart=new Chart(cvC,{type:'line',data:{labels,datasets:[{data:charges,borderColor:'#E8761A',backgroundColor:(context)=>orangeChartGradient(context,0.30),fill:true,tension:0.32,pointBackgroundColor:'#E8761A',pointBorderColor:'#FFFFFF',pointBorderWidth:1.25,pointRadius:3,pointHoverRadius:5}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:dashGridColor},ticks:{color:dashTickColor,font:{size:9}}},y:{grid:{color:dashGridColor},ticks:{color:dashTickColor,font:{size:9}}}}}});
   // PERFORMANCES CLÉS
   const lifts=(TRAINING_CONFIG.keyLifts||[]).map(l=>[l.name,l.key]);
@@ -3764,7 +4209,14 @@ function restore(){
   renderPersonalNutritionPanel();
   try{coachPreview=sessionStorage.getItem(COACH_SESSION_KEY)==='1';}catch(e){}
   currentWeek=getPortalActiveWeek();
-  applyTheme((function(){try{return localStorage.getItem(THEME_KEY)||'dark';}catch(e){return 'dark';}})());
+  const savedTheme=(function(){try{return localStorage.getItem(THEME_KEY)||'light';}catch(e){return 'light';}})();
+  applyTheme(savedTheme,savedTheme);
+  if(!systemThemeListenerBound&&window.matchMedia){
+    const mq=window.matchMedia('(prefers-color-scheme: dark)');
+    const handler=()=>{try{if(localStorage.getItem(THEME_KEY)==='system')applyTheme('system','system');}catch(e){}};
+    if(mq.addEventListener)mq.addEventListener('change',handler);else if(mq.addListener)mq.addListener(handler);
+    systemThemeListenerBound=true;
+  }
   tickClock();
   buildWeekNav();
   renderHomeWeekStatus();
@@ -3777,7 +4229,13 @@ function restore(){
   openHomeOnLoad();
   handleTallyCompletionReturn();
 }
-document.addEventListener('DOMContentLoaded',restore);
+async function bootstrapPortal(){
+  try{await loadPortalPlans();}catch(e){console.warn('External plans unavailable; using embedded fallback.',e);applyPortalPlans({plan:TEMPLATE_CONFIG.training,version:'embedded'},{plan:TEMPLATE_CONFIG.nutrition,version:'embedded'});}
+  restore();
+  // Quietly detect coach-published program versions after the app is visible.
+  setTimeout(()=>checkForPortalUpdate({silent:true}),1200);
+}
+document.addEventListener('DOMContentLoaded',bootstrapPortal);
 </script>
 <!-- ════════════════ FATHER EMPOWERING — PROTOCOL POPUP SYSTEM ════════════════ -->
 <style id="fe-popup-styles">

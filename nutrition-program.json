@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "programVersion": "nutrition-template-v1",
+  "updatedAt": "2026-07-10T00:00:00Z",
+  "nutrition": {
+    "kicker": "NUTRITION",
+    "title": "NUTRITION PLAN",
+    "phase": "NUTRITION BUILD",
+    "desc": "Nutrition content will be added after Coach Max reviews the intake data.",
+    "targets": [],
+    "rules": [],
+    "meals": [],
+    "futureNote": ""
+  },
+  "updateTitle": "CoachMax has prepared an update for your protocol.",
+  "updateMessage": "Your nutrition plan has been adjusted.",
+  "releaseNotes": [
+    "Nutrition plan updated"
+  ]
+}

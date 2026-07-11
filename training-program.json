@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "programVersion": "training-template-v1",
+  "updatedAt": "2026-07-10T00:00:00Z",
+  "training": {
+    "sessionIds": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g"
+    ],
+    "sessionDays": {
+      "a": "MON \u00b7 TRAINING",
+      "b": "TUE \u00b7 TRAINING",
+      "c": "WED \u00b7 TRAINING",
+      "d": "THU \u00b7 TRAINING",
+      "e": "FRI \u00b7 TRAINING",
+      "f": "SAT \u00b7 TRAINING",
+      "g": "SUN \u00b7 RECOVERY"
+    },
+    "defaultPhase": "PROTOCOL BUILD",
+    "defaultDesc": "Your personalized training will be built after Coach Max reviews your Week 0 data.",
+    "defaultMessage": "Complete Week 0 first. Your training plan will appear here once Coach Max builds the protocol.",
+    "keyLifts": [],
+    "weeks": []
+  },
+  "updateTitle": "CoachMax has prepared an update for your protocol.",
+  "updateMessage": "A new training phase or adjustment is ready.",
+  "releaseNotes": [
+    "Training plan updated"
+  ]
+}

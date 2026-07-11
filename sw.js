@@ -1,8 +1,10 @@
-const CACHE_NAME='legacy-protocol-cache-2026-07-08-week-zero-sticky-tabs';
+const CACHE_NAME = 'legacy-protocol-v2.9-premium-header';
 const APP_SHELL=[
   './',
   './index.html',
   './site.webmanifest',
+  './training-program.json',
+  './nutrition-program.json',
   './apple-touch-icon.png',
   './favicon-16x16.png',
   './favicon-32x32.png',
@@ -38,6 +40,17 @@ self.addEventListener('fetch',event=>{
   if(req.method!=='GET')return;
   const url=new URL(req.url);
   if(url.origin!==self.location.origin)return;
+  const isProgramFile=url.pathname.endsWith('/training-program.json')||url.pathname.endsWith('/nutrition-program.json');
+  if(isProgramFile){
+    event.respondWith(
+      fetch(req,{cache:'no-store'}).then(res=>{
+        const copy=res.clone();
+        caches.open(CACHE_NAME).then(cache=>cache.put(req,copy));
+        return res;
+      }).catch(()=>caches.match(req))
+    );
+    return;
+  }
   const isAppDocument=req.mode==='navigate'||url.pathname.endsWith('/')||url.pathname.endsWith('/index.html');
   if(isAppDocument){
     event.respondWith(
