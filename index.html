@@ -2463,13 +2463,20 @@ function renderWeekZero(){
   renderWeekZeroStepNav();
   renderWeekZeroSummary();
 }
-function scrollWeekZeroToTop(behavior){
+function scrollWeekZeroToTop(){
   const section=el('panel-weekzero');
   if(!section)return;
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const active=document.activeElement;
+  if(active&&typeof active.blur==='function')active.blur();
+  const move=()=>{
     const top=section.getBoundingClientRect().top+window.scrollY;
-    window.scrollTo({top:Math.max(0,top),left:0,behavior:behavior||'auto'});
-  }));
+    window.scrollTo(0,Math.max(0,top));
+  };
+  requestAnimationFrame(()=>{
+    move();
+    requestAnimationFrame(move);
+  });
+  setTimeout(move,120);
 }
 function showWeekZeroTab(tab,btn){
   if(!tab)tab='directives';
@@ -2494,7 +2501,7 @@ function showWeekZeroTab(tab,btn){
     });
   }
   if(tab==='review')renderWeekZeroSummary();
-  scrollWeekZeroToTop('smooth');
+  scrollWeekZeroToTop();
 }
 function openWeekZeroReview(){
   saveWeekZeroData();
