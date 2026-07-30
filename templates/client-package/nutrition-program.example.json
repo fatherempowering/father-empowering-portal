@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "programVersion": "nutrition-client-template-v1",
+  "updatedAt": "2026-07-20T00:00:00-04:00",
+  "nutrition": {
+    "kicker": "NUTRITION",
+    "title": "NUTRITION PLAN",
+    "phase": "NUTRITION BUILD",
+    "desc": "Nutrition content will be added after Coach Max reviews the intake data.",
+    "targets": [],
+    "plans": [
+      {
+        "id": "plan-1",
+        "label": "PLAN 1",
+        "title": "CLASSIC",
+        "sections": []
+      }
+    ],
+    "rules": [],
+    "meals": [],
+    "futureNote": ""
+  },
+  "updateTitle": "CoachMax has prepared your nutrition plan.",
+  "updateMessage": "Your nutrition plan is ready.",
+  "releaseNotes": [
+    "Client-specific nutrition targets",
+    "Meal plan sections",
+    "Grocery list support"
+  ]
+}
