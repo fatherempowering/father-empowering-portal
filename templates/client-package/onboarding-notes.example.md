@@ -29,6 +29,7 @@ node scripts/validate-client-package.js clients/<client-slug> --strict
 - `client-info.client.displayName`
 - `client-info.storage.namespace`
 - `training-program.programVersion` when Training is enabled
+- `training-program.training.phase.id`, `.label` and `.order`
 - `training-program.training.weeks[]` when the final program is ready
 - `nutrition-program.programVersion` when Nutrition is enabled
 
@@ -57,6 +58,17 @@ node scripts/validate-client-package.js clients/<client-slug> --strict
 4. Keep `storage.namespace` unchanged if the goal is to preserve local data without migration.
 5. Run validation.
 6. Test localStorage, IndexedDB photos, check-ins, history, and program updates before upload.
+
+## Publishing another phase
+
+1. Keep the permanent client ID, slug, URL and storage namespace unchanged.
+2. Copy the current Training file and build the new prescription.
+3. Assign a new unique `programVersion`.
+4. Assign a new permanent `training.phase.id` such as `phase-2`; never reuse an archived ID.
+5. Increase `training.phase.order` and update its visible label.
+6. Validate the complete client package.
+7. Publish the new Training JSON. The portal asks the client to confirm **START NEW PHASE**.
+8. Verify that the previous phase appears as completed in History and that the new phase starts at Week 1.
 
 ## Environment And Secrets
 

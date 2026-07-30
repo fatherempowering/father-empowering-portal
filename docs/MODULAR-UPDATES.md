@@ -19,6 +19,33 @@ The client keeps one permanent URL. The portal is split into:
 
 The visible **UPDATE** button also checks manually at any time.
 
+## Program correction versus new phase
+
+Every `training-program.json` must declare a stable phase identity:
+
+```json
+{
+  "programVersion": "client-phase-2-v1",
+  "training": {
+    "phase": {
+      "id": "phase-2",
+      "label": "PHASE 2",
+      "order": 2
+    }
+  }
+}
+```
+
+- Change `programVersion` while keeping the same `training.phase.id` for a correction or adjustment inside the current phase. Results stay active.
+- Change both `programVersion` and `training.phase.id` to publish a genuinely new phase.
+- A new phase is never activated automatically. The client must select **START NEW PHASE**.
+- Once confirmed, the current prescriptions, results, check-ins, drafts and progress photos are archived together. Week 0 remains attached to the client.
+- The new phase starts at Week 1 under the same permanent client URL and storage namespace.
+
+Never reuse a phase ID that has already been archived. Use sequential permanent IDs such as `phase-1`, `phase-2` and `phase-3`.
+
+Before a transition, the portal writes a non-destructive recovery record under the client-namespaced `phase_transition_backup_v1` localStorage key. If the update fails, the previous active phase is restored.
+
 ## Permanent identity rule
 
 `clientSlug` is the permanent client identity and must never change after launch.
@@ -30,6 +57,13 @@ Stable exercise `key` values preserve historical continuity when an exercise is 
 ```json
 {
   "programVersion": "phase-2-v1",
+  "training": {
+    "phase": {
+      "id": "phase-2",
+      "label": "PHASE 2",
+      "order": 2
+    }
+  },
   "updateTitle": "CoachMax has prepared an update for your protocol.",
   "updateMessage": "Phase 2 is ready.",
   "releaseNotes": [

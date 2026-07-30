@@ -86,6 +86,7 @@ const baseTraining = {
   programVersion: 'training-test-v1',
   updatedAt: '2026-07-21T00:00:00-04:00',
   training: {
+    phase: { id: 'phase-1', label: 'PHASE 1', order: 1 },
     sessionCatalog: [
       { id: 'a', label: 'SESSION A', title: 'Strength A', suggestedDay: 'MON', order: 1 },
       { id: 'b', label: 'SESSION B', title: 'Strength B', suggestedDay: 'WED', order: 2 }
@@ -235,6 +236,26 @@ const cases = [
       return [clone(baseClient), training, clone(baseNutrition)];
     },
     mustContain: 'schemaVersion must be 1'
+  },
+  {
+    name: 'missing-training-phase',
+    expectPass: false,
+    setup() {
+      const training = clone(baseTraining);
+      delete training.training.phase;
+      return [clone(baseClient), training, clone(baseNutrition)];
+    },
+    mustContain: 'training.phase object is required'
+  },
+  {
+    name: 'invalid-training-phase-id',
+    expectPass: false,
+    setup() {
+      const training = clone(baseTraining);
+      training.training.phase.id = 'Phase 2';
+      return [clone(baseClient), training, clone(baseNutrition)];
+    },
+    mustContain: 'stable lowercase kebab-case identifier'
   },
   {
     name: 'weeks-contradiction',

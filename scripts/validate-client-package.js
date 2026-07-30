@@ -330,6 +330,20 @@ function validateTraining(record) {
   if (Object.prototype.hasOwnProperty.call(training, 'totalWeeks')) {
     errors.push('training-program: training.totalWeeks must not be declared. It is derived from training.weeks.length.');
   }
+  const phase = training.phase;
+  if (!isObject(phase)) {
+    errors.push('training-program: training.phase object is required');
+  } else {
+    if (!phase.id || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(phase.id)) {
+      errors.push('training-program: training.phase.id must be a stable lowercase kebab-case identifier');
+    }
+    if (!phase.label || typeof phase.label !== 'string') {
+      errors.push('training-program: training.phase.label is required');
+    }
+    if (!Number.isInteger(phase.order) || phase.order < 1) {
+      errors.push('training-program: training.phase.order must be a positive integer');
+    }
+  }
 
   const catalog = asArray(training.sessionCatalog);
   const catalogIds = catalog.map((session) => session && session.id).filter(Boolean);

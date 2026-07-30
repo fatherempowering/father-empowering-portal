@@ -3,6 +3,11 @@
   "programVersion": "training-client-template-v1",
   "updatedAt": "2026-07-21T00:00:00-04:00",
   "training": {
+    "phase": {
+      "id": "phase-1",
+      "label": "PHASE 1",
+      "order": 1
+    },
     "sessionCatalog": [
       {
         "id": "a",

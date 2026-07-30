@@ -1360,6 +1360,7 @@ const TEMPLATE_CONFIG={
     showIntroOnLoad:true
   },
   training:{
+    phase:{id:'phase-1',label:'PHASE 1',order:1},
     sessionIds:['a','b','c','d','e','f','g'],
     sessionDays:{a:'MON · TRAINING',b:'TUE · TRAINING',c:'WED · TRAINING',d:'THU · TRAINING',e:'FRI · TRAINING',f:'SAT · TRAINING',g:'SUN · RECOVERY'},
     defaultPhase:'PROTOCOL BUILD',
@@ -1439,6 +1440,9 @@ function storageSlug(s){
 function uniqueList(items){
   return [...new Set((items||[]).filter(Boolean))];
 }
+function phaseId(value){
+  return String(value||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
 // Client identity is permanent. Program phases may change without changing storage.
 const CLIENT_STORAGE_ID=storageSlug(STORAGE_CONFIG.keyPrefix||(CLIENT_PROFILE.clientSlug||CLIENT_PROFILE.athleteName));
 const LEGACY_STORAGE_ID=storageSlug((CLIENT_PROFILE.clientSlug||CLIENT_PROFILE.athleteName)+'_'+(CLIENT_PROFILE.programSlug||CLIENT_PROFILE.documentTitle));
@@ -1457,8 +1461,8 @@ const COACHMAX_ENDPOINT=STORAGE_CONFIG.coachMaxEndpoint||REPORT_ENDPOINT;
 const BACKUP_SCHEMA=STORAGE_CONFIG.backupSchema;
 const TALLY_ONBOARDING_URL='https://tally.so/r/44zdvk';
 const TALLY_COMPLETION_KEY='faem_'+STORAGE_NAMESPACE+'_tally_completion_notified_v1';
-const TOTAL_WEEKS=CLIENT_PROFILE.totalWeeks;
-const MAX_CHECKINS=CHECKIN_CONFIG.maxCheckins;
+let TOTAL_WEEKS=CLIENT_PROFILE.totalWeeks;
+let MAX_CHECKINS=CHECKIN_CONFIG.maxCheckins;
 let SEANCE_IDS=TRAINING_CONFIG.sessionIds;
 let SEANCE_DAYS=TRAINING_CONFIG.sessionDays;
 const el=id=>document.getElementById(id);
@@ -1469,6 +1473,7 @@ const TRAINING_PLAN_CACHE_KEY='faem_'+STORAGE_NAMESPACE+'_training_plan_v1';
 const NUTRITION_PLAN_CACHE_KEY='faem_'+STORAGE_NAMESPACE+'_nutrition_plan_v1';
 const PLAN_META_KEY='faem_'+STORAGE_NAMESPACE+'_plan_meta_v1';
 const PLAN_NOTICE_KEY='faem_'+STORAGE_NAMESPACE+'_last_update_notice_v1';
+const PHASE_TRANSITION_BACKUP_KEY='faem_'+STORAGE_NAMESPACE+'_phase_transition_backup_v1';
 const CORRUPT_STORAGE_BACKUP_KEY=SK+'_corrupt_backup_v1';
 const REPORT_TIMEOUT_MS=30000;
 let pendingPortalUpdate=null;
@@ -1511,6 +1516,23 @@ function normalizeTrainingPlan(payload){
   if(!plan||typeof plan!=='object'||!Array.isArray(plan.weeks))throw new Error('Invalid training program file');
   return {plan:plan,version:String((payload&&payload.programVersion)||plan.programVersion||'unversioned'),updatedAt:(payload&&payload.updatedAt)||'',updateTitle:String((payload&&payload.updateTitle)||''),updateMessage:String((payload&&payload.updateMessage)||''),releaseNotes:Array.isArray(payload&&payload.releaseNotes)?payload.releaseNotes:[]};
 }
+function phaseDescriptorForTrainingRecord(record){
+  const raw=record&&record.plan&&record.plan.phase;
+  if(!raw||typeof raw!=='object'||!String(raw.id||'').trim())return null;
+  const id=phaseId(raw.id);
+  const order=parseInt(raw.order);
+  return {
+    id:id,
+    label:String(raw.label||raw.id).trim()||id.toUpperCase(),
+    order:isNaN(order)?null:order,
+    programVersion:String(record.version||'unversioned')
+  };
+}
+function phaseTransitionRequired(nextRecords,currentRecords){
+  const current=phaseDescriptorForTrainingRecord(currentRecords&&currentRecords.training);
+  const next=phaseDescriptorForTrainingRecord(nextRecords&&nextRecords.training);
+  return !!(current&&next&&current.id!==next.id);
+}
 function normalizeNutritionPlan(payload){
   const plan=payload&&payload.nutrition?payload.nutrition:payload;
   if(!plan||typeof plan!=='object'||!Array.isArray(plan.targets)||!Array.isArray(plan.rules)||!Array.isArray(plan.meals))throw new Error('Invalid nutrition program file');
@@ -1520,8 +1542,13 @@ function applyPortalPlans(trainingRecord,nutritionRecord){
   if(trainingRecord&&trainingRecord.plan){
     TRAINING_CONFIG=trainingRecord.plan;
     TEMPLATE_CONFIG.training=TRAINING_CONFIG;
-    SEANCE_IDS=Array.isArray(TRAINING_CONFIG.sessionIds)&&TRAINING_CONFIG.sessionIds.length?TRAINING_CONFIG.sessionIds:['a','b','c','d','e','f','g'];
+    const catalog=Array.isArray(TRAINING_CONFIG.sessionCatalog)?TRAINING_CONFIG.sessionCatalog:[];
+    SEANCE_IDS=catalog.length?catalog.map(item=>String(item.id||'').trim().toLowerCase()).filter(Boolean):
+      (Array.isArray(TRAINING_CONFIG.sessionIds)&&TRAINING_CONFIG.sessionIds.length?TRAINING_CONFIG.sessionIds:['a','b','c','d','e','f','g']);
     SEANCE_DAYS=TRAINING_CONFIG.sessionDays||{};
+    TOTAL_WEEKS=Array.isArray(TRAINING_CONFIG.weeks)&&TRAINING_CONFIG.weeks.length?TRAINING_CONFIG.weeks.length:(parseInt(CLIENT_PROFILE.totalWeeks)||12);
+    MAX_CHECKINS=Math.max(TOTAL_WEEKS,parseInt(CHECKIN_CONFIG.maxCheckins)||0,1);
+    WEEKS=buildWeeks();
   }
   if(nutritionRecord&&nutritionRecord.plan){
     NUTRITION_CONFIG=nutritionRecord.plan;
@@ -1563,8 +1590,8 @@ function updateMessageFor(records){
   return title+'\n\n'+custom+(notes.length?'\n\n'+notes.map(n=>'• '+n).join('\n'):'')+'\n\nYour history, photos, measurements, check-ins and progress will remain intact.';
 }
 function applyAndStorePortalUpdate(records){
-  if(records.training)writeJSONStorage(TRAINING_PLAN_CACHE_KEY,records.training);
-  if(records.nutrition)writeJSONStorage(NUTRITION_PLAN_CACHE_KEY,records.nutrition);
+  if(records.training&&!writeJSONStorage(TRAINING_PLAN_CACHE_KEY,records.training))throw new Error('Training plan could not be saved.');
+  if(records.nutrition&&!writeJSONStorage(NUTRITION_PLAN_CACHE_KEY,records.nutrition))throw new Error('Nutrition plan could not be saved.');
   const current=currentPlanRecords();
   if(!current.training)current.training={plan:TEMPLATE_CONFIG.training,version:'embedded'};
   if(!current.nutrition)current.nutrition={plan:TEMPLATE_CONFIG.nutrition,version:'embedded'};
@@ -1605,9 +1632,29 @@ function refreshPortalAfterPlanUpdate(){
 }
 async function confirmAndApplyPendingUpdate(){
   if(!pendingPortalUpdate)return false;
-  const ok=await appConfirm('PROTOCOL UPDATE',updateMessageFor(pendingPortalUpdate),{kicker:'COACHMAX UPDATE',confirmText:'UPDATE NOW',confirmClass:'app-btn-success'});
+  const before=currentPlanRecords();
+  const isPhaseTransition=phaseTransitionRequired(pendingPortalUpdate,before);
+  const nextPhase=phaseDescriptorForTrainingRecord(pendingPortalUpdate.training);
+  const transitionNotice=isPhaseTransition?'\n\nYour current phase will be archived and '+nextPhase.label+' will start at Week 1.':'';
+  const ok=await appConfirm(isPhaseTransition?'NEW TRAINING PHASE':'PROTOCOL UPDATE',updateMessageFor(pendingPortalUpdate)+transitionNotice,{kicker:'COACHMAX UPDATE',confirmText:isPhaseTransition?'START NEW PHASE':'UPDATE NOW',confirmClass:'app-btn-success'});
   if(!ok)return false;
-  const applied=applyAndStorePortalUpdate(pendingPortalUpdate);
+  let applied;
+  try{
+    if(isPhaseTransition)await transitionToTrainingPhase(before.training,pendingPortalUpdate.training);
+    applied=applyAndStorePortalUpdate(pendingPortalUpdate);
+    if(!isPhaseTransition&&pendingPortalUpdate.training){
+      const updatedPhase=phaseDescriptorForTrainingRecord(pendingPortalUpdate.training);
+      if(updatedPhase&&D.activePhase&&D.activePhase.id===updatedPhase.id){
+        D.activePhase=Object.assign({},D.activePhase,updatedPhase);
+        save();
+      }
+    }
+  }catch(error){
+    if(isPhaseTransition)await rollbackLastPhaseTransition(before.training);
+    console.error('Portal update failed',error);
+    await appAlert('UPDATE NOT APPLIED',(error&&error.message)||'The update could not be applied. Your previous phase remains active.',{kicker:'SAFE ROLLBACK',confirmClass:'app-btn-danger'});
+    return false;
+  }
   refreshPortalAfterPlanUpdate();
   if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update();}
   localStorage.setItem(PLAN_NOTICE_KEY,planFingerprint(applied));
@@ -1791,13 +1838,20 @@ function defaultWeekZeroData(){
     }
   };
 }
-function defaultData(){return {seances:{},checkins:[],drafts:{},unlockedWeek:1,weekZero:defaultWeekZeroData()};}
+function defaultActivePhase(){
+  const cached=readJSONStorage(TRAINING_PLAN_CACHE_KEY);
+  const descriptor=phaseDescriptorForTrainingRecord(cached)||phaseDescriptorForTrainingRecord({plan:TRAINING_CONFIG,version:'embedded'});
+  return descriptor?Object.assign({},descriptor,{startedAt:''}):null;
+}
+function defaultData(){return {seances:{},checkins:[],drafts:{},unlockedWeek:1,weekZero:defaultWeekZeroData(),activePhase:defaultActivePhase(),archivedPhases:{}};}
 let D=defaultData();
 function load(){
   migrateStorageKeys();
   let raw=null;
   try{raw=localStorage.getItem(SK); if(raw){const p=JSON.parse(raw); D=normalizeImportedData(Object.assign(defaultData(),p));}}catch(e){preserveCorruptStorage(raw,e);D=defaultData();}
   if(!D.seances)D.seances={}; if(!D.checkins)D.checkins=[]; if(!D.drafts)D.drafts={}; if(!D.unlockedWeek)D.unlockedWeek=1;
+  if(!D.archivedPhases||typeof D.archivedPhases!=='object'||Array.isArray(D.archivedPhases))D.archivedPhases={};
+  if(!D.activePhase)D.activePhase=defaultActivePhase();
   D.unlockedWeek=normalizeUnlockedWeek(D);
   D.weekZero=normalizeWeekZero(D.weekZero);
 }
@@ -1872,6 +1926,49 @@ function clearPhotoDbByName(name){return openPhotoDbByName(name).then(db=>new Pr
   tx.oncomplete=()=>{try{db.close();}catch(e){} res(true);};
   tx.onerror=()=>res(false);
 }));}
+function archivePhotoKey(phaseId,week,slot){return 'phase_'+slugPart(phaseId)+'_photo_s'+week+'_'+slot;}
+function archiveActivePhasePhotos(phaseId,totalWeeks){return openIDB().then(db=>new Promise(res=>{
+  if(!db)return res({archived:0,keys:[]});
+  const keys=[];
+  for(let week=1;week<=Math.max(parseInt(totalWeeks)||0,1);week++){
+    for(let slot=0;slot<3;slot++)keys.push({active:photoKey(week,slot),archived:archivePhotoKey(phaseId,week,slot)});
+  }
+  let archived=0;
+  try{
+    const tx=db.transaction('photos','readwrite');
+    const store=tx.objectStore('photos');
+    keys.forEach(pair=>{
+      const get=store.get(pair.active);
+      get.onsuccess=()=>{
+        if(get.result){
+          store.put(get.result,pair.archived);
+          store.delete(pair.active);
+          archived++;
+        }
+      };
+    });
+    tx.oncomplete=()=>res({archived:archived,keys:keys});
+    tx.onerror=()=>res(null);
+    tx.onabort=()=>res(null);
+  }catch(e){res(null);}
+}));}
+function restoreArchivedPhasePhotos(phaseId,totalWeeks){return openIDB().then(db=>new Promise(res=>{
+  if(!db)return res(false);
+  try{
+    const tx=db.transaction('photos','readwrite');
+    const store=tx.objectStore('photos');
+    for(let week=1;week<=Math.max(parseInt(totalWeeks)||0,1);week++){
+      for(let slot=0;slot<3;slot++){
+        const archived=archivePhotoKey(phaseId,week,slot);
+        const active=photoKey(week,slot);
+        const get=store.get(archived);
+        get.onsuccess=()=>{if(get.result)store.put(get.result,active);};
+      }
+    }
+    tx.oncomplete=()=>res(true);
+    tx.onerror=()=>res(false);
+  }catch(e){res(false);}
+}));}
 
 /* ═════════ BLANK PROGRAM ENGINE ═════════ */
 function _e(name,note,sets,reps,key,target,unit){return {name,note,sets,reps,key,target:target||'',unit:unit||'lbs'};}
@@ -1922,7 +2019,7 @@ function buildWeeks(){
   }
   return W;
 }
-const WEEKS=buildWeeks();
+let WEEKS=buildWeeks();
 
 /* ═════════ ÉTAT ═════════ */
 let currentWeek=0;
@@ -1949,6 +2046,82 @@ const WEEK_ZERO_LIFTS=[
   ['legPress','Leg Press','fixed']
 ];
 const WEEK_ZERO_DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+/* ═════════ GENERIC PHASE ENGINE ═════════ */
+function phaseClone(value){return cleanImportedObject(JSON.parse(JSON.stringify(value)));}
+function phaseHasClientActivity(data){
+  return !!(Object.keys((data&&data.seances)||{}).length||(data&&data.checkins&&data.checkins.length)||Object.keys((data&&data.drafts)||{}).length||(parseInt(data&&data.unlockedWeek)||1)>1);
+}
+function phaseArchiveFromActive(currentRecord,completedAt,photoCount){
+  const descriptor=(D&&D.activePhase)||phaseDescriptorForTrainingRecord(currentRecord);
+  if(!descriptor||!descriptor.id)throw new Error('The current training phase has no stable phase.id.');
+  return {
+    id:descriptor.id,
+    label:descriptor.label||descriptor.id.toUpperCase(),
+    order:descriptor.order==null?null:descriptor.order,
+    programVersion:String((currentRecord&&currentRecord.version)||descriptor.programVersion||'unversioned'),
+    startedAt:descriptor.startedAt||'',
+    completedAt:completedAt,
+    totalWeeks:Array.isArray(currentRecord&&currentRecord.plan&&currentRecord.plan.weeks)?currentRecord.plan.weeks.length:TOTAL_WEEKS,
+    unlockedWeek:parseInt(D.unlockedWeek)||1,
+    program:phaseClone((currentRecord&&currentRecord.plan)||TRAINING_CONFIG),
+    seances:phaseClone(D.seances||{}),
+    checkins:phaseClone(D.checkins||[]),
+    drafts:phaseClone(D.drafts||{}),
+    photos:{storage:'indexeddb',keyPrefix:'phase_'+slugPart(descriptor.id)+'_photo_s',count:photoCount||0}
+  };
+}
+async function transitionToTrainingPhase(currentRecord,nextRecord){
+  const current=phaseDescriptorForTrainingRecord(currentRecord)||(D&&D.activePhase);
+  const next=phaseDescriptorForTrainingRecord(nextRecord);
+  if(!current||!next||current.id===next.id)return false;
+  if(D.archivedPhases&&D.archivedPhases[current.id])throw new Error('Phase archive already exists for '+current.id+'. Use a new unique phase.id.');
+  const completedAt=new Date().toISOString();
+  const dataBefore=phaseClone(D);
+  const targetRawBefore=localStorage.getItem(SK);
+  const planRawBefore=localStorage.getItem(TRAINING_PLAN_CACHE_KEY);
+  if(!writeJSONStorage(PHASE_TRANSITION_BACKUP_KEY,{
+    schema:'father_empowering_phase_transition_backup_v1',
+    clientSlug:CLIENT_PROFILE.clientSlug||'',
+    createdAt:completedAt,
+    fromPhase:current,
+    toPhase:next,
+    dataRawBefore:targetRawBefore,
+    trainingPlanRawBefore:planRawBefore
+  }))throw new Error('The phase transition backup could not be saved.');
+  const photoResult=await archiveActivePhasePhotos(current.id,Array.isArray(currentRecord&&currentRecord.plan&&currentRecord.plan.weeks)?currentRecord.plan.weeks.length:TOTAL_WEEKS);
+  if(!photoResult)throw new Error('Progress photos could not be archived. No phase data was changed.');
+  try{
+    const archive=phaseArchiveFromActive(currentRecord,completedAt,photoResult.archived);
+    D.archivedPhases=Object.assign({},D.archivedPhases||{});
+    D.archivedPhases[current.id]=archive;
+    D.seances={};
+    D.checkins=[];
+    D.drafts={};
+    D.unlockedWeek=1;
+    D.activePhase=Object.assign({},next,{startedAt:completedAt});
+    if(!writeJSONStorage(SK,D))throw new Error('The new phase state could not be saved.');
+    return true;
+  }catch(error){
+    D=dataBefore;
+    if(targetRawBefore==null)localStorage.removeItem(SK);else localStorage.setItem(SK,targetRawBefore);
+    if(planRawBefore==null)localStorage.removeItem(TRAINING_PLAN_CACHE_KEY);else localStorage.setItem(TRAINING_PLAN_CACHE_KEY,planRawBefore);
+    await restoreArchivedPhasePhotos(current.id,Array.isArray(currentRecord&&currentRecord.plan&&currentRecord.plan.weeks)?currentRecord.plan.weeks.length:TOTAL_WEEKS);
+    throw error;
+  }
+}
+async function rollbackLastPhaseTransition(currentRecord){
+  const backup=readJSONStorage(PHASE_TRANSITION_BACKUP_KEY);
+  const current=phaseDescriptorForTrainingRecord(currentRecord);
+  if(!backup||!current||!backup.fromPhase||backup.fromPhase.id!==current.id)return false;
+  try{
+    if(backup.dataRawBefore==null)localStorage.removeItem(SK);else localStorage.setItem(SK,backup.dataRawBefore);
+    if(backup.trainingPlanRawBefore==null)localStorage.removeItem(TRAINING_PLAN_CACHE_KEY);else localStorage.setItem(TRAINING_PLAN_CACHE_KEY,backup.trainingPlanRawBefore);
+    D=backup.dataRawBefore?normalizeImportedData(JSON.parse(backup.dataRawBefore)):defaultData();
+    await restoreArchivedPhasePhotos(current.id,Array.isArray(currentRecord&&currentRecord.plan&&currentRecord.plan.weeks)?currentRecord.plan.weeks.length:TOTAL_WEEKS);
+    return true;
+  }catch(e){console.error('Phase rollback failed',e);return false;}
+}
 
 function checkinCount(){return new Set(D.checkins.map(c=>parseInt(c.week)).filter(Boolean)).size;}
 function clampWeek(w){
@@ -3693,9 +3866,63 @@ function renderCharts(){
 
 /* ═════════ HISTORIQUE ═════════ */
 function formatSeanceLabel(w,sid){const S=WEEKS[w]&&WEEKS[w].seances[sid];return S?S.day:sid.toUpperCase();}
+function archivedSessionLabel(archive,w,sid){
+  const weeks=archive&&archive.program&&Array.isArray(archive.program.weeks)?archive.program.weeks:[];
+  const week=weeks.find(item=>parseInt(item&&item.week)===parseInt(w))||weeks[parseInt(w)-1];
+  const session=week&&((week.sessions&&week.sessions[sid])||(week.seances&&week.seances[sid]));
+  return session&&(session.day||session.title)||sid.toUpperCase();
+}
+function archivedValueText(value){
+  if(value==null)return '';
+  if(typeof value==='object')return Object.entries(value).map(([k,v])=>k+': '+(typeof v==='object'?JSON.stringify(v):v)).join(' · ');
+  return String(value);
+}
+function renderArchivedPhaseHistory(container){
+  const archives=Object.values((D&&D.archivedPhases)||{}).sort((a,b)=>String(b.completedAt||'').localeCompare(String(a.completedAt||'')));
+  let any=false;
+  archives.forEach(archive=>{
+    const sessions=archive&&archive.seances&&typeof archive.seances==='object'?archive.seances:{};
+    const checkins=Array.isArray(archive&&archive.checkins)?archive.checkins:[];
+    if(!Object.keys(sessions).length&&!checkins.length)return;
+    any=true;
+    const header=document.createElement('div');header.className='hist-week-divider';
+    header.innerHTML='<div class="hist-week-divider-line"></div><div class="hist-week-divider-txt">'+escapeHTML((archive.label||archive.id||'PHASE').toUpperCase())+' — COMPLETED · '+escapeHTML(archive.programVersion||'UNVERSIONED')+'</div><div class="hist-week-divider-line"></div>';
+    container.appendChild(header);
+    const weeks=uniqueList([
+      ...Object.keys(sessions).map(key=>{const m=String(key).match(/^s(\d+)_/);return m?parseInt(m[1]):0;}),
+      ...checkins.map(item=>parseInt(item&&item.week)||0)
+    ]).filter(Boolean).sort((a,b)=>b-a);
+    weeks.forEach(w=>{
+      checkins.filter(item=>parseInt(item.week)===w).forEach(item=>{
+        const entry=document.createElement('div');entry.className='hist-entry';
+        let rows='<div class="hist-date">WEEK '+w+' CHECK-IN · '+escapeHTML(item.date||'')+'</div>';
+        if(item.poids)rows+='<div class="hist-row"><div class="hist-label">Bodyweight</div><div class="hist-val">'+escapeHTML(item.poids)+' lbs</div></div>';
+        if(item.note)rows+='<div class="hist-note">'+escapeHTML(item.note)+'</div>';
+        entry.innerHTML=rows;container.appendChild(entry);
+      });
+      Object.entries(sessions).filter(([key,rec])=>key.indexOf('s'+w+'_')===0&&rec&&rec.done).forEach(([key,rec])=>{
+        const sid=key.replace(/^s\d+_/,'');
+        const entry=document.createElement('div');entry.className='hist-seance-entry';
+        const charges=Object.entries(rec.charges||{});
+        entry.innerHTML='<div class="hist-seance-hdr"><div class="hist-seance-label">WEEK '+w+' · '+escapeHTML(archivedSessionLabel(archive,w,sid))+'</div><div class="hist-seance-date">'+escapeHTML(rec.date||'')+'</div></div>'
+          +(charges.length?'<div style="padding:10px 16px;font-size:12px;color:var(--txt2);line-height:1.8">'+charges.map(([k,v])=>'<strong>'+escapeHTML(k)+'</strong> : '+escapeHTML(archivedValueText(v))).join(' · ')+'</div>':'')
+          +(rec.actuals?'<div style="padding:0 16px 10px;font-size:12px;color:var(--txt2);line-height:1.8"><strong>RESULTS</strong> · '+escapeHTML(archivedValueText(rec.actuals))+'</div>':'')
+          +(rec.notes?'<div style="padding:0 16px 12px;font-size:12px;color:var(--txt2);line-height:1.6">'+escapeHTML(rec.notes)+'</div>':'');
+        container.appendChild(entry);
+      });
+    });
+  });
+  return any;
+}
 function renderHistorique(){
   const c=el('historique-container'); c.innerHTML='';
-  let any=false;
+  let any=renderArchivedPhaseHistory(c);
+  if(phaseHasClientActivity(D)){
+    const activeHeader=document.createElement('div');activeHeader.className='hist-week-divider';
+    const activeLabel=D.activePhase&&D.activePhase.label?D.activePhase.label:'ACTIVE PHASE';
+    activeHeader.innerHTML='<div class="hist-week-divider-line"></div><div class="hist-week-divider-txt">'+escapeHTML(activeLabel.toUpperCase())+' — ACTIVE</div><div class="hist-week-divider-line"></div>';
+    c.appendChild(activeHeader);
+  }
   for(let w=TOTAL_WEEKS;w>=1;w--){
     const items=[];
     SEANCE_IDS.forEach(sid=>{const rec=D.seances[seanceKey(w,sid)];if(rec&&rec.done)items.push({sid,rec});});
@@ -3942,6 +4169,9 @@ function normalizeImportedData(p){
     return e;
   });
   if(typeof out.drafts!=='object'||!out.drafts)out.drafts={};
+  if(typeof out.archivedPhases!=='object'||!out.archivedPhases||Array.isArray(out.archivedPhases))out.archivedPhases={};
+  if(out.activePhase&&typeof out.activePhase!=='object')out.activePhase=null;
+  if(!out.activePhase)out.activePhase=defaultActivePhase();
   out.unlockedWeek=normalizeUnlockedWeek(out);
   out.weekZero=normalizeWeekZero(out.weekZero);
   return out;
@@ -3966,7 +4196,7 @@ function validateBackupForImport(payload,imported){
     }
   }
   if(!imported||typeof imported!=='object')throw new Error('Invalid backup data.');
-  if(!(imported.seances||imported.checkins||imported.weekZero||imported.drafts||imported.unlockedWeek))throw new Error('Backup data does not match Legacy Protocol.');
+  if(!(imported.seances||imported.checkins||imported.weekZero||imported.drafts||imported.unlockedWeek||imported.activePhase||imported.archivedPhases))throw new Error('Backup data does not match Legacy Protocol.');
 }
 function importData(ev){
   const f=ev.target.files&&ev.target.files[0]; ev.target.value=''; if(!f)return;

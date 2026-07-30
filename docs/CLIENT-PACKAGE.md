@@ -47,6 +47,7 @@ Ce fichier contient :
 - `schemaVersion`;
 - une `programVersion` unique à chaque publication;
 - la date `updatedAt`;
+- une identité de phase permanente `training.phase` (`id`, `label`, `order`);
 - le catalogue des séances;
 - les semaines, séances, blocs, exercices et prescriptions;
 - les métadonnées de mise à jour.
@@ -54,6 +55,8 @@ Ce fichier contient :
 Le programme peut avoir `weeks: []` pendant l’onboarding. Cela signifie « programmation en attente » et non « programme actif vide ».
 
 Le schéma canonique actuel est `1`.
+
+Une correction à l’intérieur d’une phase change seulement `programVersion`. Une véritable nouvelle phase change également `training.phase.id`. Ce changement déclenche, après confirmation du client, l’archive de la phase active et le redémarrage à la semaine 1. Un identifiant de phase archivé ne doit jamais être réutilisé.
 
 ## `nutrition-program.json`
 
@@ -85,6 +88,8 @@ Le schéma canonique actuel est `1`.
 
 Les résultats, check-ins et photos ne sont pas stockés dans ces fichiers. Ils restent dans le stockage du navigateur sous le namespace permanent du client.
 
+Lors d’un changement de phase confirmé, le portail conserve aussi une copie immuable du programme Training précédent dans l’archive de phase. L’historique peut donc relier les résultats aux prescriptions qui étaient réellement actives.
+
 ## Validation
 
 Pour valider un modèle réutilisable :
@@ -100,4 +105,3 @@ node scripts/validate-client-package.js clients/<client-slug> --strict
 ```
 
 Le mode `--strict` refuse les fichiers `.example.json`.
-

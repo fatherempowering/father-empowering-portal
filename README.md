@@ -42,6 +42,7 @@ Exécuter les tests :
 
 ```bash
 node tests/run-validation-tests.js
+node tests/run-phase-engine-tests.js
 ```
 
 ## Règles importantes
@@ -50,6 +51,8 @@ node tests/run-validation-tests.js
 - Le slug et le namespace de stockage doivent être uniques.
 - Une modification de slug après déploiement exige une migration.
 - Les clés d’exercice doivent rester stables pour préserver l’historique.
+- Chaque programme Training doit avoir un `training.phase.id` permanent et unique.
+- Une nouvelle phase est archivée et activée uniquement après confirmation du client.
 - Les secrets serveur ne doivent jamais être ajoutés aux fichiers clients.
 - `client-info.json`, `training-program.json` et `nutrition-program.json` sont les trois sources officielles d’un client.
 - Les fichiers `.example.json` sont uniquement des modèles et ne doivent pas être publiés comme client réel.
