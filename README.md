@@ -7,11 +7,11 @@ Portail maître utilisé pour générer et maintenir les portails clients Father
 - `index.html` : moteur et interface du portail client.
 - `sw.js` : service worker et cache hors ligne isolé par portail.
 - `site.webmanifest` : manifeste PWA.
-- `generate-portal.js` : générateur historique de portail client.
+- `generate-portal.js` : générateur officiel fondé sur le paquet client à trois fichiers.
 - `client-info.example.json` : copie pratique du modèle d’identité client.
 - `training-program.json` : programme d’entraînement vierge chargé par le portail maître.
 - `nutrition-program.json` : programme nutritionnel vierge chargé par le portail maître.
-- `program.example.json` : ancien format combiné encore utilisé par le générateur.
+- `program.example.json` : ancien format combiné conservé temporairement comme référence; il n’est plus accepté par le générateur.
 - `templates/client-package/` : modèle du futur paquet client à trois fichiers.
 - `scripts/` : outils de validation des paquets clients.
 - `tests/` : tests automatisés des outils de validation.
@@ -38,11 +38,24 @@ Valider un vrai client :
 node scripts/validate-client-package.js clients/<client-slug> --strict
 ```
 
+Générer ou mettre à jour son portail dans le même dossier :
+
+```bash
+node generate-portal.js clients/<client-slug>
+```
+
+Générer une prévisualisation dans un autre dossier :
+
+```bash
+node generate-portal.js clients/<client-slug> /tmp/client-preview
+```
+
 Exécuter les tests :
 
 ```bash
 node tests/run-validation-tests.js
 node tests/run-phase-engine-tests.js
+node tests/run-generator-tests.js
 ```
 
 ## Règles importantes
@@ -56,7 +69,8 @@ node tests/run-phase-engine-tests.js
 - Les secrets serveur ne doivent jamais être ajoutés aux fichiers clients.
 - `client-info.json`, `training-program.json` et `nutrition-program.json` sont les trois sources officielles d’un client.
 - Les fichiers `.example.json` sont uniquement des modèles et ne doivent pas être publiés comme client réel.
-- Le générateur historique n’utilise pas encore directement `client-info.json`; son raccordement constitue l’étape suivante.
+- Le générateur valide les trois fichiers avant et après génération.
+- `client-info.json` est compilé dans la configuration du portail; il demeure aussi présent dans le dossier publié comme source publique vérifiable.
 
 ## Documentation
 

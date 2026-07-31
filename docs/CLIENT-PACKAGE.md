@@ -105,3 +105,25 @@ node scripts/validate-client-package.js clients/<client-slug> --strict
 ```
 
 Le mode `--strict` refuse les fichiers `.example.json`.
+
+## Génération
+
+Une fois les trois fichiers réels créés et validés :
+
+```bash
+node generate-portal.js clients/<client-slug>
+```
+
+Le générateur :
+
+- refuse l’ancien format combiné;
+- valide le paquet avant toute écriture;
+- compile `client-info.json` dans la configuration du portail;
+- conserve Training et Nutrition comme fichiers externes indépendants;
+- copie les logos, icônes et mesures;
+- personnalise le manifeste;
+- crée une version de cache propre au client;
+- valide une seconde fois le portail produit;
+- termine par `PORTAL READY` ou échoue sans annoncer d’URL prête.
+
+Par défaut, le portail est construit directement dans le dossier du client afin que son chemin permanent demeure `clients/<client-slug>/`.

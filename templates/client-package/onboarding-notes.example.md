@@ -14,6 +14,12 @@ Before generation or publication, a real client package must pass strict validat
 node scripts/validate-client-package.js clients/<client-slug> --strict
 ```
 
+Generate the validated portal in place:
+
+```bash
+node generate-portal.js clients/<client-slug>
+```
+
 ## File Responsibilities
 
 - `client-info.json`: permanent client identity, display names, public portal metadata, feature flags, measurements, public integration references, migration declaration, and storage namespace.
@@ -110,3 +116,4 @@ node scripts/validate-client-package.js templates/client-package
 - No storage override is non-namespaced.
 - No secrets or absolute local paths are present.
 - The package passes validation.
+- The generator finishes with `PORTAL READY`.

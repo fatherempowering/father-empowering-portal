@@ -1315,6 +1315,7 @@ canvas{display:block;width:100%!important}
 /*FE_CONFIG_START*/
 const TEMPLATE_CONFIG={
   client:{
+    clientId:'clt_template_001',
     athleteName:'CLIENT NAME',
     shortName:'Client',
     clientSlug:'client-template',
@@ -1329,7 +1330,25 @@ const TEMPLATE_CONFIG={
     totalWeeks:12,
     portalVersion:'1.0',
     protocolVersion:'Phase 1 — Fat Loss',
-    lastUpdated:'July 11, 2026'
+    lastUpdated:'July 11, 2026',
+    language:'en',
+    timezone:'America/Montreal',
+    startDate:''
+  },
+  features:{
+    training:true,
+    nutrition:true,
+    weekZero:true,
+    checkins:true,
+    progression:true,
+    history:true,
+    resultPoster:true,
+    tallyOnboarding:true,
+    coachReports:true,
+    installPrompt:true
+  },
+  integrations:{
+    tally:{publicFormUrl:'https://tally.so/r/44zdvk'}
   },
   branding:{
     footerText:'FATHER EMPOWERING · LEGACY PROTOCOL',
@@ -1426,6 +1445,8 @@ const TEMPLATE_CONFIG={
 /*FE_CONFIG_END*/
 
 const CLIENT_PROFILE=TEMPLATE_CONFIG.client;
+const FEATURE_CONFIG=TEMPLATE_CONFIG.features||{};
+const INTEGRATION_CONFIG=TEMPLATE_CONFIG.integrations||{};
 const BRANDING_CONFIG=TEMPLATE_CONFIG.branding;
 const STORAGE_CONFIG=TEMPLATE_CONFIG.storage;
 let TRAINING_CONFIG=TEMPLATE_CONFIG.training;
@@ -1459,7 +1480,7 @@ const LEGACY_PHOTO_DBS=uniqueList([...(STORAGE_CONFIG.legacyPhotoDbs||[]),'faem_
 const REPORT_ENDPOINT=STORAGE_CONFIG.reportEndpoint;
 const COACHMAX_ENDPOINT=STORAGE_CONFIG.coachMaxEndpoint||REPORT_ENDPOINT;
 const BACKUP_SCHEMA=STORAGE_CONFIG.backupSchema;
-const TALLY_ONBOARDING_URL='https://tally.so/r/44zdvk';
+const TALLY_ONBOARDING_URL=(INTEGRATION_CONFIG.tally&&INTEGRATION_CONFIG.tally.publicFormUrl)||'https://tally.so/r/44zdvk';
 const TALLY_COMPLETION_KEY='faem_'+STORAGE_NAMESPACE+'_tally_completion_notified_v1';
 let TOTAL_WEEKS=CLIENT_PROFILE.totalWeeks;
 let MAX_CHECKINS=CHECKIN_CONFIG.maxCheckins;
@@ -1707,12 +1728,34 @@ function initAppShell(){
   window.addEventListener('online',updateNetworkStatus);
   window.addEventListener('offline',updateNetworkStatus);
   window.addEventListener('beforeinstallprompt',ev=>{
+    if(FEATURE_CONFIG.installPrompt===false)return;
     ev.preventDefault();
     deferredInstallPrompt=ev;
     const btn=el('install-btn'); if(btn)btn.classList.add('show');
   });
   if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+}
+function applyFeatureConfig(){
+  const featurePanels={
+    training:'entrainement',
+    nutrition:'nutrition',
+    checkins:'checkin',
+    progression:'progression',
+    history:'historique'
+  };
+  Object.entries(featurePanels).forEach(([feature,panel])=>{
+    if(FEATURE_CONFIG[feature]!==false)return;
+    const panelNode=el('panel-'+panel);if(panelNode)panelNode.style.display='none';
+    document.querySelectorAll('.nav-btn').forEach(btn=>{
+      if((btn.getAttribute('onclick')||'').indexOf("'"+panel+"'")>-1)btn.style.display='none';
+    });
+  });
+  if(FEATURE_CONFIG.resultPoster===false){
+    document.querySelectorAll('.prog-secondary-btn').forEach(btn=>{
+      if((btn.getAttribute('onclick')||'').indexOf("'resultposter'")>-1)btn.style.display='none';
+    });
   }
 }
 async function installApp(){
@@ -1736,6 +1779,7 @@ function applyTemplateConfig(){
   const weekSig=document.querySelector('.week-msg-sig'); if(weekSig)weekSig.textContent=CLIENT_PROFILE.messageSignature;
   const logo=el('brand-logo'); if(logo){logo.setAttribute('src',BRANDING_CONFIG.logoSrc);logo.setAttribute('alt',BRANDING_CONFIG.logoAlt);}
   const entProtocol=el('ent-protocol'); if(entProtocol)entProtocol.textContent=CLIENT_PROFILE.homeKicker;
+  applyFeatureConfig();
 }
 let checkinSlidersPrimed=false;
 
@@ -1823,10 +1867,11 @@ function migrateStorageKeys(){
   copyStorageValueIfNeeded(sessionStorage,COACH_SESSION_KEY,LEGACY_COACH_SESSION_KEYS);
 }
 function defaultWeekZeroData(){
+  const weekZeroEnabled=FEATURE_CONFIG.weekZero!==false;
   return {
-    onboardingComplete:false,
-    submitted:false,
-    submittedAt:'',
+    onboardingComplete:!weekZeroEnabled||FEATURE_CONFIG.tallyOnboarding===false,
+    submitted:!weekZeroEnabled,
+    submittedAt:!weekZeroEnabled?new Date().toISOString():'',
     data:{
       client:{name:'',email:''},
       photos:{face:false,side:false,back:false,link:'',comment:''},
@@ -2291,6 +2336,10 @@ function buildWeekZeroLoadCards(){
   grid.dataset.ready='1';
 }
 function openOnboardingForm(){
+  if(FEATURE_CONFIG.tallyOnboarding===false){
+    markOnboardingComplete();
+    return;
+  }
   window.open(TALLY_ONBOARDING_URL,'_blank','noopener');
 }
 function markOnboardingComplete(){
