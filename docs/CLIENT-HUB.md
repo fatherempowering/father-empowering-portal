@@ -35,4 +35,3 @@ node scripts/sync-client-registry.js --dry-run
 ## Gestion de plusieurs clients
 
 La page offre une recherche par nom, slug, phase ou version, un filtre par statut et un tri par nom, date de mise à jour ou statut. Les liens utilisent des chemins relatifs afin de fonctionner autant sur un domaine personnalisé que sur un site GitHub Pages placé sous un sous-dossier.
-

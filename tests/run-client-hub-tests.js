@@ -92,4 +92,3 @@ if (failed) {
   process.exit(1);
 }
 console.log('\nAll client hub tests passed.');
-
