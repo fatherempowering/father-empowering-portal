@@ -26,6 +26,7 @@ function extractFunction(name) {
   const marker = 'function ' + name + '(';
   const start = source.indexOf(marker);
   if (start < 0) throw new Error('Missing function ' + name);
+  const declarationStart = source.slice(Math.max(0, start - 6), start) === 'async ' ? start - 6 : start;
   const brace = source.indexOf('{', start);
   let depth = 0;
   let quote = '';
@@ -43,7 +44,7 @@ function extractFunction(name) {
       continue;
     }
     if (char === '{') depth++;
-    if (char === '}' && --depth === 0) return source.slice(start, i + 1);
+    if (char === '}' && --depth === 0) return source.slice(declarationStart, i + 1);
   }
   throw new Error('Unclosed function ' + name);
 }
@@ -85,5 +86,43 @@ assert('photos-use-phase-archive-prefix', source.includes("'phase_'+slugPart(pha
 assert('transition-backup-is-written', source.includes('PHASE_TRANSITION_BACKUP_KEY'));
 assert('rollback-path-is-present', source.includes('rollbackLastPhaseTransition(before.training)'));
 
-if (failed) process.exit(1);
-console.log('\nAll phase engine tests passed.');
+const updateContext = {
+  pendingPortalUpdate: phase1v2,
+  currentPlanRecords() { return phase1v1; },
+  phaseTransitionRequired() { return false; },
+  phaseDescriptorForTrainingRecord() { return { id: 'phase-1', label: 'PHASE 1', order: 1 }; },
+  updateMessageFor() { return 'Program update'; },
+  async appConfirm() { return true; },
+  async transitionToTrainingPhase() {},
+  applyAndStorePortalUpdate(records) {
+    updateContext.pendingPortalUpdate = null;
+    return records;
+  },
+  D: { activePhase: { id: 'phase-1', label: 'PHASE 1', order: 1 } },
+  save() {},
+  async rollbackLastPhaseTransition() {},
+  console,
+  updateAlert: '',
+  async appAlert(title) { updateContext.updateAlert = title; },
+  refreshPortalAfterPlanUpdate() {},
+  navigator: {},
+  localStorage: { setItem() {} },
+  PLAN_NOTICE_KEY: 'test-plan-notice',
+  planFingerprint() { return 'p1-v2'; },
+  markSaveStatus() {}
+};
+vm.createContext(updateContext);
+vm.runInContext(extractFunction('confirmAndApplyPendingUpdate'), updateContext);
+
+(async () => {
+  try {
+    const applied = await updateContext.confirmAndApplyPendingUpdate();
+    assert('same-phase-update-survives-pending-state-clear', applied === true, 'Update returned false after clearing pending state.');
+    assert('same-phase-update-reaches-success-message', updateContext.updateAlert === 'PORTAL UPDATED', 'Unexpected alert: ' + updateContext.updateAlert);
+  } catch (error) {
+    fail('same-phase-update-survives-pending-state-clear', error.message);
+  }
+
+  if (failed) process.exit(1);
+  console.log('\nAll phase engine tests passed.');
+})();

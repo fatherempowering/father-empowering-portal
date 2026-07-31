@@ -1682,19 +1682,20 @@ function refreshPortalAfterPlanUpdate(){
   }catch(e){console.error('Plan refresh error',e);}
 }
 async function confirmAndApplyPendingUpdate(){
-  if(!pendingPortalUpdate)return false;
+  const updateRecords=pendingPortalUpdate;
+  if(!updateRecords)return false;
   const before=currentPlanRecords();
-  const isPhaseTransition=phaseTransitionRequired(pendingPortalUpdate,before);
-  const nextPhase=phaseDescriptorForTrainingRecord(pendingPortalUpdate.training);
+  const isPhaseTransition=phaseTransitionRequired(updateRecords,before);
+  const nextPhase=phaseDescriptorForTrainingRecord(updateRecords.training);
   const transitionNotice=isPhaseTransition?'\n\nYour current phase will be archived and '+nextPhase.label+' will start at Week 1.':'';
-  const ok=await appConfirm(isPhaseTransition?'NEW TRAINING PHASE':'PROTOCOL UPDATE',updateMessageFor(pendingPortalUpdate)+transitionNotice,{kicker:'COACHMAX UPDATE',confirmText:isPhaseTransition?'START NEW PHASE':'UPDATE NOW',confirmClass:'app-btn-success'});
+  const ok=await appConfirm(isPhaseTransition?'NEW TRAINING PHASE':'PROTOCOL UPDATE',updateMessageFor(updateRecords)+transitionNotice,{kicker:'COACHMAX UPDATE',confirmText:isPhaseTransition?'START NEW PHASE':'UPDATE NOW',confirmClass:'app-btn-success'});
   if(!ok)return false;
   let applied;
   try{
-    if(isPhaseTransition)await transitionToTrainingPhase(before.training,pendingPortalUpdate.training);
-    applied=applyAndStorePortalUpdate(pendingPortalUpdate);
-    if(!isPhaseTransition&&pendingPortalUpdate.training){
-      const updatedPhase=phaseDescriptorForTrainingRecord(pendingPortalUpdate.training);
+    if(isPhaseTransition)await transitionToTrainingPhase(before.training,updateRecords.training);
+    applied=applyAndStorePortalUpdate(updateRecords);
+    if(!isPhaseTransition&&updateRecords.training){
+      const updatedPhase=phaseDescriptorForTrainingRecord(updateRecords.training);
       if(updatedPhase&&D.activePhase&&D.activePhase.id===updatedPhase.id){
         D.activePhase=Object.assign({},D.activePhase,updatedPhase);
         save();
