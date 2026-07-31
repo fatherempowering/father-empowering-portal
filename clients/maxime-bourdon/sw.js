@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'client-maxime-bourdon-ms9936te';
+const CACHE_VERSION = 'client-maxime-bourdon-ms9a1igd';
 const CACHE_SCOPE_KEY = self.registration.scope.replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase()||'root';
 const CACHE_PREFIX = 'legacy-protocol-'+CACHE_SCOPE_KEY+'-';
 const CACHE_NAME = CACHE_PREFIX+CACHE_VERSION;
