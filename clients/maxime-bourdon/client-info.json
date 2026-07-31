@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "fe-client-info-v2",
+  "updatedAt": "2026-07-31T16:09:11.620Z",
+  "client": {
+    "id": "clt_89bcb047f2dc",
+    "slug": "maxime-bourdon",
+    "displayName": "Maxime Bourdon",
+    "shortName": "Max",
+    "language": "fr-ca",
+    "timezone": "America/Montreal",
+    "startDate": "2026-07-31",
+    "coachingState": {
+      "phase": "onboarding",
+      "initialStatus": "week-zero-required"
+    }
+  },
+  "portal": {
+    "appTitle": "Legacy Protocol",
+    "documentTitle": "Father Empowering Protocol - Maxime Bourdon",
+    "protocolLabel": "FATHER EMPOWERING - MAXIME BOURDON",
+    "homeKicker": "The journey shapes the legacy",
+    "sidebarTitleHtml": "FE<br>PROTOCOL",
+    "sidebarSubtitle": "MAXIME BOURDON - ONBOARDING",
+    "messageSignature": "- Coach Max",
+    "metadata": {
+      "protocolVersionLabel": "ONBOARDING",
+      "lastUpdatedLabel": "2026-07-31"
+    }
+  },
+  "features": {
+    "training": true,
+    "nutrition": true,
+    "weekZero": true,
+    "checkins": true,
+    "progression": true,
+    "history": true,
+    "resultPoster": true,
+    "tallyOnboarding": true,
+    "coachReports": true,
+    "installPrompt": true
+  },
+  "measurements": {
+    "fields": [
+      {
+        "key": "taille",
+        "label": "Waist",
+        "goal": "down",
+        "weight": 2
+      },
+      {
+        "key": "poitrine",
+        "label": "Chest",
+        "goal": "up",
+        "weight": 1
+      },
+      {
+        "key": "bras",
+        "label": "Flex Arm",
+        "goal": "up",
+        "weight": 1
+      },
+      {
+        "key": "cuisse",
+        "label": "Thigh",
+        "goal": "up",
+        "weight": 1
+      },
+      {
+        "key": "mollet",
+        "label": "Calf",
+        "goal": "up",
+        "weight": 1
+      }
+    ],
+    "iconMap": {
+      "poids": "bodyweight",
+      "taille": "waist",
+      "poitrine": "chest",
+      "bras": "arm",
+      "cuisse": "thigh",
+      "mollet": "calf",
+      "score": "waist"
+    }
+  },
+  "integrations": {
+    "tally": {
+      "publicFormUrl": "https://tally.so/r/44zdvk"
+    },
+    "coachmax": {
+      "environment": "production",
+      "endpointRef": "legacy-telegram-backend"
+    }
+  },
+  "migration": {
+    "enabled": false,
+    "reason": "",
+    "sourcePortal": "",
+    "preserveOriginalData": true,
+    "legacyStorage": {
+      "localStorageKeys": [],
+      "sessionStorageKeys": [],
+      "indexedDbNames": []
+    }
+  },
+  "storage": {
+    "namespace": "maxime_bourdon",
+    "strategy": "client-namespace-v1",
+    "overrides": {}
+  },
+  "environment": {
+    "profile": "production",
+    "coachMaxEndpointRef": "legacy-telegram-backend",
+    "trainingProgramUrl": "training-program.json",
+    "nutritionProgramUrl": "nutrition-program.json"
+  },
+  "notes": {
+    "clientIdVsSlug": "client.id is permanent and should never change. client.slug is public and used for URLs/storage naming; changing it after launch requires an explicit migration.",
+    "securityReminder": "Do not place API tokens, bot tokens, private URLs or server credentials in this file."
+  }
+}
