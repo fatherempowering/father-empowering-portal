@@ -66,6 +66,9 @@ const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
 assert('registry-has-one-client', registry.clients.length === 1);
 assert('registry-has-no-email', !JSON.stringify(registry).toLowerCase().includes('email'));
 assert('registry-has-permanent-url-path', registry.clients[0].urlPath === '/clients/emile-test/');
+assert('registry-has-card-summary', registry.clients[0].phaseId === 'phase-1' && registry.clients[0].phaseLabel === 'PHASE 1' && registry.clients[0].totalWeeks === 0);
+assert('registry-has-program-versions', registry.clients[0].programVersion === 'training-emile-test-onboarding-v1' && registry.clients[0].nutritionVersion === 'nutrition-emile-test-onboarding-v1');
+assert('registry-has-public-update-date', registry.clients[0].updatedAt === registry.updatedAt);
 
 const validation = run(validator, [clientDir, '--strict']);
 assert('created-client-passes-strict-validation', validation.status === 0, output(validation));

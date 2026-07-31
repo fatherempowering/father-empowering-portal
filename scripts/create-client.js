@@ -191,8 +191,16 @@ try {
     shortName,
     namespace,
     status: 'onboarding',
+    phaseId: training.training.phase.id,
+    phaseLabel: training.training.phase.label,
+    phaseOrder: training.training.phase.order,
+    programVersion: training.programVersion,
+    totalWeeks: training.training.weeks.length,
+    nutritionEnabled: !args.disableNutrition,
+    nutritionVersion: args.disableNutrition ? '' : ('nutrition-' + slug + '-onboarding-v1'),
     createdAt: now,
     startDate,
+    updatedAt: now,
     path: 'clients/' + slug,
     urlPath: '/clients/' + slug + '/'
   };

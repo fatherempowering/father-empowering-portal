@@ -238,6 +238,25 @@ fs.writeFileSync(path.join(outputDir, 'sw.js'), sw);
 
 runValidator(outputDir, true);
 
+const canonicalClientsDir = path.join(repoRoot, 'clients');
+const relativeClientDir = path.relative(canonicalClientsDir, packageDir);
+const isCanonicalClient = outputDir === packageDir
+  && relativeClientDir
+  && !relativeClientDir.startsWith('..')
+  && !path.isAbsolute(relativeClientDir)
+  && !relativeClientDir.includes(path.sep)
+  && !path.basename(packageDir).startsWith('.');
+if (isCanonicalClient) {
+  const registryPath = path.join(canonicalClientsDir, 'registry.json');
+  const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+  const registered = Array.isArray(registry.clients) && registry.clients.some((entry) => entry.id === client.id && entry.slug === client.slug);
+  if (!registered) throw new Error('Canonical client is missing from clients/registry.json.');
+  const sync = spawnSync(process.execPath, [path.join(repoRoot, 'scripts', 'sync-client-registry.js')], { encoding: 'utf8' });
+  if (sync.stdout) process.stdout.write(sync.stdout);
+  if (sync.stderr) process.stderr.write(sync.stderr);
+  if (sync.status !== 0) throw new Error('Client registry synchronization failed.');
+}
+
 console.log('PORTAL READY');
 console.log('Client:  ' + client.displayName);
 console.log('ID:      ' + client.id);

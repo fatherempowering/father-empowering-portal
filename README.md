@@ -14,6 +14,7 @@ Portail maître utilisé pour générer et maintenir les portails clients Father
 - `program.example.json` : ancien format combiné conservé temporairement comme référence; il n’est plus accepté par le générateur.
 - `templates/client-package/` : modèle du futur paquet client à trois fichiers.
 - `clients/registry.json` : registre public des identités et chemins clients.
+- `clients/index.html` : page mère et cartes clients générées depuis le registre.
 - `scripts/` : outils de validation des paquets clients.
 - `tests/` : tests automatisés des outils de validation.
 - `measure-icons/` : icônes des mesures corporelles.
@@ -67,6 +68,7 @@ node tests/run-create-client-tests.js
 node tests/run-training-model-tests.js
 node tests/run-set-results-tests.js
 node tests/run-pwa-offline-tests.js
+node tests/run-client-hub-tests.js
 ```
 
 ## Règles importantes
@@ -92,4 +94,5 @@ node tests/run-pwa-offline-tests.js
 - [Modèle Training officiel](docs/TRAINING-MODEL.md)
 - [Formulaire Training pour Coach Max](docs/TRAINING-INTAKE-TEMPLATE.md)
 - [PWA et fonctionnement hors ligne](docs/PWA-OFFLINE.md)
+- [Page mère et cartes clients](docs/CLIENT-HUB.md)
 - [Notes de version](docs/releases/)

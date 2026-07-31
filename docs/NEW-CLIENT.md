@@ -45,6 +45,7 @@ La commande :
 6. inscrit le client au registre seulement après réussite;
 7. supprime automatiquement toute création temporaire en cas d’échec;
 8. affiche `CLIENT PORTAL READY` et le chemin permanent.
+9. rend immédiatement la carte du client disponible sur la page mère `/clients/`.
 
 Le registre `clients/registry.json` ne contient que les informations publiques nécessaires à l’administration technique des portails.
 
