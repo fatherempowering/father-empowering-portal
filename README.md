@@ -13,6 +13,7 @@ Portail maître utilisé pour générer et maintenir les portails clients Father
 - `nutrition-program.json` : programme nutritionnel vierge chargé par le portail maître.
 - `program.example.json` : ancien format combiné conservé temporairement comme référence; il n’est plus accepté par le générateur.
 - `templates/client-package/` : modèle du futur paquet client à trois fichiers.
+- `clients/registry.json` : registre public des identités et chemins clients.
 - `scripts/` : outils de validation des paquets clients.
 - `tests/` : tests automatisés des outils de validation.
 - `measure-icons/` : icônes des mesures corporelles.
@@ -44,6 +45,12 @@ Générer ou mettre à jour son portail dans le même dossier :
 node generate-portal.js clients/<client-slug>
 ```
 
+Créer un nouveau client et son portail initial :
+
+```bash
+node scripts/create-client.js --name "Jean Tremblay" --short-name "Jean" --language fr-ca
+```
+
 Générer une prévisualisation dans un autre dossier :
 
 ```bash
@@ -56,6 +63,7 @@ Exécuter les tests :
 node tests/run-validation-tests.js
 node tests/run-phase-engine-tests.js
 node tests/run-generator-tests.js
+node tests/run-create-client-tests.js
 ```
 
 ## Règles importantes
@@ -77,4 +85,5 @@ node tests/run-generator-tests.js
 - [Mises à jour modulaires](docs/MODULAR-UPDATES.md)
 - [Paquet client officiel](docs/CLIENT-PACKAGE.md)
 - [Procédure du paquet client](templates/client-package/onboarding-notes.example.md)
+- [Création simplifiée d’un client](docs/NEW-CLIENT.md)
 - [Notes de version](docs/releases/)
