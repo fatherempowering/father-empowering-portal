@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "programVersion": "training-example-phase-1-v1",
+  "updatedAt": "2026-07-31T00:00:00-04:00",
+  "training": {
+    "phase": {
+      "id": "phase-1",
+      "label": "PHASE 1 — TRANSITION",
+      "order": 1,
+      "objective": "Build repeatable execution and calibrate loads."
+    },
+    "progression": {
+      "mode": "coach-confirmed",
+      "clientConfirmationRequired": true,
+      "rules": [
+        "The portal may propose progression but never changes the prescription automatically.",
+        "Coach or client confirmation is required before using a higher target load."
+      ]
+    },
+    "resultTracking": {
+      "scope": "per-set",
+      "perSetFields": ["load", "reps", "rir", "pain", "notes", "machineSetup", "calibrationNotes"]
+    },
+    "sessionCatalog": [
+      {"id":"upper-a","label":"SESSION A","title":"Upper A","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"MON"},"order":1},
+      {"id":"lower-a","label":"SESSION B","title":"Lower A","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"TUE"},"order":2},
+      {"id":"upper-b","label":"SESSION C","title":"Upper B","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"THU"},"order":3},
+      {"id":"lower-b","label":"SESSION D","title":"Lower B","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"FRI"},"order":4},
+      {"id":"optional-conditioning","label":"OPTIONAL","title":"Optional Conditioning","type":"training","required":false,"schedule":{"mode":"flexible"},"order":5},
+      {"id":"active-recovery","label":"ACTIVE RECOVERY","title":"Zone 2 Walk or Bike","type":"active-recovery","required":true,"schedule":{"mode":"suggested","suggestedDay":"WED"},"order":6},
+      {"id":"complete-rest","label":"COMPLETE REST","title":"Complete Rest","type":"complete-rest","required":true,"schedule":{"mode":"suggested","suggestedDay":"SUN"},"order":7}
+    ],
+    "complementaryProtocols": [
+      {
+        "id": "posing-foundations",
+        "type": "posing",
+        "title": "Posing Foundations",
+        "required": false,
+        "scheduleMode": "flexible",
+        "frequencyPerWeek": 2,
+        "durationMinutes": 15,
+        "instructions": ["Complete when recovered.", "Do not attach to a mandatory training day."]
+      }
+    ],
+    "defaultPhase": "TRANSITION",
+    "defaultDesc": "Two-week transition block.",
+    "defaultMessage": "Execute the prescription and record every working set.",
+    "keyLifts": [
+      {"key":"incline_press_machine","name":"Incline Press Machine"},
+      {"key":"hack_squat","name":"Hack Squat"}
+    ],
+    "weeks": [
+      {
+        "week": 1,
+        "label": "CALIBRATION",
+        "phase": "TRANSITION",
+        "objective": "Establish repeatable loads and full range of motion.",
+        "targetRir": 3,
+        "sessions": {
+          "upper-a": {
+            "day": "MON · UPPER A",
+            "title": "UPPER A",
+            "warmup": "5 min bike · shoulder activation",
+            "blocks": [{"label":"MAIN","exercises":[{"key":"incline_press_machine","name":"Incline Press Machine","note":"Controlled range.","prescription":{"sets":3,"reps":"8-10","targetRir":3,"restSeconds":120,"tempo":"3-1-1-0","loadTarget":"Calibration load","unit":"lb","machineSetup":"Seat 4 · neutral handles","calibrationNotes":"Keep shoulder blades fixed","progression":{"type":"double-progression","rule":"Propose +5 lb after all sets reach 10 reps.","confirmationRequired":true}},"substitutions":["incline_dumbbell_press"]}]}]
+          },
+          "lower-a": {
+            "day": "TUE · LOWER A",
+            "title": "LOWER A",
+            "warmup": "Hip and ankle preparation",
+            "blocks": [{"label":"MAIN","exercises":[{"key":"hack_squat","name":"Hack Squat","note":"Pain-free depth.","prescription":{"sets":3,"reps":"8-10","targetRir":3,"restSeconds":150,"tempo":"3-1-1-0","loadTarget":"Calibration load","unit":"lb","machineSetup":"Footplate mark 3","calibrationNotes":"Record stance and depth","progression":{"type":"double-progression","rule":"Propose the smallest load increase after confirmation.","confirmationRequired":true}}}]}]
+          },
+          "upper-b": {
+            "day": "THU · UPPER B",
+            "title": "UPPER B",
+            "blocks": [{"label":"MAIN","exercises":[{"key":"chest_supported_row","name":"Chest Supported Row","prescription":{"sets":3,"reps":"10-12","restSeconds":90,"tempo":"2-1-2-0","loadTarget":"Technical load","unit":"lb","machineSetup":"Chest pad 5","calibrationNotes":"No lumbar extension","progression":{"type":"repetition","rule":"Add reps inside the range only after confirmation.","confirmationRequired":true}}}]}]
+          },
+          "lower-b": {
+            "day": "FRI · LOWER B",
+            "title": "LOWER B",
+            "blocks": [{"label":"MAIN","exercises":[{"key":"romanian_deadlift","name":"Romanian Deadlift","prescription":{"sets":3,"reps":"8","restSeconds":150,"tempo":"3-1-1-0","loadTarget":"Technical load","unit":"lb","machineSetup":"","calibrationNotes":"Stop before lumbar compensation","progression":{"type":"load","rule":"Coach confirms any load increase.","confirmationRequired":true}}}]}]
+          },
+          "optional-conditioning": {
+            "day": "FLEXIBLE · OPTIONAL",
+            "title": "OPTIONAL CONDITIONING",
+            "blocks": [{"label":"CONDITIONING","exercises":[{"key":"easy_bike","name":"Easy Bike","prescription":{"sets":1,"reps":"20 min","targetRir":4,"restSeconds":0,"tempo":"","loadTarget":"Zone 2","unit":"min","machineSetup":"Record seat height","calibrationNotes":"Conversational pace","progression":{"type":"duration","rule":"Add time only after confirmation.","confirmationRequired":true}}}]}]
+          },
+          "active-recovery": {
+            "day": "WED · ACTIVE RECOVERY",
+            "title": "ACTIVE RECOVERY",
+            "blocks": [{"label":"RECOVERY","exercises":[{"key":"recovery_walk","name":"Recovery Walk","prescription":{"sets":1,"reps":"30 min","targetRir":5,"restSeconds":0,"tempo":"","loadTarget":"Easy pace","unit":"min","machineSetup":"","calibrationNotes":"Nasal breathing","progression":{"type":"none","rule":"No automatic progression.","confirmationRequired":true}}}]}]
+          },
+          "complete-rest": {"day":"SUN · COMPLETE REST","title":"COMPLETE REST","blocks":[]}
+        }
+      },
+      {
+        "week": 2,
+        "label": "CONSOLIDATION",
+        "phase": "TRANSITION",
+        "objective": "Repeat the movements with one fewer rep in reserve.",
+        "targetRir": 2,
+        "sessions": {
+          "upper-a": {"day":"MON · UPPER A","title":"UPPER A","warmup":"5 min bike · shoulder activation","blocks":[{"label":"MAIN","exercises":[{"key":"incline_press_machine","name":"Incline Press Machine","note":"Keep Week 1 settings.","prescription":{"sets":3,"reps":"8-10","targetRir":2,"restSeconds":120,"tempo":"3-1-1-0","loadTarget":"Confirmed Week 1 load","unit":"lb","machineSetup":"Seat 4 · neutral handles","calibrationNotes":"Change only after confirmation","progression":{"type":"double-progression","rule":"Use a proposed increase only after confirmation.","confirmationRequired":true}}}]}]},
+          "lower-a": {"day":"TUE · LOWER A","title":"LOWER A","warmup":"Hip and ankle preparation","blocks":[{"label":"MAIN","exercises":[{"key":"hack_squat","name":"Hack Squat","prescription":{"sets":3,"reps":"8-10","targetRir":2,"restSeconds":150,"tempo":"3-1-1-0","loadTarget":"Confirmed Week 1 load","unit":"lb","machineSetup":"Footplate mark 3","calibrationNotes":"Repeat Week 1 stance","progression":{"type":"double-progression","rule":"Use a proposed increase only after confirmation.","confirmationRequired":true}}}]}]},
+          "upper-b": {"day":"THU · UPPER B","title":"UPPER B","blocks":[{"label":"MAIN","exercises":[{"key":"chest_supported_row","name":"Chest Supported Row","prescription":{"sets":3,"reps":"10-12","targetRir":2,"restSeconds":90,"tempo":"2-1-2-0","loadTarget":"Confirmed Week 1 load","unit":"lb","machineSetup":"Chest pad 5","calibrationNotes":"Repeat Week 1 setup","progression":{"type":"repetition","rule":"Use proposed reps only after confirmation.","confirmationRequired":true}}}]}]},
+          "lower-b": {"day":"FRI · LOWER B","title":"LOWER B","blocks":[{"label":"MAIN","exercises":[{"key":"romanian_deadlift","name":"Romanian Deadlift","prescription":{"sets":3,"reps":"8","targetRir":2,"restSeconds":150,"tempo":"3-1-1-0","loadTarget":"Confirmed Week 1 load","unit":"lb","machineSetup":"","calibrationNotes":"Preserve Week 1 range","progression":{"type":"load","rule":"Coach confirms any load increase.","confirmationRequired":true}}}]}]},
+          "optional-conditioning": {"day":"FLEXIBLE · OPTIONAL","title":"OPTIONAL CONDITIONING","blocks":[{"label":"CONDITIONING","exercises":[{"key":"easy_bike","name":"Easy Bike","prescription":{"sets":1,"reps":"25 min","targetRir":4,"restSeconds":0,"tempo":"","loadTarget":"Zone 2","unit":"min","machineSetup":"Use recorded seat height","calibrationNotes":"Conversational pace","progression":{"type":"duration","rule":"This duration was confirmed by Coach Max.","confirmationRequired":true}}}]}]},
+          "active-recovery": {"day":"WED · ACTIVE RECOVERY","title":"ACTIVE RECOVERY","blocks":[{"label":"RECOVERY","exercises":[{"key":"recovery_walk","name":"Recovery Walk","prescription":{"sets":1,"reps":"30 min","targetRir":5,"restSeconds":0,"tempo":"","loadTarget":"Easy pace","unit":"min","machineSetup":"","calibrationNotes":"Nasal breathing","progression":{"type":"none","rule":"No automatic progression.","confirmationRequired":true}}}]}]},
+          "complete-rest": {"day":"SUN · COMPLETE REST","title":"COMPLETE REST","blocks":[]}
+        }
+      }
+    ]
+  },
+  "updateTitle": "CoachMax has prepared Phase 1.",
+  "updateMessage": "Your two-week transition block is ready.",
+  "releaseNotes": ["Two distinct weeks", "Four required sessions", "One optional session", "Flexible posing protocol"]
+}

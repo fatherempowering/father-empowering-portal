@@ -64,6 +64,7 @@ node tests/run-validation-tests.js
 node tests/run-phase-engine-tests.js
 node tests/run-generator-tests.js
 node tests/run-create-client-tests.js
+node tests/run-training-model-tests.js
 ```
 
 ## Règles importantes
@@ -86,4 +87,6 @@ node tests/run-create-client-tests.js
 - [Paquet client officiel](docs/CLIENT-PACKAGE.md)
 - [Procédure du paquet client](templates/client-package/onboarding-notes.example.md)
 - [Création simplifiée d’un client](docs/NEW-CLIENT.md)
+- [Modèle Training officiel](docs/TRAINING-MODEL.md)
+- [Formulaire Training pour Coach Max](docs/TRAINING-INTAKE-TEMPLATE.md)
 - [Notes de version](docs/releases/)

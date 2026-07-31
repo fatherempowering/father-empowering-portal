@@ -1567,6 +1567,13 @@ function applyPortalPlans(trainingRecord,nutritionRecord){
     SEANCE_IDS=catalog.length?catalog.map(item=>String(item.id||'').trim().toLowerCase()).filter(Boolean):
       (Array.isArray(TRAINING_CONFIG.sessionIds)&&TRAINING_CONFIG.sessionIds.length?TRAINING_CONFIG.sessionIds:['a','b','c','d','e','f','g']);
     SEANCE_DAYS=TRAINING_CONFIG.sessionDays||{};
+    catalog.forEach(item=>{
+      const id=String(item&&item.id||'').trim().toLowerCase();
+      if(!id||SEANCE_DAYS[id])return;
+      const schedule=item.schedule&&typeof item.schedule==='object'?item.schedule:{};
+      const day=schedule.suggestedDay||((schedule.mode==='flexible')?'FLEXIBLE':'DAY');
+      SEANCE_DAYS[id]=String(day).toUpperCase()+' · '+String(item.title||item.label||id).toUpperCase();
+    });
     TOTAL_WEEKS=Array.isArray(TRAINING_CONFIG.weeks)&&TRAINING_CONFIG.weeks.length?TRAINING_CONFIG.weeks.length:(parseInt(CLIENT_PROFILE.totalWeeks)||12);
     MAX_CHECKINS=Math.max(TOTAL_WEEKS,parseInt(CHECKIN_CONFIG.maxCheckins)||0,1);
     WEEKS=buildWeeks();
@@ -2023,8 +2030,17 @@ function blankSession(sid){
   return {day,title:day,warmup:'',cardio:false,blocs:[]};
 }
 function normalizeExercise(ex,week,sid,blockIndex,exerciseIndex){
+  const prescription=ex.prescription&&typeof ex.prescription==='object'?ex.prescription:ex;
   const key=ex.key||('w'+week+'_'+sid+'_b'+(blockIndex+1)+'_e'+(exerciseIndex+1)+'_'+slugPart(ex.name));
-  return _e(ex.name||'Exercise',ex.note||'',ex.sets||'',ex.reps||'',key,ex.target||'',ex.unit||'lbs');
+  const details=[];
+  if(ex.note)details.push(ex.note);
+  if(prescription.targetRir!=null)details.push('Target RIR '+prescription.targetRir);
+  if(prescription.restSeconds!=null)details.push('Rest '+prescription.restSeconds+' sec');
+  if(prescription.tempo)details.push('Tempo '+prescription.tempo);
+  if(prescription.machineSetup)details.push('Machine: '+prescription.machineSetup);
+  if(prescription.calibrationNotes)details.push('Calibration: '+prescription.calibrationNotes);
+  if(prescription.technique)details.push(prescription.technique);
+  return _e(ex.name||'Exercise',details.join(' · '),prescription.sets||'',prescription.reps||'',key,prescription.loadTarget||ex.target||'',prescription.unit||ex.unit||'lbs');
 }
 function normalizeBlock(block,week,sid,blockIndex){
   const rawExercises=block.exercises||block.exs||[];
@@ -2984,7 +3000,11 @@ function sessionHasProgramContent(S){
 function plannedSessionIdsForWeek(week){
   const W=WEEKS[week];
   if(!W||!W.seances)return [];
-  return SEANCE_IDS.filter(sid=>sessionHasProgramContent(W.seances[sid]));
+  const catalog=Array.isArray(TRAINING_CONFIG.sessionCatalog)?TRAINING_CONFIG.sessionCatalog:[];
+  return SEANCE_IDS.filter(sid=>{
+    const definition=catalog.find(item=>String(item&&item.id||'').toLowerCase()===sid);
+    return (!definition||definition.required!==false)&&sessionHasProgramContent(W.seances[sid]);
+  });
 }
 function weekDoneCount(week){
   if(parseInt(week)===0)return WEEK_ZERO_STEPS.filter(s=>['complete','sent'].includes(getWeekZeroStepStatus(s.key))).length;

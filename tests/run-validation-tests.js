@@ -87,14 +87,17 @@ const baseTraining = {
   updatedAt: '2026-07-21T00:00:00-04:00',
   training: {
     phase: { id: 'phase-1', label: 'PHASE 1', order: 1 },
+    progression: { mode: 'coach-confirmed', clientConfirmationRequired: true, rules: [] },
+    resultTracking: { scope: 'per-set', perSetFields: ['load', 'reps', 'rir', 'pain', 'notes'] },
     sessionCatalog: [
-      { id: 'a', label: 'SESSION A', title: 'Strength A', suggestedDay: 'MON', order: 1 },
-      { id: 'b', label: 'SESSION B', title: 'Strength B', suggestedDay: 'WED', order: 2 }
+      { id: 'a', label: 'SESSION A', title: 'Strength A', type: 'training', required: true, schedule: { mode: 'suggested', suggestedDay: 'MON' }, order: 1 },
+      { id: 'b', label: 'SESSION B', title: 'Strength B', type: 'training', required: true, schedule: { mode: 'suggested', suggestedDay: 'WED' }, order: 2 }
     ],
     weeks: [
       {
         week: 1,
         phase: 'FOUNDATION',
+        targetRir: 3,
         sessions: {
           a: {
             title: 'Strength A',
@@ -102,7 +105,7 @@ const baseTraining = {
               {
                 label: 'MAIN',
                 exercises: [
-                  { name: 'Trap Bar Deadlift', key: 'trap_bar_deadlift', sets: 3, reps: '6' }
+                  { name: 'Trap Bar Deadlift', key: 'trap_bar_deadlift', prescription: { sets: 3, reps: '6', unit: 'lb' } }
                 ]
               }
             ]
@@ -112,6 +115,7 @@ const baseTraining = {
       {
         week: 2,
         phase: 'FOUNDATION',
+        targetRir: 2,
         sessions: {
           b: {
             title: 'Strength B',
@@ -119,7 +123,7 @@ const baseTraining = {
               {
                 label: 'MAIN',
                 exercises: [
-                  { name: 'DB Bench Press', key: 'db_bench_press', sets: 3, reps: '8' }
+                  { name: 'DB Bench Press', key: 'db_bench_press', prescription: { sets: 3, reps: '8', unit: 'lb' } }
                 ]
               }
             ]

@@ -6,31 +6,48 @@
     "phase": {
       "id": "phase-1",
       "label": "PHASE 1",
-      "order": 1
+      "order": 1,
+      "objective": "Built after Week 0 review"
+    },
+    "progression": {
+      "mode": "coach-confirmed",
+      "clientConfirmationRequired": true,
+      "rules": []
+    },
+    "resultTracking": {
+      "scope": "per-set",
+      "perSetFields": ["load", "reps", "rir", "pain", "notes", "machineSetup", "calibrationNotes"]
     },
     "sessionCatalog": [
       {
         "id": "a",
         "label": "SESSION A",
         "title": "Upper + Hinge Strength",
-        "suggestedDay": "MON",
+        "type": "training",
+        "required": true,
+        "schedule": {"mode": "suggested", "suggestedDay": "MON"},
         "order": 1
       },
       {
         "id": "b",
         "label": "SESSION B",
         "title": "Lower + Push + Unilateral",
-        "suggestedDay": "WED",
+        "type": "training",
+        "required": true,
+        "schedule": {"mode": "suggested", "suggestedDay": "WED"},
         "order": 2
       },
       {
         "id": "c",
         "label": "SESSION C",
         "title": "Conditioning",
-        "suggestedDay": "FRI",
+        "type": "training",
+        "required": true,
+        "schedule": {"mode": "suggested", "suggestedDay": "FRI"},
         "order": 3
       }
     ],
+    "complementaryProtocols": [],
     "defaultPhase": "PROTOCOL BUILD",
     "defaultDesc": "Your personalized training will be built after Coach Max reviews your Week 0 data.",
     "defaultMessage": "Complete Week 0 first. Your training plan will appear here once Coach Max builds the protocol.",

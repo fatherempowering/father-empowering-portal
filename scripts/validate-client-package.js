@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { validateTrainingModel } = require('./validate-training-model');
 
 const cliArgs = process.argv.slice(2);
 const strict = cliArgs.includes('--strict');
@@ -314,6 +315,10 @@ function getTrainingConfig(data) {
 function validateTraining(record) {
   if (!record) return null;
   const data = record.data;
+  const officialModel = validateTrainingModel(data, { allowEmptyWeeks: true, allowLegacy: true });
+  officialModel.errors.forEach((message) => errors.push('training-program: ' + message));
+  officialModel.warnings.forEach((message) => warnings.push('training-program: ' + message));
+  officialModel.infos.forEach((message) => infos.push('training-program: ' + message));
   if (data.schemaVersion !== 1) errors.push('training-program: schemaVersion must be 1');
   if (!data.programVersion) errors.push('training-program: programVersion is required');
   if (!data.updatedAt || typeof data.updatedAt !== 'string') errors.push('training-program: updatedAt is required');
