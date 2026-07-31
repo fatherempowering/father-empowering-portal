@@ -16,7 +16,7 @@
     },
     "resultTracking": {
       "scope": "per-set",
-      "perSetFields": ["load", "reps", "rir", "pain", "notes"]
+      "perSetFields": ["load", "reps", "rir"]
     },
     "sessionCatalog": [
       {

@@ -70,7 +70,11 @@ La cible `week.targetRir` s’applique par défaut. `prescription.targetRir` la 
 
 ## Résultats
 
-`training.resultTracking.perSetFields` décrit les données que le portail doit recueillir pour chaque série : charge, répétitions, RIR, douleur et notes.
+`training.resultTracking.perSetFields` décrit les données que le portail doit recueillir pour chaque série : charge, répétitions et RIR.
+
+La prescription reste immuable. Les résultats sont préremplis à partir des cibles, puis modifiables indépendamment pour chaque série. La douleur ou une observation générale demeure dans la note de séance existante.
+
+La consigne visible d’un exercice doit rester courte. Utiliser `cue` pour une seule instruction immédiatement utile pendant l’effort; les longs paragraphes ne font pas partie du modèle mobile officiel.
 
 Les unités officielles sont `lb`, `min`, `sec`, `distance` et `level`. Les kilogrammes, réglages de machines et notes de calibration ne font pas partie du modèle Training final.
 

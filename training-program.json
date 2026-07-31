@@ -16,7 +16,7 @@
     },
     "resultTracking": {
       "scope": "per-set",
-      "perSetFields": ["load", "reps", "rir", "pain", "notes"]
+      "perSetFields": ["load", "reps", "rir"]
     },
     "sessionCatalog": [
       {"id":"a","label":"SESSION A","title":"Training A","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"MON"},"order":1},

@@ -1,6 +1,6 @@
 const SESSION_TYPES = new Set(['training', 'active-recovery', 'complete-rest', 'posing', 'mobility']);
 const SCHEDULE_MODES = new Set(['fixed', 'suggested', 'flexible']);
-const RESULT_FIELDS = new Set(['load', 'reps', 'rir', 'pain', 'notes']);
+const RESULT_FIELDS = new Set(['load', 'reps', 'rir']);
 const TRAINING_UNITS = new Set(['lb', 'min', 'sec', 'distance', 'level']);
 
 function isObject(value) {
@@ -60,7 +60,7 @@ function validateTrainingModel(data, options = {}) {
   else {
     if (tracking.scope !== 'per-set') errors.push('training.resultTracking.scope must be "per-set".');
     const fields = Array.isArray(tracking.perSetFields) ? tracking.perSetFields : [];
-    ['load', 'reps', 'rir', 'pain', 'notes'].forEach((field) => {
+    ['load', 'reps', 'rir'].forEach((field) => {
       if (!fields.includes(field)) errors.push(`training.resultTracking.perSetFields must include "${field}".`);
     });
     fields.filter((field) => !RESULT_FIELDS.has(field)).forEach((field) => (allowLegacy ? warnings : errors).push(`Unknown result field "${field}" is not part of the official model.`));
@@ -123,6 +123,8 @@ function validateTrainingModel(data, options = {}) {
           if (exerciseKeys.has(exercise.key) && exerciseKeys.get(exercise.key) !== exercise.name) errors.push(`Exercise key "${exercise.key}" refers to more than one exercise name.`);
           exerciseKeys.set(exercise.key, exercise.name);
           if (!String(exercise.name || '').trim()) errors.push(`${exerciseLabel}.name is required.`);
+          const cue=String(exercise.cue||exercise.note||'').trim();
+          if(cue.length>80)(allowLegacy?warnings:errors).push(`${exerciseLabel}.cue must remain 80 characters or fewer for mobile readability.`);
           ['results', 'actuals', 'completedSets', 'actualLoad', 'actualReps', 'actualRir', 'painResult'].forEach((field) => {
             if (Object.prototype.hasOwnProperty.call(exercise, field)) errors.push(`${exerciseLabel}.${field} is a result and must not appear in training-program.json.`);
           });

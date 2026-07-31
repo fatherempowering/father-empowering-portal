@@ -65,6 +65,7 @@ node tests/run-phase-engine-tests.js
 node tests/run-generator-tests.js
 node tests/run-create-client-tests.js
 node tests/run-training-model-tests.js
+node tests/run-set-results-tests.js
 ```
 
 ## Règles importantes

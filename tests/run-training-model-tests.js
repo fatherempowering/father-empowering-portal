@@ -51,20 +51,28 @@ assert('posing-is-flexible', example.training.complementaryProtocols.some((item)
 assert('week-rir-can-change', example.training.weeks[0].targetRir !== example.training.weeks[1].targetRir);
 assert('prescription-and-results-are-separated', !JSON.stringify(example).includes('actualLoad'));
 assert('progression-requires-confirmation', example.training.progression.mode === 'coach-confirmed' && example.training.progression.clientConfirmationRequired === true);
-assert('per-set-results-are-declared', ['load', 'reps', 'rir', 'pain', 'notes'].every((field) => example.training.resultTracking.perSetFields.includes(field)));
+assert('per-set-results-are-declared', ['load', 'reps', 'rir'].every((field) => example.training.resultTracking.perSetFields.includes(field)));
 
-const portal = {};
+const portal = { configuredWeek() { return example.training.weeks[0]; } };
 vm.createContext(portal);
+['uniqueList', 'phaseId', 'trainingSessionCatalog', 'trainingSessionIds', 'trainingSessionDays'].forEach((name) => {
+  vm.runInContext(extractFunction(name), portal);
+});
 vm.runInContext(extractFunction('_e'), portal);
 vm.runInContext(extractFunction('normalizeExercise'), portal);
 const canonicalExercise = example.training.weeks[0].sessions['upper-a'].blocks[0].exercises[0];
 const normalized = portal.normalizeExercise(canonicalExercise, 1, 'upper-a', 0, 0);
 assert('portal-reads-canonical-prescription', normalized.sets === 3 && normalized.reps === '8-10' && normalized.target === 'Calibration load' && normalized.unit === 'lb');
-assert('portal-displays-rir-rest-and-tempo', ['Target RIR 3', 'Rest 120 sec', 'Tempo 3-1-1-0'].every((part) => normalized.note.includes(part)), normalized.note);
+assert('portal-displays-rir-rest-and-tempo', ['RIR 3', 'Rest: 120 sec', 'Tempo 3-1-1-0'].every((part) => normalized.note.includes(part)), normalized.note);
 assert('optional-session-is-excluded-from-required-completion', portalSource.includes('definition.required!==false'));
+assert('portal-starts-from-canonical-session-catalog', JSON.stringify(portal.trainingSessionIds(example.training)) === JSON.stringify(example.training.sessionCatalog.map((item) => item.id)));
+assert('portal-builds-session-labels-from-catalog', portal.trainingSessionDays(example.training)['upper-a'] === 'MON · UPPER A');
+assert('portal-creates-panels-for-canonical-session-ids', portalSource.includes('function ensureTrainingSessionPanels()') && portalSource.includes("panel.id='sub-'+sid"));
 
 invalid('automatic-progression-is-blocked', (value) => { value.training.progression.mode = 'automatic'; }, 'coach-confirmed');
-invalid('missing-per-set-pain-is-blocked', (value) => { value.training.resultTracking.perSetFields = ['load', 'reps', 'rir', 'notes']; }, '"pain"');
+invalid('missing-per-set-rir-is-blocked', (value) => { value.training.resultTracking.perSetFields = ['load', 'reps']; }, '"rir"');
+invalid('per-exercise-notes-are-blocked-as-result-fields', (value) => { value.training.resultTracking.perSetFields.push('notes'); }, 'Unknown result field "notes"');
+invalid('long-mobile-cues-are-blocked', (value) => { value.training.weeks[0].sessions['upper-a'].blocks[0].exercises[0].cue = 'This instruction is intentionally far too long to remain readable during a mobile training session and must be shortened.'; }, '80 characters or fewer');
 invalid('declared-total-weeks-is-blocked', (value) => { value.training.totalWeeks = 2; }, 'totalWeeks');
 invalid('client-results-in-prescription-are-blocked', (value) => { value.training.weeks[0].sessions['upper-a'].blocks[0].exercises[0].actualLoad = 150; }, 'actualLoad');
 invalid('non-sequential-weeks-are-blocked', (value) => { value.training.weeks[1].week = 3; }, 'sequential');

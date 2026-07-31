@@ -19,7 +19,7 @@
     },
     "resultTracking": {
       "scope": "per-set",
-      "perSetFields": ["load", "reps", "rir", "pain", "notes"]
+      "perSetFields": ["load", "reps", "rir"]
     },
     "sessionCatalog": [
       {"id":"upper-a","label":"SESSION A","title":"Upper A","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"MON"},"order":1},
