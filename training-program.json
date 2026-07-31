@@ -3,24 +3,31 @@
   "programVersion": "training-template-v1",
   "updatedAt": "2026-07-10T00:00:00Z",
   "training": {
-    "sessionIds": [
-      "a",
-      "b",
-      "c",
-      "d",
-      "e",
-      "f",
-      "g"
-    ],
-    "sessionDays": {
-      "a": "MON \u00b7 TRAINING",
-      "b": "TUE \u00b7 TRAINING",
-      "c": "WED \u00b7 TRAINING",
-      "d": "THU \u00b7 TRAINING",
-      "e": "FRI \u00b7 TRAINING",
-      "f": "SAT \u00b7 TRAINING",
-      "g": "SUN \u00b7 RECOVERY"
+    "phase": {
+      "id": "phase-1",
+      "label": "PHASE 1",
+      "order": 1,
+      "objective": "Built after Week 0 review"
     },
+    "progression": {
+      "mode": "coach-confirmed",
+      "clientConfirmationRequired": true,
+      "rules": []
+    },
+    "resultTracking": {
+      "scope": "per-set",
+      "perSetFields": ["load", "reps", "rir"]
+    },
+    "sessionCatalog": [
+      {"id":"a","label":"SESSION A","title":"Training A","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"MON"},"order":1},
+      {"id":"b","label":"SESSION B","title":"Training B","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"TUE"},"order":2},
+      {"id":"c","label":"SESSION C","title":"Training C","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"WED"},"order":3},
+      {"id":"d","label":"SESSION D","title":"Training D","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"THU"},"order":4},
+      {"id":"e","label":"SESSION E","title":"Optional Training","type":"training","required":false,"schedule":{"mode":"flexible"},"order":5},
+      {"id":"f","label":"ACTIVE RECOVERY","title":"Active Recovery","type":"active-recovery","required":true,"schedule":{"mode":"suggested","suggestedDay":"SAT"},"order":6},
+      {"id":"g","label":"COMPLETE REST","title":"Complete Rest","type":"complete-rest","required":true,"schedule":{"mode":"suggested","suggestedDay":"SUN"},"order":7}
+    ],
+    "complementaryProtocols": [],
     "defaultPhase": "PROTOCOL BUILD",
     "defaultDesc": "Your personalized training will be built after Coach Max reviews your Week 0 data.",
     "defaultMessage": "Complete Week 0 first. Your training plan will appear here once Coach Max builds the protocol.",

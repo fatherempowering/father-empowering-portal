@@ -19,7 +19,12 @@
       "openOnLoad": true,
       "showIntroOnLoad": true
     },
-    "training": {
+  "training": {
+    "phase": {
+      "id": "phase-1",
+      "label": "PHASE 1",
+      "order": 1
+    },
       "defaultPhase": "FOUNDATION",
       "weeks": [
         {

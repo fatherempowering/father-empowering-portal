@@ -1,6 +1,8 @@
 {
   "name": "Legacy Protocol",
   "short_name": "Legacy Protocol",
+  "id": "./",
+  "lang": "en",
   "description": "Father Empowering client fitness protocol, check-in, progress, and Week 0 portal.",
   "start_url": "./index.html",
   "scope": "./",
@@ -13,12 +15,14 @@
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

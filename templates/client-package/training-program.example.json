@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "programVersion": "training-client-template-v1",
+  "updatedAt": "2026-07-21T00:00:00-04:00",
+  "training": {
+    "phase": {
+      "id": "phase-1",
+      "label": "PHASE 1",
+      "order": 1,
+      "objective": "Built after Week 0 review"
+    },
+    "progression": {
+      "mode": "coach-confirmed",
+      "clientConfirmationRequired": true,
+      "rules": []
+    },
+    "resultTracking": {
+      "scope": "per-set",
+      "perSetFields": ["load", "reps", "rir"]
+    },
+    "sessionCatalog": [
+      {
+        "id": "a",
+        "label": "SESSION A",
+        "title": "Upper + Hinge Strength",
+        "type": "training",
+        "required": true,
+        "schedule": {"mode": "suggested", "suggestedDay": "MON"},
+        "order": 1
+      },
+      {
+        "id": "b",
+        "label": "SESSION B",
+        "title": "Lower + Push + Unilateral",
+        "type": "training",
+        "required": true,
+        "schedule": {"mode": "suggested", "suggestedDay": "WED"},
+        "order": 2
+      },
+      {
+        "id": "c",
+        "label": "SESSION C",
+        "title": "Conditioning",
+        "type": "training",
+        "required": true,
+        "schedule": {"mode": "suggested", "suggestedDay": "FRI"},
+        "order": 3
+      }
+    ],
+    "complementaryProtocols": [],
+    "defaultPhase": "PROTOCOL BUILD",
+    "defaultDesc": "Your personalized training will be built after Coach Max reviews your Week 0 data.",
+    "defaultMessage": "Complete Week 0 first. Your training plan will appear here once Coach Max builds the protocol.",
+    "keyLifts": [],
+    "weeks": []
+  },
+  "updateTitle": "CoachMax has prepared your training plan.",
+  "updateMessage": "Your training plan is ready.",
+  "releaseNotes": [
+    "Client-specific training structure",
+    "Flexible session recommendations",
+    "Local progress preserved"
+  ]
+}

@@ -202,11 +202,10 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .bloc-line{flex:1;height:1px;background:var(--br)}
 .bloc-label{font-size:9px;letter-spacing:2px;color:var(--txt3);white-space:nowrap;font-weight:600;font-family:'Bebas Neue',sans-serif}
 .ex-card{background:var(--card);border-radius:14px;border:1px solid var(--br);margin:8px 14px 0;overflow:hidden;box-shadow:var(--shadow)}
-.ex-thead{display:grid;grid-template-columns:1fr 44px 44px 66px 66px;gap:4px;padding:8px 14px;background:var(--black);border-bottom:1px solid rgba(255,255,255,0.07)}
+.ex-thead{display:grid;grid-template-columns:minmax(0,1fr) 44px 54px 76px;gap:5px;padding:8px 14px;background:var(--black);border-bottom:1px solid rgba(255,255,255,0.07)}
 .ex-th{font-size:9px;letter-spacing:1.5px;color:rgba(255,255,255,0.5);font-weight:600;font-family:'Bebas Neue',sans-serif;text-align:center}
 .ex-th:first-child{text-align:left}
-.ex-th.th-reel{color:var(--orange)}
-.ex-row{display:grid;grid-template-columns:1fr 44px 44px 66px 66px;gap:4px;padding:11px 14px;border-bottom:1px solid var(--br);align-items:center}
+.ex-row{display:grid;grid-template-columns:minmax(0,1fr) 44px 54px 76px;gap:5px;padding:12px 14px;border-bottom:1px solid var(--br);align-items:center}
 .ex-row:last-child{border-bottom:none}
 .ex-name{font-size:13px;font-weight:700;color:var(--txt);line-height:1.3}
 .ex-note{font-size:10px;color:var(--txt3);margin-top:2px;line-height:1.4}
@@ -215,6 +214,20 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .ex-editable:focus,.ex-editable-rep:focus{border-color:var(--orange);background:var(--card2)}
 .ex-editable::placeholder,.ex-editable-rep::placeholder{color:var(--txt3)}
 .ex-target{font-size:12px;font-weight:700;color:var(--txt);text-align:center;background:var(--card2);border-radius:8px;padding:7px 4px;border:1px solid var(--br)}
+.ex-prescribed{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--orange);text-align:center}
+.ex-prescribed-reps{font-size:15px;color:var(--txt2);font-weight:600;text-align:center}
+.set-results{background:var(--card2);border-top:1px solid var(--br);padding:10px 14px 12px}
+.set-results-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1.5px;color:var(--txt3)}
+.set-results-head strong{color:var(--orange);font-weight:600}
+.set-result-grid{display:grid;grid-template-columns:34px minmax(0,1fr) minmax(0,1fr) 58px;gap:6px;align-items:center}
+.set-result-grid+.set-result-grid{margin-top:6px}
+.set-result-label{font-family:'Bebas Neue',sans-serif;font-size:9px;letter-spacing:1.1px;color:var(--txt3);text-align:center}
+.set-result-index{font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--orange);text-align:center}
+.set-result-input{width:100%;min-width:0;box-sizing:border-box;border:1.5px solid var(--br);border-radius:8px;background:var(--card);color:var(--txt);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;text-align:center;padding:9px 4px;outline:none}
+.set-result-input:focus{border-color:var(--orange)}
+.set-result-input::placeholder{color:var(--txt3);font-weight:400}
+.set-duration-row{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.set-duration-row .duration-field{background:var(--card)}
 .ex-input-wrap{background:var(--card2);border:1.5px solid var(--br);border-radius:8px;padding:5px 4px;text-align:center;transition:border-color .15s}
 .ex-input-wrap:focus-within{border-color:var(--orange)}
 .ex-input-wrap.disabled{opacity:0.35;pointer-events:none}
@@ -605,7 +618,7 @@ canvas{display:block;width:100%!important}
   .hdr{position:static}
   .coach-banner{top:46px}
   .ent-wrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:0 4px;align-items:start;padding-right:10px}
-  .ex-thead,.ex-row{grid-template-columns:minmax(0,1fr) 70px 90px 110px 110px;gap:8px;padding:11px 18px}
+  .ex-thead,.ex-row{grid-template-columns:minmax(0,1fr) 70px 90px 110px;gap:8px;padding:11px 18px}
   .ex-thead{padding-top:9px;padding-bottom:9px}
   .ex-name{font-size:14px}
   .dash-grid{grid-template-columns:1fr 1fr}
@@ -1315,6 +1328,7 @@ canvas{display:block;width:100%!important}
 /*FE_CONFIG_START*/
 const TEMPLATE_CONFIG={
   client:{
+    clientId:'clt_template_001',
     athleteName:'CLIENT NAME',
     shortName:'Client',
     clientSlug:'client-template',
@@ -1329,7 +1343,25 @@ const TEMPLATE_CONFIG={
     totalWeeks:12,
     portalVersion:'1.0',
     protocolVersion:'Phase 1 — Fat Loss',
-    lastUpdated:'July 11, 2026'
+    lastUpdated:'July 11, 2026',
+    language:'en',
+    timezone:'America/Montreal',
+    startDate:''
+  },
+  features:{
+    training:true,
+    nutrition:true,
+    weekZero:true,
+    checkins:true,
+    progression:true,
+    history:true,
+    resultPoster:true,
+    tallyOnboarding:true,
+    coachReports:true,
+    installPrompt:true
+  },
+  integrations:{
+    tally:{publicFormUrl:'https://tally.so/r/44zdvk'}
   },
   branding:{
     footerText:'FATHER EMPOWERING · LEGACY PROTOCOL',
@@ -1360,6 +1392,7 @@ const TEMPLATE_CONFIG={
     showIntroOnLoad:true
   },
   training:{
+    phase:{id:'phase-1',label:'PHASE 1',order:1},
     sessionIds:['a','b','c','d','e','f','g'],
     sessionDays:{a:'MON · TRAINING',b:'TUE · TRAINING',c:'WED · TRAINING',d:'THU · TRAINING',e:'FRI · TRAINING',f:'SAT · TRAINING',g:'SUN · RECOVERY'},
     defaultPhase:'PROTOCOL BUILD',
@@ -1425,6 +1458,8 @@ const TEMPLATE_CONFIG={
 /*FE_CONFIG_END*/
 
 const CLIENT_PROFILE=TEMPLATE_CONFIG.client;
+const FEATURE_CONFIG=TEMPLATE_CONFIG.features||{};
+const INTEGRATION_CONFIG=TEMPLATE_CONFIG.integrations||{};
 const BRANDING_CONFIG=TEMPLATE_CONFIG.branding;
 const STORAGE_CONFIG=TEMPLATE_CONFIG.storage;
 let TRAINING_CONFIG=TEMPLATE_CONFIG.training;
@@ -1438,6 +1473,28 @@ function storageSlug(s){
 }
 function uniqueList(items){
   return [...new Set((items||[]).filter(Boolean))];
+}
+function phaseId(value){
+  return String(value||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+function trainingSessionCatalog(config){
+  return Array.isArray(config&&config.sessionCatalog)?config.sessionCatalog:[];
+}
+function trainingSessionIds(config){
+  const catalog=trainingSessionCatalog(config);
+  if(catalog.length)return uniqueList(catalog.map(item=>phaseId(item&&item.id)));
+  return Array.isArray(config&&config.sessionIds)&&config.sessionIds.length?uniqueList(config.sessionIds.map(phaseId)):['a','b','c','d','e','f','g'];
+}
+function trainingSessionDays(config){
+  const days=Object.assign({},config&&config.sessionDays||{});
+  trainingSessionCatalog(config).forEach(item=>{
+    const id=phaseId(item&&item.id);
+    if(!id||days[id])return;
+    const schedule=item.schedule&&typeof item.schedule==='object'?item.schedule:{};
+    const day=schedule.suggestedDay||((schedule.mode==='flexible')?'FLEXIBLE':'DAY');
+    days[id]=String(day).toUpperCase()+' · '+String(item.title||item.label||id).toUpperCase();
+  });
+  return days;
 }
 // Client identity is permanent. Program phases may change without changing storage.
 const CLIENT_STORAGE_ID=storageSlug(STORAGE_CONFIG.keyPrefix||(CLIENT_PROFILE.clientSlug||CLIENT_PROFILE.athleteName));
@@ -1455,12 +1512,12 @@ const LEGACY_PHOTO_DBS=uniqueList([...(STORAGE_CONFIG.legacyPhotoDbs||[]),'faem_
 const REPORT_ENDPOINT=STORAGE_CONFIG.reportEndpoint;
 const COACHMAX_ENDPOINT=STORAGE_CONFIG.coachMaxEndpoint||REPORT_ENDPOINT;
 const BACKUP_SCHEMA=STORAGE_CONFIG.backupSchema;
-const TALLY_ONBOARDING_URL='https://tally.so/r/44zdvk';
+const TALLY_ONBOARDING_URL=(INTEGRATION_CONFIG.tally&&INTEGRATION_CONFIG.tally.publicFormUrl)||'https://tally.so/r/44zdvk';
 const TALLY_COMPLETION_KEY='faem_'+STORAGE_NAMESPACE+'_tally_completion_notified_v1';
-const TOTAL_WEEKS=CLIENT_PROFILE.totalWeeks;
-const MAX_CHECKINS=CHECKIN_CONFIG.maxCheckins;
-let SEANCE_IDS=TRAINING_CONFIG.sessionIds;
-let SEANCE_DAYS=TRAINING_CONFIG.sessionDays;
+let TOTAL_WEEKS=CLIENT_PROFILE.totalWeeks;
+let MAX_CHECKINS=CHECKIN_CONFIG.maxCheckins;
+let SEANCE_IDS=trainingSessionIds(TRAINING_CONFIG);
+let SEANCE_DAYS=trainingSessionDays(TRAINING_CONFIG);
 const el=id=>document.getElementById(id);
 const APP_VERSION='2.8.0';
 const TRAINING_PLAN_URL=(STORAGE_CONFIG.trainingProgramUrl||'training-program.json');
@@ -1469,6 +1526,7 @@ const TRAINING_PLAN_CACHE_KEY='faem_'+STORAGE_NAMESPACE+'_training_plan_v1';
 const NUTRITION_PLAN_CACHE_KEY='faem_'+STORAGE_NAMESPACE+'_nutrition_plan_v1';
 const PLAN_META_KEY='faem_'+STORAGE_NAMESPACE+'_plan_meta_v1';
 const PLAN_NOTICE_KEY='faem_'+STORAGE_NAMESPACE+'_last_update_notice_v1';
+const PHASE_TRANSITION_BACKUP_KEY='faem_'+STORAGE_NAMESPACE+'_phase_transition_backup_v1';
 const CORRUPT_STORAGE_BACKUP_KEY=SK+'_corrupt_backup_v1';
 const REPORT_TIMEOUT_MS=30000;
 let pendingPortalUpdate=null;
@@ -1511,6 +1569,23 @@ function normalizeTrainingPlan(payload){
   if(!plan||typeof plan!=='object'||!Array.isArray(plan.weeks))throw new Error('Invalid training program file');
   return {plan:plan,version:String((payload&&payload.programVersion)||plan.programVersion||'unversioned'),updatedAt:(payload&&payload.updatedAt)||'',updateTitle:String((payload&&payload.updateTitle)||''),updateMessage:String((payload&&payload.updateMessage)||''),releaseNotes:Array.isArray(payload&&payload.releaseNotes)?payload.releaseNotes:[]};
 }
+function phaseDescriptorForTrainingRecord(record){
+  const raw=record&&record.plan&&record.plan.phase;
+  if(!raw||typeof raw!=='object'||!String(raw.id||'').trim())return null;
+  const id=phaseId(raw.id);
+  const order=parseInt(raw.order);
+  return {
+    id:id,
+    label:String(raw.label||raw.id).trim()||id.toUpperCase(),
+    order:isNaN(order)?null:order,
+    programVersion:String(record.version||'unversioned')
+  };
+}
+function phaseTransitionRequired(nextRecords,currentRecords){
+  const current=phaseDescriptorForTrainingRecord(currentRecords&&currentRecords.training);
+  const next=phaseDescriptorForTrainingRecord(nextRecords&&nextRecords.training);
+  return !!(current&&next&&current.id!==next.id);
+}
 function normalizeNutritionPlan(payload){
   const plan=payload&&payload.nutrition?payload.nutrition:payload;
   if(!plan||typeof plan!=='object'||!Array.isArray(plan.targets)||!Array.isArray(plan.rules)||!Array.isArray(plan.meals))throw new Error('Invalid nutrition program file');
@@ -1520,8 +1595,11 @@ function applyPortalPlans(trainingRecord,nutritionRecord){
   if(trainingRecord&&trainingRecord.plan){
     TRAINING_CONFIG=trainingRecord.plan;
     TEMPLATE_CONFIG.training=TRAINING_CONFIG;
-    SEANCE_IDS=Array.isArray(TRAINING_CONFIG.sessionIds)&&TRAINING_CONFIG.sessionIds.length?TRAINING_CONFIG.sessionIds:['a','b','c','d','e','f','g'];
-    SEANCE_DAYS=TRAINING_CONFIG.sessionDays||{};
+    SEANCE_IDS=trainingSessionIds(TRAINING_CONFIG);
+    SEANCE_DAYS=trainingSessionDays(TRAINING_CONFIG);
+    TOTAL_WEEKS=Array.isArray(TRAINING_CONFIG.weeks)&&TRAINING_CONFIG.weeks.length?TRAINING_CONFIG.weeks.length:(parseInt(CLIENT_PROFILE.totalWeeks)||12);
+    MAX_CHECKINS=Math.max(TOTAL_WEEKS,parseInt(CHECKIN_CONFIG.maxCheckins)||0,1);
+    WEEKS=buildWeeks();
   }
   if(nutritionRecord&&nutritionRecord.plan){
     NUTRITION_CONFIG=nutritionRecord.plan;
@@ -1563,8 +1641,8 @@ function updateMessageFor(records){
   return title+'\n\n'+custom+(notes.length?'\n\n'+notes.map(n=>'• '+n).join('\n'):'')+'\n\nYour history, photos, measurements, check-ins and progress will remain intact.';
 }
 function applyAndStorePortalUpdate(records){
-  if(records.training)writeJSONStorage(TRAINING_PLAN_CACHE_KEY,records.training);
-  if(records.nutrition)writeJSONStorage(NUTRITION_PLAN_CACHE_KEY,records.nutrition);
+  if(records.training&&!writeJSONStorage(TRAINING_PLAN_CACHE_KEY,records.training))throw new Error('Training plan could not be saved.');
+  if(records.nutrition&&!writeJSONStorage(NUTRITION_PLAN_CACHE_KEY,records.nutrition))throw new Error('Nutrition plan could not be saved.');
   const current=currentPlanRecords();
   if(!current.training)current.training={plan:TEMPLATE_CONFIG.training,version:'embedded'};
   if(!current.nutrition)current.nutrition={plan:TEMPLATE_CONFIG.nutrition,version:'embedded'};
@@ -1605,9 +1683,29 @@ function refreshPortalAfterPlanUpdate(){
 }
 async function confirmAndApplyPendingUpdate(){
   if(!pendingPortalUpdate)return false;
-  const ok=await appConfirm('PROTOCOL UPDATE',updateMessageFor(pendingPortalUpdate),{kicker:'COACHMAX UPDATE',confirmText:'UPDATE NOW',confirmClass:'app-btn-success'});
+  const before=currentPlanRecords();
+  const isPhaseTransition=phaseTransitionRequired(pendingPortalUpdate,before);
+  const nextPhase=phaseDescriptorForTrainingRecord(pendingPortalUpdate.training);
+  const transitionNotice=isPhaseTransition?'\n\nYour current phase will be archived and '+nextPhase.label+' will start at Week 1.':'';
+  const ok=await appConfirm(isPhaseTransition?'NEW TRAINING PHASE':'PROTOCOL UPDATE',updateMessageFor(pendingPortalUpdate)+transitionNotice,{kicker:'COACHMAX UPDATE',confirmText:isPhaseTransition?'START NEW PHASE':'UPDATE NOW',confirmClass:'app-btn-success'});
   if(!ok)return false;
-  const applied=applyAndStorePortalUpdate(pendingPortalUpdate);
+  let applied;
+  try{
+    if(isPhaseTransition)await transitionToTrainingPhase(before.training,pendingPortalUpdate.training);
+    applied=applyAndStorePortalUpdate(pendingPortalUpdate);
+    if(!isPhaseTransition&&pendingPortalUpdate.training){
+      const updatedPhase=phaseDescriptorForTrainingRecord(pendingPortalUpdate.training);
+      if(updatedPhase&&D.activePhase&&D.activePhase.id===updatedPhase.id){
+        D.activePhase=Object.assign({},D.activePhase,updatedPhase);
+        save();
+      }
+    }
+  }catch(error){
+    if(isPhaseTransition)await rollbackLastPhaseTransition(before.training);
+    console.error('Portal update failed',error);
+    await appAlert('UPDATE NOT APPLIED',(error&&error.message)||'The update could not be applied. Your previous phase remains active.',{kicker:'SAFE ROLLBACK',confirmClass:'app-btn-danger'});
+    return false;
+  }
   refreshPortalAfterPlanUpdate();
   if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update();}
   localStorage.setItem(PLAN_NOTICE_KEY,planFingerprint(applied));
@@ -1660,12 +1758,34 @@ function initAppShell(){
   window.addEventListener('online',updateNetworkStatus);
   window.addEventListener('offline',updateNetworkStatus);
   window.addEventListener('beforeinstallprompt',ev=>{
+    if(FEATURE_CONFIG.installPrompt===false)return;
     ev.preventDefault();
     deferredInstallPrompt=ev;
     const btn=el('install-btn'); if(btn)btn.classList.add('show');
   });
   if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+}
+function applyFeatureConfig(){
+  const featurePanels={
+    training:'entrainement',
+    nutrition:'nutrition',
+    checkins:'checkin',
+    progression:'progression',
+    history:'historique'
+  };
+  Object.entries(featurePanels).forEach(([feature,panel])=>{
+    if(FEATURE_CONFIG[feature]!==false)return;
+    const panelNode=el('panel-'+panel);if(panelNode)panelNode.style.display='none';
+    document.querySelectorAll('.nav-btn').forEach(btn=>{
+      if((btn.getAttribute('onclick')||'').indexOf("'"+panel+"'")>-1)btn.style.display='none';
+    });
+  });
+  if(FEATURE_CONFIG.resultPoster===false){
+    document.querySelectorAll('.prog-secondary-btn').forEach(btn=>{
+      if((btn.getAttribute('onclick')||'').indexOf("'resultposter'")>-1)btn.style.display='none';
+    });
   }
 }
 async function installApp(){
@@ -1689,6 +1809,7 @@ function applyTemplateConfig(){
   const weekSig=document.querySelector('.week-msg-sig'); if(weekSig)weekSig.textContent=CLIENT_PROFILE.messageSignature;
   const logo=el('brand-logo'); if(logo){logo.setAttribute('src',BRANDING_CONFIG.logoSrc);logo.setAttribute('alt',BRANDING_CONFIG.logoAlt);}
   const entProtocol=el('ent-protocol'); if(entProtocol)entProtocol.textContent=CLIENT_PROFILE.homeKicker;
+  applyFeatureConfig();
 }
 let checkinSlidersPrimed=false;
 
@@ -1776,10 +1897,11 @@ function migrateStorageKeys(){
   copyStorageValueIfNeeded(sessionStorage,COACH_SESSION_KEY,LEGACY_COACH_SESSION_KEYS);
 }
 function defaultWeekZeroData(){
+  const weekZeroEnabled=FEATURE_CONFIG.weekZero!==false;
   return {
-    onboardingComplete:false,
-    submitted:false,
-    submittedAt:'',
+    onboardingComplete:!weekZeroEnabled||FEATURE_CONFIG.tallyOnboarding===false,
+    submitted:!weekZeroEnabled,
+    submittedAt:!weekZeroEnabled?new Date().toISOString():'',
     data:{
       client:{name:'',email:''},
       photos:{face:false,side:false,back:false,link:'',comment:''},
@@ -1791,13 +1913,20 @@ function defaultWeekZeroData(){
     }
   };
 }
-function defaultData(){return {seances:{},checkins:[],drafts:{},unlockedWeek:1,weekZero:defaultWeekZeroData()};}
+function defaultActivePhase(){
+  const cached=readJSONStorage(TRAINING_PLAN_CACHE_KEY);
+  const descriptor=phaseDescriptorForTrainingRecord(cached)||phaseDescriptorForTrainingRecord({plan:TRAINING_CONFIG,version:'embedded'});
+  return descriptor?Object.assign({},descriptor,{startedAt:''}):null;
+}
+function defaultData(){return {seances:{},checkins:[],drafts:{},unlockedWeek:1,weekZero:defaultWeekZeroData(),activePhase:defaultActivePhase(),archivedPhases:{}};}
 let D=defaultData();
 function load(){
   migrateStorageKeys();
   let raw=null;
   try{raw=localStorage.getItem(SK); if(raw){const p=JSON.parse(raw); D=normalizeImportedData(Object.assign(defaultData(),p));}}catch(e){preserveCorruptStorage(raw,e);D=defaultData();}
   if(!D.seances)D.seances={}; if(!D.checkins)D.checkins=[]; if(!D.drafts)D.drafts={}; if(!D.unlockedWeek)D.unlockedWeek=1;
+  if(!D.archivedPhases||typeof D.archivedPhases!=='object'||Array.isArray(D.archivedPhases))D.archivedPhases={};
+  if(!D.activePhase)D.activePhase=defaultActivePhase();
   D.unlockedWeek=normalizeUnlockedWeek(D);
   D.weekZero=normalizeWeekZero(D.weekZero);
 }
@@ -1872,17 +2001,74 @@ function clearPhotoDbByName(name){return openPhotoDbByName(name).then(db=>new Pr
   tx.oncomplete=()=>{try{db.close();}catch(e){} res(true);};
   tx.onerror=()=>res(false);
 }));}
+function archivePhotoKey(phaseId,week,slot){return 'phase_'+slugPart(phaseId)+'_photo_s'+week+'_'+slot;}
+function archiveActivePhasePhotos(phaseId,totalWeeks){return openIDB().then(db=>new Promise(res=>{
+  if(!db)return res({archived:0,keys:[]});
+  const keys=[];
+  for(let week=1;week<=Math.max(parseInt(totalWeeks)||0,1);week++){
+    for(let slot=0;slot<3;slot++)keys.push({active:photoKey(week,slot),archived:archivePhotoKey(phaseId,week,slot)});
+  }
+  let archived=0;
+  try{
+    const tx=db.transaction('photos','readwrite');
+    const store=tx.objectStore('photos');
+    keys.forEach(pair=>{
+      const get=store.get(pair.active);
+      get.onsuccess=()=>{
+        if(get.result){
+          store.put(get.result,pair.archived);
+          store.delete(pair.active);
+          archived++;
+        }
+      };
+    });
+    tx.oncomplete=()=>res({archived:archived,keys:keys});
+    tx.onerror=()=>res(null);
+    tx.onabort=()=>res(null);
+  }catch(e){res(null);}
+}));}
+function restoreArchivedPhasePhotos(phaseId,totalWeeks){return openIDB().then(db=>new Promise(res=>{
+  if(!db)return res(false);
+  try{
+    const tx=db.transaction('photos','readwrite');
+    const store=tx.objectStore('photos');
+    for(let week=1;week<=Math.max(parseInt(totalWeeks)||0,1);week++){
+      for(let slot=0;slot<3;slot++){
+        const archived=archivePhotoKey(phaseId,week,slot);
+        const active=photoKey(week,slot);
+        const get=store.get(archived);
+        get.onsuccess=()=>{if(get.result)store.put(get.result,active);};
+      }
+    }
+    tx.oncomplete=()=>res(true);
+    tx.onerror=()=>res(false);
+  }catch(e){res(false);}
+}));}
 
 /* ═════════ BLANK PROGRAM ENGINE ═════════ */
-function _e(name,note,sets,reps,key,target,unit){return {name,note,sets,reps,key,target:target||'',unit:unit||'lbs'};}
+function _e(name,note,sets,reps,key,target,unit){return {name,note,sets,reps,key,target:target||'',unit:unit||'lb'};}
 function slugPart(s){return String(s||'item').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'item';}
 function blankSession(sid){
   const day=SEANCE_DAYS[sid]||sid.toUpperCase();
   return {day,title:day,warmup:'',cardio:false,blocs:[]};
 }
 function normalizeExercise(ex,week,sid,blockIndex,exerciseIndex){
+  const prescription=ex.prescription&&typeof ex.prescription==='object'?ex.prescription:ex;
   const key=ex.key||('w'+week+'_'+sid+'_b'+(blockIndex+1)+'_e'+(exerciseIndex+1)+'_'+slugPart(ex.name));
-  return _e(ex.name||'Exercise',ex.note||'',ex.sets||'',ex.reps||'',key,ex.target||'',ex.unit||'lbs');
+  const weekConfig=configuredWeek(week);
+  const targetRir=prescription.targetRir!=null?prescription.targetRir:weekConfig.targetRir;
+  const details=[];
+  if(targetRir!=null)details.push('RIR '+targetRir);
+  if(prescription.restSeconds!=null)details.push('Rest: '+prescription.restSeconds+' sec');
+  if(prescription.tempo)details.push('Tempo '+prescription.tempo);
+  const cue=String(ex.cue||ex.note||prescription.technique||'').trim().replace(/\s+/g,' ');
+  if(cue)details.push(cue);
+  const normalized=_e(ex.name||'Exercise',details.join(' · '),prescription.sets||'',prescription.reps||'',key,prescription.loadTarget||ex.target||'',prescription.unit||ex.unit||'lb');
+  normalized.targetRir=targetRir==null?'':targetRir;
+  normalized.restSeconds=prescription.restSeconds;
+  normalized.tempo=prescription.tempo||'';
+  normalized.substitutions=Array.isArray(ex.substitutions)?ex.substitutions:[];
+  return normalized;
 }
 function normalizeBlock(block,week,sid,blockIndex){
   const rawExercises=block.exercises||block.exs||[];
@@ -1922,7 +2108,7 @@ function buildWeeks(){
   }
   return W;
 }
-const WEEKS=buildWeeks();
+let WEEKS=buildWeeks();
 
 /* ═════════ ÉTAT ═════════ */
 let currentWeek=0;
@@ -1949,6 +2135,82 @@ const WEEK_ZERO_LIFTS=[
   ['legPress','Leg Press','fixed']
 ];
 const WEEK_ZERO_DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+/* ═════════ GENERIC PHASE ENGINE ═════════ */
+function phaseClone(value){return cleanImportedObject(JSON.parse(JSON.stringify(value)));}
+function phaseHasClientActivity(data){
+  return !!(Object.keys((data&&data.seances)||{}).length||(data&&data.checkins&&data.checkins.length)||Object.keys((data&&data.drafts)||{}).length||(parseInt(data&&data.unlockedWeek)||1)>1);
+}
+function phaseArchiveFromActive(currentRecord,completedAt,photoCount){
+  const descriptor=(D&&D.activePhase)||phaseDescriptorForTrainingRecord(currentRecord);
+  if(!descriptor||!descriptor.id)throw new Error('The current training phase has no stable phase.id.');
+  return {
+    id:descriptor.id,
+    label:descriptor.label||descriptor.id.toUpperCase(),
+    order:descriptor.order==null?null:descriptor.order,
+    programVersion:String((currentRecord&&currentRecord.version)||descriptor.programVersion||'unversioned'),
+    startedAt:descriptor.startedAt||'',
+    completedAt:completedAt,
+    totalWeeks:Array.isArray(currentRecord&&currentRecord.plan&&currentRecord.plan.weeks)?currentRecord.plan.weeks.length:TOTAL_WEEKS,
+    unlockedWeek:parseInt(D.unlockedWeek)||1,
+    program:phaseClone((currentRecord&&currentRecord.plan)||TRAINING_CONFIG),
+    seances:phaseClone(D.seances||{}),
+    checkins:phaseClone(D.checkins||[]),
+    drafts:phaseClone(D.drafts||{}),
+    photos:{storage:'indexeddb',keyPrefix:'phase_'+slugPart(descriptor.id)+'_photo_s',count:photoCount||0}
+  };
+}
+async function transitionToTrainingPhase(currentRecord,nextRecord){
+  const current=phaseDescriptorForTrainingRecord(currentRecord)||(D&&D.activePhase);
+  const next=phaseDescriptorForTrainingRecord(nextRecord);
+  if(!current||!next||current.id===next.id)return false;
+  if(D.archivedPhases&&D.archivedPhases[current.id])throw new Error('Phase archive already exists for '+current.id+'. Use a new unique phase.id.');
+  const completedAt=new Date().toISOString();
+  const dataBefore=phaseClone(D);
+  const targetRawBefore=localStorage.getItem(SK);
+  const planRawBefore=localStorage.getItem(TRAINING_PLAN_CACHE_KEY);
+  if(!writeJSONStorage(PHASE_TRANSITION_BACKUP_KEY,{
+    schema:'father_empowering_phase_transition_backup_v1',
+    clientSlug:CLIENT_PROFILE.clientSlug||'',
+    createdAt:completedAt,
+    fromPhase:current,
+    toPhase:next,
+    dataRawBefore:targetRawBefore,
+    trainingPlanRawBefore:planRawBefore
+  }))throw new Error('The phase transition backup could not be saved.');
+  const photoResult=await archiveActivePhasePhotos(current.id,Array.isArray(currentRecord&&currentRecord.plan&&currentRecord.plan.weeks)?currentRecord.plan.weeks.length:TOTAL_WEEKS);
+  if(!photoResult)throw new Error('Progress photos could not be archived. No phase data was changed.');
+  try{
+    const archive=phaseArchiveFromActive(currentRecord,completedAt,photoResult.archived);
+    D.archivedPhases=Object.assign({},D.archivedPhases||{});
+    D.archivedPhases[current.id]=archive;
+    D.seances={};
+    D.checkins=[];
+    D.drafts={};
+    D.unlockedWeek=1;
+    D.activePhase=Object.assign({},next,{startedAt:completedAt});
+    if(!writeJSONStorage(SK,D))throw new Error('The new phase state could not be saved.');
+    return true;
+  }catch(error){
+    D=dataBefore;
+    if(targetRawBefore==null)localStorage.removeItem(SK);else localStorage.setItem(SK,targetRawBefore);
+    if(planRawBefore==null)localStorage.removeItem(TRAINING_PLAN_CACHE_KEY);else localStorage.setItem(TRAINING_PLAN_CACHE_KEY,planRawBefore);
+    await restoreArchivedPhasePhotos(current.id,Array.isArray(currentRecord&&currentRecord.plan&&currentRecord.plan.weeks)?currentRecord.plan.weeks.length:TOTAL_WEEKS);
+    throw error;
+  }
+}
+async function rollbackLastPhaseTransition(currentRecord){
+  const backup=readJSONStorage(PHASE_TRANSITION_BACKUP_KEY);
+  const current=phaseDescriptorForTrainingRecord(currentRecord);
+  if(!backup||!current||!backup.fromPhase||backup.fromPhase.id!==current.id)return false;
+  try{
+    if(backup.dataRawBefore==null)localStorage.removeItem(SK);else localStorage.setItem(SK,backup.dataRawBefore);
+    if(backup.trainingPlanRawBefore==null)localStorage.removeItem(TRAINING_PLAN_CACHE_KEY);else localStorage.setItem(TRAINING_PLAN_CACHE_KEY,backup.trainingPlanRawBefore);
+    D=backup.dataRawBefore?normalizeImportedData(JSON.parse(backup.dataRawBefore)):defaultData();
+    await restoreArchivedPhasePhotos(current.id,Array.isArray(currentRecord&&currentRecord.plan&&currentRecord.plan.weeks)?currentRecord.plan.weeks.length:TOTAL_WEEKS);
+    return true;
+  }catch(e){console.error('Phase rollback failed',e);return false;}
+}
 
 function checkinCount(){return new Set(D.checkins.map(c=>parseInt(c.week)).filter(Boolean)).size;}
 function clampWeek(w){
@@ -2118,6 +2380,10 @@ function buildWeekZeroLoadCards(){
   grid.dataset.ready='1';
 }
 function openOnboardingForm(){
+  if(FEATURE_CONFIG.tallyOnboarding===false){
+    markOnboardingComplete();
+    return;
+  }
   window.open(TALLY_ONBOARDING_URL,'_blank','noopener');
 }
 function markOnboardingComplete(){
@@ -2708,23 +2974,49 @@ function actualInputHTML(ex){
   if(isDurationUnit(ex.unit||''))return durationControlHTML(ex);
   return '<div class="ex-input-wrap"><input class="ex-input" inputmode="decimal" data-key="'+escapeHTML(ex.key)+'" placeholder="'+escapeHTML(ex.unit||'lbs')+'"></div>';
 }
-function actualSetsRepsHTML(ex){
-  const safeName=escapeHTML(ex.name);
-  return '<input class="ex-editable ex-sets-input" inputmode="numeric" data-key="'+escapeHTML(ex.key)+'" data-prescribed="'+escapeHTML(ex.sets)+'" value="'+escapeHTML(ex.sets)+'" aria-label="Sets completed for '+safeName+'">'
-    +'<input class="ex-editable-rep ex-reps-input" inputmode="text" data-key="'+escapeHTML(ex.key)+'" data-prescribed="'+escapeHTML(ex.reps)+'" value="'+escapeHTML(ex.reps)+'" aria-label="Reps completed for '+safeName+'">';
+function prescribedSetCount(value){
+  const values=String(value==null?'':value).match(/\d+/g)||[];
+  const count=values.length?Math.max(...values.map(Number)):1;
+  return Math.max(1,Math.min(count,20));
+}
+function exactTargetNumber(value,unit){
+  const raw=String(value==null?'':value).trim();
+  const suffix=unit==='lb'?'(?:\\s*(?:lb|lbs))?':'';
+  const match=raw.match(new RegExp('^([0-9]+(?:[.,][0-9]+)?)'+suffix+'$','i'));
+  return match?match[1].replace(',','.'):'';
+}
+function defaultSetLoad(ex){return exactTargetNumber(ex.target,ex.unit||'lb');}
+function defaultSetReps(ex){return String(ex.reps==null?'':ex.reps).trim();}
+function defaultSetRir(ex){return String(ex.targetRir==null?'':ex.targetRir).trim();}
+function setResultsHTML(ex){
+  if(isDurationUnit(ex.unit||'')){
+    return '<div class="set-results" data-exercise-key="'+escapeHTML(ex.key)+'"><div class="set-results-head"><strong>ACTUAL RESULT</strong><span>DURATION</span></div><div class="set-duration-row">'+durationControlHTML(ex)+'</div></div>';
+  }
+  if((ex.unit||'lb')!=='lb'&&(ex.unit||'')!=='lbs'){
+    return '<div class="set-results" data-exercise-key="'+escapeHTML(ex.key)+'"><div class="set-results-head"><strong>ACTUAL RESULT</strong><span>'+escapeHTML(String(ex.unit||'result').toUpperCase())+'</span></div>'+actualInputHTML(ex)+'</div>';
+  }
+  const count=prescribedSetCount(ex.sets);
+  const load=defaultSetLoad(ex),reps=defaultSetReps(ex),rir=defaultSetRir(ex);
+  let h='<div class="set-results" data-exercise-key="'+escapeHTML(ex.key)+'"><div class="set-results-head"><strong>RESULTS PER SET</strong><span>LOAD · REPS · RIR</span></div>'
+    +'<div class="set-result-grid"><div class="set-result-label">SET</div><div class="set-result-label">LB</div><div class="set-result-label">REPS</div><div class="set-result-label">RIR</div></div>';
+  for(let index=0;index<count;index++){
+    h+='<div class="set-result-grid"><div class="set-result-index">'+(index+1)+'</div>'
+      +'<input class="set-result-input set-load-input" inputmode="decimal" data-key="'+escapeHTML(ex.key)+'" data-set-index="'+index+'" data-prescribed="'+escapeHTML(load)+'" value="'+escapeHTML(load)+'" placeholder="lb" aria-label="Load for '+escapeHTML(ex.name)+' set '+(index+1)+'">'
+      +'<input class="set-result-input set-reps-result-input" inputmode="numeric" data-key="'+escapeHTML(ex.key)+'" data-set-index="'+index+'" data-prescribed="'+escapeHTML(reps)+'" value="'+escapeHTML(reps)+'" placeholder="reps" aria-label="Repetitions for '+escapeHTML(ex.name)+' set '+(index+1)+'">'
+      +'<input class="set-result-input set-rir-input" inputmode="decimal" data-key="'+escapeHTML(ex.key)+'" data-set-index="'+index+'" data-prescribed="'+escapeHTML(rir)+'" value="'+escapeHTML(rir)+'" placeholder="RIR" aria-label="RIR for '+escapeHTML(ex.name)+' set '+(index+1)+'"></div>';
+  }
+  return h+'</div>';
 }
 function buildExCard(bloc,week,sid){
   let h='<div class="bloc-hdr"><div class="bloc-line"></div><div class="bloc-label">'+escapeHTML(bloc.label)+'</div><div class="bloc-line"></div></div>';
-  h+='<div class="ex-card"><div class="ex-thead"><div class="ex-th">EXERCISE</div><div class="ex-th">SETS</div><div class="ex-th">REPS</div><div class="ex-th">TARGET LOAD</div><div class="ex-th th-reel">ACTUAL LOAD</div></div>';
+  h+='<div class="ex-card"><div class="ex-thead"><div class="ex-th">EXERCISE</div><div class="ex-th">SETS</div><div class="ex-th">REPS</div><div class="ex-th">TARGET LOAD</div></div>';
   bloc.exs.forEach(ex=>{
-    const actualFields=actualSetsRepsHTML(ex);
-    const rowClass=isDurationUnit(ex.unit||'')?'ex-row duration-row':'ex-row';
-    h+='<div class="'+rowClass+'">'
+    h+='<div class="ex-row">'
       +'<div><div class="ex-name">'+escapeHTML(ex.name)+'<button class="timer-btn" style="display:inline-flex;vertical-align:middle;width:24px;height:24px;font-size:11px;margin-left:6px" onclick="startTimer(\''+escapeHTML(ex.name).replace(/'/g,"\\'")+'\')" title="Timer repos">⏱</button></div><div class="ex-note">'+escapeHTML(ex.note)+'</div></div>'
-      +actualFields
+      +'<div class="ex-prescribed">'+escapeHTML(ex.sets)+'</div>'
+      +'<div class="ex-prescribed-reps">'+escapeHTML(ex.reps)+'</div>'
       +'<div class="ex-target">'+(ex.target?escapeHTML(ex.target):'—')+'</div>'
-      +actualInputHTML(ex)
-      +'</div>';
+      +'</div>'+setResultsHTML(ex);
   });
   h+='</div>';
   return h;
@@ -2756,13 +3048,30 @@ function splitSessionLabel(label){
     title:(parts.slice(1).join(' · ')||parts[0]||'TRAINING').toUpperCase()
   };
 }
+function ensureTrainingSessionPanels(){
+  const main=document.querySelector('#panel-entrainement .ent-main');
+  const archive=main&&main.querySelector('.training-archive-btn');
+  if(!main||!archive)return;
+  SEANCE_IDS.forEach(sid=>{
+    if(el('sub-'+sid))return;
+    const panel=document.createElement('div');
+    panel.className='sub-panel';
+    panel.id='sub-'+sid;
+    main.insertBefore(panel,archive);
+  });
+  if(!SEANCE_IDS.includes(currentSeance))currentSeance=SEANCE_IDS[0]||'a';
+}
 function sessionHasProgramContent(S){
   return !!(S&&Array.isArray(S.blocs)&&S.blocs.some(b=>Array.isArray(b.exs)&&b.exs.length));
 }
 function plannedSessionIdsForWeek(week){
   const W=WEEKS[week];
   if(!W||!W.seances)return [];
-  return SEANCE_IDS.filter(sid=>sessionHasProgramContent(W.seances[sid]));
+  const catalog=Array.isArray(TRAINING_CONFIG.sessionCatalog)?TRAINING_CONFIG.sessionCatalog:[];
+  return SEANCE_IDS.filter(sid=>{
+    const definition=catalog.find(item=>String(item&&item.id||'').toLowerCase()===sid);
+    return (!definition||definition.required!==false)&&sessionHasProgramContent(W.seances[sid]);
+  });
 }
 function weekDoneCount(week){
   if(parseInt(week)===0)return WEEK_ZERO_STEPS.filter(s=>['complete','sent'].includes(getWeekZeroStepStatus(s.key))).length;
@@ -2810,6 +3119,7 @@ function renderTrainingWeekZero(){
 }
 function renderEntrainementWeek(){
   if(currentWeek===0){renderTrainingWeekZero();return;}
+  ensureTrainingSessionPanels();
   const panel=el('panel-entrainement');
   if(panel)panel.classList.remove('week-zero-mode');
   const W=WEEKS[currentWeek];
@@ -2817,55 +3127,114 @@ function renderEntrainementWeek(){
   el('ent-title').textContent='WEEK '+currentWeek;
   el('ent-phase').textContent=W.phase;
   el('ent-desc').textContent=W.desc;
-  SEANCE_IDS.forEach(sid=>{ el('sub-'+sid).innerHTML=buildSeanceHTML(currentWeek,sid); restoreSeanceFields(sid); wireSeanceInputs(sid); updateStatus(sid); });
+  SEANCE_IDS.forEach(sid=>{
+    const host=el('sub-'+sid);
+    if(!host)return;
+    host.innerHTML=buildSeanceHTML(currentWeek,sid);
+    restoreSeanceFields(sid); wireSeanceInputs(sid); updateStatus(sid);
+  });
   renderDayNav();
   showSeance(currentSeance);
   renderDash(); renderSideKpis(); renderMens();
 }
 function seanceKey(w,sid){return 's'+w+'_'+sid;}
+function strictActualNumber(value,allowLoadUnit){
+  const raw=String(value==null?'':value).trim();
+  const suffix=allowLoadUnit?'(?:\\s*(?:lb|lbs))?':'';
+  const match=raw.match(new RegExp('^([0-9]+(?:[.,][0-9]+)?)'+suffix+'$','i'));
+  return match?parseFloat(match[1].replace(',','.')):null;
+}
+function legacySetResults(exercise,record){
+  const key=exercise&&exercise.key;
+  if(!key||!record||!record.charges||record.charges[key]==null)return [];
+  const actual=(record.actuals&&record.actuals[key])||{};
+  const count=Math.max(1,Math.min(prescribedSetCount(actual.sets||exercise.sets),20));
+  const reps=String(actual.reps||exercise.reps||'');
+  const load=String(record.charges[key]);
+  const rir=String(exercise.targetRir==null?'':exercise.targetRir);
+  return Array.from({length:count},(_,index)=>({set:index+1,load,reps,rir}));
+}
+function setResultVolume(rows){
+  return (Array.isArray(rows)?rows:[]).reduce((total,row)=>{
+    const load=strictActualNumber(row&&row.load,true);
+    const reps=strictActualNumber(row&&row.reps,false);
+    return load!=null&&reps!=null?total+(load*reps):total;
+  },0);
+}
+function setResultLoadTotal(rows){
+  return (Array.isArray(rows)?rows:[]).reduce((total,row)=>{
+    const load=strictActualNumber(row&&row.load,true);
+    return load==null?total:total+load;
+  },0);
+}
+function setResultBestLoad(rows){
+  const values=(Array.isArray(rows)?rows:[]).map(row=>strictActualNumber(row&&row.load,true)).filter(value=>value!=null);
+  return values.length?Math.max(...values):null;
+}
 function restoreSeanceFields(sid){
   const rec=D.seances[seanceKey(currentWeek,sid)]||D.drafts[seanceKey(currentWeek,sid)];
   if(!rec)return;
   const panel=el('sub-'+sid);
-  const actuals=rec.actuals||{};
-  panel.querySelectorAll('.ex-sets-input').forEach(inp=>{ const k=inp.dataset.key; if(actuals[k]&&actuals[k].sets!=null) inp.value=actuals[k].sets; });
-  panel.querySelectorAll('.ex-reps-input').forEach(inp=>{ const k=inp.dataset.key; if(actuals[k]&&actuals[k].reps!=null) inp.value=actuals[k].reps; });
+  panel.querySelectorAll('.set-results[data-exercise-key]').forEach(container=>{
+    const key=container.dataset.exerciseKey;
+    const exercise=exerciseByKey(currentWeek,key)||{};
+    const stored=rec.setResults&&Array.isArray(rec.setResults[key])?rec.setResults[key]:legacySetResults(exercise,rec);
+    const loadInputs=[...container.querySelectorAll('.set-load-input')];
+    const repsInputs=[...container.querySelectorAll('.set-reps-result-input')];
+    const rirInputs=[...container.querySelectorAll('.set-rir-input')];
+    if(!stored.length)return;
+    loadInputs.forEach(input=>{input.value='';});
+    repsInputs.forEach(input=>{input.value='';});
+    rirInputs.forEach(input=>{input.value='';});
+    stored.forEach((row,index)=>{
+      if(loadInputs[index])loadInputs[index].value=row&&row.load!=null?row.load:'';
+      if(repsInputs[index])repsInputs[index].value=row&&row.reps!=null?row.reps:'';
+      if(rirInputs[index])rirInputs[index].value=row&&row.rir!=null?row.rir:'';
+    });
+  });
   panel.querySelectorAll('.ex-input').forEach(inp=>{ const k=inp.dataset.key; if(rec.charges&&rec.charges[k]!=null) inp.value=rec.charges[k]; });
   panel.querySelectorAll('.duration-control').forEach(ctrl=>{ const k=ctrl.dataset.key; if(rec.charges&&rec.charges[k]!=null) setDurationControl(ctrl,rec.charges[k]); });
   const notes=el('notes-'+sid); if(notes&&rec.notes) notes.value=rec.notes;
 }
 function persistSeanceFields(sid){
-  const panel=el('sub-'+sid); const charges={},actuals={};
-  panel.querySelectorAll('.ex-sets-input').forEach(inp=>{
-    const k=inp.dataset.key;
-    const sets=(inp.value||'').trim();
-    let repsInput=null;
-    panel.querySelectorAll('.ex-reps-input').forEach(node=>{if(node.dataset.key===k)repsInput=node;});
-    const reps=repsInput?(repsInput.value||'').trim():'';
-    const prescribedSets=(inp.dataset.prescribed||'').trim();
-    const prescribedReps=repsInput?(repsInput.dataset.prescribed||'').trim():'';
-    if((sets&&sets!==prescribedSets)||(reps&&reps!==prescribedReps)){
-      actuals[k]={sets:sets||prescribedSets,reps:reps||prescribedReps};
-    }
+  const panel=el('sub-'+sid); const charges={},actuals={},setResults={};
+  panel.querySelectorAll('.set-results[data-exercise-key]').forEach(container=>{
+    const key=container.dataset.exerciseKey;
+    const loadInputs=[...container.querySelectorAll('.set-load-input')];
+    if(!loadInputs.length)return;
+    const repsInputs=[...container.querySelectorAll('.set-reps-result-input')];
+    const rirInputs=[...container.querySelectorAll('.set-rir-input')];
+    const rows=loadInputs.map((input,index)=>({
+      set:index+1,
+      load:(input.value||'').trim(),
+      reps:((repsInputs[index]&&repsInputs[index].value)||'').trim(),
+      rir:((rirInputs[index]&&rirInputs[index].value)||'').trim()
+    })).filter(row=>row.load||row.reps||row.rir);
+    if(!rows.length)return;
+    setResults[key]=rows;
+    const best=setResultBestLoad(rows);
+    if(best!=null)charges[key]=String(best);
+    const completedRows=rows.filter(row=>strictActualNumber(row.load,true)!=null&&strictActualNumber(row.reps,false)!=null);
+    if(completedRows.length)actuals[key]={sets:String(completedRows.length),reps:completedRows.map(row=>row.reps).join('/')};
   });
   panel.querySelectorAll('.ex-input').forEach(inp=>{ if(inp.value.trim()!=='') charges[inp.dataset.key]=inp.value.trim(); });
   panel.querySelectorAll('.duration-control').forEach(ctrl=>{ const total=readDurationControl(ctrl); if(total!=null)charges[ctrl.dataset.key]=String(total); });
   const notes=(el('notes-'+sid)||{}).value||'';
-  return {charges,actuals,notes};
+  return {charges,actuals,setResults,notes};
 }
 let _draftTimer=null;
 function autosaveDraft(sid){
   clearTimeout(_draftTimer);
   _draftTimer=setTimeout(()=>{
     const k=seanceKey(currentWeek,sid);
-    if(D.seances[k]&&D.seances[k].done){ const f=persistSeanceFields(sid); D.seances[k].charges=f.charges; D.seances[k].actuals=f.actuals; D.seances[k].notes=f.notes; }
+    if(D.seances[k]&&D.seances[k].done){ const f=persistSeanceFields(sid); D.seances[k].charges=f.charges; D.seances[k].actuals=f.actuals; D.seances[k].setResults=f.setResults; D.seances[k].notes=f.notes; }
     else{ D.drafts[k]=persistSeanceFields(sid); }
     save();
   },600);
 }
 function wireSeanceInputs(sid){
   const panel=el('sub-'+sid);
-  panel.querySelectorAll('.ex-sets-input,.ex-reps-input').forEach(inp=>{ inp.addEventListener('input',()=>autosaveDraft(sid)); });
+  panel.querySelectorAll('.set-result-input').forEach(inp=>{ inp.addEventListener('input',()=>autosaveDraft(sid)); });
   panel.querySelectorAll('.ex-input').forEach(inp=>{ inp.addEventListener('input',()=>autosaveDraft(sid)); });
   panel.querySelectorAll('.duration-control').forEach(ctrl=>{
     ctrl.querySelectorAll('.duration-input').forEach(inp=>{ inp.addEventListener('input',()=>autosaveDraft(sid)); });
@@ -2898,7 +3267,7 @@ function saveSeance(sid){
   if(!isWeekUnlocked(currentWeek)){showLockedWeekModal();return;}
   const k=seanceKey(currentWeek,sid);
   const f=persistSeanceFields(sid);
-  D.seances[k]={done:true,date:new Date().toISOString().slice(0,10),charges:f.charges,actuals:f.actuals,notes:f.notes};
+  D.seances[k]={done:true,date:new Date().toISOString().slice(0,10),charges:f.charges,actuals:f.actuals,setResults:f.setResults,notes:f.notes};
   delete D.drafts[k];
   save(); updateStatus(sid); renderDayNav(); buildWeekNav(); updateHomeStats(); renderDash();
   const btn=el('save-'+sid); if(btn){btn.style.background='var(--green)'; btn.querySelector('.save-btn-label').textContent='SAVED ✓ — SESSION COMPLETED';}
@@ -2911,7 +3280,15 @@ function updateStatus(sid){
 
 /* ═════════ NAVIGATION ═════════ */
 function todaySeanceId(){
-  return ['g','a','b','c','d','e','f'][new Date().getDay()];
+  const dayIndex=new Date().getDay();
+  const day=['SUN','MON','TUE','WED','THU','FRI','SAT'][dayIndex];
+  const match=trainingSessionCatalog(TRAINING_CONFIG).find(item=>{
+    const schedule=item&&item.schedule&&typeof item.schedule==='object'?item.schedule:{};
+    return String(schedule.suggestedDay||'').toUpperCase()===day;
+  });
+  const matchedId=phaseId(match&&match.id);
+  const legacyId=['g','a','b','c','d','e','f'][dayIndex];
+  return matchedId||(SEANCE_IDS.includes(legacyId)?legacyId:null)||SEANCE_IDS[dayIndex%Math.max(SEANCE_IDS.length,1)]||SEANCE_IDS[0]||'a';
 }
 function todayNutritionDay(){
   return ['dim','lun','mar','mer','jeu','ven','sam'][new Date().getDay()];
@@ -2985,9 +3362,11 @@ function showPanel(name,btn,opts){
 }
 function showSeance(sid,btn){
   if(currentWeek===0)return;
+  const panel=el('sub-'+sid);
+  if(!panel)return;
   currentSeance=sid;
   document.querySelectorAll('#panel-entrainement .sub-panel').forEach(p=>p.classList.remove('active'));
-  el('sub-'+sid).classList.add('active');
+  panel.classList.add('active');
   const fallbackBtn=document.querySelectorAll('#panel-entrainement .sub-nav .sub-btn')[SEANCE_IDS.indexOf(sid)];
   const targetBtn=btn||fallbackBtn;
   if(!targetBtn)return;
@@ -3229,9 +3608,24 @@ function formatActualsHTML(week,actuals){
     +entries.map(([k,v])=>{const s=actualSetRepSummary(week,k,v);return escapeHTML(s.name)+' : '+escapeHTML(s.done)+' <span style="color:var(--txt3)">(planned '+escapeHTML(s.planned)+')</span>';}).join('<br>')
     +'</div>';
 }
+function formatSetResultsHTML(week,setResults){
+  const entries=Object.entries(setResults||{}).filter(([,rows])=>Array.isArray(rows)&&rows.length);
+  if(!entries.length)return '';
+  return '<div style="padding:10px 16px;font-size:12px;color:var(--txt2);line-height:1.8;border-top:1px solid var(--br)"><strong>RESULTS PER SET</strong><br>'
+    +entries.map(([key,rows])=>{
+      const exercise=exerciseByKey(week,key);
+      const name=exercise?exercise.name:key;
+      const values=rows.map((row,index)=>'S'+(row.set||index+1)+' '+(row.load||'—')+' lb × '+(row.reps||'—')+(row.rir!==''&&row.rir!=null?' · RIR '+row.rir:'')).join(' · ');
+      return escapeHTML(name)+' : '+escapeHTML(values);
+    }).join('<br>')+'</div>';
+}
 function seanceVolume(week,sid){
   if(parseInt(week)===0)return 0;
-  const rec=D.seances[seanceKey(week,sid)]; if(!rec||!rec.charges)return 0;
+  const rec=D.seances[seanceKey(week,sid)]; if(!rec)return 0;
+  if(rec.setResults&&Object.keys(rec.setResults).length){
+    return Math.round(Object.values(rec.setResults).reduce((total,rows)=>total+setResultVolume(rows),0));
+  }
+  if(!rec.charges)return 0;
   const map=exMap(week); let vol=0;
   Object.entries(rec.charges).forEach(([k,v])=>{ const n=parseFloat(String(v).replace(',','.')); if(isNaN(n))return;
     const m=map[k]||{sets:1,reps:1}; if(m.sid&&m.sid!==sid)return; if(isDurationUnit(m.unit))return;
@@ -3244,7 +3638,12 @@ function seanceVolume(week,sid){
 }
 function weekCharge(week){
   if(parseInt(week)===0)return 0;
-  let tot=0; SEANCE_IDS.forEach(sid=>{ const rec=D.seances[seanceKey(week,sid)]; if(!rec||!rec.charges)return;
+  let tot=0; SEANCE_IDS.forEach(sid=>{ const rec=D.seances[seanceKey(week,sid)]; if(!rec)return;
+    if(rec.setResults&&Object.keys(rec.setResults).length){
+      tot+=Object.values(rec.setResults).reduce((sum,rows)=>sum+setResultLoadTotal(rows),0);
+      return;
+    }
+    if(!rec.charges)return;
     const map=exMap(week);
     Object.entries(rec.charges).forEach(([k,v])=>{if(isDurationUnit((map[k]||{}).unit))return;const n=parseFloat(String(v).replace(',','.'));if(!isNaN(n))tot+=n;});});
   return Math.round(tot);
@@ -3693,9 +4092,63 @@ function renderCharts(){
 
 /* ═════════ HISTORIQUE ═════════ */
 function formatSeanceLabel(w,sid){const S=WEEKS[w]&&WEEKS[w].seances[sid];return S?S.day:sid.toUpperCase();}
+function archivedSessionLabel(archive,w,sid){
+  const weeks=archive&&archive.program&&Array.isArray(archive.program.weeks)?archive.program.weeks:[];
+  const week=weeks.find(item=>parseInt(item&&item.week)===parseInt(w))||weeks[parseInt(w)-1];
+  const session=week&&((week.sessions&&week.sessions[sid])||(week.seances&&week.seances[sid]));
+  return session&&(session.day||session.title)||sid.toUpperCase();
+}
+function archivedValueText(value){
+  if(value==null)return '';
+  if(typeof value==='object')return Object.entries(value).map(([k,v])=>k+': '+(typeof v==='object'?JSON.stringify(v):v)).join(' · ');
+  return String(value);
+}
+function renderArchivedPhaseHistory(container){
+  const archives=Object.values((D&&D.archivedPhases)||{}).sort((a,b)=>String(b.completedAt||'').localeCompare(String(a.completedAt||'')));
+  let any=false;
+  archives.forEach(archive=>{
+    const sessions=archive&&archive.seances&&typeof archive.seances==='object'?archive.seances:{};
+    const checkins=Array.isArray(archive&&archive.checkins)?archive.checkins:[];
+    if(!Object.keys(sessions).length&&!checkins.length)return;
+    any=true;
+    const header=document.createElement('div');header.className='hist-week-divider';
+    header.innerHTML='<div class="hist-week-divider-line"></div><div class="hist-week-divider-txt">'+escapeHTML((archive.label||archive.id||'PHASE').toUpperCase())+' — COMPLETED · '+escapeHTML(archive.programVersion||'UNVERSIONED')+'</div><div class="hist-week-divider-line"></div>';
+    container.appendChild(header);
+    const weeks=uniqueList([
+      ...Object.keys(sessions).map(key=>{const m=String(key).match(/^s(\d+)_/);return m?parseInt(m[1]):0;}),
+      ...checkins.map(item=>parseInt(item&&item.week)||0)
+    ]).filter(Boolean).sort((a,b)=>b-a);
+    weeks.forEach(w=>{
+      checkins.filter(item=>parseInt(item.week)===w).forEach(item=>{
+        const entry=document.createElement('div');entry.className='hist-entry';
+        let rows='<div class="hist-date">WEEK '+w+' CHECK-IN · '+escapeHTML(item.date||'')+'</div>';
+        if(item.poids)rows+='<div class="hist-row"><div class="hist-label">Bodyweight</div><div class="hist-val">'+escapeHTML(item.poids)+' lbs</div></div>';
+        if(item.note)rows+='<div class="hist-note">'+escapeHTML(item.note)+'</div>';
+        entry.innerHTML=rows;container.appendChild(entry);
+      });
+      Object.entries(sessions).filter(([key,rec])=>key.indexOf('s'+w+'_')===0&&rec&&rec.done).forEach(([key,rec])=>{
+        const sid=key.replace(/^s\d+_/,'');
+        const entry=document.createElement('div');entry.className='hist-seance-entry';
+        const charges=Object.entries(rec.charges||{});
+        entry.innerHTML='<div class="hist-seance-hdr"><div class="hist-seance-label">WEEK '+w+' · '+escapeHTML(archivedSessionLabel(archive,w,sid))+'</div><div class="hist-seance-date">'+escapeHTML(rec.date||'')+'</div></div>'
+          +(rec.setResults?formatSetResultsHTML(w,rec.setResults):(charges.length?'<div style="padding:10px 16px;font-size:12px;color:var(--txt2);line-height:1.8">'+charges.map(([k,v])=>'<strong>'+escapeHTML(k)+'</strong> : '+escapeHTML(archivedValueText(v))).join(' · ')+'</div>':''))
+          +(!rec.setResults&&rec.actuals?'<div style="padding:0 16px 10px;font-size:12px;color:var(--txt2);line-height:1.8"><strong>RESULTS</strong> · '+escapeHTML(archivedValueText(rec.actuals))+'</div>':'')
+          +(rec.notes?'<div style="padding:0 16px 12px;font-size:12px;color:var(--txt2);line-height:1.6">'+escapeHTML(rec.notes)+'</div>':'');
+        container.appendChild(entry);
+      });
+    });
+  });
+  return any;
+}
 function renderHistorique(){
   const c=el('historique-container'); c.innerHTML='';
-  let any=false;
+  let any=renderArchivedPhaseHistory(c);
+  if(phaseHasClientActivity(D)){
+    const activeHeader=document.createElement('div');activeHeader.className='hist-week-divider';
+    const activeLabel=D.activePhase&&D.activePhase.label?D.activePhase.label:'ACTIVE PHASE';
+    activeHeader.innerHTML='<div class="hist-week-divider-line"></div><div class="hist-week-divider-txt">'+escapeHTML(activeLabel.toUpperCase())+' — ACTIVE</div><div class="hist-week-divider-line"></div>';
+    c.appendChild(activeHeader);
+  }
   for(let w=TOTAL_WEEKS;w>=1;w--){
     const items=[];
     SEANCE_IDS.forEach(sid=>{const rec=D.seances[seanceKey(w,sid)];if(rec&&rec.done)items.push({sid,rec});});
@@ -3718,10 +4171,10 @@ function renderHistorique(){
     });
     items.forEach(({sid,rec})=>{
       const e=document.createElement('div');e.className='hist-seance-entry';
-      const nCharges=rec.charges?Object.keys(rec.charges).length:0;
+      const nCharges=rec.setResults?Object.keys(rec.setResults).length:(rec.charges?Object.keys(rec.charges).length:0);
       let chargesHTML='';
-      if(nCharges){chargesHTML='<div style="padding:10px 16px;font-size:12px;color:var(--txt2);line-height:1.8">'+Object.entries(rec.charges).map(([k,v])=>'<strong>'+escapeHTML(k)+'</strong> : '+formatRecordedFieldHTML(w,k,v)).join(' · ')+'</div>';}
-      const actualsHTML=formatActualsHTML(w,rec.actuals);
+      if(nCharges&&!rec.setResults){chargesHTML='<div style="padding:10px 16px;font-size:12px;color:var(--txt2);line-height:1.8">'+Object.entries(rec.charges).map(([k,v])=>'<strong>'+escapeHTML(k)+'</strong> : '+formatRecordedFieldHTML(w,k,v)).join(' · ')+'</div>';}
+      const actualsHTML=rec.setResults?formatSetResultsHTML(w,rec.setResults):formatActualsHTML(w,rec.actuals);
       e.innerHTML='<div class="hist-seance-hdr"><div class="hist-seance-label">'+escapeHTML(formatSeanceLabel(w,sid))+'</div><div class="hist-seance-date">'+escapeHTML(rec.date||'')+'</div></div>'
         +'<div class="hist-seance-stats"><div class="hist-seance-stat"><div class="hist-seance-stat-n">✓</div><div class="hist-seance-stat-l">COMPLETED</div></div>'
         +'<div class="hist-seance-stat"><div class="hist-seance-stat-n">'+nCharges+'</div><div class="hist-seance-stat-l">LOADS NOTED</div></div>'
@@ -3942,6 +4395,9 @@ function normalizeImportedData(p){
     return e;
   });
   if(typeof out.drafts!=='object'||!out.drafts)out.drafts={};
+  if(typeof out.archivedPhases!=='object'||!out.archivedPhases||Array.isArray(out.archivedPhases))out.archivedPhases={};
+  if(out.activePhase&&typeof out.activePhase!=='object')out.activePhase=null;
+  if(!out.activePhase)out.activePhase=defaultActivePhase();
   out.unlockedWeek=normalizeUnlockedWeek(out);
   out.weekZero=normalizeWeekZero(out.weekZero);
   return out;
@@ -3966,7 +4422,7 @@ function validateBackupForImport(payload,imported){
     }
   }
   if(!imported||typeof imported!=='object')throw new Error('Invalid backup data.');
-  if(!(imported.seances||imported.checkins||imported.weekZero||imported.drafts||imported.unlockedWeek))throw new Error('Backup data does not match Legacy Protocol.');
+  if(!(imported.seances||imported.checkins||imported.weekZero||imported.drafts||imported.unlockedWeek||imported.activePhase||imported.archivedPhases))throw new Error('Backup data does not match Legacy Protocol.');
 }
 function importData(ev){
   const f=ev.target.files&&ev.target.files[0]; ev.target.value=''; if(!f)return;
@@ -4069,10 +4525,16 @@ function buildReportLines(checkin,week){
     const S=WEEKS[week].seances[sid];
     if(rec&&rec.done){
       L.push('✅ '+S.day);
-      if(rec.charges&&Object.keys(rec.charges).length){
+      if(rec.setResults&&Object.keys(rec.setResults).length){
+        Object.entries(rec.setResults).forEach(([key,rows])=>{
+          const exercise=exerciseByKey(week,key);
+          L.push('   · '+(exercise?exercise.name:key));
+          rows.forEach((row,index)=>L.push('      S'+(row.set||index+1)+' : '+(row.load||'—')+' lb × '+(row.reps||'—')+(row.rir!==''&&row.rir!=null?' · RIR '+row.rir:'')));
+        });
+      }else if(rec.charges&&Object.keys(rec.charges).length){
         Object.entries(rec.charges).forEach(([k,v])=>L.push('   · '+k+' : '+formatRecordedField(week,k,v)));
       }
-      if(rec.actuals&&Object.keys(rec.actuals).length){
+      if(!rec.setResults&&rec.actuals&&Object.keys(rec.actuals).length){
         L.push('   · Sets / reps adjusted:');
         Object.entries(rec.actuals).forEach(([k,v])=>{
           const s=actualSetRepSummary(week,k,v);
@@ -4666,7 +5128,7 @@ window.saveSeance=function(sid){
     </div>
     <div class="fe-ios-step">
       <div class="fe-ios-step-num">3</div>
-      <div class="fe-ios-step-txt">Select <b>Add to Home Screen</b>. Keep the name <b>Legacy Protocol</b>, then tap <b>Add</b>.</div>
+      <div class="fe-ios-step-txt">Select <b>Add to Home Screen</b>. Keep the suggested portal name, then tap <b>Add</b>.</div>
     </div>
     <div class="fe-ios-note">Installing gives you the full-screen app experience and keeps your portal one tap away.</div>
     <button class="fe-ios-btn" type="button" onclick="feDismissIosInstall()">GOT IT</button>
