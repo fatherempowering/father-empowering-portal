@@ -1,6 +1,7 @@
 const SESSION_TYPES = new Set(['training', 'active-recovery', 'complete-rest', 'posing', 'mobility']);
 const SCHEDULE_MODES = new Set(['fixed', 'suggested', 'flexible']);
-const RESULT_FIELDS = new Set(['load', 'reps', 'rir', 'pain', 'notes', 'machineSetup', 'calibrationNotes']);
+const RESULT_FIELDS = new Set(['load', 'reps', 'rir', 'pain', 'notes']);
+const TRAINING_UNITS = new Set(['lb', 'min', 'sec', 'distance', 'level']);
 
 function isObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
@@ -62,7 +63,7 @@ function validateTrainingModel(data, options = {}) {
     ['load', 'reps', 'rir', 'pain', 'notes'].forEach((field) => {
       if (!fields.includes(field)) errors.push(`training.resultTracking.perSetFields must include "${field}".`);
     });
-    fields.filter((field) => !RESULT_FIELDS.has(field)).forEach((field) => warnings.push(`Unknown result field "${field}" will be preserved but may not be displayed.`));
+    fields.filter((field) => !RESULT_FIELDS.has(field)).forEach((field) => (allowLegacy ? warnings : errors).push(`Unknown result field "${field}" is not part of the official model.`));
   }
 
   const legacyIds = Array.isArray(training.sessionIds) ? training.sessionIds : [];
@@ -133,6 +134,10 @@ function validateTrainingModel(data, options = {}) {
           if (prescription.targetRir != null && !(Number.isInteger(prescription.targetRir) && prescription.targetRir >= 0 && prescription.targetRir <= 5)) errors.push(`${exerciseLabel}.prescription.targetRir must be 0 to 5.`);
           if (prescription.restSeconds != null && !(Number.isInteger(prescription.restSeconds) && prescription.restSeconds >= 0)) errors.push(`${exerciseLabel}.prescription.restSeconds must be a non-negative integer.`);
           if (!String(prescription.unit || '').trim()) errors.push(`${exerciseLabel}.prescription.unit is required.`);
+          else if (!TRAINING_UNITS.has(prescription.unit)) (allowLegacy ? warnings : errors).push(`${exerciseLabel}.prescription.unit must be lb, min, sec, distance or level.`);
+          ['machineSetup', 'calibrationNotes'].forEach((field) => {
+            if (Object.prototype.hasOwnProperty.call(prescription, field)) (allowLegacy ? warnings : errors).push(`${exerciseLabel}.prescription.${field} is not part of the official model.`);
+          });
           if (isObject(prescription.progression) && prescription.progression.confirmationRequired !== true) errors.push(`${exerciseLabel}.prescription.progression.confirmationRequired must be true.`);
         });
       });

@@ -19,7 +19,6 @@ Le format représente :
 - un protocole de posing flexible, sans journée imposée;
 - une cible de RIR globale par semaine et une surcharge par exercice;
 - la prescription des séries, répétitions, tempo, repos et charge cible;
-- les réglages de machines et notes de calibration;
 - les substitutions autorisées;
 - une progression proposée par le coach et soumise à confirmation;
 - une liste explicite des champs de résultats attendus par série.
@@ -57,8 +56,6 @@ Chaque exercice contient une clé stable et un objet `prescription` :
     "tempo": "3-1-1-0",
     "loadTarget": "Calibration load",
     "unit": "lb",
-    "machineSetup": "Seat 4 · handles neutral",
-    "calibrationNotes": "Keep shoulder blades fixed",
     "progression": {
       "type": "double-progression",
       "rule": "Propose +5 lb after every set reaches 10 reps at target RIR.",
@@ -73,7 +70,9 @@ La cible `week.targetRir` s’applique par défaut. `prescription.targetRir` la 
 
 ## Résultats
 
-`training.resultTracking.perSetFields` décrit les données que le portail doit recueillir pour chaque série : charge, répétitions, RIR, douleur et notes. `machineSetup` et `calibrationNotes` peuvent aussi être conservés comme résultats lorsque le réglage réellement utilisé diffère de la prescription.
+`training.resultTracking.perSetFields` décrit les données que le portail doit recueillir pour chaque série : charge, répétitions, RIR, douleur et notes.
+
+Les unités officielles sont `lb`, `min`, `sec`, `distance` et `level`. Les kilogrammes, réglages de machines et notes de calibration ne font pas partie du modèle Training final.
 
 Les résultats n’apparaissent jamais dans `training-program.json`; ils sont rattachés à la combinaison phase, semaine, séance, exercice et numéro de série.
 

@@ -16,7 +16,7 @@
     },
     "resultTracking": {
       "scope": "per-set",
-      "perSetFields": ["load", "reps", "rir", "pain", "notes", "machineSetup", "calibrationNotes"]
+      "perSetFields": ["load", "reps", "rir", "pain", "notes"]
     },
     "sessionCatalog": [
       {

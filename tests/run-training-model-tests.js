@@ -60,7 +60,7 @@ vm.runInContext(extractFunction('normalizeExercise'), portal);
 const canonicalExercise = example.training.weeks[0].sessions['upper-a'].blocks[0].exercises[0];
 const normalized = portal.normalizeExercise(canonicalExercise, 1, 'upper-a', 0, 0);
 assert('portal-reads-canonical-prescription', normalized.sets === 3 && normalized.reps === '8-10' && normalized.target === 'Calibration load' && normalized.unit === 'lb');
-assert('portal-displays-rir-rest-tempo-and-machine-setup', ['Target RIR 3', 'Rest 120 sec', 'Tempo 3-1-1-0', 'Seat 4'].every((part) => normalized.note.includes(part)), normalized.note);
+assert('portal-displays-rir-rest-and-tempo', ['Target RIR 3', 'Rest 120 sec', 'Tempo 3-1-1-0'].every((part) => normalized.note.includes(part)), normalized.note);
 assert('optional-session-is-excluded-from-required-completion', portalSource.includes('definition.required!==false'));
 
 invalid('automatic-progression-is-blocked', (value) => { value.training.progression.mode = 'automatic'; }, 'coach-confirmed');
@@ -72,6 +72,8 @@ invalid('invalid-week-rir-is-blocked', (value) => { value.training.weeks[0].targ
 invalid('flexible-session-cannot-impose-day', (value) => { value.training.sessionCatalog[4].schedule.suggestedDay = 'SAT'; }, 'flexible session');
 invalid('unknown-session-is-blocked', (value) => { value.training.weeks[0].sessions.unknown = { blocks: [] }; }, 'missing from sessionCatalog');
 invalid('legacy-block-names-are-blocked', (value) => { value.training.weeks[0].sessions['upper-a'].blocs = []; }, 'legacy blocs/exs');
+invalid('kilograms-are-blocked', (value) => { value.training.weeks[0].sessions['upper-a'].blocks[0].exercises[0].prescription.unit = 'kg'; }, 'must be lb, min, sec, distance or level');
+invalid('machine-settings-are-blocked', (value) => { value.training.weeks[0].sessions['upper-a'].blocks[0].exercises[0].prescription.machineSetup = 'Seat 4'; }, 'machineSetup');
 
 if (failed) {
   console.error('\n' + failed + ' Training model test(s) failed.');

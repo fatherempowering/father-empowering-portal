@@ -36,9 +36,7 @@ RIR cible :
 Repos entre les séries :
 Tempo :
 Charge cible :
-Unité : lb / kg / min / sec / distance / niveau
-Réglage de machine :
-Note de calibration :
+Unité : lb / min / sec / distance / niveau
 Consigne technique :
 Substitution permise :
 Règle de progression :
