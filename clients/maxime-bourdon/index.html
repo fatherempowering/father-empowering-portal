@@ -5453,16 +5453,15 @@ function setResultsHTML(ex){
 }
 function buildExCard(bloc,week,sid){
   let h='<div class="bloc-hdr"><div class="bloc-line"></div><div class="bloc-label">'+escapeHTML(bloc.label)+'</div><div class="bloc-line"></div></div>';
-  h+='<div class="ex-card"><div class="ex-thead"><div class="ex-th">EXERCISE</div><div class="ex-th">SETS</div><div class="ex-th">REPS</div><div class="ex-th">TARGET LOAD</div></div>';
   bloc.exs.forEach(ex=>{
-    h+='<div class="ex-row">'
+    h+='<div class="ex-card"><div class="ex-thead"><div class="ex-th">EXERCISE</div><div class="ex-th">SETS</div><div class="ex-th">REPS</div><div class="ex-th">TARGET LOAD</div></div>'
+      +'<div class="ex-row">'
       +'<div><div class="ex-name">'+escapeHTML(ex.name)+'<button class="timer-btn" style="display:inline-flex;vertical-align:middle;width:24px;height:24px;font-size:11px;margin-left:6px" onclick="startTimer(\''+escapeHTML(ex.name).replace(/'/g,"\\'")+'\')" title="Timer repos">⏱</button></div><div class="ex-note">'+escapeHTML(ex.note)+'</div></div>'
       +'<div class="ex-prescribed">'+escapeHTML(ex.sets)+'</div>'
       +'<div class="ex-prescribed-reps">'+escapeHTML(ex.reps)+'</div>'
       +'<div class="ex-target">'+(ex.target?escapeHTML(ex.target):'—')+'</div>'
-      +'</div>'+setResultsHTML(ex);
+      +'</div>'+setResultsHTML(ex)+'</div>';
   });
-  h+='</div>';
   return h;
 }
 function buildSeanceHTML(week,sid){

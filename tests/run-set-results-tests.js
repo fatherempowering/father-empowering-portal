@@ -32,9 +32,11 @@ function assert(name, condition, detail) {
   else { failed++; console.error('FAIL ' + name + (detail ? ' - ' + detail : '')); }
 }
 
-const portal = {};
+const portal = {
+  escapeHTML(value) { return String(value == null ? '' : value); }
+};
 vm.createContext(portal);
-['prescribedSetCount', 'exactTargetNumber', 'strictActualNumber', 'legacySetResults', 'setResultVolume', 'setResultLoadTotal', 'setResultBestLoad'].forEach((name) => {
+['isDurationUnit', 'durationControlHTML', 'actualInputHTML', 'prescribedSetCount', 'exactTargetNumber', 'defaultSetLoad', 'defaultSetReps', 'defaultSetRir', 'setResultsHTML', 'strictActualNumber', 'legacySetResults', 'setResultVolume', 'setResultLoadTotal', 'setResultBestLoad'].forEach((name) => {
   vm.runInContext(extractFunction(name), portal);
 });
 
@@ -66,6 +68,14 @@ assert('no-pain-or-per-exercise-note-field-is-added', !source.includes('set-pain
 assert('general-session-note-remains', source.includes('SESSION NOTES') && source.includes('id="notes-'));
 assert('new-results-appear-in-history', source.includes('formatSetResultsHTML(w,rec.setResults)'));
 assert('new-results-appear-in-coach-report', source.includes("if(rec.setResults&&Object.keys(rec.setResults).length)"));
+
+const buildStart = source.indexOf('function buildExCard(');
+const buildEnd = source.indexOf('function buildSeanceHTML(', buildStart);
+const buildSource = source.slice(buildStart, buildEnd);
+const exerciseLoop = buildSource.indexOf('bloc.exs.forEach(ex=>{');
+const exerciseCard = buildSource.indexOf('<div class="ex-card"><div class="ex-thead">');
+assert('each-exercise-has-its-own-card', exerciseLoop >= 0 && exerciseCard > exerciseLoop);
+assert('each-exercise-card-wraps-results', buildSource.includes("setResultsHTML(ex)+'</div>'"));
 
 if (failed) {
   console.error('\n' + failed + ' set-results test(s) failed.');
