@@ -1,17 +1,22 @@
 {
   "schemaVersion": 1,
-  "programVersion": "training-maxime-bourdon-onboarding-v1",
-  "updatedAt": "2026-07-31T16:09:11.620Z",
+  "programVersion": "training-maxime-bourdon-phase-1-v1",
+  "updatedAt": "2026-07-31T17:39:08.945Z",
   "training": {
     "phase": {
       "id": "phase-1",
-      "label": "PHASE 1",
-      "order": 1
+      "label": "PHASE 1 — CLASSIC PHYSIQUE PREP",
+      "order": 1,
+      "objective": "Préparation compétition bodybuilding."
     },
     "progression": {
       "mode": "coach-confirmed",
       "clientConfirmationRequired": true,
-      "rules": []
+      "rules": [
+        "Keep the same target loads for Weeks 1 to 3.",
+        "No load increase is applied automatically.",
+        "Every proposed load increase requires confirmation before the prescription changes."
+      ]
     },
     "resultTracking": {
       "scope": "per-set",
@@ -23,9 +28,9 @@
     },
     "sessionCatalog": [
       {
-        "id": "a",
-        "label": "SESSION A",
-        "title": "Upper + Hinge Strength",
+        "id": "posterior-lats",
+        "label": "JOUR 1",
+        "title": "Chaîne postérieure & Latissimus dorsi",
         "type": "training",
         "required": true,
         "schedule": {
@@ -35,42 +40,2402 @@
         "order": 1
       },
       {
-        "id": "b",
-        "label": "SESSION B",
-        "title": "Lower + Push + Unilateral",
+        "id": "chest-biceps",
+        "label": "JOUR 2",
+        "title": "Pectoraux & Biceps",
+        "type": "training",
+        "required": true,
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "TUE"
+        },
+        "order": 2
+      },
+      {
+        "id": "delts-triceps",
+        "label": "JOUR 3",
+        "title": "Deltoïdes & Triceps",
         "type": "training",
         "required": true,
         "schedule": {
           "mode": "suggested",
           "suggestedDay": "WED"
         },
-        "order": 2
+        "order": 3
       },
       {
-        "id": "c",
-        "label": "SESSION C",
-        "title": "Conditioning",
+        "id": "active-recovery",
+        "label": "RÉCUPÉRATION ACTIVE",
+        "title": "Récupération active — Aucun cardio planifié",
+        "type": "active-recovery",
+        "required": false,
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "THU"
+        },
+        "order": 4
+      },
+      {
+        "id": "quads-lats",
+        "label": "JOUR 4",
+        "title": "Quadriceps & Latissimus dorsi",
         "type": "training",
         "required": true,
         "schedule": {
           "mode": "suggested",
           "suggestedDay": "FRI"
         },
-        "order": 3
+        "order": 5
+      },
+      {
+        "id": "chest-arms",
+        "label": "JOUR 5",
+        "title": "Pectoraux & Bras",
+        "type": "training",
+        "required": true,
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "SAT"
+        },
+        "order": 6
+      },
+      {
+        "id": "complete-rest",
+        "label": "REPOS COMPLET",
+        "title": "Repos complet",
+        "type": "complete-rest",
+        "required": false,
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "SUN"
+        },
+        "order": 7
       }
     ],
-    "complementaryProtocols": [],
-    "defaultPhase": "PROTOCOL BUILD",
-    "defaultDesc": "Your personalized training will be built after Coach Max reviews your Week 0 data.",
-    "defaultMessage": "Complete Week 0 first. Your training plan will appear here once Coach Max builds the protocol.",
-    "keyLifts": [],
-    "weeks": []
+    "complementaryProtocols": [
+      {
+        "id": "classic-physique-posing",
+        "type": "posing",
+        "title": "Classic Physique Mandatory Posing",
+        "required": false,
+        "scheduleMode": "flexible",
+        "frequencyPerWeek": 3,
+        "durationMinutes": 15,
+        "instructions": [
+          "Complete at least 15 minutes per session.",
+          "Practice all six mandatory Classic Physique poses.",
+          "The exact schedule and final posing sequence will be updated after coach confirmation."
+        ]
+      }
+    ],
+    "defaultPhase": "CLASSIC PHYSIQUE PREP",
+    "defaultDesc": "Exécute chaque série à RIR 0 et inscris tes résultats réels.",
+    "defaultMessage": "Les charges cibles restent identiques pour les Semaines 1 à 3. Toute augmentation doit être confirmée.",
+    "keyLifts": [
+      {
+        "key": "smith_romanian_deadlift",
+        "name": "Smith Romanian Deadlift"
+      },
+      {
+        "key": "back_squat",
+        "name": "Back Squat"
+      },
+      {
+        "key": "incline_barbell_press",
+        "name": "Incline Barbell Press"
+      },
+      {
+        "key": "overhead_press",
+        "name": "Overhead Press"
+      },
+      {
+        "key": "hack_squat",
+        "name": "Hack Squat"
+      }
+    ],
+    "weeks": [
+      {
+        "week": 1,
+        "label": "DÉPART PARTIEL",
+        "phase": "CLASSIC PHYSIQUE PREP",
+        "objective": "Commencer le vendredi avec les Jours 4 et 5.",
+        "targetRir": 0,
+        "desc": "Semaine partielle : Jour 4 vendredi, Jour 5 samedi, repos complet dimanche.",
+        "msg": "Commence par le Jour 4. Les Jours 1 à 3 débuteront à la Semaine 2.",
+        "sessions": {
+          "quads-lats": {
+            "day": "FRI · JOUR 4",
+            "title": "QUADRICEPS & LATISSIMUS DORSI",
+            "blocks": [
+              {
+                "label": "QUADRICEPS",
+                "exercises": [
+                  {
+                    "key": "side_plank_adductor_knee_bench_db_hold",
+                    "name": "Side Plank Adductor Knee Bench DB Hold",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "15 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "db_walking_lunge",
+                    "name": "DB Walking Lunge",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "20",
+                      "targetRir": 0,
+                      "restSeconds": 80,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "leg_extension",
+                    "name": "Leg Extension",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 70,
+                      "loadTarget": "100 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "adductor_machine",
+                    "name": "Adductor Machine",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "80 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "leg_press",
+                    "name": "Leg Press",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 80,
+                      "loadTarget": "270 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "hack_squat",
+                    "name": "Hack Squat",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "180 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "LATISSIMUS DORSI",
+                "exercises": [
+                  {
+                    "key": "db_bent_over_row",
+                    "name": "DB Bent Over Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "60 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "iso_lat_pulldown",
+                    "name": "ISO Lat Pulldown",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "140 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "single_arm_cable_row",
+                    "name": "Single Arm Cable Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "130 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "db_pullover",
+                    "name": "DB Pullover",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "35 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "machine_calf_press",
+                    "name": "Machine Calf Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_ankle_extension",
+                    "name": "Machine Ankle Extension",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12-15",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "standing_tibialis_raise",
+                    "name": "Standing Tibialis Raise",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "20",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "chest-arms": {
+            "day": "SAT · JOUR 5",
+            "title": "PECTORAUX & BRAS",
+            "blocks": [
+              {
+                "label": "CHEST",
+                "exercises": [
+                  {
+                    "key": "incline_machine_press",
+                    "name": "Incline Machine Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "135 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "dumbbell_press_day5",
+                    "name": "Dumbbell Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "65 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "pec_deck_day5",
+                    "name": "Pec Deck",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "100 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "chest_dip",
+                    "name": "Chest Dip",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12-15",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "ARMS — INDIVIDUAL EXERCISES",
+                "exercises": [
+                  {
+                    "key": "barbell_curl_day5",
+                    "name": "Barbell Curl",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 15,
+                      "loadTarget": "50 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "skull_crusher",
+                    "name": "Skull Crusher",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "40 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "neutral_db_curl",
+                    "name": "Neutral DB Curl",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "16",
+                      "targetRir": 0,
+                      "restSeconds": 15,
+                      "loadTarget": "15 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "overhead_cable_extension",
+                    "name": "Overhead Cable Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_curl",
+                    "name": "Machine Curl",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "45 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "cable_cross_triceps_extension",
+                    "name": "Cable Cross Triceps Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "DELTOIDS",
+                "exercises": [
+                  {
+                    "key": "machine_lateral_raise_day5",
+                    "name": "Machine Lateral Raise",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "face_pull",
+                    "name": "Face Pull",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — ABS — 2 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "hanging_jackknife",
+                    "name": "Hanging Jackknife",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_crunch",
+                    "name": "Machine Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "alternating_cross_body_crunch",
+                    "name": "Alternating Cross-Body Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "40",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "straight_back_back_extension",
+                    "name": "Straight-Back Back Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 120,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "complete-rest": {
+            "day": "SUN · REPOS COMPLET",
+            "title": "REPOS COMPLET",
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 2,
+        "label": "SEMAINE COMPLÈTE",
+        "phase": "CLASSIC PHYSIQUE PREP",
+        "objective": "Exécuter les cinq séances avec les charges cibles prescrites.",
+        "targetRir": 0,
+        "desc": "Cinq séances obligatoires, récupération active jeudi et repos complet dimanche.",
+        "msg": "Donne tout à chaque série, inscris tes résultats et conserve les charges cibles jusqu’à confirmation.",
+        "sessions": {
+          "posterior-lats": {
+            "day": "MON · JOUR 1",
+            "title": "CHAÎNE POSTÉRIEURE & LATISSIMUS DORSI",
+            "blocks": [
+              {
+                "label": "MAIN",
+                "exercises": [
+                  {
+                    "key": "one_leg_curl",
+                    "name": "One Leg Curl",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10/side",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "25 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "smith_romanian_deadlift",
+                    "name": "Smith Romanian Deadlift",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "140 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "back_squat",
+                    "name": "Back Squat",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 100,
+                      "loadTarget": "175 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "hip_thrust",
+                    "name": "Hip Thrust",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 70,
+                      "loadTarget": "150 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "leg_curl",
+                    "name": "Leg Curl",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "100 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "incline_chest_supported_db_row",
+                    "name": "Incline Chest Supported DB Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "70 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_lat_pulldown",
+                    "name": "Machine Lat Pulldown",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "135 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_lat_row",
+                    "name": "Machine Lat Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "130 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "supported_bent_over_row",
+                    "name": "Supported Bent Over Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "90 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "machine_calf_press",
+                    "name": "Machine Calf Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_ankle_extension",
+                    "name": "Machine Ankle Extension",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12-15",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "standing_tibialis_raise",
+                    "name": "Standing Tibialis Raise",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "20",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "chest-biceps": {
+            "day": "TUE · JOUR 2",
+            "title": "PECTORAUX & BICEPS",
+            "blocks": [
+              {
+                "label": "CHEST",
+                "exercises": [
+                  {
+                    "key": "pec_deck_day2",
+                    "name": "Pec Deck",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "120 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "incline_barbell_press",
+                    "name": "Incline Barbell Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "155 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "dumbbell_press_day2",
+                    "name": "Dumbbell Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "65 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_chest_press",
+                    "name": "Machine Chest Press",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "150 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "cable_crossover",
+                    "name": "Cable Crossover",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "15",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "BICEPS — INDIVIDUAL EXERCISES",
+                "exercises": [
+                  {
+                    "key": "alternating_incline_db_curl",
+                    "name": "Alternating Incline DB Curl",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "20",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_preacher_curl",
+                    "name": "Machine Preacher Curl",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "15",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "45 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "barbell_curl_day2",
+                    "name": "Barbell Curl",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "50 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — ABS — 2 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "hanging_jackknife",
+                    "name": "Hanging Jackknife",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_crunch",
+                    "name": "Machine Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "alternating_cross_body_crunch",
+                    "name": "Alternating Cross-Body Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "40",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "straight_back_back_extension",
+                    "name": "Straight-Back Back Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 120,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "delts-triceps": {
+            "day": "WED · JOUR 3",
+            "title": "DELTOÏDES & TRICEPS",
+            "blocks": [
+              {
+                "label": "DELTOIDS",
+                "exercises": [
+                  {
+                    "key": "machine_lateral_raise_10_12",
+                    "name": "Machine Lateral Raise",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 45,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "db_bat_wing_row",
+                    "name": "DB Bat Wing Row",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "overhead_press",
+                    "name": "Overhead Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "95 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "alternating_front_raise",
+                    "name": "Alternating Front Raise",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "16",
+                      "targetRir": 0,
+                      "restSeconds": 45,
+                      "loadTarget": "17.5 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "cable_rear_delt_fly",
+                    "name": "Cable Rear Delt Fly",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_lateral_raise_heavy",
+                    "name": "Machine Lateral Raise",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "6-8",
+                      "targetRir": 0,
+                      "restSeconds": 45,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "shrugs",
+                    "name": "Shrugs",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "120 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "TRICEPS",
+                "exercises": [
+                  {
+                    "key": "rope_triceps_pushdown",
+                    "name": "Rope Triceps Pushdown",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "15",
+                      "targetRir": 0,
+                      "restSeconds": 50,
+                      "loadTarget": "40 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "db_skull_crusher",
+                    "name": "DB Skull Crusher",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "15",
+                      "targetRir": 0,
+                      "restSeconds": 50,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "triceps_dip",
+                    "name": "Triceps Dip",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12-15",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — ABS — 2 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "hanging_jackknife",
+                    "name": "Hanging Jackknife",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_crunch",
+                    "name": "Machine Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "alternating_cross_body_crunch",
+                    "name": "Alternating Cross-Body Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "40",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "straight_back_back_extension",
+                    "name": "Straight-Back Back Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 120,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "active-recovery": {
+            "day": "THU · RÉCUPÉRATION ACTIVE",
+            "title": "RÉCUPÉRATION ACTIVE — AUCUN CARDIO PLANIFIÉ",
+            "blocks": []
+          },
+          "quads-lats": {
+            "day": "FRI · JOUR 4",
+            "title": "QUADRICEPS & LATISSIMUS DORSI",
+            "blocks": [
+              {
+                "label": "QUADRICEPS",
+                "exercises": [
+                  {
+                    "key": "side_plank_adductor_knee_bench_db_hold",
+                    "name": "Side Plank Adductor Knee Bench DB Hold",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "15 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "db_walking_lunge",
+                    "name": "DB Walking Lunge",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "20",
+                      "targetRir": 0,
+                      "restSeconds": 80,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "leg_extension",
+                    "name": "Leg Extension",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 70,
+                      "loadTarget": "100 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "adductor_machine",
+                    "name": "Adductor Machine",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "80 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "leg_press",
+                    "name": "Leg Press",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 80,
+                      "loadTarget": "270 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "hack_squat",
+                    "name": "Hack Squat",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "180 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "LATISSIMUS DORSI",
+                "exercises": [
+                  {
+                    "key": "db_bent_over_row",
+                    "name": "DB Bent Over Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "60 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "iso_lat_pulldown",
+                    "name": "ISO Lat Pulldown",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "140 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "single_arm_cable_row",
+                    "name": "Single Arm Cable Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "130 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "db_pullover",
+                    "name": "DB Pullover",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "35 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "machine_calf_press",
+                    "name": "Machine Calf Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_ankle_extension",
+                    "name": "Machine Ankle Extension",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12-15",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "standing_tibialis_raise",
+                    "name": "Standing Tibialis Raise",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "20",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "chest-arms": {
+            "day": "SAT · JOUR 5",
+            "title": "PECTORAUX & BRAS",
+            "blocks": [
+              {
+                "label": "CHEST",
+                "exercises": [
+                  {
+                    "key": "incline_machine_press",
+                    "name": "Incline Machine Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "135 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "dumbbell_press_day5",
+                    "name": "Dumbbell Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "65 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "pec_deck_day5",
+                    "name": "Pec Deck",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "100 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "chest_dip",
+                    "name": "Chest Dip",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12-15",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "ARMS — INDIVIDUAL EXERCISES",
+                "exercises": [
+                  {
+                    "key": "barbell_curl_day5",
+                    "name": "Barbell Curl",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 15,
+                      "loadTarget": "50 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "skull_crusher",
+                    "name": "Skull Crusher",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "40 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "neutral_db_curl",
+                    "name": "Neutral DB Curl",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "16",
+                      "targetRir": 0,
+                      "restSeconds": 15,
+                      "loadTarget": "15 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "overhead_cable_extension",
+                    "name": "Overhead Cable Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_curl",
+                    "name": "Machine Curl",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "45 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "cable_cross_triceps_extension",
+                    "name": "Cable Cross Triceps Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "DELTOIDS",
+                "exercises": [
+                  {
+                    "key": "machine_lateral_raise_day5",
+                    "name": "Machine Lateral Raise",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "face_pull",
+                    "name": "Face Pull",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — ABS — 2 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "hanging_jackknife",
+                    "name": "Hanging Jackknife",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_crunch",
+                    "name": "Machine Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "alternating_cross_body_crunch",
+                    "name": "Alternating Cross-Body Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "40",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "straight_back_back_extension",
+                    "name": "Straight-Back Back Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 120,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "complete-rest": {
+            "day": "SUN · REPOS COMPLET",
+            "title": "REPOS COMPLET",
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 3,
+        "label": "SEMAINE COMPLÈTE",
+        "phase": "CLASSIC PHYSIQUE PREP",
+        "objective": "Répéter la prescription et observer la progression réelle.",
+        "targetRir": 0,
+        "desc": "Cinq séances obligatoires, récupération active jeudi et repos complet dimanche.",
+        "msg": "Répète les charges cibles. Toute augmentation doit être confirmée avant de modifier la prescription.",
+        "sessions": {
+          "posterior-lats": {
+            "day": "MON · JOUR 1",
+            "title": "CHAÎNE POSTÉRIEURE & LATISSIMUS DORSI",
+            "blocks": [
+              {
+                "label": "MAIN",
+                "exercises": [
+                  {
+                    "key": "one_leg_curl",
+                    "name": "One Leg Curl",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10/side",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "25 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "smith_romanian_deadlift",
+                    "name": "Smith Romanian Deadlift",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "140 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "back_squat",
+                    "name": "Back Squat",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 100,
+                      "loadTarget": "175 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "hip_thrust",
+                    "name": "Hip Thrust",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 70,
+                      "loadTarget": "150 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "leg_curl",
+                    "name": "Leg Curl",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "100 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "incline_chest_supported_db_row",
+                    "name": "Incline Chest Supported DB Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "70 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_lat_pulldown",
+                    "name": "Machine Lat Pulldown",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "135 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_lat_row",
+                    "name": "Machine Lat Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "130 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "supported_bent_over_row",
+                    "name": "Supported Bent Over Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "90 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "machine_calf_press",
+                    "name": "Machine Calf Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_ankle_extension",
+                    "name": "Machine Ankle Extension",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12-15",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "standing_tibialis_raise",
+                    "name": "Standing Tibialis Raise",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "20",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "chest-biceps": {
+            "day": "TUE · JOUR 2",
+            "title": "PECTORAUX & BICEPS",
+            "blocks": [
+              {
+                "label": "CHEST",
+                "exercises": [
+                  {
+                    "key": "pec_deck_day2",
+                    "name": "Pec Deck",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "120 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "incline_barbell_press",
+                    "name": "Incline Barbell Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "155 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "dumbbell_press_day2",
+                    "name": "Dumbbell Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "65 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_chest_press",
+                    "name": "Machine Chest Press",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "150 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "cable_crossover",
+                    "name": "Cable Crossover",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "15",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "BICEPS — INDIVIDUAL EXERCISES",
+                "exercises": [
+                  {
+                    "key": "alternating_incline_db_curl",
+                    "name": "Alternating Incline DB Curl",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "20",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_preacher_curl",
+                    "name": "Machine Preacher Curl",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "15",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "45 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "barbell_curl_day2",
+                    "name": "Barbell Curl",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "50 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — ABS — 2 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "hanging_jackknife",
+                    "name": "Hanging Jackknife",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_crunch",
+                    "name": "Machine Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "alternating_cross_body_crunch",
+                    "name": "Alternating Cross-Body Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "40",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "straight_back_back_extension",
+                    "name": "Straight-Back Back Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 120,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "delts-triceps": {
+            "day": "WED · JOUR 3",
+            "title": "DELTOÏDES & TRICEPS",
+            "blocks": [
+              {
+                "label": "DELTOIDS",
+                "exercises": [
+                  {
+                    "key": "machine_lateral_raise_10_12",
+                    "name": "Machine Lateral Raise",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 45,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "db_bat_wing_row",
+                    "name": "DB Bat Wing Row",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "overhead_press",
+                    "name": "Overhead Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "95 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "alternating_front_raise",
+                    "name": "Alternating Front Raise",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "16",
+                      "targetRir": 0,
+                      "restSeconds": 45,
+                      "loadTarget": "17.5 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "cable_rear_delt_fly",
+                    "name": "Cable Rear Delt Fly",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_lateral_raise_heavy",
+                    "name": "Machine Lateral Raise",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "6-8",
+                      "targetRir": 0,
+                      "restSeconds": 45,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "shrugs",
+                    "name": "Shrugs",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "120 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "TRICEPS",
+                "exercises": [
+                  {
+                    "key": "rope_triceps_pushdown",
+                    "name": "Rope Triceps Pushdown",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "15",
+                      "targetRir": 0,
+                      "restSeconds": 50,
+                      "loadTarget": "40 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "db_skull_crusher",
+                    "name": "DB Skull Crusher",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "15",
+                      "targetRir": 0,
+                      "restSeconds": 50,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "triceps_dip",
+                    "name": "Triceps Dip",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12-15",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — ABS — 2 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "hanging_jackknife",
+                    "name": "Hanging Jackknife",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_crunch",
+                    "name": "Machine Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "alternating_cross_body_crunch",
+                    "name": "Alternating Cross-Body Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "40",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "straight_back_back_extension",
+                    "name": "Straight-Back Back Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 120,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "active-recovery": {
+            "day": "THU · RÉCUPÉRATION ACTIVE",
+            "title": "RÉCUPÉRATION ACTIVE — AUCUN CARDIO PLANIFIÉ",
+            "blocks": []
+          },
+          "quads-lats": {
+            "day": "FRI · JOUR 4",
+            "title": "QUADRICEPS & LATISSIMUS DORSI",
+            "blocks": [
+              {
+                "label": "QUADRICEPS",
+                "exercises": [
+                  {
+                    "key": "side_plank_adductor_knee_bench_db_hold",
+                    "name": "Side Plank Adductor Knee Bench DB Hold",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "15 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "db_walking_lunge",
+                    "name": "DB Walking Lunge",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "20",
+                      "targetRir": 0,
+                      "restSeconds": 80,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "leg_extension",
+                    "name": "Leg Extension",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 70,
+                      "loadTarget": "100 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "adductor_machine",
+                    "name": "Adductor Machine",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "80 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "leg_press",
+                    "name": "Leg Press",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 80,
+                      "loadTarget": "270 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "hack_squat",
+                    "name": "Hack Squat",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "180 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "LATISSIMUS DORSI",
+                "exercises": [
+                  {
+                    "key": "db_bent_over_row",
+                    "name": "DB Bent Over Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "60 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "iso_lat_pulldown",
+                    "name": "ISO Lat Pulldown",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "140 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "single_arm_cable_row",
+                    "name": "Single Arm Cable Row",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "130 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "db_pullover",
+                    "name": "DB Pullover",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 75,
+                      "loadTarget": "35 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "machine_calf_press",
+                    "name": "Machine Calf Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_ankle_extension",
+                    "name": "Machine Ankle Extension",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12-15",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "standing_tibialis_raise",
+                    "name": "Standing Tibialis Raise",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "20",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "chest-arms": {
+            "day": "SAT · JOUR 5",
+            "title": "PECTORAUX & BRAS",
+            "blocks": [
+              {
+                "label": "CHEST",
+                "exercises": [
+                  {
+                    "key": "incline_machine_press",
+                    "name": "Incline Machine Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "135 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "dumbbell_press_day5",
+                    "name": "Dumbbell Press",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "65 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "pec_deck_day5",
+                    "name": "Pec Deck",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "100 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "chest_dip",
+                    "name": "Chest Dip",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12-15",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "ARMS — INDIVIDUAL EXERCISES",
+                "exercises": [
+                  {
+                    "key": "barbell_curl_day5",
+                    "name": "Barbell Curl",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "8-10",
+                      "targetRir": 0,
+                      "restSeconds": 15,
+                      "loadTarget": "50 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "skull_crusher",
+                    "name": "Skull Crusher",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "40 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "neutral_db_curl",
+                    "name": "Neutral DB Curl",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "16",
+                      "targetRir": 0,
+                      "restSeconds": 15,
+                      "loadTarget": "15 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "overhead_cable_extension",
+                    "name": "Overhead Cable Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_curl",
+                    "name": "Machine Curl",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "45 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "cable_cross_triceps_extension",
+                    "name": "Cable Cross Triceps Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 30,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "DELTOIDS",
+                "exercises": [
+                  {
+                    "key": "machine_lateral_raise_day5",
+                    "name": "Machine Lateral Raise",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "10",
+                      "targetRir": 0,
+                      "restSeconds": 90,
+                      "loadTarget": "30 lb",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "face_pull",
+                    "name": "Face Pull",
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "targetRir": 0,
+                      "restSeconds": 60,
+                      "loadTarget": "20 lb",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": "FINISHER — ABS — 2 ROUNDS",
+                "exercises": [
+                  {
+                    "key": "hanging_jackknife",
+                    "name": "Hanging Jackknife",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "10-12",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "machine_crunch",
+                    "name": "Machine Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Calibration load",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "alternating_cross_body_crunch",
+                    "name": "Alternating Cross-Body Crunch",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "40",
+                      "targetRir": 0,
+                      "restSeconds": 0,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "straight_back_back_extension",
+                    "name": "Straight-Back Back Extension",
+                    "prescription": {
+                      "sets": 2,
+                      "reps": "25",
+                      "targetRir": 0,
+                      "restSeconds": 120,
+                      "loadTarget": "Bodyweight",
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "complete-rest": {
+            "day": "SUN · REPOS COMPLET",
+            "title": "REPOS COMPLET",
+            "blocks": []
+          }
+        }
+      }
+    ]
   },
-  "updateTitle": "CoachMax has prepared your training plan.",
-  "updateMessage": "Your training plan is ready.",
+  "updateTitle": "Tes trois premières semaines sont prêtes.",
+  "updateMessage": "La Semaine 1 commence vendredi avec le Jour 4. Les Semaines 2 et 3 sont complètes.",
   "releaseNotes": [
-    "Client-specific training structure",
-    "Flexible session recommendations",
-    "Local progress preserved"
+    "Semaine 1 partielle avec Jours 4 et 5",
+    "Semaines 2 et 3 complètes",
+    "RIR cible 0",
+    "Charges cibles identiques",
+    "Progression soumise à confirmation",
+    "Posing flexible trois fois par semaine",
+    "Aucun cardio planifié"
   ]
 }

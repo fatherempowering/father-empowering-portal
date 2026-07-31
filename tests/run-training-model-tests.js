@@ -69,6 +69,54 @@ assert('portal-starts-from-canonical-session-catalog', JSON.stringify(portal.tra
 assert('portal-builds-session-labels-from-catalog', portal.trainingSessionDays(example.training)['upper-a'] === 'MON · UPPER A');
 assert('portal-creates-panels-for-canonical-session-ids', portalSource.includes('function ensureTrainingSessionPanels()') && portalSource.includes("panel.id='sub-'+sid"));
 
+const partialPortal = {
+  TRAINING_CONFIG: {
+    sessionCatalog: [
+      { id: 'upper-a', required: true },
+      { id: 'lower-a', required: true },
+      { id: 'lower-b', required: true },
+      { id: 'upper-c', required: true },
+      { id: 'complete-rest', required: false }
+    ],
+    weeks: [
+      { week: 1, sessions: { 'lower-b': {}, 'upper-c': {}, 'complete-rest': {} } },
+      { week: 2, sessions: { 'upper-a': {}, 'lower-a': {}, 'lower-b': {}, 'upper-c': {}, 'complete-rest': {} } }
+    ]
+  },
+  SEANCE_IDS: ['upper-a', 'lower-a', 'lower-b', 'upper-c', 'complete-rest'],
+  WEEKS: {
+    1: {
+      seances: {
+        'upper-a': { blocs: [] },
+        'lower-a': { blocs: [] },
+        'lower-b': { blocs: [{ exs: [{}] }] },
+        'upper-c': { blocs: [{ exs: [{}] }] },
+        'complete-rest': { blocs: [] }
+      }
+    }
+  }
+};
+vm.createContext(partialPortal);
+['configuredWeek', 'configuredSessionIdsForWeek', 'sessionHasProgramContent', 'plannedSessionIdsForWeek'].forEach((name) => {
+  vm.runInContext(extractFunction(name), partialPortal);
+});
+assert(
+  'partial-week-shows-only-configured-sessions',
+  JSON.stringify(partialPortal.configuredSessionIdsForWeek(1)) === JSON.stringify(['lower-b', 'upper-c', 'complete-rest'])
+);
+assert(
+  'full-week-keeps-all-configured-sessions',
+  partialPortal.configuredSessionIdsForWeek(2).length === 5
+);
+assert(
+  'training-navigation-uses-week-specific-sessions',
+  portalSource.includes('visibleSessionIds.forEach(sid=>')
+);
+assert(
+  'partial-week-completion-counts-only-programmed-required-sessions',
+  JSON.stringify(partialPortal.plannedSessionIdsForWeek(1)) === JSON.stringify(['lower-b', 'upper-c'])
+);
+
 invalid('automatic-progression-is-blocked', (value) => { value.training.progression.mode = 'automatic'; }, 'coach-confirmed');
 invalid('missing-per-set-rir-is-blocked', (value) => { value.training.resultTracking.perSetFields = ['load', 'reps']; }, '"rir"');
 invalid('per-exercise-notes-are-blocked-as-result-fields', (value) => { value.training.resultTracking.perSetFields.push('notes'); }, 'Unknown result field "notes"');

@@ -3073,6 +3073,12 @@ function plannedSessionIdsForWeek(week){
     return (!definition||definition.required!==false)&&sessionHasProgramContent(W.seances[sid]);
   });
 }
+function configuredSessionIdsForWeek(week){
+  const cfg=configuredWeek(week);
+  const sessions=cfg.sessions||cfg.seances||{};
+  const configured=SEANCE_IDS.filter(sid=>Object.prototype.hasOwnProperty.call(sessions,sid));
+  return configured.length?configured:SEANCE_IDS;
+}
 function weekDoneCount(week){
   if(parseInt(week)===0)return WEEK_ZERO_STEPS.filter(s=>['complete','sent'].includes(getWeekZeroStepStatus(s.key))).length;
   return plannedSessionIdsForWeek(week).reduce((n,sid)=>n+(D.seances[seanceKey(week,sid)]&&D.seances[seanceKey(week,sid)].done?1:0),0);
@@ -3082,7 +3088,9 @@ function renderDayNav(){
   if(!nav)return;
   if(currentWeek===0){renderWeekZeroStepNav();return;}
   nav.innerHTML='';
-  SEANCE_IDS.forEach(sid=>{
+  const visibleSessionIds=configuredSessionIdsForWeek(currentWeek);
+  if(!visibleSessionIds.includes(currentSeance))currentSeance=visibleSessionIds[0]||SEANCE_IDS[0]||'a';
+  visibleSessionIds.forEach(sid=>{
     const S=WEEKS[currentWeek].seances[sid]||blankSession(sid);
     const label=splitSessionLabel(S.day||S.title||sid.toUpperCase());
     const done=!!(D.seances[seanceKey(currentWeek,sid)]&&D.seances[seanceKey(currentWeek,sid)].done);
