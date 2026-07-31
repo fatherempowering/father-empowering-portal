@@ -66,6 +66,7 @@ node tests/run-generator-tests.js
 node tests/run-create-client-tests.js
 node tests/run-training-model-tests.js
 node tests/run-set-results-tests.js
+node tests/run-pwa-offline-tests.js
 ```
 
 ## Règles importantes
@@ -90,4 +91,5 @@ node tests/run-set-results-tests.js
 - [Création simplifiée d’un client](docs/NEW-CLIENT.md)
 - [Modèle Training officiel](docs/TRAINING-MODEL.md)
 - [Formulaire Training pour Coach Max](docs/TRAINING-INTAKE-TEMPLATE.md)
+- [PWA et fonctionnement hors ligne](docs/PWA-OFFLINE.md)
 - [Notes de version](docs/releases/)

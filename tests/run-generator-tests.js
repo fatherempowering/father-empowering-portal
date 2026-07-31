@@ -87,10 +87,14 @@ assert('training-phase-is-compiled', html.includes('"id": "phase-1"'));
 
 const manifest = readJson(path.join(output, 'site.webmanifest'));
 assert('manifest-is-personalized', manifest.name.includes('Test Client') && manifest.short_name === 'Test Protocol');
+assert('manifest-language-is-personalized', manifest.lang === 'en');
+assert('manifest-has-stable-install-id', manifest.id === './');
 
 const sw = fs.readFileSync(path.join(output, 'sw.js'), 'utf8');
 assert('service-worker-cache-is-unique', /const CACHE_VERSION = 'client-test-client-[^']+';/.test(sw));
 assert('service-worker-keeps-programs', sw.includes("'./training-program.json'") && sw.includes("'./nutrition-program.json'"));
+assert('service-worker-keeps-client-info-offline', sw.includes("const OPTIONAL_SHELL=['./client-info.json']"));
+assert('installed-app-name-is-personalized', html.includes('<meta name="apple-mobile-web-app-title" content="Test Protocol">') && html.includes('<meta name="application-name" content="Test Protocol">'));
 
 const noNutritionSource = createPackage('training-only', false);
 const limitedClient = readJson(path.join(noNutritionSource, 'client-info.json'));

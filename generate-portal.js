@@ -66,7 +66,7 @@ function deepMerge(target, source) {
 }
 
 function htmlText(value) {
-  return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function endpointForReference(reference) {
@@ -195,6 +195,8 @@ const newBlock = '\nconst TEMPLATE_CONFIG=' + JSON.stringify(finalConfig, null, 
 html = html.slice(0, start + START.length) + newBlock + html.slice(end);
 html = html.replace(/<title>[^<]*<\/title>/, '<title>' + htmlText(finalConfig.client.documentTitle) + '</title>');
 html = html.replace(/<html lang="[^"]*"/, '<html lang="' + htmlText(finalConfig.client.language) + '"');
+html = html.replace(/<meta name="apple-mobile-web-app-title" content="[^"]*">/, '<meta name="apple-mobile-web-app-title" content="' + htmlText(finalConfig.client.shortName + ' Protocol') + '">');
+html = html.replace(/<meta name="application-name" content="[^"]*">/, '<meta name="application-name" content="' + htmlText(finalConfig.client.shortName + ' Protocol') + '">');
 
 const outputDir = args[1] ? path.resolve(args[1]) : packageDir;
 fs.mkdirSync(outputDir, { recursive: true });
@@ -224,6 +226,7 @@ const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'site.webmanifes
 manifest.name = finalConfig.client.appTitle + ' — ' + finalConfig.client.athleteName;
 manifest.short_name = finalConfig.client.shortName + ' Protocol';
 manifest.description = finalConfig.client.protocolLabel;
+manifest.lang = finalConfig.client.language;
 fs.writeFileSync(path.join(outputDir, 'site.webmanifest'), JSON.stringify(manifest, null, 2) + '\n');
 
 let sw = fs.readFileSync(path.join(repoRoot, 'sw.js'), 'utf8');

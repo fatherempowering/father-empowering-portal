@@ -1,7 +1,12 @@
-const CACHE_VERSION = 'v3.2.3-week-zero-absolute-top-fix';
+const CACHE_VERSION = 'v3.2.3-pwa-offline-v1';
 const CACHE_SCOPE_KEY = self.registration.scope.replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase()||'root';
 const CACHE_PREFIX = 'legacy-protocol-'+CACHE_SCOPE_KEY+'-';
 const CACHE_NAME = CACHE_PREFIX+CACHE_VERSION;
+const TRUSTED_EXTERNAL_ORIGINS=[
+  'https://cdn.jsdelivr.net',
+  'https://fonts.googleapis.com',
+  'https://fonts.gstatic.com'
+];
 const APP_SHELL=[
   './',
   './index.html',
@@ -25,9 +30,30 @@ const APP_SHELL=[
   './measure-icons/thigh.png',
   './measure-icons/waist.png'
 ];
+const OPTIONAL_SHELL=['./client-info.json'];
+
+function cacheSuccessful(request,response){
+  if(!response||!response.ok)return Promise.resolve(response);
+  const copy=response.clone();
+  return caches.open(CACHE_NAME).then(cache=>cache.put(request,copy)).then(()=>response);
+}
+
+function canonicalProgramRequest(url){
+  return new Request(url.origin+url.pathname,{method:'GET'});
+}
+
+function cacheExternal(request,response){
+  if(!response||(!response.ok&&response.type!=='opaque'))return Promise.resolve(response);
+  const copy=response.clone();
+  return caches.open(CACHE_NAME).then(cache=>cache.put(request,copy)).then(()=>response);
+}
 
 self.addEventListener('install',event=>{
-  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)).then(()=>self.skipWaiting()));
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache=>cache.addAll(APP_SHELL).then(()=>Promise.all(OPTIONAL_SHELL.map(path=>cache.add(path).catch(()=>null)))))
+      .then(()=>self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate',event=>{
@@ -42,15 +68,21 @@ self.addEventListener('fetch',event=>{
   const req=event.request;
   if(req.method!=='GET')return;
   const url=new URL(req.url);
-  if(url.origin!==self.location.origin)return;
+  if(url.origin!==self.location.origin){
+    if(!TRUSTED_EXTERNAL_ORIGINS.includes(url.origin))return;
+    event.respondWith(
+      caches.match(req).then(cached=>cached||fetch(req).then(res=>cacheExternal(req,res)).catch(()=>Response.error()))
+    );
+    return;
+  }
   const isProgramFile=url.pathname.endsWith('/training-program.json')||url.pathname.endsWith('/nutrition-program.json');
   if(isProgramFile){
+    const cacheKey=canonicalProgramRequest(url);
     event.respondWith(
       fetch(req,{cache:'no-store'}).then(res=>{
-        const copy=res.clone();
-        caches.open(CACHE_NAME).then(cache=>cache.put(req,copy));
-        return res;
-      }).catch(()=>caches.match(req))
+        if(!res.ok)throw new Error('Program fetch failed: '+res.status);
+        return cacheSuccessful(cacheKey,res);
+      }).catch(()=>caches.match(cacheKey).then(cached=>cached||caches.match(req,{ignoreSearch:true})))
     );
     return;
   }
@@ -58,9 +90,8 @@ self.addEventListener('fetch',event=>{
   if(isAppDocument){
     event.respondWith(
       fetch(req).then(res=>{
-        const copy=res.clone();
-        caches.open(CACHE_NAME).then(cache=>cache.put(req,copy));
-        return res;
+        if(!res.ok)throw new Error('Navigation fetch failed: '+res.status);
+        return cacheSuccessful(req,res);
       }).catch(()=>caches.match(req).then(cached=>cached||caches.match('./index.html')))
     );
     return;
@@ -68,10 +99,8 @@ self.addEventListener('fetch',event=>{
   event.respondWith(
     caches.match(req).then(cached=>{
       const network=fetch(req).then(res=>{
-        const copy=res.clone();
-        caches.open(CACHE_NAME).then(cache=>cache.put(req,copy));
-        return res;
-      }).catch(()=>cached||caches.match('./index.html'));
+        return cacheSuccessful(req,res);
+      }).catch(()=>cached||Response.error());
       return cached||network;
     })
   );
