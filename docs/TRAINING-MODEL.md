@@ -40,6 +40,8 @@ Le format représente :
 
 `required` indique si la séance compte dans l’exécution obligatoire. `schedule.mode` accepte `fixed`, `suggested` ou `flexible`. Un protocole sans jour imposé utilise `flexible` et omet `suggestedDay`.
 
+`schedule.suggestedDay` alimente aussi la navigation quotidienne du portail. Les boutons **Start Today’s Session** et **Training** utilisent le fuseau horaire du client et l’identifiant permanent de la séance pour ouvrir automatiquement la séance, la récupération active ou le repos complet prévu ce jour-là. Dans une semaine partielle, seules les séances réellement présentes dans cette semaine peuvent être sélectionnées.
+
 ## Prescription d’un exercice
 
 Chaque exercice contient une clé stable et un objet `prescription` :
