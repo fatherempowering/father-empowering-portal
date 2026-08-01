@@ -76,6 +76,12 @@ const exerciseLoop = buildSource.indexOf('bloc.exs.forEach(ex=>{');
 const exerciseCard = buildSource.indexOf('<div class="ex-card"><div class="ex-thead">');
 assert('each-exercise-has-its-own-card', exerciseLoop >= 0 && exerciseCard > exerciseLoop);
 assert('each-exercise-card-wraps-results', buildSource.includes("setResultsHTML(ex)+'</div>'"));
+assert('result-keyboard-declares-done-action', source.includes('inputmode="decimal" enterkeyhint="done"') && source.includes('inputmode="numeric" enterkeyhint="done"'));
+assert('result-blur-queues-exercise-recenter', source.includes("inp.addEventListener('blur',event=>queueExerciseCardRecenter(inp,event.relatedTarget))"));
+assert('switching-fields-cancels-recenter', source.includes('if(!input||isPortalEntryField(nextTarget))return') && source.includes('if(isPortalEntryField(document.activeElement))return'));
+assert('exercise-recenter-waits-for-keyboard-animation', source.includes('},360);') && source.includes('requestAnimationFrame(()=>recenterExerciseCard(card))'));
+assert('exercise-recenter-respects-sticky-navigation', source.includes("document.querySelectorAll('.hdr,.nav,.coach-banner.show,.week-nav')") && source.includes('trainingVisibleTop()'));
+assert('exercise-recenter-scrolls-smoothly', source.includes("window.scrollBy({top:distance,behavior:'smooth'})"));
 
 if (failed) {
   console.error('\n' + failed + ' set-results test(s) failed.');
