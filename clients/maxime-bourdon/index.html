@@ -5445,9 +5445,9 @@ function setResultsHTML(ex){
     +'<div class="set-result-grid"><div class="set-result-label">SET</div><div class="set-result-label">LB</div><div class="set-result-label">REPS</div><div class="set-result-label">RIR</div></div>';
   for(let index=0;index<count;index++){
     h+='<div class="set-result-grid"><div class="set-result-index">'+(index+1)+'</div>'
-      +'<input class="set-result-input set-load-input" inputmode="decimal" data-key="'+escapeHTML(ex.key)+'" data-set-index="'+index+'" data-prescribed="'+escapeHTML(load)+'" value="'+escapeHTML(load)+'" placeholder="lb" aria-label="Load for '+escapeHTML(ex.name)+' set '+(index+1)+'">'
-      +'<input class="set-result-input set-reps-result-input" inputmode="numeric" data-key="'+escapeHTML(ex.key)+'" data-set-index="'+index+'" data-prescribed="'+escapeHTML(reps)+'" value="'+escapeHTML(reps)+'" placeholder="reps" aria-label="Repetitions for '+escapeHTML(ex.name)+' set '+(index+1)+'">'
-      +'<input class="set-result-input set-rir-input" inputmode="decimal" data-key="'+escapeHTML(ex.key)+'" data-set-index="'+index+'" data-prescribed="'+escapeHTML(rir)+'" value="'+escapeHTML(rir)+'" placeholder="RIR" aria-label="RIR for '+escapeHTML(ex.name)+' set '+(index+1)+'"></div>';
+      +'<input class="set-result-input set-load-input" inputmode="decimal" enterkeyhint="done" data-key="'+escapeHTML(ex.key)+'" data-set-index="'+index+'" data-prescribed="'+escapeHTML(load)+'" value="'+escapeHTML(load)+'" placeholder="lb" aria-label="Load for '+escapeHTML(ex.name)+' set '+(index+1)+'">'
+      +'<input class="set-result-input set-reps-result-input" inputmode="numeric" enterkeyhint="done" data-key="'+escapeHTML(ex.key)+'" data-set-index="'+index+'" data-prescribed="'+escapeHTML(reps)+'" value="'+escapeHTML(reps)+'" placeholder="reps" aria-label="Repetitions for '+escapeHTML(ex.name)+' set '+(index+1)+'">'
+      +'<input class="set-result-input set-rir-input" inputmode="decimal" enterkeyhint="done" data-key="'+escapeHTML(ex.key)+'" data-set-index="'+index+'" data-prescribed="'+escapeHTML(rir)+'" value="'+escapeHTML(rir)+'" placeholder="RIR" aria-label="RIR for '+escapeHTML(ex.name)+' set '+(index+1)+'"></div>';
   }
   return h+'</div>';
 }
@@ -5674,6 +5674,7 @@ function persistSeanceFields(sid){
   return {charges,actuals,setResults,notes};
 }
 let _draftTimer=null;
+let _exerciseRecenterTimer=null;
 function autosaveDraft(sid){
   clearTimeout(_draftTimer);
   _draftTimer=setTimeout(()=>{
@@ -5683,9 +5684,53 @@ function autosaveDraft(sid){
     save();
   },600);
 }
+function isPortalEntryField(node){
+  return !!(node&&node.matches&&node.matches('input,textarea,select,[contenteditable="true"]'));
+}
+function trainingVisibleTop(){
+  let top=(window.visualViewport&&window.visualViewport.offsetTop)||0;
+  document.querySelectorAll('.hdr,.nav,.coach-banner.show,.week-nav').forEach(node=>{
+    const style=window.getComputedStyle(node);
+    if(style.display==='none'||(style.position!=='sticky'&&style.position!=='fixed'))return;
+    const rect=node.getBoundingClientRect();
+    if(rect.bottom>top&&rect.top<=top+2)top=Math.max(top,rect.bottom);
+  });
+  return top;
+}
+function recenterExerciseCard(card){
+  if(!card||!card.isConnected||isPortalEntryField(document.activeElement))return false;
+  const viewport=window.visualViewport;
+  const viewportTop=(viewport&&viewport.offsetTop)||0;
+  const viewportBottom=viewportTop+((viewport&&viewport.height)||window.innerHeight);
+  const visibleTop=Math.max(viewportTop,trainingVisibleTop())+12;
+  const visibleBottom=viewportBottom-12;
+  const availableHeight=Math.max(0,visibleBottom-visibleTop);
+  const rect=card.getBoundingClientRect();
+  const targetTop=rect.height<=availableHeight?visibleTop+(availableHeight-rect.height)/2:visibleTop;
+  const distance=rect.top-targetTop;
+  if(Math.abs(distance)>4)window.scrollBy({top:distance,behavior:'smooth'});
+  return true;
+}
+function queueExerciseCardRecenter(input,nextTarget){
+  clearTimeout(_exerciseRecenterTimer);
+  if(!input||isPortalEntryField(nextTarget))return;
+  const card=input.closest('.ex-card');
+  if(!card)return;
+  _exerciseRecenterTimer=setTimeout(()=>{
+    if(isPortalEntryField(document.activeElement))return;
+    requestAnimationFrame(()=>recenterExerciseCard(card));
+  },360);
+}
 function wireSeanceInputs(sid){
   const panel=el('sub-'+sid);
-  panel.querySelectorAll('.set-result-input').forEach(inp=>{ inp.addEventListener('input',()=>autosaveDraft(sid)); });
+  panel.querySelectorAll('.set-result-input').forEach(inp=>{
+    inp.addEventListener('input',()=>autosaveDraft(sid));
+    inp.addEventListener('focus',()=>clearTimeout(_exerciseRecenterTimer));
+    inp.addEventListener('blur',event=>queueExerciseCardRecenter(inp,event.relatedTarget));
+    inp.addEventListener('keydown',event=>{
+      if(event.key==='Enter'){event.preventDefault();inp.blur();}
+    });
+  });
   panel.querySelectorAll('.ex-input').forEach(inp=>{ inp.addEventListener('input',()=>autosaveDraft(sid)); });
   panel.querySelectorAll('.duration-control').forEach(ctrl=>{
     ctrl.querySelectorAll('.duration-input').forEach(inp=>{ inp.addEventListener('input',()=>autosaveDraft(sid)); });
