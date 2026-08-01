@@ -67,6 +67,7 @@ node tests/run-generator-tests.js
 node tests/run-create-client-tests.js
 node tests/run-training-model-tests.js
 node tests/run-set-results-tests.js
+node tests/run-today-navigation-tests.js
 node tests/run-pwa-offline-tests.js
 node tests/run-client-hub-tests.js
 ```

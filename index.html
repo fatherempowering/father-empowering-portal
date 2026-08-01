@@ -3287,29 +3287,49 @@ function updateStatus(sid){
 }
 
 /* ═════════ NAVIGATION ═════════ */
-function todaySeanceId(){
-  const dayIndex=new Date().getDay();
-  const day=['SUN','MON','TUE','WED','THU','FRI','SAT'][dayIndex];
+function clientDayCode(date){
+  const value=date==null?new Date():new Date(date);
+  const safeDate=isNaN(value.getTime())?new Date():value;
+  const codes=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  try{
+    const options={weekday:'short'};
+    const timezone=String(CLIENT_PROFILE.timezone||'').trim();
+    if(timezone)options.timeZone=timezone;
+    const code=new Intl.DateTimeFormat('en-US',options).format(safeDate).slice(0,3).toUpperCase();
+    if(codes.includes(code))return code;
+  }catch(e){}
+  return codes[safeDate.getDay()];
+}
+function scheduledSessionIdForDay(week,day){
+  const visibleSessionIds=configuredSessionIdsForWeek(week);
+  const normalizedDay=String(day||'').toUpperCase();
   const match=trainingSessionCatalog(TRAINING_CONFIG).find(item=>{
+    const id=phaseId(item&&item.id);
     const schedule=item&&item.schedule&&typeof item.schedule==='object'?item.schedule:{};
-    return String(schedule.suggestedDay||'').toUpperCase()===day;
+    return visibleSessionIds.includes(id)&&String(schedule.suggestedDay||'').toUpperCase()===normalizedDay;
   });
-  const matchedId=phaseId(match&&match.id);
-  const legacyId=['g','a','b','c','d','e','f'][dayIndex];
-  return matchedId||(SEANCE_IDS.includes(legacyId)?legacyId:null)||SEANCE_IDS[dayIndex%Math.max(SEANCE_IDS.length,1)]||SEANCE_IDS[0]||'a';
+  return phaseId(match&&match.id)||null;
+}
+function todaySeanceId(week,date){
+  const activeWeek=parseInt(week)||getPortalActiveWeek();
+  if(activeWeek<1)return null;
+  return scheduledSessionIdForDay(activeWeek,clientDayCode(date));
 }
 function todayNutritionDay(){
-  return ['dim','lun','mar','mer','jeu','ven','sam'][new Date().getDay()];
+  const days={SUN:'dim',MON:'lun',TUE:'mar',WED:'mer',THU:'jeu',FRI:'ven',SAT:'sam'};
+  return days[clientDayCode()]||'lun';
 }
-function selectTrainingDayForToday(){
+function selectTrainingDayForToday(date){
   currentWeek=getPortalActiveWeek();
   buildWeekNav();
   renderEntrainementWeek();
-  if(currentWeek===0)return;
-  const sid=todaySeanceId();
-  const idx=SEANCE_IDS.indexOf(sid);
-  const btn=document.querySelectorAll('#panel-entrainement .sub-nav .sub-btn')[idx];
+  if(currentWeek===0)return false;
+  const sid=todaySeanceId(currentWeek,date);
+  if(!sid)return false;
+  const btn=[...document.querySelectorAll('#panel-entrainement .sub-nav .sub-btn')].find(button=>button.dataset.seance===sid);
   showSeance(sid,btn);
+  if(btn&&typeof btn.scrollIntoView==='function')setTimeout(()=>btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}),0);
+  return true;
 }
 function startTodaysSession(){
   showPanel('entrainement',document.querySelectorAll('.nav-btn')[1]);
@@ -3520,17 +3540,27 @@ function updateHomeFocus(){
     if(weekSub)weekSub.textContent=weekZeroOverallStatus();
     return;
   }
-  const sid=todaySeanceId();
+  const sid=todaySeanceId(act);
+  const catalog=trainingSessionCatalog(TRAINING_CONFIG);
+  const definition=catalog.find(item=>phaseId(item&&item.id)===sid)||{};
   const S=WEEKS[act]&&WEEKS[act].seances[sid];
-  const label=splitSessionLabel((S&&S.day)||SEANCE_DAYS[sid]||sid.toUpperCase());
-  const done=!!(D.seances[seanceKey(act,sid)]&&D.seances[seanceKey(act,sid)].done);
   const planned=plannedSessionIdsForWeek(act);
   const doneCount=weekDoneCount(act);
   const pct=planned.length?Math.round(doneCount/planned.length*100):0;
   const title=el('v2-today-title'),sub=el('v2-today-sub'),pill=el('v2-today-pill');
-  if(title)title.textContent=label.title;
-  if(sub)sub.textContent=done?label.day+' completed.':(planned.includes(sid)?label.day+' is ready.':'No programmed work for '+label.day+'.');
-  if(pill)pill.textContent=done?'DONE':(planned.includes(sid)?'TODAY':'BUILD');
+  if(sid){
+    const label=splitSessionLabel((S&&S.day)||SEANCE_DAYS[sid]||sid.toUpperCase());
+    const done=!!(D.seances[seanceKey(act,sid)]&&D.seances[seanceKey(act,sid)].done);
+    const type=String(definition.type||'training');
+    if(title)title.textContent=label.title;
+    if(sub)sub.textContent=done?label.day+' completed.':(type==='complete-rest'?label.day+' · Complete rest.':(type==='active-recovery'?label.day+' · Active recovery.':label.day+' is ready.'));
+    if(pill)pill.textContent=done?'DONE':(type==='complete-rest'?'REST':(type==='active-recovery'?'RECOVERY':'TODAY'));
+  }else{
+    const label=splitSessionLabel(clientDayCode());
+    if(title)title.textContent='NO SESSION TODAY';
+    if(sub)sub.textContent='No programmed session for '+label.day+'.';
+    if(pill)pill.textContent='REST';
+  }
   const weekPill=el('v2-week-pill'),weekTitle=el('v2-week-title'),fill=el('v2-week-fill'),weekSub=el('v2-week-sub');
   if(weekPill)weekPill.textContent=pct+'%';
   if(weekTitle)weekTitle.textContent=doneCount+' / '+planned.length+' DONE';
