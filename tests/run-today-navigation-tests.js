@@ -58,11 +58,16 @@ const context = {
   }
 };
 vm.createContext(context);
-['clientDayCode', 'scheduledSessionIdForDay', 'todaySeanceId'].forEach((name) => {
+['clientDayCode', 'clientDateKey', 'shouldShowCheckinBadge', 'scheduledSessionIdForDay', 'todaySeanceId'].forEach((name) => {
   vm.runInContext(extractFunction(name), context);
 });
 
 assert('client-timezone-controls-calendar-day', context.clientDayCode('2026-08-02T02:00:00Z') === 'SAT');
+assert('client-timezone-controls-calendar-date', context.clientDateKey('2026-08-03T02:00:00Z') === '2026-08-02');
+assert('sunday-checkin-badge-shows-while-pending', context.shouldShowCheckinBadge([], 1, '2026-08-02T16:00:00-04:00') === true);
+assert('sunday-checkin-badge-hides-for-active-week', context.shouldShowCheckinBadge([{ week: 1, date: '2026-08-02' }], 1, '2026-08-02T16:00:00-04:00') === false);
+assert('sunday-checkin-badge-hides-after-week-unlocks', context.shouldShowCheckinBadge([{ week: 1, date: '2026-08-02' }], 2, '2026-08-02T16:00:00-04:00') === false);
+assert('next-sunday-checkin-badge-returns', context.shouldShowCheckinBadge([{ week: 1, date: '2026-08-02' }], 2, '2026-08-09T16:00:00-04:00') === true);
 assert('partial-week-friday-opens-day-4', context.todaySeanceId(1, '2026-07-31T16:00:00-04:00') === 'quads-lats');
 assert('partial-week-saturday-opens-day-5', context.todaySeanceId(1, '2026-08-01T16:00:00-04:00') === 'chest-arms');
 assert('partial-week-sunday-opens-complete-rest', context.todaySeanceId(1, '2026-08-02T16:00:00-04:00') === 'complete-rest');
