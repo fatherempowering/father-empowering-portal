@@ -350,8 +350,8 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .ci-duration{display:flex;gap:6px;align-items:center}
 .ci-duration .duration-field{padding:7px 6px;min-width:62px}
 .ci-duration .duration-input{width:34px}
-.ci-duration[data-duration-id="ci-sommeil-h"] .duration-input{color:#fff}
-.ci-duration[data-duration-id="ci-sommeil-h"] .duration-input::placeholder{color:rgba(255,255,255,.48)}
+.ci-duration[data-duration-id="ci-sommeil-h"] .duration-input{color:var(--txt);-webkit-text-fill-color:var(--txt)}
+.ci-duration[data-duration-id="ci-sommeil-h"] .duration-input::placeholder{color:var(--txt3);-webkit-text-fill-color:var(--txt3)}
 .mens-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .mens-field label{display:block;font-size:10px;letter-spacing:1px;color:var(--txt3);margin-bottom:4px;font-family:'Bebas Neue',sans-serif}
 .mens-field input{width:100%;border:1.5px solid var(--br);border-radius:8px;padding:8px 10px;font-size:13px;font-weight:600;color:var(--txt);background:var(--card2);outline:none;font-family:'DM Sans',sans-serif}
@@ -3345,6 +3345,29 @@ function clientDayCode(date){
   }catch(e){}
   return codes[safeDate.getDay()];
 }
+function clientDateKey(date){
+  const value=date==null?new Date():new Date(date);
+  const safeDate=isNaN(value.getTime())?new Date():value;
+  try{
+    const options={year:'numeric',month:'2-digit',day:'2-digit'};
+    const timezone=String(CLIENT_PROFILE.timezone||'').trim();
+    if(timezone)options.timeZone=timezone;
+    const parts=new Intl.DateTimeFormat('en-US',options).formatToParts(safeDate);
+    const read=type=>(parts.find(part=>part.type===type)||{}).value||'';
+    const year=read('year'),month=read('month'),day=read('day');
+    if(year&&month&&day)return year+'-'+month+'-'+day;
+  }catch(e){}
+  return safeDate.getFullYear()+'-'+String(safeDate.getMonth()+1).padStart(2,'0')+'-'+String(safeDate.getDate()).padStart(2,'0');
+}
+function shouldShowCheckinBadge(checkins,activeWeek,date){
+  if(clientDayCode(date)!=='SUN')return false;
+  const today=clientDateKey(date);
+  const week=parseInt(activeWeek)||0;
+  return !(Array.isArray(checkins)?checkins:[]).some(entry=>{
+    if(!entry)return false;
+    return parseInt(entry.week)===week||String(entry.date||'')===today;
+  });
+}
 function scheduledSessionIdForDay(week,day){
   const visibleSessionIds=configuredSessionIdsForWeek(week);
   const normalizedDay=String(day||'').toUpperCase();
@@ -3896,7 +3919,7 @@ function getCheckinFormEntry(){
   ['taille','poitrine','bras','cuisse','mollet'].forEach(k=>{const v=num('ci-m-'+k);if(v!=null)mens[k]=v;});
   return {
     week:getActiveWeek(),
-    date:new Date().toISOString().slice(0,10),
+    date:clientDateKey(),
     poids:el('ci-poids').value.trim()||null,
     energie:parseInt(el('ci-energie').value),
     sommeil:parseInt(el('ci-sommeil').value),
@@ -4006,6 +4029,7 @@ function saveCheckin(silent){
   if(window.saveWeek12FinalData)window.saveWeek12FinalData(entry);
   _resetCheckinForm();
   buildWeekNav(); updateHomeStats();
+  if(window.feRefreshCheckinBadge)window.feRefreshCheckinBadge();
   if(!silent){alert('Week '+entry.week+' check-in archived ✓');showPanel('accueil',document.querySelectorAll('.nav-btn')[0]);}
   return entry;
 }
@@ -5358,8 +5382,7 @@ function refreshCheckinBadge(){
     if(!checkinButton)return;
     var old=checkinButton.querySelector('.fe-ci-badge');
     var week=getActiveWeek();
-    var done=(D.checkins||[]).some(function(c){return c&&c.week===week;});
-    var shouldShow=(new Date().getDay()===0)&&!done;
+    var shouldShow=shouldShowCheckinBadge(D.checkins,week,new Date());
     if(shouldShow&&!old){
       var dot=document.createElement('span');
       dot.className='fe-ci-badge';
@@ -5368,6 +5391,7 @@ function refreshCheckinBadge(){
     if(!shouldShow&&old)old.remove();
   }catch(e){}
 }
+window.feRefreshCheckinBadge=refreshCheckinBadge;
 if(typeof window.showPanel==='function'){
   var originalShowPanel=window.showPanel;
   window.showPanel=function(){
