@@ -5766,6 +5766,7 @@ function saveSeance(sid){
   D.seances[k]={done:true,date:new Date().toISOString().slice(0,10),charges:f.charges,actuals:f.actuals,setResults:f.setResults,notes:f.notes};
   delete D.drafts[k];
   save(); updateStatus(sid); renderDayNav(); buildWeekNav(); updateHomeStats(); renderDash();
+  if(window.feRefreshCheckinBadge)window.feRefreshCheckinBadge();
   const btn=el('save-'+sid); if(btn){btn.style.background='var(--green)'; btn.querySelector('.save-btn-label').textContent='SAVED ✓ — SESSION COMPLETED';}
 }
 function updateStatus(sid){
@@ -5802,14 +5803,20 @@ function clientDateKey(date){
   }catch(e){}
   return safeDate.getFullYear()+'-'+String(safeDate.getMonth()+1).padStart(2,'0')+'-'+String(safeDate.getDate()).padStart(2,'0');
 }
-function shouldShowCheckinBadge(checkins,activeWeek,date){
-  if(clientDayCode(date)!=='SUN')return false;
+function shouldShowCheckinBadge(checkins,activeWeek,date,requiredCount,doneCount){
   const today=clientDateKey(date);
   const week=parseInt(activeWeek)||0;
-  return !(Array.isArray(checkins)?checkins:[]).some(entry=>{
+  if(week<1)return false;
+  const alreadySubmitted=(Array.isArray(checkins)?checkins:[]).some(entry=>{
     if(!entry)return false;
     return parseInt(entry.week)===week||String(entry.date||'')===today;
   });
+  if(alreadySubmitted)return false;
+  const required=Math.max(0,parseInt(requiredCount)||0);
+  const done=Math.max(0,parseInt(doneCount)||0);
+  const day=clientDayCode(date);
+  if(day==='SUN')return false;
+  return (required>0&&done>=required)||day==='SAT';
 }
 function scheduledSessionIdForDay(week,day){
   const visibleSessionIds=configuredSessionIdsForWeek(week);
@@ -7824,8 +7831,10 @@ function refreshCheckinBadge(){
     });
     if(!checkinButton)return;
     var old=checkinButton.querySelector('.fe-ci-badge');
-    var week=getActiveWeek();
-    var shouldShow=shouldShowCheckinBadge(D.checkins,week,new Date());
+    var week=getPortalActiveWeek();
+    var planned=week>0?plannedSessionIdsForWeek(week):[];
+    var done=week>0?weekDoneCount(week):0;
+    var shouldShow=shouldShowCheckinBadge(D.checkins,week,new Date(),planned.length,done);
     if(shouldShow&&!old){
       var dot=document.createElement('span');
       dot.className='fe-ci-badge';
