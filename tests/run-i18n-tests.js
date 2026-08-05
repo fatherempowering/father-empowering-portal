@@ -60,7 +60,8 @@ const sw=fs.readFileSync(path.join(repo,'sw.js'),'utf8');
 const generator=fs.readFileSync(path.join(repo,'generate-portal.js'),'utf8');
 assert('settings-has-two-language-buttons',portal.includes('data-language-choice="fr"')&&portal.includes('data-language-choice="en"'));
 assert('preference-has-client-specific-storage-key',portal.includes("'_language_v1'"));
-assert('language-survives-offline',sw.includes("'./i18n.js'"));
+assert('language-survives-offline',sw.includes("'./i18n.js?v=2'"));
+assert('installed-app-bypasses-legacy-language-cache',portal.includes('<script src="i18n.js?v=2"></script>'));
 assert('generator-copies-language-engine',generator.includes("'i18n.js'"));
 
 for(const file of ['training-program.json','templates/client-package/training-program.example.json','clients/maxime-bourdon/training-program.json']){

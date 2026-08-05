@@ -10,7 +10,7 @@ const TRUSTED_EXTERNAL_ORIGINS=[
 const APP_SHELL=[
   './',
   './index.html',
-  './i18n.js',
+  './i18n.js?v=2',
   './site.webmanifest',
   './training-program.json',
   './nutrition-program.json',
