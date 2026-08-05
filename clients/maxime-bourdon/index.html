@@ -19,6 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Biryani:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="i18n.js"></script>
 <style>
 /* ═══ THEMES ═══ */
 :root{--bg:#F4F3EF;--card:#FFFFFF;--card2:#F8F7F3;--black:#1C1C1C;--black2:#252525;--orange:#C85A00;--ol:#E8751A;--wh:#FFFFFF;--txt:#1C1C1C;--txt2:#444444;--txt3:#888888;--br:rgba(0,0,0,0.07);--shadow:0 2px 12px rgba(0,0,0,0.07);--green:#2a7a3b;--yellow:#C99A15;--red:#c0392b;--tint:rgba(200,90,0,0.06)}
@@ -69,6 +70,9 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .appearance-row{display:flex;gap:6px;padding:0 12px 14px}
 .appearance-btn{flex:1;border:1px solid var(--br);background:var(--card2);color:var(--txt2);border-radius:10px;padding:9px 6px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer}
 .appearance-btn.active{border-color:var(--orange);background:var(--tint);color:var(--orange)}
+.language-row{display:flex;gap:6px;padding:0 12px 14px}
+.language-btn{flex:1;border:1px solid var(--br);background:var(--card2);color:var(--txt2);border-radius:10px;padding:10px 6px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer}
+.language-btn.active{border-color:var(--orange);background:var(--tint);color:var(--orange)}
 @media(max-width:520px){.clock{font-size:21px}.clock-date{font-size:8px}.hdr{padding:12px 14px 10px}.hdr-name{font-size:18px}.settings-sheet{padding-top:68px}.hdr-welcome{font-size:10px}}
 
 /* ═══ TOP NAV ═══ */
@@ -734,6 +738,11 @@ canvas{display:block;width:100%!important}
   <div class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
     <div class="settings-head"><div class="settings-title" id="settings-title">SETTINGS</div><button class="settings-close" onclick="closeSettings()" aria-label="Close settings">×</button></div>
     <div class="settings-list">
+      <div class="settings-item" style="cursor:default"><span><span>LANGUE / LANGUAGE</span><span class="settings-sub">Choose your portal language</span></span></div>
+      <div class="language-row">
+        <button class="language-btn" data-language-choice="fr" onclick="setPortalLanguage('fr')">FRANÇAIS</button>
+        <button class="language-btn" data-language-choice="en" onclick="setPortalLanguage('en')">ENGLISH</button>
+      </div>
       <button class="settings-item" onclick="manualUpdateCheck()"><span><span>Check for updates</span><span class="settings-sub">Refresh training and nutrition plans</span></span><span class="settings-chevron">›</span></button>
       <button class="settings-item" onclick="settingsExportData()"><span><span>Export my data</span><span class="settings-sub">Download a private backup of your progress</span></span><span class="settings-chevron">›</span></button>
       <div class="settings-item" style="cursor:default"><span><span>Appearance</span><span class="settings-sub">Choose how Legacy Protocol looks</span></span></div>
@@ -1396,9 +1405,15 @@ const TEMPLATE_CONFIG={
   "training": {
     "phase": {
       "id": "phase-1",
-      "label": "PHASE 1 — CLASSIC PHYSIQUE PREP",
+      "label": {
+        "en": "PHASE 1 — CLASSIC PHYSIQUE PREP",
+        "fr": "PHASE 1 — PRÉPARATION CLASSIC PHYSIQUE"
+      },
       "order": 1,
-      "objective": "Préparation compétition bodybuilding."
+      "objective": {
+        "en": "Bodybuilding competition preparation.",
+        "fr": "Préparation à une compétition de bodybuilding."
+      }
     },
     "sessionIds": [
       "a",
@@ -1418,9 +1433,18 @@ const TEMPLATE_CONFIG={
       "f": "SAT · TRAINING",
       "g": "SUN · RECOVERY"
     },
-    "defaultPhase": "CLASSIC PHYSIQUE PREP",
-    "defaultDesc": "Exécute chaque série à RIR 0 et inscris tes résultats réels.",
-    "defaultMessage": "Les charges cibles restent identiques pour les Semaines 1 à 3. Toute augmentation doit être confirmée.",
+    "defaultPhase": {
+      "en": "CLASSIC PHYSIQUE PREP",
+      "fr": "PRÉPARATION CLASSIC PHYSIQUE"
+    },
+    "defaultDesc": {
+      "en": "Execute every set at RIR 0 and enter your actual results.",
+      "fr": "Exécute chaque série à RIR 0 et inscris tes résultats réels."
+    },
+    "defaultMessage": {
+      "en": "Target loads remain unchanged for Weeks 1 to 3. Every increase must be confirmed.",
+      "fr": "Les charges cibles restent identiques pour les Semaines 1 à 3. Toute augmentation doit être confirmée."
+    },
     "keyLifts": [
       {
         "key": "smith_romanian_deadlift",
@@ -1446,19 +1470,43 @@ const TEMPLATE_CONFIG={
     "weeks": [
       {
         "week": 1,
-        "label": "DÉPART PARTIEL",
-        "phase": "CLASSIC PHYSIQUE PREP",
-        "objective": "Commencer le vendredi avec les Jours 4 et 5.",
+        "label": {
+          "en": "PARTIAL START",
+          "fr": "DÉPART PARTIEL"
+        },
+        "phase": {
+          "en": "CLASSIC PHYSIQUE PREP",
+          "fr": "PRÉPARATION CLASSIC PHYSIQUE"
+        },
+        "objective": {
+          "en": "Start Friday with Days 4 and 5.",
+          "fr": "Commencer le vendredi avec les Jours 4 et 5."
+        },
         "targetRir": 0,
-        "desc": "Semaine partielle : Jour 4 vendredi, Jour 5 samedi, repos complet dimanche.",
-        "msg": "Commence par le Jour 4. Les Jours 1 à 3 débuteront à la Semaine 2.",
+        "desc": {
+          "en": "Partial week: Day 4 Friday, Day 5 Saturday, complete rest Sunday.",
+          "fr": "Semaine partielle : Jour 4 vendredi, Jour 5 samedi, repos complet dimanche."
+        },
+        "msg": {
+          "en": "Start with Day 4. Days 1 to 3 begin in Week 2.",
+          "fr": "Commence par le Jour 4. Les Jours 1 à 3 débuteront à la Semaine 2."
+        },
         "sessions": {
           "quads-lats": {
-            "day": "FRI · JOUR 4",
-            "title": "QUADRICEPS & LATISSIMUS DORSI",
+            "day": {
+              "en": "FRI · DAY 4",
+              "fr": "FRI · JOUR 4"
+            },
+            "title": {
+              "en": "QUADRICEPS & LATISSIMUS DORSI",
+              "fr": "QUADRICEPS & LATISSIMUS DORSI"
+            },
             "blocks": [
               {
-                "label": "QUADRICEPS",
+                "label": {
+                  "en": "QUADRICEPS",
+                  "fr": "QUADRICEPS"
+                },
                 "exercises": [
                   {
                     "key": "side_plank_adductor_knee_bench_db_hold",
@@ -1535,7 +1583,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "LATISSIMUS DORSI",
+                "label": {
+                  "en": "LATISSIMUS DORSI",
+                  "fr": "LATISSIMUS DORSI"
+                },
                 "exercises": [
                   {
                     "key": "db_bent_over_row",
@@ -1588,7 +1639,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "label": {
+                  "en": "FINISHER — CALVES — 3 ROUNDS",
+                  "fr": "FINISHER — MOLLETS — 3 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "machine_calf_press",
@@ -1598,7 +1652,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1610,7 +1667,10 @@ const TEMPLATE_CONFIG={
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1622,7 +1682,10 @@ const TEMPLATE_CONFIG={
                       "reps": "20",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -1631,11 +1694,20 @@ const TEMPLATE_CONFIG={
             ]
           },
           "chest-arms": {
-            "day": "SAT · JOUR 5",
-            "title": "PECTORAUX & BRAS",
+            "day": {
+              "en": "SAT · DAY 5",
+              "fr": "SAT · JOUR 5"
+            },
+            "title": {
+              "en": "CHEST & ARMS",
+              "fr": "PECTORAUX & BRAS"
+            },
             "blocks": [
               {
-                "label": "CHEST",
+                "label": {
+                  "en": "CHEST",
+                  "fr": "PECTORAUX"
+                },
                 "exercises": [
                   {
                     "key": "incline_machine_press",
@@ -1681,14 +1753,20 @@ const TEMPLATE_CONFIG={
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
                 ]
               },
               {
-                "label": "ARMS — INDIVIDUAL EXERCISES",
+                "label": {
+                  "en": "ARMS — INDIVIDUAL EXERCISES",
+                  "fr": "BRAS — EXERCICES INDIVIDUELS"
+                },
                 "exercises": [
                   {
                     "key": "barbell_curl_day5",
@@ -1765,7 +1843,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "DELTOIDS",
+                "label": {
+                  "en": "DELTOIDS",
+                  "fr": "DELTOÏDES"
+                },
                 "exercises": [
                   {
                     "key": "machine_lateral_raise_day5",
@@ -1794,7 +1875,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -1804,7 +1888,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1816,7 +1903,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1828,7 +1918,10 @@ const TEMPLATE_CONFIG={
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1840,7 +1933,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -1849,27 +1945,57 @@ const TEMPLATE_CONFIG={
             ]
           },
           "complete-rest": {
-            "day": "SUN · REPOS COMPLET",
-            "title": "REPOS COMPLET",
+            "day": {
+              "en": "SUN · COMPLETE REST",
+              "fr": "SUN · REPOS COMPLET"
+            },
+            "title": {
+              "en": "COMPLETE REST",
+              "fr": "REPOS COMPLET"
+            },
             "blocks": []
           }
         }
       },
       {
         "week": 2,
-        "label": "SEMAINE COMPLÈTE",
-        "phase": "CLASSIC PHYSIQUE PREP",
-        "objective": "Exécuter les cinq séances avec les charges cibles prescrites.",
+        "label": {
+          "en": "FULL WEEK",
+          "fr": "SEMAINE COMPLÈTE"
+        },
+        "phase": {
+          "en": "CLASSIC PHYSIQUE PREP",
+          "fr": "PRÉPARATION CLASSIC PHYSIQUE"
+        },
+        "objective": {
+          "en": "Complete all five sessions with the prescribed target loads.",
+          "fr": "Exécuter les cinq séances avec les charges cibles prescrites."
+        },
         "targetRir": 0,
-        "desc": "Cinq séances obligatoires, récupération active jeudi et repos complet dimanche.",
-        "msg": "Donne tout à chaque série, inscris tes résultats et conserve les charges cibles jusqu’à confirmation.",
+        "desc": {
+          "en": "Five required sessions, active recovery Thursday and complete rest Sunday.",
+          "fr": "Cinq séances obligatoires, récupération active jeudi et repos complet dimanche."
+        },
+        "msg": {
+          "en": "Give everything on every set, enter your results and keep target loads until confirmation.",
+          "fr": "Donne tout à chaque série, inscris tes résultats et conserve les charges cibles jusqu’à confirmation."
+        },
         "sessions": {
           "posterior-lats": {
-            "day": "MON · JOUR 1",
-            "title": "CHAÎNE POSTÉRIEURE & LATISSIMUS DORSI",
+            "day": {
+              "en": "MON · DAY 1",
+              "fr": "MON · JOUR 1"
+            },
+            "title": {
+              "en": "POSTERIOR CHAIN & LATISSIMUS DORSI",
+              "fr": "CHAÎNE POSTÉRIEURE & LATISSIMUS DORSI"
+            },
             "blocks": [
               {
-                "label": "MAIN",
+                "label": {
+                  "en": "MAIN",
+                  "fr": "PRINCIPAL"
+                },
                 "exercises": [
                   {
                     "key": "one_leg_curl",
@@ -1982,7 +2108,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "label": {
+                  "en": "FINISHER — CALVES — 3 ROUNDS",
+                  "fr": "FINISHER — MOLLETS — 3 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "machine_calf_press",
@@ -1992,7 +2121,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2004,7 +2136,10 @@ const TEMPLATE_CONFIG={
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2016,7 +2151,10 @@ const TEMPLATE_CONFIG={
                       "reps": "20",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -2025,11 +2163,20 @@ const TEMPLATE_CONFIG={
             ]
           },
           "chest-biceps": {
-            "day": "TUE · JOUR 2",
-            "title": "PECTORAUX & BICEPS",
+            "day": {
+              "en": "TUE · DAY 2",
+              "fr": "TUE · JOUR 2"
+            },
+            "title": {
+              "en": "CHEST & BICEPS",
+              "fr": "PECTORAUX & BICEPS"
+            },
             "blocks": [
               {
-                "label": "CHEST",
+                "label": {
+                  "en": "CHEST",
+                  "fr": "PECTORAUX"
+                },
                 "exercises": [
                   {
                     "key": "pec_deck_day2",
@@ -2094,7 +2241,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "BICEPS — INDIVIDUAL EXERCISES",
+                "label": {
+                  "en": "BICEPS — INDIVIDUAL EXERCISES",
+                  "fr": "BICEPS — EXERCICES INDIVIDUELS"
+                },
                 "exercises": [
                   {
                     "key": "alternating_incline_db_curl",
@@ -2135,7 +2285,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -2145,7 +2298,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2157,7 +2313,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2169,7 +2328,10 @@ const TEMPLATE_CONFIG={
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2181,7 +2343,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -2190,11 +2355,20 @@ const TEMPLATE_CONFIG={
             ]
           },
           "delts-triceps": {
-            "day": "WED · JOUR 3",
-            "title": "DELTOÏDES & TRICEPS",
+            "day": {
+              "en": "WED · DAY 3",
+              "fr": "WED · JOUR 3"
+            },
+            "title": {
+              "en": "DELTOIDS & TRICEPS",
+              "fr": "DELTOÏDES & TRICEPS"
+            },
             "blocks": [
               {
-                "label": "DELTOIDS",
+                "label": {
+                  "en": "DELTOIDS",
+                  "fr": "DELTOÏDES"
+                },
                 "exercises": [
                   {
                     "key": "machine_lateral_raise_10_12",
@@ -2283,7 +2457,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "TRICEPS",
+                "label": {
+                  "en": "TRICEPS",
+                  "fr": "TRICEPS"
+                },
                 "exercises": [
                   {
                     "key": "rope_triceps_pushdown",
@@ -2317,14 +2494,20 @@ const TEMPLATE_CONFIG={
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -2334,7 +2517,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2346,7 +2532,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2358,7 +2547,10 @@ const TEMPLATE_CONFIG={
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2370,7 +2562,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -2379,16 +2574,31 @@ const TEMPLATE_CONFIG={
             ]
           },
           "active-recovery": {
-            "day": "THU · RÉCUPÉRATION ACTIVE",
-            "title": "RÉCUPÉRATION ACTIVE — AUCUN CARDIO PLANIFIÉ",
+            "day": {
+              "en": "THU · ACTIVE RECOVERY",
+              "fr": "THU · RÉCUPÉRATION ACTIVE"
+            },
+            "title": {
+              "en": "ACTIVE RECOVERY — NO CARDIO PLANNED",
+              "fr": "RÉCUPÉRATION ACTIVE — AUCUN CARDIO PLANIFIÉ"
+            },
             "blocks": []
           },
           "quads-lats": {
-            "day": "FRI · JOUR 4",
-            "title": "QUADRICEPS & LATISSIMUS DORSI",
+            "day": {
+              "en": "FRI · DAY 4",
+              "fr": "FRI · JOUR 4"
+            },
+            "title": {
+              "en": "QUADRICEPS & LATISSIMUS DORSI",
+              "fr": "QUADRICEPS & LATISSIMUS DORSI"
+            },
             "blocks": [
               {
-                "label": "QUADRICEPS",
+                "label": {
+                  "en": "QUADRICEPS",
+                  "fr": "QUADRICEPS"
+                },
                 "exercises": [
                   {
                     "key": "side_plank_adductor_knee_bench_db_hold",
@@ -2465,7 +2675,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "LATISSIMUS DORSI",
+                "label": {
+                  "en": "LATISSIMUS DORSI",
+                  "fr": "LATISSIMUS DORSI"
+                },
                 "exercises": [
                   {
                     "key": "db_bent_over_row",
@@ -2518,7 +2731,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "label": {
+                  "en": "FINISHER — CALVES — 3 ROUNDS",
+                  "fr": "FINISHER — MOLLETS — 3 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "machine_calf_press",
@@ -2528,7 +2744,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2540,7 +2759,10 @@ const TEMPLATE_CONFIG={
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2552,7 +2774,10 @@ const TEMPLATE_CONFIG={
                       "reps": "20",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -2561,11 +2786,20 @@ const TEMPLATE_CONFIG={
             ]
           },
           "chest-arms": {
-            "day": "SAT · JOUR 5",
-            "title": "PECTORAUX & BRAS",
+            "day": {
+              "en": "SAT · DAY 5",
+              "fr": "SAT · JOUR 5"
+            },
+            "title": {
+              "en": "CHEST & ARMS",
+              "fr": "PECTORAUX & BRAS"
+            },
             "blocks": [
               {
-                "label": "CHEST",
+                "label": {
+                  "en": "CHEST",
+                  "fr": "PECTORAUX"
+                },
                 "exercises": [
                   {
                     "key": "incline_machine_press",
@@ -2611,14 +2845,20 @@ const TEMPLATE_CONFIG={
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
                 ]
               },
               {
-                "label": "ARMS — INDIVIDUAL EXERCISES",
+                "label": {
+                  "en": "ARMS — INDIVIDUAL EXERCISES",
+                  "fr": "BRAS — EXERCICES INDIVIDUELS"
+                },
                 "exercises": [
                   {
                     "key": "barbell_curl_day5",
@@ -2695,7 +2935,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "DELTOIDS",
+                "label": {
+                  "en": "DELTOIDS",
+                  "fr": "DELTOÏDES"
+                },
                 "exercises": [
                   {
                     "key": "machine_lateral_raise_day5",
@@ -2724,7 +2967,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -2734,7 +2980,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2746,7 +2995,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2758,7 +3010,10 @@ const TEMPLATE_CONFIG={
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2770,7 +3025,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -2779,27 +3037,57 @@ const TEMPLATE_CONFIG={
             ]
           },
           "complete-rest": {
-            "day": "SUN · REPOS COMPLET",
-            "title": "REPOS COMPLET",
+            "day": {
+              "en": "SUN · COMPLETE REST",
+              "fr": "SUN · REPOS COMPLET"
+            },
+            "title": {
+              "en": "COMPLETE REST",
+              "fr": "REPOS COMPLET"
+            },
             "blocks": []
           }
         }
       },
       {
         "week": 3,
-        "label": "SEMAINE COMPLÈTE",
-        "phase": "CLASSIC PHYSIQUE PREP",
-        "objective": "Répéter la prescription et observer la progression réelle.",
+        "label": {
+          "en": "FULL WEEK",
+          "fr": "SEMAINE COMPLÈTE"
+        },
+        "phase": {
+          "en": "CLASSIC PHYSIQUE PREP",
+          "fr": "PRÉPARATION CLASSIC PHYSIQUE"
+        },
+        "objective": {
+          "en": "Repeat the prescription and observe actual progression.",
+          "fr": "Répéter la prescription et observer la progression réelle."
+        },
         "targetRir": 0,
-        "desc": "Cinq séances obligatoires, récupération active jeudi et repos complet dimanche.",
-        "msg": "Répète les charges cibles. Toute augmentation doit être confirmée avant de modifier la prescription.",
+        "desc": {
+          "en": "Five required sessions, active recovery Thursday and complete rest Sunday.",
+          "fr": "Cinq séances obligatoires, récupération active jeudi et repos complet dimanche."
+        },
+        "msg": {
+          "en": "Repeat target loads. Every increase must be confirmed before changing the prescription.",
+          "fr": "Répète les charges cibles. Toute augmentation doit être confirmée avant de modifier la prescription."
+        },
         "sessions": {
           "posterior-lats": {
-            "day": "MON · JOUR 1",
-            "title": "CHAÎNE POSTÉRIEURE & LATISSIMUS DORSI",
+            "day": {
+              "en": "MON · DAY 1",
+              "fr": "MON · JOUR 1"
+            },
+            "title": {
+              "en": "POSTERIOR CHAIN & LATISSIMUS DORSI",
+              "fr": "CHAÎNE POSTÉRIEURE & LATISSIMUS DORSI"
+            },
             "blocks": [
               {
-                "label": "MAIN",
+                "label": {
+                  "en": "MAIN",
+                  "fr": "PRINCIPAL"
+                },
                 "exercises": [
                   {
                     "key": "one_leg_curl",
@@ -2912,7 +3200,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "label": {
+                  "en": "FINISHER — CALVES — 3 ROUNDS",
+                  "fr": "FINISHER — MOLLETS — 3 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "machine_calf_press",
@@ -2922,7 +3213,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2934,7 +3228,10 @@ const TEMPLATE_CONFIG={
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2946,7 +3243,10 @@ const TEMPLATE_CONFIG={
                       "reps": "20",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -2955,11 +3255,20 @@ const TEMPLATE_CONFIG={
             ]
           },
           "chest-biceps": {
-            "day": "TUE · JOUR 2",
-            "title": "PECTORAUX & BICEPS",
+            "day": {
+              "en": "TUE · DAY 2",
+              "fr": "TUE · JOUR 2"
+            },
+            "title": {
+              "en": "CHEST & BICEPS",
+              "fr": "PECTORAUX & BICEPS"
+            },
             "blocks": [
               {
-                "label": "CHEST",
+                "label": {
+                  "en": "CHEST",
+                  "fr": "PECTORAUX"
+                },
                 "exercises": [
                   {
                     "key": "pec_deck_day2",
@@ -3024,7 +3333,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "BICEPS — INDIVIDUAL EXERCISES",
+                "label": {
+                  "en": "BICEPS — INDIVIDUAL EXERCISES",
+                  "fr": "BICEPS — EXERCICES INDIVIDUELS"
+                },
                 "exercises": [
                   {
                     "key": "alternating_incline_db_curl",
@@ -3065,7 +3377,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -3075,7 +3390,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -3087,7 +3405,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -3099,7 +3420,10 @@ const TEMPLATE_CONFIG={
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -3111,7 +3435,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -3120,11 +3447,20 @@ const TEMPLATE_CONFIG={
             ]
           },
           "delts-triceps": {
-            "day": "WED · JOUR 3",
-            "title": "DELTOÏDES & TRICEPS",
+            "day": {
+              "en": "WED · DAY 3",
+              "fr": "WED · JOUR 3"
+            },
+            "title": {
+              "en": "DELTOIDS & TRICEPS",
+              "fr": "DELTOÏDES & TRICEPS"
+            },
             "blocks": [
               {
-                "label": "DELTOIDS",
+                "label": {
+                  "en": "DELTOIDS",
+                  "fr": "DELTOÏDES"
+                },
                 "exercises": [
                   {
                     "key": "machine_lateral_raise_10_12",
@@ -3213,7 +3549,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "TRICEPS",
+                "label": {
+                  "en": "TRICEPS",
+                  "fr": "TRICEPS"
+                },
                 "exercises": [
                   {
                     "key": "rope_triceps_pushdown",
@@ -3247,14 +3586,20 @@ const TEMPLATE_CONFIG={
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -3264,7 +3609,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -3276,7 +3624,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -3288,7 +3639,10 @@ const TEMPLATE_CONFIG={
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -3300,7 +3654,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -3309,16 +3666,31 @@ const TEMPLATE_CONFIG={
             ]
           },
           "active-recovery": {
-            "day": "THU · RÉCUPÉRATION ACTIVE",
-            "title": "RÉCUPÉRATION ACTIVE — AUCUN CARDIO PLANIFIÉ",
+            "day": {
+              "en": "THU · ACTIVE RECOVERY",
+              "fr": "THU · RÉCUPÉRATION ACTIVE"
+            },
+            "title": {
+              "en": "ACTIVE RECOVERY — NO CARDIO PLANNED",
+              "fr": "RÉCUPÉRATION ACTIVE — AUCUN CARDIO PLANIFIÉ"
+            },
             "blocks": []
           },
           "quads-lats": {
-            "day": "FRI · JOUR 4",
-            "title": "QUADRICEPS & LATISSIMUS DORSI",
+            "day": {
+              "en": "FRI · DAY 4",
+              "fr": "FRI · JOUR 4"
+            },
+            "title": {
+              "en": "QUADRICEPS & LATISSIMUS DORSI",
+              "fr": "QUADRICEPS & LATISSIMUS DORSI"
+            },
             "blocks": [
               {
-                "label": "QUADRICEPS",
+                "label": {
+                  "en": "QUADRICEPS",
+                  "fr": "QUADRICEPS"
+                },
                 "exercises": [
                   {
                     "key": "side_plank_adductor_knee_bench_db_hold",
@@ -3395,7 +3767,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "LATISSIMUS DORSI",
+                "label": {
+                  "en": "LATISSIMUS DORSI",
+                  "fr": "LATISSIMUS DORSI"
+                },
                 "exercises": [
                   {
                     "key": "db_bent_over_row",
@@ -3448,7 +3823,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "label": {
+                  "en": "FINISHER — CALVES — 3 ROUNDS",
+                  "fr": "FINISHER — MOLLETS — 3 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "machine_calf_press",
@@ -3458,7 +3836,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -3470,7 +3851,10 @@ const TEMPLATE_CONFIG={
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -3482,7 +3866,10 @@ const TEMPLATE_CONFIG={
                       "reps": "20",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -3491,11 +3878,20 @@ const TEMPLATE_CONFIG={
             ]
           },
           "chest-arms": {
-            "day": "SAT · JOUR 5",
-            "title": "PECTORAUX & BRAS",
+            "day": {
+              "en": "SAT · DAY 5",
+              "fr": "SAT · JOUR 5"
+            },
+            "title": {
+              "en": "CHEST & ARMS",
+              "fr": "PECTORAUX & BRAS"
+            },
             "blocks": [
               {
-                "label": "CHEST",
+                "label": {
+                  "en": "CHEST",
+                  "fr": "PECTORAUX"
+                },
                 "exercises": [
                   {
                     "key": "incline_machine_press",
@@ -3541,14 +3937,20 @@ const TEMPLATE_CONFIG={
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
                 ]
               },
               {
-                "label": "ARMS — INDIVIDUAL EXERCISES",
+                "label": {
+                  "en": "ARMS — INDIVIDUAL EXERCISES",
+                  "fr": "BRAS — EXERCICES INDIVIDUELS"
+                },
                 "exercises": [
                   {
                     "key": "barbell_curl_day5",
@@ -3625,7 +4027,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "DELTOIDS",
+                "label": {
+                  "en": "DELTOIDS",
+                  "fr": "DELTOÏDES"
+                },
                 "exercises": [
                   {
                     "key": "machine_lateral_raise_day5",
@@ -3654,7 +4059,10 @@ const TEMPLATE_CONFIG={
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -3664,7 +4072,10 @@ const TEMPLATE_CONFIG={
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -3676,7 +4087,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -3688,7 +4102,10 @@ const TEMPLATE_CONFIG={
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -3700,7 +4117,10 @@ const TEMPLATE_CONFIG={
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -3709,8 +4129,14 @@ const TEMPLATE_CONFIG={
             ]
           },
           "complete-rest": {
-            "day": "SUN · REPOS COMPLET",
-            "title": "REPOS COMPLET",
+            "day": {
+              "en": "SUN · COMPLETE REST",
+              "fr": "SUN · REPOS COMPLET"
+            },
+            "title": {
+              "en": "COMPLETE REST",
+              "fr": "REPOS COMPLET"
+            },
             "blocks": []
           }
         }
@@ -3720,9 +4146,18 @@ const TEMPLATE_CONFIG={
       "mode": "coach-confirmed",
       "clientConfirmationRequired": true,
       "rules": [
-        "Keep the same target loads for Weeks 1 to 3.",
-        "No load increase is applied automatically.",
-        "Every proposed load increase requires confirmation before the prescription changes."
+        {
+          "en": "Keep the same target loads for Weeks 1 to 3.",
+          "fr": "Conserve les mêmes charges cibles pour les Semaines 1 à 3."
+        },
+        {
+          "en": "No load increase is applied automatically.",
+          "fr": "Aucune augmentation de charge n’est appliquée automatiquement."
+        },
+        {
+          "en": "Every proposed load increase requires confirmation before the prescription changes.",
+          "fr": "Toute augmentation de charge proposée doit être confirmée avant de modifier la prescription."
+        }
       ]
     },
     "resultTracking": {
@@ -3736,8 +4171,14 @@ const TEMPLATE_CONFIG={
     "sessionCatalog": [
       {
         "id": "posterior-lats",
-        "label": "JOUR 1",
-        "title": "Chaîne postérieure & Latissimus dorsi",
+        "label": {
+          "en": "DAY 1",
+          "fr": "JOUR 1"
+        },
+        "title": {
+          "en": "Posterior Chain & Latissimus Dorsi",
+          "fr": "Chaîne postérieure & Latissimus dorsi"
+        },
         "type": "training",
         "required": true,
         "schedule": {
@@ -3748,8 +4189,14 @@ const TEMPLATE_CONFIG={
       },
       {
         "id": "chest-biceps",
-        "label": "JOUR 2",
-        "title": "Pectoraux & Biceps",
+        "label": {
+          "en": "DAY 2",
+          "fr": "JOUR 2"
+        },
+        "title": {
+          "en": "Chest & Biceps",
+          "fr": "Pectoraux & Biceps"
+        },
         "type": "training",
         "required": true,
         "schedule": {
@@ -3760,8 +4207,14 @@ const TEMPLATE_CONFIG={
       },
       {
         "id": "delts-triceps",
-        "label": "JOUR 3",
-        "title": "Deltoïdes & Triceps",
+        "label": {
+          "en": "DAY 3",
+          "fr": "JOUR 3"
+        },
+        "title": {
+          "en": "Deltoids & Triceps",
+          "fr": "Deltoïdes & Triceps"
+        },
         "type": "training",
         "required": true,
         "schedule": {
@@ -3772,8 +4225,14 @@ const TEMPLATE_CONFIG={
       },
       {
         "id": "active-recovery",
-        "label": "RÉCUPÉRATION ACTIVE",
-        "title": "Récupération active — Aucun cardio planifié",
+        "label": {
+          "en": "ACTIVE RECOVERY",
+          "fr": "RÉCUPÉRATION ACTIVE"
+        },
+        "title": {
+          "en": "Active Recovery — No Cardio Planned",
+          "fr": "Récupération active — Aucun cardio planifié"
+        },
         "type": "active-recovery",
         "required": false,
         "schedule": {
@@ -3784,8 +4243,14 @@ const TEMPLATE_CONFIG={
       },
       {
         "id": "quads-lats",
-        "label": "JOUR 4",
-        "title": "Quadriceps & Latissimus dorsi",
+        "label": {
+          "en": "DAY 4",
+          "fr": "JOUR 4"
+        },
+        "title": {
+          "en": "Quadriceps & Latissimus Dorsi",
+          "fr": "Quadriceps & Latissimus dorsi"
+        },
         "type": "training",
         "required": true,
         "schedule": {
@@ -3796,8 +4261,14 @@ const TEMPLATE_CONFIG={
       },
       {
         "id": "chest-arms",
-        "label": "JOUR 5",
-        "title": "Pectoraux & Bras",
+        "label": {
+          "en": "DAY 5",
+          "fr": "JOUR 5"
+        },
+        "title": {
+          "en": "Chest & Arms",
+          "fr": "Pectoraux & Bras"
+        },
         "type": "training",
         "required": true,
         "schedule": {
@@ -3808,8 +4279,14 @@ const TEMPLATE_CONFIG={
       },
       {
         "id": "complete-rest",
-        "label": "REPOS COMPLET",
-        "title": "Repos complet",
+        "label": {
+          "en": "COMPLETE REST",
+          "fr": "REPOS COMPLET"
+        },
+        "title": {
+          "en": "Complete Rest",
+          "fr": "Repos complet"
+        },
         "type": "complete-rest",
         "required": false,
         "schedule": {
@@ -3823,15 +4300,27 @@ const TEMPLATE_CONFIG={
       {
         "id": "classic-physique-posing",
         "type": "posing",
-        "title": "Classic Physique Mandatory Posing",
+        "title": {
+          "en": "Classic Physique Mandatory Posing",
+          "fr": "Poses obligatoires Classic Physique"
+        },
         "required": false,
         "scheduleMode": "flexible",
         "frequencyPerWeek": 3,
         "durationMinutes": 15,
         "instructions": [
-          "Complete at least 15 minutes per session.",
-          "Practice all six mandatory Classic Physique poses.",
-          "The exact schedule and final posing sequence will be updated after coach confirmation."
+          {
+            "en": "Complete at least 15 minutes per session.",
+            "fr": "Effectue au moins 15 minutes par séance."
+          },
+          {
+            "en": "Practice all six mandatory Classic Physique poses.",
+            "fr": "Pratique les six poses obligatoires du Classic Physique."
+          },
+          {
+            "en": "The exact schedule and final posing sequence will be updated after coach confirmation.",
+            "fr": "L’horaire exact et la séquence finale de posing seront mis à jour après la confirmation du coach."
+          }
         ]
       }
     ]
@@ -3880,10 +4369,22 @@ const TEMPLATE_CONFIG={
     }
   },
   "nutrition": {
-    "kicker": "NUTRITION",
-    "title": "NUTRITION PLAN",
-    "phase": "NUTRITION BUILD",
-    "desc": "Nutrition content will be added after Coach Max reviews the intake data.",
+    "kicker": {
+      "en": "NUTRITION",
+      "fr": "NUTRITION"
+    },
+    "title": {
+      "en": "NUTRITION PLAN",
+      "fr": "PLAN NUTRITIONNEL"
+    },
+    "phase": {
+      "en": "NUTRITION BUILD",
+      "fr": "CONSTRUCTION DU PLAN NUTRITIONNEL"
+    },
+    "desc": {
+      "en": "Nutrition content will be added after Coach Max reviews the intake data.",
+      "fr": "Le contenu nutritionnel sera ajouté après l’analyse des données par Coach Max."
+    },
     "targets": [],
     "rules": [],
     "meals": [],
@@ -3891,8 +4392,14 @@ const TEMPLATE_CONFIG={
     "plans": [
       {
         "id": "plan-1",
-        "label": "PLAN 1",
-        "title": "CLASSIC",
+        "label": {
+          "en": "PLAN 1",
+          "fr": "PLAN 1"
+        },
+        "title": {
+          "en": "CLASSIC",
+          "fr": "CLASSIQUE"
+        },
         "sections": []
       }
     ]
@@ -3909,6 +4416,8 @@ let TRAINING_CONFIG=TEMPLATE_CONFIG.training;
 const CHECKIN_CONFIG=TEMPLATE_CONFIG.checkin;
 const MEASUREMENT_CONFIG=TEMPLATE_CONFIG.measurements;
 let NUTRITION_CONFIG=TEMPLATE_CONFIG.nutrition;
+const tr=(source,vars)=>window.FE_I18N?window.FE_I18N.t(source,vars):String(source==null?'':source);
+const localizedText=value=>window.FE_I18N?window.FE_I18N.localized(value):String(value==null?'':value);
 
 /* ========= SYSTEM CONSTANTS — usually do not edit below ========= */
 function storageSlug(s){
@@ -3935,7 +4444,7 @@ function trainingSessionDays(config){
     if(!id||days[id])return;
     const schedule=item.schedule&&typeof item.schedule==='object'?item.schedule:{};
     const day=schedule.suggestedDay||((schedule.mode==='flexible')?'FLEXIBLE':'DAY');
-    days[id]=String(day).toUpperCase()+' · '+String(item.title||item.label||id).toUpperCase();
+    days[id]=String(day).toUpperCase()+' · '+localizedText(item.title||item.label||id).toUpperCase();
   });
   return days;
 }
@@ -3945,6 +4454,7 @@ const LEGACY_STORAGE_ID=storageSlug((CLIENT_PROFILE.clientSlug||CLIENT_PROFILE.a
 const STORAGE_NAMESPACE=CLIENT_STORAGE_ID;
 const SK=STORAGE_CONFIG.dataKey||('faem_'+STORAGE_NAMESPACE+'_data_v1');
 const THEME_KEY=STORAGE_CONFIG.themeKey||('faem_'+STORAGE_NAMESPACE+'_theme');
+const LANGUAGE_KEY='faem_'+STORAGE_NAMESPACE+'_language_v1';
 const COACH_SESSION_KEY=STORAGE_CONFIG.coachSessionKey||('faem_'+STORAGE_NAMESPACE+'_manual_mode');
 const PHOTO_DB=STORAGE_CONFIG.photoDb||('faem_'+STORAGE_NAMESPACE+'_photos_v1');
 const LEGACY_MIGRATION_ENABLED=true;
@@ -3962,6 +4472,7 @@ let MAX_CHECKINS=CHECKIN_CONFIG.maxCheckins;
 let SEANCE_IDS=trainingSessionIds(TRAINING_CONFIG);
 let SEANCE_DAYS=trainingSessionDays(TRAINING_CONFIG);
 const el=id=>document.getElementById(id);
+const activeLocale=()=>window.FE_I18N&&window.FE_I18N.getLanguage()==='fr'?'fr-CA':'en-CA';
 const APP_VERSION='2.8.0';
 const TRAINING_PLAN_URL=(STORAGE_CONFIG.trainingProgramUrl||'training-program.json');
 const NUTRITION_PLAN_URL=(STORAGE_CONFIG.nutritionProgramUrl||'nutrition-program.json');
@@ -4010,7 +4521,7 @@ function preserveCorruptStorage(raw,error){
 function normalizeTrainingPlan(payload){
   const plan=payload&&payload.training?payload.training:payload;
   if(!plan||typeof plan!=='object'||!Array.isArray(plan.weeks))throw new Error('Invalid training program file');
-  return {plan:plan,version:String((payload&&payload.programVersion)||plan.programVersion||'unversioned'),updatedAt:(payload&&payload.updatedAt)||'',updateTitle:String((payload&&payload.updateTitle)||''),updateMessage:String((payload&&payload.updateMessage)||''),releaseNotes:Array.isArray(payload&&payload.releaseNotes)?payload.releaseNotes:[]};
+  return {plan:plan,version:String((payload&&payload.programVersion)||plan.programVersion||'unversioned'),updatedAt:(payload&&payload.updatedAt)||'',updateTitle:(payload&&payload.updateTitle)||'',updateMessage:(payload&&payload.updateMessage)||'',releaseNotes:Array.isArray(payload&&payload.releaseNotes)?payload.releaseNotes:[]};
 }
 function phaseDescriptorForTrainingRecord(record){
   const raw=record&&record.plan&&record.plan.phase;
@@ -4019,7 +4530,7 @@ function phaseDescriptorForTrainingRecord(record){
   const order=parseInt(raw.order);
   return {
     id:id,
-    label:String(raw.label||raw.id).trim()||id.toUpperCase(),
+    label:localizedText(raw.label||raw.id).trim()||id.toUpperCase(),
     order:isNaN(order)?null:order,
     programVersion:String(record.version||'unversioned')
   };
@@ -4032,7 +4543,7 @@ function phaseTransitionRequired(nextRecords,currentRecords){
 function normalizeNutritionPlan(payload){
   const plan=payload&&payload.nutrition?payload.nutrition:payload;
   if(!plan||typeof plan!=='object'||!Array.isArray(plan.targets)||!Array.isArray(plan.rules)||!Array.isArray(plan.meals))throw new Error('Invalid nutrition program file');
-  return {plan:plan,version:String((payload&&payload.programVersion)||plan.programVersion||'unversioned'),updatedAt:(payload&&payload.updatedAt)||'',updateTitle:String((payload&&payload.updateTitle)||''),updateMessage:String((payload&&payload.updateMessage)||''),releaseNotes:Array.isArray(payload&&payload.releaseNotes)?payload.releaseNotes:[]};
+  return {plan:plan,version:String((payload&&payload.programVersion)||plan.programVersion||'unversioned'),updatedAt:(payload&&payload.updatedAt)||'',updateTitle:(payload&&payload.updateTitle)||'',updateMessage:(payload&&payload.updateMessage)||'',releaseNotes:Array.isArray(payload&&payload.releaseNotes)?payload.releaseNotes:[]};
 }
 function applyPortalPlans(trainingRecord,nutritionRecord){
   if(trainingRecord&&trainingRecord.plan){
@@ -4078,10 +4589,10 @@ function hasNewPortalPlans(remote,current){
 }
 function updateMessageFor(records){
   const all=[records.training,records.nutrition].filter(Boolean);
-  const title=all.map(r=>r.updateTitle).find(Boolean)||'CoachMax has prepared an update for your protocol.';
-  const custom=all.map(r=>r.updateMessage).find(Boolean)||'Your training and nutrition plan can now be refreshed.';
-  const notes=uniqueList(all.flatMap(r=>r.releaseNotes||[]));
-  return title+'\n\n'+custom+(notes.length?'\n\n'+notes.map(n=>'• '+n).join('\n'):'')+'\n\nYour history, photos, measurements, check-ins and progress will remain intact.';
+  const title=localizedText(all.map(r=>r.updateTitle).find(Boolean)||'CoachMax has prepared an update for your protocol.');
+  const custom=localizedText(all.map(r=>r.updateMessage).find(Boolean)||'Your training and nutrition plan can now be refreshed.');
+  const notes=uniqueList(all.flatMap(r=>r.releaseNotes||[]).map(localizedText));
+  return title+'\n\n'+custom+(notes.length?'\n\n'+notes.map(n=>'• '+n).join('\n'):'')+'\n\n'+tr('Your history, photos, measurements, check-ins and progress will remain intact.');
 }
 function applyAndStorePortalUpdate(records){
   if(records.training&&!writeJSONStorage(TRAINING_PLAN_CACHE_KEY,records.training))throw new Error('Training plan could not be saved.');
@@ -4130,7 +4641,7 @@ async function confirmAndApplyPendingUpdate(){
   const before=currentPlanRecords();
   const isPhaseTransition=phaseTransitionRequired(updateRecords,before);
   const nextPhase=phaseDescriptorForTrainingRecord(updateRecords.training);
-  const transitionNotice=isPhaseTransition?'\n\nYour current phase will be archived and '+nextPhase.label+' will start at Week 1.':'';
+  const transitionNotice=isPhaseTransition?'\n\n'+tr('Your current phase will be archived and {phase} will start at Week 1.',{phase:nextPhase.label}):'';
   const ok=await appConfirm(isPhaseTransition?'NEW TRAINING PHASE':'PROTOCOL UPDATE',updateMessageFor(updateRecords)+transitionNotice,{kicker:'COACHMAX UPDATE',confirmText:isPhaseTransition?'START NEW PHASE':'UPDATE NOW',confirmClass:'app-btn-success'});
   if(!ok)return false;
   let applied;
@@ -4248,7 +4759,7 @@ function applyTemplateConfig(){
   const sidebarFoot=document.querySelector('.sb-foot'); if(sidebarFoot)sidebarFoot.textContent=BRANDING_CONFIG.footerText;
   const headerProtocol=document.querySelector('.hdr-protocol'); if(headerProtocol)headerProtocol.textContent='LEGACY PROTOCOL';
   const headerName=el('hdr-name'); if(headerName)headerName.textContent=CLIENT_PROFILE.athleteName;
-  const headerWelcome=el('hdr-welcome'); if(headerWelcome)headerWelcome.textContent='Welcome back, '+CLIENT_PROFILE.athleteName+'.';
+  const headerWelcome=el('hdr-welcome'); if(headerWelcome)headerWelcome.textContent=tr('Welcome back, {name}.',{name:CLIENT_PROFILE.athleteName});
   const homeSub=document.querySelector('.home-sub'); if(homeSub)homeSub.textContent=CLIENT_PROFILE.homeKicker;
   const weekSig=document.querySelector('.week-msg-sig'); if(weekSig)weekSig.textContent=CLIENT_PROFILE.messageSignature;
   const logo=el('brand-logo'); if(logo){logo.setAttribute('src',BRANDING_CONFIG.logoSrc);logo.setAttribute('alt',BRANDING_CONFIG.logoAlt);}
@@ -4292,6 +4803,22 @@ function openSettings(){
   updateAppearanceButtons(pref);
   sheet.classList.add('show'); sheet.setAttribute('aria-hidden','false');
 }
+function refreshLocalizedPortal(){
+  try{SEANCE_DAYS=trainingSessionDays(TRAINING_CONFIG);WEEKS=buildWeeks();}catch(e){}
+  try{applyTemplateConfig();}catch(e){}
+  try{tickClock();}catch(e){}
+  try{buildWeekNav();renderHomeWeekStatus();updateHomeStats();}catch(e){}
+  try{renderEntrainementWeek();renderPersonalNutritionPanel();}catch(e){}
+  try{renderWeekZero();showLastCheckinRef();}catch(e){}
+  try{renderDash();renderCharts();renderHistorique();}catch(e){}
+  try{if(window.renderResultPosterPanel)window.renderResultPosterPanel();}catch(e){}
+  try{if(window.FE_I18N)window.FE_I18N.translateTree(document.body);}catch(e){}
+}
+function setPortalLanguage(language){
+  if(!window.FE_I18N)return;
+  window.FE_I18N.setLanguage(language);
+  refreshLocalizedPortal();
+}
 function closeSettings(){const sheet=el('settings-sheet');if(sheet){sheet.classList.remove('show');sheet.setAttribute('aria-hidden','true');}}
 function settingsBackdropClose(event){if(event&&event.target===el('settings-sheet'))closeSettings();}
 async function manualUpdateCheck(){closeSettings();await updatePortal();}
@@ -4301,19 +4828,21 @@ function showAbout(){
   const training=currentPlanRecords().training;
   const nutrition=currentPlanRecords().nutrition;
   const dates=[training&&training.updatedAt,nutrition&&nutrition.updatedAt].filter(Boolean).map(v=>new Date(v)).filter(d=>!isNaN(d));
-  const last=dates.length?new Date(Math.max(...dates)).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}):(CLIENT_PROFILE.lastUpdated||'July 11, 2026');
-  const message='Legacy Protocol\n\nPortal Version\n'+(CLIENT_PROFILE.portalVersion||'1.0')+'\n\nProtocol Version\n'+(CLIENT_PROFILE.protocolVersion||'Phase 1 — Fat Loss')+'\n\nLast Updated\n'+last+'\n\nDesigned by Father Empowering.\n\nLegacy Protocol is a high-performance coaching platform built to help you execute your training, nutrition, and recovery with precision. Every update is designed to improve your coaching experience while preserving your progress.\n\nPowered by CoachMax';
+  const last=dates.length?new Date(Math.max(...dates)).toLocaleDateString(activeLocale(),{year:'numeric',month:'long',day:'numeric'}):(CLIENT_PROFILE.lastUpdated||'July 11, 2026');
+  const message='Legacy Protocol\n\n'+tr('Portal Version')+'\n'+(CLIENT_PROFILE.portalVersion||'1.0')+'\n\n'+tr('Protocol Version')+'\n'+localizedText(CLIENT_PROFILE.protocolVersion||'Phase 1 — Fat Loss')+'\n\n'+tr('Last Updated')+'\n'+last+'\n\n'+tr('Designed by Father Empowering.')+'\n\n'+tr('Legacy Protocol is a high-performance coaching platform built to help you execute your training, nutrition, and recovery with precision. Every update is designed to improve your coaching experience while preserving your progress.')+'\n\n'+tr('Powered by CoachMax');
   return appAlert('ABOUT LEGACY PROTOCOL',message,{kicker:'LEGACY PROTOCOL',confirmClass:'app-btn-success'});
 }
-window.openSettings=openSettings;window.closeSettings=closeSettings;window.setThemePreference=setThemePreference;window.manualUpdateCheck=manualUpdateCheck;window.settingsExportData=settingsExportData;window.showAbout=showAbout;
+window.openSettings=openSettings;window.closeSettings=closeSettings;window.setThemePreference=setThemePreference;window.setPortalLanguage=setPortalLanguage;window.manualUpdateCheck=manualUpdateCheck;window.settingsExportData=settingsExportData;window.showAbout=showAbout;
 
 /* ═════════ HORLOGE ═════════ */
 function tickClock(){
   const n=new Date();
-  el('clock').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-  const days=['SUN','MON','TUE','WED','THU','FRI','SAT'];
-  const months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  el('clock-date').textContent=days[n.getDay()]+' '+n.getDate()+' '+months[n.getMonth()];
+  const timezone=String(CLIENT_PROFILE.timezone||'').trim();
+  const timeOptions={hour:'2-digit',minute:'2-digit',hourCycle:'h23'};
+  const dateOptions={weekday:'short',day:'numeric',month:'short'};
+  if(timezone){timeOptions.timeZone=timezone;dateOptions.timeZone=timezone;}
+  el('clock').textContent=new Intl.DateTimeFormat(activeLocale(),timeOptions).format(n);
+  el('clock-date').textContent=new Intl.DateTimeFormat(activeLocale(),dateOptions).format(n).replace(/\./g,'').toUpperCase();
 }
 setInterval(tickClock,15000);
 
@@ -4503,11 +5032,11 @@ function normalizeExercise(ex,week,sid,blockIndex,exerciseIndex){
   const targetRir=prescription.targetRir!=null?prescription.targetRir:weekConfig.targetRir;
   const details=[];
   if(targetRir!=null)details.push('RIR '+targetRir);
-  if(prescription.restSeconds!=null)details.push('Rest: '+prescription.restSeconds+' sec');
-  if(prescription.tempo)details.push('Tempo '+prescription.tempo);
-  const cue=String(ex.cue||ex.note||prescription.technique||'').trim().replace(/\s+/g,' ');
+  if(prescription.restSeconds!=null)details.push(tr('Rest: {seconds} sec',{seconds:prescription.restSeconds}));
+  if(prescription.tempo)details.push(tr('Tempo {tempo}',{tempo:prescription.tempo}));
+  const cue=localizedText(ex.cue||ex.note||prescription.technique||'').trim().replace(/\s+/g,' ');
   if(cue)details.push(cue);
-  const normalized=_e(ex.name||'Exercise',details.join(' · '),prescription.sets||'',prescription.reps||'',key,prescription.loadTarget||ex.target||'',prescription.unit||ex.unit||'lb');
+  const normalized=_e(ex.name||'Exercise',details.join(' · '),prescription.sets||'',prescription.reps||'',key,localizedText(prescription.loadTarget||ex.target||''),prescription.unit||ex.unit||'lb');
   normalized.targetRir=targetRir==null?'':targetRir;
   normalized.restSeconds=prescription.restSeconds;
   normalized.tempo=prescription.tempo||'';
@@ -4517,7 +5046,7 @@ function normalizeExercise(ex,week,sid,blockIndex,exerciseIndex){
 function normalizeBlock(block,week,sid,blockIndex){
   const rawExercises=block.exercises||block.exs||[];
   return {
-    label:block.label||('BLOCK '+(blockIndex+1)),
+    label:localizedText(block.label||('BLOCK '+(blockIndex+1))),
     exs:rawExercises.map((ex,i)=>normalizeExercise(ex,week,sid,blockIndex,i))
   };
 }
@@ -4525,9 +5054,9 @@ function normalizeSession(session,week,sid){
   if(!session)return blankSession(sid);
   const rawBlocks=session.blocks||session.blocs||[];
   return {
-    day:session.day||SEANCE_DAYS[sid]||sid.toUpperCase(),
-    title:session.title||session.day||SEANCE_DAYS[sid]||sid.toUpperCase(),
-    warmup:session.warmup||'',
+    day:localizedText(session.day||SEANCE_DAYS[sid]||sid.toUpperCase()),
+    title:localizedText(session.title||session.day||SEANCE_DAYS[sid]||sid.toUpperCase()),
+    warmup:localizedText(session.warmup||''),
     cardio:!!session.cardio,
     blocs:rawBlocks.map((block,i)=>normalizeBlock(block,week,sid,i))
   };
@@ -4544,9 +5073,9 @@ function buildWeeks(){
     const seances={};
     SEANCE_IDS.forEach(sid=>{seances[sid]=normalizeSession(sessions[sid],week,sid);});
     W[week]={
-      phase:cfg.phase||TRAINING_CONFIG.defaultPhase||'PROTOCOL BUILD',
-      desc:cfg.desc||TRAINING_CONFIG.defaultDesc||'Your personalized training will appear here after Week 0 is reviewed.',
-      msg:cfg.msg||TRAINING_CONFIG.defaultMessage||'Complete Week 0 first. Your protocol will be built from real data.',
+      phase:localizedText(cfg.phase||TRAINING_CONFIG.defaultPhase||'PROTOCOL BUILD'),
+      desc:localizedText(cfg.desc||TRAINING_CONFIG.defaultDesc||'Your personalized training will appear here after Week 0 is reviewed.'),
+      msg:localizedText(cfg.msg||TRAINING_CONFIG.defaultMessage||'Complete Week 0 first. Your protocol will be built from real data.'),
       seances
     };
   }
@@ -4979,8 +5508,8 @@ function updateRowerVo2Calculation(){
   if(paceNode)paceNode.value=total>0?formatPace500(total):'';
   if(wattsNode)wattsNode.value=watts?watts.toFixed(1)+' W':'';
   if(vo2Node)vo2Node.value=vo2&&vo2>0?vo2.toFixed(1)+' mL/kg/min':'';
-  if(classNode)classNode.value=classification;
-  if(interpretNode)interpretNode.value=interpretation;
+  if(classNode){classNode.dataset.canonical=classification;classNode.value=tr(classification);}
+  if(interpretNode){interpretNode.dataset.canonical=interpretation;interpretNode.value=tr(interpretation);}
 }
 function collectWeekZeroData(){
   const loads={};
@@ -6215,7 +6744,7 @@ function renderDash(){
   const days=['LUN','MAR','MER','JEU','VEN','SAM','DIM'];
   const vols=SEANCE_IDS.map(sid=>seanceVolume(currentWeek,sid));
   const volTot=vols.reduce((a,b)=>a+b,0);
-  el('dash-vol-total').textContent=volTot.toLocaleString('fr-CA');
+  el('dash-vol-total').textContent=volTot.toLocaleString(activeLocale());
   el('dash-vol-sub').textContent='Week '+currentWeek+' · load × sets × reps';
   if(_volChart){_volChart.destroy();_volChart=null;}
   _volChart=new Chart(cvV,{type:'bar',data:{labels:days,datasets:[{data:vols,backgroundColor:'rgba(232,118,26,0.75)',borderRadius:5}]},
@@ -6224,7 +6753,7 @@ function renderDash(){
   const labels=[],charges=[];
   for(let w=1;w<=TOTAL_WEEKS;w++){const c=weekCharge(w); if(c>0||w<=getActiveWeek()){labels.push('W'+w);charges.push(c);}}
   const cur=weekCharge(currentWeek);
-  el('dash-charge-total').textContent=cur.toLocaleString('fr-CA');
+  el('dash-charge-total').textContent=cur.toLocaleString(activeLocale());
   const prev=currentWeek>1?weekCharge(currentWeek-1):0;
   if(prev>0&&cur>0){const pct=((cur-prev)/prev*100);
     el('dash-charge-sub').innerHTML='<span class="'+(pct>=0?'up':'down')+'">'+(pct>=0?'▲ +':'▼ ')+pct.toFixed(1)+'%</span> vs week '+(currentWeek-1);}
@@ -6735,7 +7264,7 @@ function renderHistorique(){
       e.innerHTML='<div class="hist-seance-hdr"><div class="hist-seance-label">'+escapeHTML(formatSeanceLabel(w,sid))+'</div><div class="hist-seance-date">'+escapeHTML(rec.date||'')+'</div></div>'
         +'<div class="hist-seance-stats"><div class="hist-seance-stat"><div class="hist-seance-stat-n">✓</div><div class="hist-seance-stat-l">COMPLETED</div></div>'
         +'<div class="hist-seance-stat"><div class="hist-seance-stat-n">'+nCharges+'</div><div class="hist-seance-stat-l">LOADS NOTED</div></div>'
-        +'<div class="hist-seance-stat"><div class="hist-seance-stat-n">'+seanceVolume(w,sid).toLocaleString('fr-CA')+'</div><div class="hist-seance-stat-l">VOLUME LBS</div></div></div>'
+        +'<div class="hist-seance-stat"><div class="hist-seance-stat-n">'+seanceVolume(w,sid).toLocaleString(activeLocale())+'</div><div class="hist-seance-stat-l">VOLUME LBS</div></div></div>'
         +chargesHTML
         +actualsHTML
         +(rec.notes?'<div style="padding:0 16px 12px;font-size:12px;color:var(--txt2);line-height:1.6">'+escapeHTML(rec.notes)+'</div>':'');
@@ -7104,9 +7633,9 @@ function buildReportLines(checkin,week){
     }
   });
   const vol=SEANCE_IDS.reduce((a,sid)=>a+seanceVolume(week,sid),0);
-  if(vol>0)L.push('📊 Volume total : '+vol.toLocaleString('fr-CA')+' lbs');
+  if(vol>0)L.push('📊 Volume total : '+vol.toLocaleString(activeLocale())+' lbs');
   const wc=weekCharge(week);
-  if(wc>0)L.push('📈 Total load : '+wc.toLocaleString('fr-CA')+' lbs');
+  if(wc>0)L.push('📈 Total load : '+wc.toLocaleString(activeLocale())+' lbs');
   if(checkin.note){L.push('───────────────');L.push('💬 NOTES : '+checkin.note);}
   return L;
 }
@@ -7207,18 +7736,18 @@ function renderPersonalNutritionPanel(){
   const targets=cfg.targets||[];
   const rulesList=cfg.rules||[];
   const mealsList=cfg.meals||[];
-  const stats=targets.map(t=>'<div class="stat-cell"><div class="stat-n '+(t.tone||'')+'">'+escapeHTML(t.value)+'</div><div class="stat-l">'+escapeHTML(t.label)+'</div></div>').join('');
-  const rules=rulesList.map((r,i)=>'<div class="rule-row"><div class="rule-num">'+(i+1)+'</div><div><div class="rule-title">'+escapeHTML(r.title)+'</div><div class="rule-detail">'+escapeHTML(r.detail)+'</div></div></div>').join('');
-  const meals=mealsList.map(m=>'<div class="meal-row"><div class="meal-time">'+escapeHTML(m.time)+'</div><div class="meal-body"><div class="meal-name">'+escapeHTML(m.name)+'</div><div class="meal-detail">'+escapeHTML(m.detail)+'</div></div><div class="meal-cal">'+escapeHTML(m.cal)+'</div></div>').join('');
+  const stats=targets.map(t=>'<div class="stat-cell"><div class="stat-n '+(t.tone||'')+'">'+escapeHTML(t.value)+'</div><div class="stat-l">'+escapeHTML(localizedText(t.label))+'</div></div>').join('');
+  const rules=rulesList.map((r,i)=>'<div class="rule-row"><div class="rule-num">'+(i+1)+'</div><div><div class="rule-title">'+escapeHTML(localizedText(r.title))+'</div><div class="rule-detail">'+escapeHTML(localizedText(r.detail))+'</div></div></div>').join('');
+  const meals=mealsList.map(m=>'<div class="meal-row"><div class="meal-time">'+escapeHTML(localizedText(m.time))+'</div><div class="meal-body"><div class="meal-name">'+escapeHTML(localizedText(m.name))+'</div><div class="meal-detail">'+escapeHTML(localizedText(m.detail))+'</div></div><div class="meal-cal">'+escapeHTML(m.cal)+'</div></div>').join('');
   const hasNutrition=targets.length||rulesList.length||mealsList.length||cfg.futureNote;
   panel.innerHTML=`
   <div class="seance-hdr">
-    <div class="seance-protocol">${escapeHTML(cfg.kicker)}</div>
+    <div class="seance-protocol">${escapeHTML(localizedText(cfg.kicker))}</div>
     <div class="seance-title-row">
-      <div class="seance-title">${escapeHTML(cfg.title)}</div>
-      <div class="seance-day">${escapeHTML(cfg.phase)}</div>
+      <div class="seance-title">${escapeHTML(localizedText(cfg.title))}</div>
+      <div class="seance-day">${escapeHTML(localizedText(cfg.phase))}</div>
     </div>
-    <div class="seance-desc">${escapeHTML(cfg.desc)}</div>
+    <div class="seance-desc">${escapeHTML(localizedText(cfg.desc))}</div>
   </div>
   ${stats?'<div class="stats-row" style="margin-top:14px">'+stats+'</div>':''}
   ${hasNutrition?'':`<div class="card" style="max-width:900px;margin:14px auto"><div class="card-hdr"><div class="cdot" style="background:var(--orange)"></div><div class="ctitle">NUTRITION BUILD IN PROGRESS</div></div><div style="padding:18px;color:var(--txt2);font-size:13px;line-height:1.8">Nutrition targets and meal structure will appear here after Coach Max reviews the intake data.</div></div>`}
@@ -7232,7 +7761,7 @@ function renderPersonalNutritionPanel(){
   </div>`:''}
   ${cfg.futureNote?`<div class="card" style="max-width:900px;margin-left:auto;margin-right:auto">
     <div class="card-hdr"><div class="cdot" style="background:var(--green)"></div><div class="ctitle">NOTES FOR FUTURE UPDATES</div></div>
-    <div style="padding:16px;color:var(--txt2);font-size:13px;line-height:1.8">${escapeHTML(cfg.futureNote)}</div>
+    <div style="padding:16px;color:var(--txt2);font-size:13px;line-height:1.8">${escapeHTML(localizedText(cfg.futureNote))}</div>
   </div>`:''}
   <div class="spacer"></div>`;
 }
@@ -7288,6 +7817,9 @@ function initSplash(){
 
 /* ═════════ INIT ═════════ */
 function restore(){
+  if(window.FE_I18N)window.FE_I18N.configure({storageKey:LANGUAGE_KEY,defaultLanguage:CLIENT_PROFILE.language});
+  SEANCE_DAYS=trainingSessionDays(TRAINING_CONFIG);
+  WEEKS=buildWeeks();
   initSplash();
   applyTemplateConfig();
   initAppShell();

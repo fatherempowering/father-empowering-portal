@@ -52,6 +52,8 @@ Ce fichier contient :
 - les semaines, séances, blocs, exercices et prescriptions;
 - les métadonnées de mise à jour.
 
+Les textes destinés au client utilisent `{ "en": "...", "fr": "..." }`. Les noms d’exercices restent toutefois une chaîne anglaise unique afin de préserver le catalogue et les références vidéo.
+
 Le programme peut avoir `weeks: []` pendant l’onboarding. Cela signifie « programmation en attente » et non « programme actif vide ».
 
 Le schéma canonique actuel est `1`.
@@ -69,6 +71,8 @@ Ce fichier contient :
 - la date `updatedAt`;
 - les plans, sections, cibles, règles et repas;
 - les métadonnées de mise à jour.
+
+Les titres, descriptions, règles et repas destinés au client utilisent également le format bilingue `{ "en": "...", "fr": "..." }`.
 
 Si la Nutrition est désactivée dans `client-info.json`, ce fichier peut être absent. Si elle est activée, il est obligatoire.
 
@@ -121,6 +125,7 @@ Le générateur :
 - compile `client-info.json` dans la configuration du portail;
 - conserve Training et Nutrition comme fichiers externes indépendants;
 - copie les logos, icônes et mesures;
+- copie le moteur de langue hors ligne;
 - personnalise le manifeste;
 - crée une version de cache propre au client;
 - valide une seconde fois le portail produit;

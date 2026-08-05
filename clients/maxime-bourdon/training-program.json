@@ -1,21 +1,36 @@
 {
   "schemaVersion": 1,
-  "programVersion": "training-maxime-bourdon-phase-1-v1",
-  "updatedAt": "2026-07-31T17:39:08.945Z",
+  "programVersion": "training-maxime-bourdon-phase-1-v2",
+  "updatedAt": "2026-08-04T12:00:00-04:00",
   "training": {
     "phase": {
       "id": "phase-1",
-      "label": "PHASE 1 — CLASSIC PHYSIQUE PREP",
+      "label": {
+        "en": "PHASE 1 — CLASSIC PHYSIQUE PREP",
+        "fr": "PHASE 1 — PRÉPARATION CLASSIC PHYSIQUE"
+      },
       "order": 1,
-      "objective": "Préparation compétition bodybuilding."
+      "objective": {
+        "en": "Bodybuilding competition preparation.",
+        "fr": "Préparation à une compétition de bodybuilding."
+      }
     },
     "progression": {
       "mode": "coach-confirmed",
       "clientConfirmationRequired": true,
       "rules": [
-        "Keep the same target loads for Weeks 1 to 3.",
-        "No load increase is applied automatically.",
-        "Every proposed load increase requires confirmation before the prescription changes."
+        {
+          "en": "Keep the same target loads for Weeks 1 to 3.",
+          "fr": "Conserve les mêmes charges cibles pour les Semaines 1 à 3."
+        },
+        {
+          "en": "No load increase is applied automatically.",
+          "fr": "Aucune augmentation de charge n’est appliquée automatiquement."
+        },
+        {
+          "en": "Every proposed load increase requires confirmation before the prescription changes.",
+          "fr": "Toute augmentation de charge proposée doit être confirmée avant de modifier la prescription."
+        }
       ]
     },
     "resultTracking": {
@@ -29,8 +44,14 @@
     "sessionCatalog": [
       {
         "id": "posterior-lats",
-        "label": "JOUR 1",
-        "title": "Chaîne postérieure & Latissimus dorsi",
+        "label": {
+          "en": "DAY 1",
+          "fr": "JOUR 1"
+        },
+        "title": {
+          "en": "Posterior Chain & Latissimus Dorsi",
+          "fr": "Chaîne postérieure & Latissimus dorsi"
+        },
         "type": "training",
         "required": true,
         "schedule": {
@@ -41,8 +62,14 @@
       },
       {
         "id": "chest-biceps",
-        "label": "JOUR 2",
-        "title": "Pectoraux & Biceps",
+        "label": {
+          "en": "DAY 2",
+          "fr": "JOUR 2"
+        },
+        "title": {
+          "en": "Chest & Biceps",
+          "fr": "Pectoraux & Biceps"
+        },
         "type": "training",
         "required": true,
         "schedule": {
@@ -53,8 +80,14 @@
       },
       {
         "id": "delts-triceps",
-        "label": "JOUR 3",
-        "title": "Deltoïdes & Triceps",
+        "label": {
+          "en": "DAY 3",
+          "fr": "JOUR 3"
+        },
+        "title": {
+          "en": "Deltoids & Triceps",
+          "fr": "Deltoïdes & Triceps"
+        },
         "type": "training",
         "required": true,
         "schedule": {
@@ -65,8 +98,14 @@
       },
       {
         "id": "active-recovery",
-        "label": "RÉCUPÉRATION ACTIVE",
-        "title": "Récupération active — Aucun cardio planifié",
+        "label": {
+          "en": "ACTIVE RECOVERY",
+          "fr": "RÉCUPÉRATION ACTIVE"
+        },
+        "title": {
+          "en": "Active Recovery — No Cardio Planned",
+          "fr": "Récupération active — Aucun cardio planifié"
+        },
         "type": "active-recovery",
         "required": false,
         "schedule": {
@@ -77,8 +116,14 @@
       },
       {
         "id": "quads-lats",
-        "label": "JOUR 4",
-        "title": "Quadriceps & Latissimus dorsi",
+        "label": {
+          "en": "DAY 4",
+          "fr": "JOUR 4"
+        },
+        "title": {
+          "en": "Quadriceps & Latissimus Dorsi",
+          "fr": "Quadriceps & Latissimus dorsi"
+        },
         "type": "training",
         "required": true,
         "schedule": {
@@ -89,8 +134,14 @@
       },
       {
         "id": "chest-arms",
-        "label": "JOUR 5",
-        "title": "Pectoraux & Bras",
+        "label": {
+          "en": "DAY 5",
+          "fr": "JOUR 5"
+        },
+        "title": {
+          "en": "Chest & Arms",
+          "fr": "Pectoraux & Bras"
+        },
         "type": "training",
         "required": true,
         "schedule": {
@@ -101,8 +152,14 @@
       },
       {
         "id": "complete-rest",
-        "label": "REPOS COMPLET",
-        "title": "Repos complet",
+        "label": {
+          "en": "COMPLETE REST",
+          "fr": "REPOS COMPLET"
+        },
+        "title": {
+          "en": "Complete Rest",
+          "fr": "Repos complet"
+        },
         "type": "complete-rest",
         "required": false,
         "schedule": {
@@ -116,21 +173,42 @@
       {
         "id": "classic-physique-posing",
         "type": "posing",
-        "title": "Classic Physique Mandatory Posing",
+        "title": {
+          "en": "Classic Physique Mandatory Posing",
+          "fr": "Poses obligatoires Classic Physique"
+        },
         "required": false,
         "scheduleMode": "flexible",
         "frequencyPerWeek": 3,
         "durationMinutes": 15,
         "instructions": [
-          "Complete at least 15 minutes per session.",
-          "Practice all six mandatory Classic Physique poses.",
-          "The exact schedule and final posing sequence will be updated after coach confirmation."
+          {
+            "en": "Complete at least 15 minutes per session.",
+            "fr": "Effectue au moins 15 minutes par séance."
+          },
+          {
+            "en": "Practice all six mandatory Classic Physique poses.",
+            "fr": "Pratique les six poses obligatoires du Classic Physique."
+          },
+          {
+            "en": "The exact schedule and final posing sequence will be updated after coach confirmation.",
+            "fr": "L’horaire exact et la séquence finale de posing seront mis à jour après la confirmation du coach."
+          }
         ]
       }
     ],
-    "defaultPhase": "CLASSIC PHYSIQUE PREP",
-    "defaultDesc": "Exécute chaque série à RIR 0 et inscris tes résultats réels.",
-    "defaultMessage": "Les charges cibles restent identiques pour les Semaines 1 à 3. Toute augmentation doit être confirmée.",
+    "defaultPhase": {
+      "en": "CLASSIC PHYSIQUE PREP",
+      "fr": "PRÉPARATION CLASSIC PHYSIQUE"
+    },
+    "defaultDesc": {
+      "en": "Execute every set at RIR 0 and enter your actual results.",
+      "fr": "Exécute chaque série à RIR 0 et inscris tes résultats réels."
+    },
+    "defaultMessage": {
+      "en": "Target loads remain unchanged for Weeks 1 to 3. Every increase must be confirmed.",
+      "fr": "Les charges cibles restent identiques pour les Semaines 1 à 3. Toute augmentation doit être confirmée."
+    },
     "keyLifts": [
       {
         "key": "smith_romanian_deadlift",
@@ -156,19 +234,43 @@
     "weeks": [
       {
         "week": 1,
-        "label": "DÉPART PARTIEL",
-        "phase": "CLASSIC PHYSIQUE PREP",
-        "objective": "Commencer le vendredi avec les Jours 4 et 5.",
+        "label": {
+          "en": "PARTIAL START",
+          "fr": "DÉPART PARTIEL"
+        },
+        "phase": {
+          "en": "CLASSIC PHYSIQUE PREP",
+          "fr": "PRÉPARATION CLASSIC PHYSIQUE"
+        },
+        "objective": {
+          "en": "Start Friday with Days 4 and 5.",
+          "fr": "Commencer le vendredi avec les Jours 4 et 5."
+        },
         "targetRir": 0,
-        "desc": "Semaine partielle : Jour 4 vendredi, Jour 5 samedi, repos complet dimanche.",
-        "msg": "Commence par le Jour 4. Les Jours 1 à 3 débuteront à la Semaine 2.",
+        "desc": {
+          "en": "Partial week: Day 4 Friday, Day 5 Saturday, complete rest Sunday.",
+          "fr": "Semaine partielle : Jour 4 vendredi, Jour 5 samedi, repos complet dimanche."
+        },
+        "msg": {
+          "en": "Start with Day 4. Days 1 to 3 begin in Week 2.",
+          "fr": "Commence par le Jour 4. Les Jours 1 à 3 débuteront à la Semaine 2."
+        },
         "sessions": {
           "quads-lats": {
-            "day": "FRI · JOUR 4",
-            "title": "QUADRICEPS & LATISSIMUS DORSI",
+            "day": {
+              "en": "FRI · DAY 4",
+              "fr": "FRI · JOUR 4"
+            },
+            "title": {
+              "en": "QUADRICEPS & LATISSIMUS DORSI",
+              "fr": "QUADRICEPS & LATISSIMUS DORSI"
+            },
             "blocks": [
               {
-                "label": "QUADRICEPS",
+                "label": {
+                  "en": "QUADRICEPS",
+                  "fr": "QUADRICEPS"
+                },
                 "exercises": [
                   {
                     "key": "side_plank_adductor_knee_bench_db_hold",
@@ -245,7 +347,10 @@
                 ]
               },
               {
-                "label": "LATISSIMUS DORSI",
+                "label": {
+                  "en": "LATISSIMUS DORSI",
+                  "fr": "LATISSIMUS DORSI"
+                },
                 "exercises": [
                   {
                     "key": "db_bent_over_row",
@@ -298,7 +403,10 @@
                 ]
               },
               {
-                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "label": {
+                  "en": "FINISHER — CALVES — 3 ROUNDS",
+                  "fr": "FINISHER — MOLLETS — 3 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "machine_calf_press",
@@ -308,7 +416,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -320,7 +431,10 @@
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -332,7 +446,10 @@
                       "reps": "20",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -341,11 +458,20 @@
             ]
           },
           "chest-arms": {
-            "day": "SAT · JOUR 5",
-            "title": "PECTORAUX & BRAS",
+            "day": {
+              "en": "SAT · DAY 5",
+              "fr": "SAT · JOUR 5"
+            },
+            "title": {
+              "en": "CHEST & ARMS",
+              "fr": "PECTORAUX & BRAS"
+            },
             "blocks": [
               {
-                "label": "CHEST",
+                "label": {
+                  "en": "CHEST",
+                  "fr": "PECTORAUX"
+                },
                 "exercises": [
                   {
                     "key": "incline_machine_press",
@@ -391,14 +517,20 @@
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
                 ]
               },
               {
-                "label": "ARMS — INDIVIDUAL EXERCISES",
+                "label": {
+                  "en": "ARMS — INDIVIDUAL EXERCISES",
+                  "fr": "BRAS — EXERCICES INDIVIDUELS"
+                },
                 "exercises": [
                   {
                     "key": "barbell_curl_day5",
@@ -475,7 +607,10 @@
                 ]
               },
               {
-                "label": "DELTOIDS",
+                "label": {
+                  "en": "DELTOIDS",
+                  "fr": "DELTOÏDES"
+                },
                 "exercises": [
                   {
                     "key": "machine_lateral_raise_day5",
@@ -504,7 +639,10 @@
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -514,7 +652,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -526,7 +667,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -538,7 +682,10 @@
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -550,7 +697,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -559,27 +709,57 @@
             ]
           },
           "complete-rest": {
-            "day": "SUN · REPOS COMPLET",
-            "title": "REPOS COMPLET",
+            "day": {
+              "en": "SUN · COMPLETE REST",
+              "fr": "SUN · REPOS COMPLET"
+            },
+            "title": {
+              "en": "COMPLETE REST",
+              "fr": "REPOS COMPLET"
+            },
             "blocks": []
           }
         }
       },
       {
         "week": 2,
-        "label": "SEMAINE COMPLÈTE",
-        "phase": "CLASSIC PHYSIQUE PREP",
-        "objective": "Exécuter les cinq séances avec les charges cibles prescrites.",
+        "label": {
+          "en": "FULL WEEK",
+          "fr": "SEMAINE COMPLÈTE"
+        },
+        "phase": {
+          "en": "CLASSIC PHYSIQUE PREP",
+          "fr": "PRÉPARATION CLASSIC PHYSIQUE"
+        },
+        "objective": {
+          "en": "Complete all five sessions with the prescribed target loads.",
+          "fr": "Exécuter les cinq séances avec les charges cibles prescrites."
+        },
         "targetRir": 0,
-        "desc": "Cinq séances obligatoires, récupération active jeudi et repos complet dimanche.",
-        "msg": "Donne tout à chaque série, inscris tes résultats et conserve les charges cibles jusqu’à confirmation.",
+        "desc": {
+          "en": "Five required sessions, active recovery Thursday and complete rest Sunday.",
+          "fr": "Cinq séances obligatoires, récupération active jeudi et repos complet dimanche."
+        },
+        "msg": {
+          "en": "Give everything on every set, enter your results and keep target loads until confirmation.",
+          "fr": "Donne tout à chaque série, inscris tes résultats et conserve les charges cibles jusqu’à confirmation."
+        },
         "sessions": {
           "posterior-lats": {
-            "day": "MON · JOUR 1",
-            "title": "CHAÎNE POSTÉRIEURE & LATISSIMUS DORSI",
+            "day": {
+              "en": "MON · DAY 1",
+              "fr": "MON · JOUR 1"
+            },
+            "title": {
+              "en": "POSTERIOR CHAIN & LATISSIMUS DORSI",
+              "fr": "CHAÎNE POSTÉRIEURE & LATISSIMUS DORSI"
+            },
             "blocks": [
               {
-                "label": "MAIN",
+                "label": {
+                  "en": "MAIN",
+                  "fr": "PRINCIPAL"
+                },
                 "exercises": [
                   {
                     "key": "one_leg_curl",
@@ -692,7 +872,10 @@
                 ]
               },
               {
-                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "label": {
+                  "en": "FINISHER — CALVES — 3 ROUNDS",
+                  "fr": "FINISHER — MOLLETS — 3 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "machine_calf_press",
@@ -702,7 +885,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -714,7 +900,10 @@
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -726,7 +915,10 @@
                       "reps": "20",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -735,11 +927,20 @@
             ]
           },
           "chest-biceps": {
-            "day": "TUE · JOUR 2",
-            "title": "PECTORAUX & BICEPS",
+            "day": {
+              "en": "TUE · DAY 2",
+              "fr": "TUE · JOUR 2"
+            },
+            "title": {
+              "en": "CHEST & BICEPS",
+              "fr": "PECTORAUX & BICEPS"
+            },
             "blocks": [
               {
-                "label": "CHEST",
+                "label": {
+                  "en": "CHEST",
+                  "fr": "PECTORAUX"
+                },
                 "exercises": [
                   {
                     "key": "pec_deck_day2",
@@ -804,7 +1005,10 @@
                 ]
               },
               {
-                "label": "BICEPS — INDIVIDUAL EXERCISES",
+                "label": {
+                  "en": "BICEPS — INDIVIDUAL EXERCISES",
+                  "fr": "BICEPS — EXERCICES INDIVIDUELS"
+                },
                 "exercises": [
                   {
                     "key": "alternating_incline_db_curl",
@@ -845,7 +1049,10 @@
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -855,7 +1062,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -867,7 +1077,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -879,7 +1092,10 @@
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -891,7 +1107,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -900,11 +1119,20 @@
             ]
           },
           "delts-triceps": {
-            "day": "WED · JOUR 3",
-            "title": "DELTOÏDES & TRICEPS",
+            "day": {
+              "en": "WED · DAY 3",
+              "fr": "WED · JOUR 3"
+            },
+            "title": {
+              "en": "DELTOIDS & TRICEPS",
+              "fr": "DELTOÏDES & TRICEPS"
+            },
             "blocks": [
               {
-                "label": "DELTOIDS",
+                "label": {
+                  "en": "DELTOIDS",
+                  "fr": "DELTOÏDES"
+                },
                 "exercises": [
                   {
                     "key": "machine_lateral_raise_10_12",
@@ -993,7 +1221,10 @@
                 ]
               },
               {
-                "label": "TRICEPS",
+                "label": {
+                  "en": "TRICEPS",
+                  "fr": "TRICEPS"
+                },
                 "exercises": [
                   {
                     "key": "rope_triceps_pushdown",
@@ -1027,14 +1258,20 @@
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -1044,7 +1281,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1056,7 +1296,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1068,7 +1311,10 @@
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1080,7 +1326,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -1089,16 +1338,31 @@
             ]
           },
           "active-recovery": {
-            "day": "THU · RÉCUPÉRATION ACTIVE",
-            "title": "RÉCUPÉRATION ACTIVE — AUCUN CARDIO PLANIFIÉ",
+            "day": {
+              "en": "THU · ACTIVE RECOVERY",
+              "fr": "THU · RÉCUPÉRATION ACTIVE"
+            },
+            "title": {
+              "en": "ACTIVE RECOVERY — NO CARDIO PLANNED",
+              "fr": "RÉCUPÉRATION ACTIVE — AUCUN CARDIO PLANIFIÉ"
+            },
             "blocks": []
           },
           "quads-lats": {
-            "day": "FRI · JOUR 4",
-            "title": "QUADRICEPS & LATISSIMUS DORSI",
+            "day": {
+              "en": "FRI · DAY 4",
+              "fr": "FRI · JOUR 4"
+            },
+            "title": {
+              "en": "QUADRICEPS & LATISSIMUS DORSI",
+              "fr": "QUADRICEPS & LATISSIMUS DORSI"
+            },
             "blocks": [
               {
-                "label": "QUADRICEPS",
+                "label": {
+                  "en": "QUADRICEPS",
+                  "fr": "QUADRICEPS"
+                },
                 "exercises": [
                   {
                     "key": "side_plank_adductor_knee_bench_db_hold",
@@ -1175,7 +1439,10 @@
                 ]
               },
               {
-                "label": "LATISSIMUS DORSI",
+                "label": {
+                  "en": "LATISSIMUS DORSI",
+                  "fr": "LATISSIMUS DORSI"
+                },
                 "exercises": [
                   {
                     "key": "db_bent_over_row",
@@ -1228,7 +1495,10 @@
                 ]
               },
               {
-                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "label": {
+                  "en": "FINISHER — CALVES — 3 ROUNDS",
+                  "fr": "FINISHER — MOLLETS — 3 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "machine_calf_press",
@@ -1238,7 +1508,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1250,7 +1523,10 @@
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1262,7 +1538,10 @@
                       "reps": "20",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -1271,11 +1550,20 @@
             ]
           },
           "chest-arms": {
-            "day": "SAT · JOUR 5",
-            "title": "PECTORAUX & BRAS",
+            "day": {
+              "en": "SAT · DAY 5",
+              "fr": "SAT · JOUR 5"
+            },
+            "title": {
+              "en": "CHEST & ARMS",
+              "fr": "PECTORAUX & BRAS"
+            },
             "blocks": [
               {
-                "label": "CHEST",
+                "label": {
+                  "en": "CHEST",
+                  "fr": "PECTORAUX"
+                },
                 "exercises": [
                   {
                     "key": "incline_machine_press",
@@ -1321,14 +1609,20 @@
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
                 ]
               },
               {
-                "label": "ARMS — INDIVIDUAL EXERCISES",
+                "label": {
+                  "en": "ARMS — INDIVIDUAL EXERCISES",
+                  "fr": "BRAS — EXERCICES INDIVIDUELS"
+                },
                 "exercises": [
                   {
                     "key": "barbell_curl_day5",
@@ -1405,7 +1699,10 @@
                 ]
               },
               {
-                "label": "DELTOIDS",
+                "label": {
+                  "en": "DELTOIDS",
+                  "fr": "DELTOÏDES"
+                },
                 "exercises": [
                   {
                     "key": "machine_lateral_raise_day5",
@@ -1434,7 +1731,10 @@
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -1444,7 +1744,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1456,7 +1759,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1468,7 +1774,10 @@
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1480,7 +1789,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -1489,27 +1801,57 @@
             ]
           },
           "complete-rest": {
-            "day": "SUN · REPOS COMPLET",
-            "title": "REPOS COMPLET",
+            "day": {
+              "en": "SUN · COMPLETE REST",
+              "fr": "SUN · REPOS COMPLET"
+            },
+            "title": {
+              "en": "COMPLETE REST",
+              "fr": "REPOS COMPLET"
+            },
             "blocks": []
           }
         }
       },
       {
         "week": 3,
-        "label": "SEMAINE COMPLÈTE",
-        "phase": "CLASSIC PHYSIQUE PREP",
-        "objective": "Répéter la prescription et observer la progression réelle.",
+        "label": {
+          "en": "FULL WEEK",
+          "fr": "SEMAINE COMPLÈTE"
+        },
+        "phase": {
+          "en": "CLASSIC PHYSIQUE PREP",
+          "fr": "PRÉPARATION CLASSIC PHYSIQUE"
+        },
+        "objective": {
+          "en": "Repeat the prescription and observe actual progression.",
+          "fr": "Répéter la prescription et observer la progression réelle."
+        },
         "targetRir": 0,
-        "desc": "Cinq séances obligatoires, récupération active jeudi et repos complet dimanche.",
-        "msg": "Répète les charges cibles. Toute augmentation doit être confirmée avant de modifier la prescription.",
+        "desc": {
+          "en": "Five required sessions, active recovery Thursday and complete rest Sunday.",
+          "fr": "Cinq séances obligatoires, récupération active jeudi et repos complet dimanche."
+        },
+        "msg": {
+          "en": "Repeat target loads. Every increase must be confirmed before changing the prescription.",
+          "fr": "Répète les charges cibles. Toute augmentation doit être confirmée avant de modifier la prescription."
+        },
         "sessions": {
           "posterior-lats": {
-            "day": "MON · JOUR 1",
-            "title": "CHAÎNE POSTÉRIEURE & LATISSIMUS DORSI",
+            "day": {
+              "en": "MON · DAY 1",
+              "fr": "MON · JOUR 1"
+            },
+            "title": {
+              "en": "POSTERIOR CHAIN & LATISSIMUS DORSI",
+              "fr": "CHAÎNE POSTÉRIEURE & LATISSIMUS DORSI"
+            },
             "blocks": [
               {
-                "label": "MAIN",
+                "label": {
+                  "en": "MAIN",
+                  "fr": "PRINCIPAL"
+                },
                 "exercises": [
                   {
                     "key": "one_leg_curl",
@@ -1622,7 +1964,10 @@
                 ]
               },
               {
-                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "label": {
+                  "en": "FINISHER — CALVES — 3 ROUNDS",
+                  "fr": "FINISHER — MOLLETS — 3 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "machine_calf_press",
@@ -1632,7 +1977,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1644,7 +1992,10 @@
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1656,7 +2007,10 @@
                       "reps": "20",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -1665,11 +2019,20 @@
             ]
           },
           "chest-biceps": {
-            "day": "TUE · JOUR 2",
-            "title": "PECTORAUX & BICEPS",
+            "day": {
+              "en": "TUE · DAY 2",
+              "fr": "TUE · JOUR 2"
+            },
+            "title": {
+              "en": "CHEST & BICEPS",
+              "fr": "PECTORAUX & BICEPS"
+            },
             "blocks": [
               {
-                "label": "CHEST",
+                "label": {
+                  "en": "CHEST",
+                  "fr": "PECTORAUX"
+                },
                 "exercises": [
                   {
                     "key": "pec_deck_day2",
@@ -1734,7 +2097,10 @@
                 ]
               },
               {
-                "label": "BICEPS — INDIVIDUAL EXERCISES",
+                "label": {
+                  "en": "BICEPS — INDIVIDUAL EXERCISES",
+                  "fr": "BICEPS — EXERCICES INDIVIDUELS"
+                },
                 "exercises": [
                   {
                     "key": "alternating_incline_db_curl",
@@ -1775,7 +2141,10 @@
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -1785,7 +2154,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1797,7 +2169,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1809,7 +2184,10 @@
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1821,7 +2199,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -1830,11 +2211,20 @@
             ]
           },
           "delts-triceps": {
-            "day": "WED · JOUR 3",
-            "title": "DELTOÏDES & TRICEPS",
+            "day": {
+              "en": "WED · DAY 3",
+              "fr": "WED · JOUR 3"
+            },
+            "title": {
+              "en": "DELTOIDS & TRICEPS",
+              "fr": "DELTOÏDES & TRICEPS"
+            },
             "blocks": [
               {
-                "label": "DELTOIDS",
+                "label": {
+                  "en": "DELTOIDS",
+                  "fr": "DELTOÏDES"
+                },
                 "exercises": [
                   {
                     "key": "machine_lateral_raise_10_12",
@@ -1923,7 +2313,10 @@
                 ]
               },
               {
-                "label": "TRICEPS",
+                "label": {
+                  "en": "TRICEPS",
+                  "fr": "TRICEPS"
+                },
                 "exercises": [
                   {
                     "key": "rope_triceps_pushdown",
@@ -1957,14 +2350,20 @@
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -1974,7 +2373,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1986,7 +2388,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -1998,7 +2403,10 @@
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2010,7 +2418,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -2019,16 +2430,31 @@
             ]
           },
           "active-recovery": {
-            "day": "THU · RÉCUPÉRATION ACTIVE",
-            "title": "RÉCUPÉRATION ACTIVE — AUCUN CARDIO PLANIFIÉ",
+            "day": {
+              "en": "THU · ACTIVE RECOVERY",
+              "fr": "THU · RÉCUPÉRATION ACTIVE"
+            },
+            "title": {
+              "en": "ACTIVE RECOVERY — NO CARDIO PLANNED",
+              "fr": "RÉCUPÉRATION ACTIVE — AUCUN CARDIO PLANIFIÉ"
+            },
             "blocks": []
           },
           "quads-lats": {
-            "day": "FRI · JOUR 4",
-            "title": "QUADRICEPS & LATISSIMUS DORSI",
+            "day": {
+              "en": "FRI · DAY 4",
+              "fr": "FRI · JOUR 4"
+            },
+            "title": {
+              "en": "QUADRICEPS & LATISSIMUS DORSI",
+              "fr": "QUADRICEPS & LATISSIMUS DORSI"
+            },
             "blocks": [
               {
-                "label": "QUADRICEPS",
+                "label": {
+                  "en": "QUADRICEPS",
+                  "fr": "QUADRICEPS"
+                },
                 "exercises": [
                   {
                     "key": "side_plank_adductor_knee_bench_db_hold",
@@ -2105,7 +2531,10 @@
                 ]
               },
               {
-                "label": "LATISSIMUS DORSI",
+                "label": {
+                  "en": "LATISSIMUS DORSI",
+                  "fr": "LATISSIMUS DORSI"
+                },
                 "exercises": [
                   {
                     "key": "db_bent_over_row",
@@ -2158,7 +2587,10 @@
                 ]
               },
               {
-                "label": "FINISHER — CALVES — 3 ROUNDS",
+                "label": {
+                  "en": "FINISHER — CALVES — 3 ROUNDS",
+                  "fr": "FINISHER — MOLLETS — 3 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "machine_calf_press",
@@ -2168,7 +2600,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2180,7 +2615,10 @@
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2192,7 +2630,10 @@
                       "reps": "20",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -2201,11 +2642,20 @@
             ]
           },
           "chest-arms": {
-            "day": "SAT · JOUR 5",
-            "title": "PECTORAUX & BRAS",
+            "day": {
+              "en": "SAT · DAY 5",
+              "fr": "SAT · JOUR 5"
+            },
+            "title": {
+              "en": "CHEST & ARMS",
+              "fr": "PECTORAUX & BRAS"
+            },
             "blocks": [
               {
-                "label": "CHEST",
+                "label": {
+                  "en": "CHEST",
+                  "fr": "PECTORAUX"
+                },
                 "exercises": [
                   {
                     "key": "incline_machine_press",
@@ -2251,14 +2701,20 @@
                       "reps": "12-15",
                       "targetRir": 0,
                       "restSeconds": 60,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
                 ]
               },
               {
-                "label": "ARMS — INDIVIDUAL EXERCISES",
+                "label": {
+                  "en": "ARMS — INDIVIDUAL EXERCISES",
+                  "fr": "BRAS — EXERCICES INDIVIDUELS"
+                },
                 "exercises": [
                   {
                     "key": "barbell_curl_day5",
@@ -2335,7 +2791,10 @@
                 ]
               },
               {
-                "label": "DELTOIDS",
+                "label": {
+                  "en": "DELTOIDS",
+                  "fr": "DELTOÏDES"
+                },
                 "exercises": [
                   {
                     "key": "machine_lateral_raise_day5",
@@ -2364,7 +2823,10 @@
                 ]
               },
               {
-                "label": "FINISHER — ABS — 2 ROUNDS",
+                "label": {
+                  "en": "FINISHER — ABS — 2 ROUNDS",
+                  "fr": "FINISHER — ABDOMINAUX — 2 TOURS"
+                },
                 "exercises": [
                   {
                     "key": "hanging_jackknife",
@@ -2374,7 +2836,10 @@
                       "reps": "10-12",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2386,7 +2851,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Calibration load",
+                      "loadTarget": {
+                        "en": "Calibration load",
+                        "fr": "Charge de calibration"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2398,7 +2866,10 @@
                       "reps": "40",
                       "targetRir": 0,
                       "restSeconds": 0,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   },
@@ -2410,7 +2881,10 @@
                       "reps": "25",
                       "targetRir": 0,
                       "restSeconds": 120,
-                      "loadTarget": "Bodyweight",
+                      "loadTarget": {
+                        "en": "Bodyweight",
+                        "fr": "Poids du corps"
+                      },
                       "unit": "lb"
                     }
                   }
@@ -2419,23 +2893,60 @@
             ]
           },
           "complete-rest": {
-            "day": "SUN · REPOS COMPLET",
-            "title": "REPOS COMPLET",
+            "day": {
+              "en": "SUN · COMPLETE REST",
+              "fr": "SUN · REPOS COMPLET"
+            },
+            "title": {
+              "en": "COMPLETE REST",
+              "fr": "REPOS COMPLET"
+            },
             "blocks": []
           }
         }
       }
     ]
   },
-  "updateTitle": "Tes trois premières semaines sont prêtes.",
-  "updateMessage": "La Semaine 1 commence vendredi avec le Jour 4. Les Semaines 2 et 3 sont complètes.",
+  "updateTitle": {
+    "en": "Your bilingual portal is ready.",
+    "fr": "Ton portail bilingue est prêt."
+  },
+  "updateMessage": {
+    "en": "You can now switch between French and English in Settings. Your training history and prescriptions remain intact.",
+    "fr": "Tu peux maintenant passer du français à l’anglais dans les paramètres. Ton historique et tes prescriptions restent intacts."
+  },
   "releaseNotes": [
-    "Semaine 1 partielle avec Jours 4 et 5",
-    "Semaines 2 et 3 complètes",
-    "RIR cible 0",
-    "Charges cibles identiques",
-    "Progression soumise à confirmation",
-    "Posing flexible trois fois par semaine",
-    "Aucun cardio planifié"
+    {
+      "en": "French and English interface available offline",
+      "fr": "Interface française et anglaise disponible hors ligne"
+    },
+    {
+      "en": "Partial Week 1 with Days 4 and 5",
+      "fr": "Semaine 1 partielle avec Jours 4 et 5"
+    },
+    {
+      "en": "Complete Weeks 2 and 3",
+      "fr": "Semaines 2 et 3 complètes"
+    },
+    {
+      "en": "Target RIR 0",
+      "fr": "RIR cible 0"
+    },
+    {
+      "en": "Identical target loads",
+      "fr": "Charges cibles identiques"
+    },
+    {
+      "en": "Progression requires confirmation",
+      "fr": "Progression soumise à confirmation"
+    },
+    {
+      "en": "Flexible posing three times per week",
+      "fr": "Posing flexible trois fois par semaine"
+    },
+    {
+      "en": "No cardio planned",
+      "fr": "Aucun cardio planifié"
+    }
   ]
 }

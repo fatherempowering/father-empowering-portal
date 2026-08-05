@@ -208,6 +208,7 @@ fs.writeFileSync(path.join(outputDir, 'index.html'), html);
 });
 
 const staticAssets = [
+  'i18n.js',
   'apple-touch-icon.png',
   'favicon-16x16.png',
   'favicon-32x32.png',

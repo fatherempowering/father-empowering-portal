@@ -61,6 +61,11 @@ function writeJson(file, value) {
   fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n');
 }
 
+function publicText(value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return String(value.fr || value.en || '');
+  return String(value || '');
+}
+
 function validDate(value) {
   return !value || /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
@@ -167,7 +172,7 @@ try {
   const training = readJson(path.join(templateDir, 'training-program.example.json'));
   training.programVersion = 'training-' + slug + '-onboarding-v1';
   training.updatedAt = now;
-  training.training.phase = { id: 'phase-1', label: 'PHASE 1', order: 1 };
+  training.training.phase = { id: 'phase-1', label: { en: 'PHASE 1', fr: 'PHASE 1' }, order: 1 };
   training.training.weeks = [];
   writeJson(path.join(temporaryDir, 'training-program.json'), training);
 
@@ -192,7 +197,7 @@ try {
     namespace,
     status: 'onboarding',
     phaseId: training.training.phase.id,
-    phaseLabel: training.training.phase.label,
+    phaseLabel: publicText(training.training.phase.label),
     phaseOrder: training.training.phase.order,
     programVersion: training.programVersion,
     totalWeeks: training.training.weeks.length,

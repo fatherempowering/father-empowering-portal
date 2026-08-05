@@ -5,9 +5,15 @@
   "training": {
     "phase": {
       "id": "phase-1",
-      "label": "PHASE 1",
+      "label": {
+        "en": "PHASE 1",
+        "fr": "PHASE 1"
+      },
       "order": 1,
-      "objective": "Built after Week 0 review"
+      "objective": {
+        "en": "Built after Week 0 review",
+        "fr": "Construit après l’analyse de la Semaine 0"
+      }
     },
     "progression": {
       "mode": "coach-confirmed",
@@ -16,27 +22,167 @@
     },
     "resultTracking": {
       "scope": "per-set",
-      "perSetFields": ["load", "reps", "rir"]
+      "perSetFields": [
+        "load",
+        "reps",
+        "rir"
+      ]
     },
     "sessionCatalog": [
-      {"id":"a","label":"SESSION A","title":"Training A","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"MON"},"order":1},
-      {"id":"b","label":"SESSION B","title":"Training B","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"TUE"},"order":2},
-      {"id":"c","label":"SESSION C","title":"Training C","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"WED"},"order":3},
-      {"id":"d","label":"SESSION D","title":"Training D","type":"training","required":true,"schedule":{"mode":"suggested","suggestedDay":"THU"},"order":4},
-      {"id":"e","label":"SESSION E","title":"Optional Training","type":"training","required":false,"schedule":{"mode":"flexible"},"order":5},
-      {"id":"f","label":"ACTIVE RECOVERY","title":"Active Recovery","type":"active-recovery","required":true,"schedule":{"mode":"suggested","suggestedDay":"SAT"},"order":6},
-      {"id":"g","label":"COMPLETE REST","title":"Complete Rest","type":"complete-rest","required":true,"schedule":{"mode":"suggested","suggestedDay":"SUN"},"order":7}
+      {
+        "id": "a",
+        "label": {
+          "en": "SESSION A",
+          "fr": "SÉANCE A"
+        },
+        "title": {
+          "en": "Training A",
+          "fr": "Entraînement A"
+        },
+        "type": "training",
+        "required": true,
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "MON"
+        },
+        "order": 1
+      },
+      {
+        "id": "b",
+        "label": {
+          "en": "SESSION B",
+          "fr": "SÉANCE B"
+        },
+        "title": {
+          "en": "Training B",
+          "fr": "Entraînement B"
+        },
+        "type": "training",
+        "required": true,
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "TUE"
+        },
+        "order": 2
+      },
+      {
+        "id": "c",
+        "label": {
+          "en": "SESSION C",
+          "fr": "SÉANCE C"
+        },
+        "title": {
+          "en": "Training C",
+          "fr": "Entraînement C"
+        },
+        "type": "training",
+        "required": true,
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "WED"
+        },
+        "order": 3
+      },
+      {
+        "id": "d",
+        "label": {
+          "en": "SESSION D",
+          "fr": "SÉANCE D"
+        },
+        "title": {
+          "en": "Training D",
+          "fr": "Entraînement D"
+        },
+        "type": "training",
+        "required": true,
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "THU"
+        },
+        "order": 4
+      },
+      {
+        "id": "e",
+        "label": {
+          "en": "SESSION E",
+          "fr": "SÉANCE E"
+        },
+        "title": {
+          "en": "Optional Training",
+          "fr": "Entraînement facultatif"
+        },
+        "type": "training",
+        "required": false,
+        "schedule": {
+          "mode": "flexible"
+        },
+        "order": 5
+      },
+      {
+        "id": "f",
+        "label": {
+          "en": "ACTIVE RECOVERY",
+          "fr": "RÉCUPÉRATION ACTIVE"
+        },
+        "title": {
+          "en": "Active Recovery",
+          "fr": "Récupération active"
+        },
+        "type": "active-recovery",
+        "required": true,
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "SAT"
+        },
+        "order": 6
+      },
+      {
+        "id": "g",
+        "label": {
+          "en": "COMPLETE REST",
+          "fr": "REPOS COMPLET"
+        },
+        "title": {
+          "en": "Complete Rest",
+          "fr": "Repos complet"
+        },
+        "type": "complete-rest",
+        "required": true,
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "SUN"
+        },
+        "order": 7
+      }
     ],
     "complementaryProtocols": [],
-    "defaultPhase": "PROTOCOL BUILD",
-    "defaultDesc": "Your personalized training will be built after Coach Max reviews your Week 0 data.",
-    "defaultMessage": "Complete Week 0 first. Your training plan will appear here once Coach Max builds the protocol.",
+    "defaultPhase": {
+      "en": "PROTOCOL BUILD",
+      "fr": "CONSTRUCTION DU PROTOCOLE"
+    },
+    "defaultDesc": {
+      "en": "Your personalized training will be built after Coach Max reviews your Week 0 data.",
+      "fr": "Ton entraînement personnalisé sera construit après l’analyse de tes données de Semaine 0 par Coach Max."
+    },
+    "defaultMessage": {
+      "en": "Complete Week 0 first. Your training plan will appear here once Coach Max builds the protocol.",
+      "fr": "Complète d’abord la Semaine 0. Ton entraînement apparaîtra ici lorsque Coach Max aura construit le protocole."
+    },
     "keyLifts": [],
     "weeks": []
   },
-  "updateTitle": "CoachMax has prepared an update for your protocol.",
-  "updateMessage": "A new training phase or adjustment is ready.",
+  "updateTitle": {
+    "en": "CoachMax has prepared an update for your protocol.",
+    "fr": "CoachMax a préparé une mise à jour de ton protocole."
+  },
+  "updateMessage": {
+    "en": "A new training phase or adjustment is ready.",
+    "fr": "Une nouvelle phase d’entraînement ou un ajustement est prêt."
+  },
   "releaseNotes": [
-    "Training plan updated"
+    {
+      "en": "Training plan updated",
+      "fr": "Plan d’entraînement mis à jour"
+    }
   ]
 }

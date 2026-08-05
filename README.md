@@ -70,7 +70,10 @@ node tests/run-set-results-tests.js
 node tests/run-today-navigation-tests.js
 node tests/run-pwa-offline-tests.js
 node tests/run-client-hub-tests.js
+node tests/run-i18n-tests.js
 ```
+
+Le sélecteur français/anglais se trouve dans Paramètres. Les textes du portail et les descriptions du programme sont bilingues; les noms d’exercices restent volontairement en anglais. Le choix de langue est conservé localement pour chaque client et fonctionne hors ligne.
 
 ## Règles importantes
 

@@ -6,7 +6,7 @@ Après une première ouverture complète avec Internet, chaque portail client pe
 
 Le service worker conserve :
 
-- l’interface et le manifeste;
+- l’interface, le moteur bilingue `i18n.js` et le manifeste;
 - `client-info.json` lorsqu’il est publié;
 - les programmes Training et Nutrition;
 - les logos, icônes PWA et icônes de mensurations;
@@ -21,6 +21,7 @@ Les résultats d’entraînement, brouillons, check-ins, mesures et réglages d�
 - Les fichiers programme utilisent le réseau en priorité, puis la dernière copie mise en cache hors ligne.
 - Une nouvelle génération crée une nouvelle version de cache sans effacer les données personnelles du client.
 - Les caches d’un client ne doivent jamais être partagés avec le chemin d’un autre client.
+- Le choix français/anglais est sauvegardé dans une clé locale propre au client et reste disponible sans réseau.
 
 ## Validation automatisée
 

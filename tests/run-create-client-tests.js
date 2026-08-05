@@ -48,6 +48,7 @@ assert('accented-name-produces-safe-slug', fs.existsSync(clientDir));
   'training-program.json',
   'nutrition-program.json',
   'index.html',
+  'i18n.js',
   'site.webmanifest',
   'sw.js',
   'fe-logo-home.png'

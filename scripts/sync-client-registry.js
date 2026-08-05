@@ -50,6 +50,11 @@ function newestTimestamp(values) {
   }).pop() || '';
 }
 
+function publicText(value, fallback = '') {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return String(value.fr || value.en || fallback);
+  return String(value || fallback);
+}
+
 function publicStatus(clientInfo, training) {
   const declared = String((((clientInfo || {}).client || {}).coachingState || {}).phase || '').toLowerCase();
   if (declared === 'paused' || declared === 'archived') return declared;
@@ -71,7 +76,7 @@ function registrySummary(entry, clientInfo, training, nutrition) {
     namespace: ((clientInfo.storage || {}).namespace) || entry.namespace,
     status: publicStatus(clientInfo, training),
     phaseId: phase.id || '',
-    phaseLabel: phase.label || 'PROGRAMME EN PRÉPARATION',
+    phaseLabel: publicText(phase.label, 'PROGRAMME EN PRÉPARATION'),
     phaseOrder: Number.isInteger(phase.order) ? phase.order : null,
     programVersion: training && training.programVersion || '',
     totalWeeks: weeks.length,

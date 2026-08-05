@@ -136,6 +136,7 @@ async function run() {
   const harness = makeServiceWorkerHarness();
   const pwa = harness.self.__pwa;
   assert('app-shell-includes-programs', ['./training-program.json', './nutrition-program.json'].every((item) => pwa.APP_SHELL.includes(item)));
+  assert('app-shell-includes-language-engine', pwa.APP_SHELL.includes('./i18n.js'));
   assert('app-shell-includes-branding-and-measure-icons', ['./fe-logo-home.png', './fe-logo-splash.png', './measure-icons/waist.png'].every((item) => pwa.APP_SHELL.includes(item)));
   assert('client-info-is-an-offline-optional-source', pwa.OPTIONAL_SHELL.includes('./client-info.json'));
   assert('chart-and-font-origins-are-runtime-cached', ['https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'].every((origin) => pwa.TRUSTED_EXTERNAL_ORIGINS.includes(origin)));
