@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'client-maxime-bourdon-msft5mac';
+const CACHE_VERSION = 'client-maxime-bourdon-msfv70ma';
 const CACHE_SCOPE_KEY = self.registration.scope.replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase()||'root';
 const CACHE_PREFIX = 'legacy-protocol-'+CACHE_SCOPE_KEY+'-';
 const CACHE_NAME = CACHE_PREFIX+CACHE_VERSION;
@@ -10,7 +10,7 @@ const TRUSTED_EXTERNAL_ORIGINS=[
 const APP_SHELL=[
   './',
   './index.html',
-  './i18n.js?v=2',
+  './i18n.js?v=3',
   './site.webmanifest',
   './training-program.json',
   './nutrition-program.json',

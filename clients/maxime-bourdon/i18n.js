@@ -130,6 +130,16 @@ const ENGLISH={
 const state={language:'en',defaultLanguage:'en',storageKey:'',configured:false,observer:null};
 const originalText=new WeakMap();
 const originalAttrs=new WeakMap();
+const EXCLUDED_TAGS={SCRIPT:true,STYLE:true,NOSCRIPT:true,TEMPLATE:true};
+
+function isTranslationExcluded(node){
+  let current=node&&node.nodeType===1?node:node&&node.parentNode;
+  while(current&&current.nodeType===1){
+    if(EXCLUDED_TAGS[String(current.tagName||'').toUpperCase()])return true;
+    current=current.parentNode;
+  }
+  return false;
+}
 
 function normalizeLanguage(value){
   return String(value||'').toLowerCase().startsWith('fr')?'fr':'en';
@@ -178,7 +188,7 @@ function localized(value,language){
   return String(value[lang]||value[lang==='fr'?'fr-ca':'en-ca']||value.en||value.fr||'');
 }
 function translateTextNode(node){
-  if(!node||node.nodeType!==3||!/[A-Za-zÀ-ÿ]/.test(node.nodeValue||''))return;
+  if(!node||node.nodeType!==3||isTranslationExcluded(node)||!/[A-Za-zÀ-ÿ]/.test(node.nodeValue||''))return;
   if(!originalText.has(node))originalText.set(node,node.nodeValue);
   const source=originalText.get(node);
   const leading=(source.match(/^\s*/)||[''])[0],trailing=(source.match(/\s*$/)||[''])[0];
@@ -187,7 +197,7 @@ function translateTextNode(node){
   if(node.nodeValue!==next)node.nodeValue=next;
 }
 function translateAttributes(node){
-  if(!node||node.nodeType!==1)return;
+  if(!node||node.nodeType!==1||isTranslationExcluded(node))return;
   const names=['placeholder','title','aria-label','alt'];
   let saved=originalAttrs.get(node);
   if(!saved){saved={};originalAttrs.set(node,saved);}
@@ -199,7 +209,7 @@ function translateAttributes(node){
   });
 }
 function translateTree(root){
-  if(!root)return;
+  if(!root||isTranslationExcluded(root))return;
   if(root.nodeType===3){translateTextNode(root);return;}
   if(root.nodeType===1)translateAttributes(root);
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);
