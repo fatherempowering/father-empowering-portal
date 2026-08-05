@@ -183,7 +183,8 @@ function translateTextNode(node){
   const source=originalText.get(node);
   const leading=(source.match(/^\s*/)||[''])[0],trailing=(source.match(/\s*$/)||[''])[0];
   const core=source.trim();
-  node.nodeValue=leading+text(core)+trailing;
+  const next=leading+text(core)+trailing;
+  if(node.nodeValue!==next)node.nodeValue=next;
 }
 function translateAttributes(node){
   if(!node||node.nodeType!==1)return;
@@ -193,7 +194,8 @@ function translateAttributes(node){
   names.forEach(function(name){
     if(!node.hasAttribute(name))return;
     if(saved[name]==null)saved[name]=node.getAttribute(name);
-    node.setAttribute(name,text(saved[name]));
+    const next=text(saved[name]);
+    if(node.getAttribute(name)!==next)node.setAttribute(name,next);
   });
 }
 function translateTree(root){

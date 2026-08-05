@@ -25,6 +25,36 @@ assert('pattern-translation',i18n.t('WEEK 3',null,'fr')==='SEMAINE 3');
 assert('localized-object-french',i18n.localized({en:'Training',fr:'Entraînement'},'fr')==='Entraînement');
 assert('localized-object-english',i18n.localized({en:'Training',fr:'Entraînement'},'en')==='Training');
 
+let textWrites=0;
+let currentNodeValue='TRAINING';
+const textNode={nodeType:3};
+Object.defineProperty(textNode,'nodeValue',{get(){return currentNodeValue;},set(value){textWrites++;currentNodeValue=value;}});
+const bodyNode={nodeType:1,hasAttribute(){return false;}};
+const domContext={
+  window:{},
+  localStorage:{getItem(){return null;},setItem(){}},
+  NodeFilter:{SHOW_ELEMENT:1,SHOW_TEXT:4},
+  CustomEvent:function(){},
+  MutationObserver:function(){this.observe=function(){};},
+  document:{
+    body:bodyNode,
+    documentElement:{setAttribute(){}},
+    createTreeWalker(){let sent=false;return{nextNode(){if(sent)return null;sent=true;return textNode;}};},
+    querySelectorAll(){return[];},
+    dispatchEvent(){}
+  }
+};
+vm.createContext(domContext);
+vm.runInContext(source,domContext);
+domContext.window.FE_I18N.configure({storageKey:'test-language',defaultLanguage:'fr'});
+const writesAfterFirstTranslation=textWrites;
+domContext.window.FE_I18N.apply('fr');
+assert('same-language-application-is-idempotent',textWrites===writesAfterFirstTranslation,'repeated text writes can trigger an observer loop');
+domContext.window.FE_I18N.apply('en');
+const writesAfterEnglish=textWrites;
+domContext.window.FE_I18N.apply('en');
+assert('english-application-is-idempotent',textWrites===writesAfterEnglish,'repeated text writes can trigger an observer loop');
+
 const portal=fs.readFileSync(path.join(repo,'index.html'),'utf8');
 const sw=fs.readFileSync(path.join(repo,'sw.js'),'utf8');
 const generator=fs.readFileSync(path.join(repo,'generate-portal.js'),'utf8');
