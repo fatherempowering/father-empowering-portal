@@ -7,6 +7,28 @@ function isObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
 }
 
+function textValues(value) {
+  if (typeof value === 'string') return [value];
+  if (isObject(value)) return ['en', 'fr'].map((language) => value[language]).filter((item) => typeof item === 'string');
+  return [];
+}
+
+function hasText(value) {
+  return textValues(value).some((item) => item.trim());
+}
+
+function validateLocalizedText(value, label, errors, warnings, options = {}) {
+  if (!hasText(value)) return errors.push(`${label} is required.`);
+  if (typeof value === 'string') {
+    if (options.requireBilingual) warnings.push(`${label} uses a legacy single-language string; new content should include en and fr.`);
+    return;
+  }
+  if (!isObject(value)) return errors.push(`${label} must be a string or an { en, fr } object.`);
+  ['en', 'fr'].forEach((language) => {
+    if (!String(value[language] || '').trim()) errors.push(`${label}.${language} is required.`);
+  });
+}
+
 function duplicateItems(values) {
   const seen = new Set();
   const duplicates = new Set();
@@ -44,7 +66,8 @@ function validateTrainingModel(data, options = {}) {
   if (!isObject(phase)) errors.push('training.phase is required.');
   else {
     if (!stableId(phase.id) || String(phase.id).includes('_')) errors.push('training.phase.id must use lowercase kebab-case.');
-    if (!String(phase.label || '').trim()) errors.push('training.phase.label is required.');
+    validateLocalizedText(phase.label, 'training.phase.label', errors, warnings, { requireBilingual: true });
+    if (phase.objective != null) validateLocalizedText(phase.objective, 'training.phase.objective', errors, warnings, { requireBilingual: true });
     if (!Number.isInteger(phase.order) || phase.order < 1) errors.push('training.phase.order must be a positive integer.');
   }
 
@@ -53,6 +76,7 @@ function validateTrainingModel(data, options = {}) {
   else {
     if (progression.mode !== 'coach-confirmed') errors.push('training.progression.mode must be "coach-confirmed".');
     if (progression.clientConfirmationRequired !== true) errors.push('training.progression.clientConfirmationRequired must be true.');
+    (Array.isArray(progression.rules) ? progression.rules : []).forEach((rule, index) => validateLocalizedText(rule, `training.progression.rules[${index}]`, errors, warnings, { requireBilingual: true }));
   }
 
   const tracking = training.resultTracking;
@@ -79,8 +103,8 @@ function validateTrainingModel(data, options = {}) {
     const label = `sessionCatalog[${index}]`;
     if (!isObject(session)) return errors.push(`${label} must be an object.`);
     if (!stableId(session.id)) errors.push(`${label}.id must be a stable lowercase identifier.`);
-    if (!String(session.label || '').trim()) errors.push(`${label}.label is required.`);
-    if (!String(session.title || '').trim()) errors.push(`${label}.title is required.`);
+    validateLocalizedText(session.label, `${label}.label`, errors, warnings, { requireBilingual: true });
+    validateLocalizedText(session.title, `${label}.title`, errors, warnings, { requireBilingual: true });
     if (!SESSION_TYPES.has(session.type)) (allowLegacy ? warnings : errors).push(`${label}.type is invalid.`);
     if (typeof session.required !== 'boolean') (allowLegacy ? warnings : errors).push(`${label}.required must be true or false.`);
     if (!isObject(session.schedule) || !SCHEDULE_MODES.has(session.schedule.mode)) (allowLegacy ? warnings : errors).push(`${label}.schedule.mode must be fixed, suggested or flexible.`);
@@ -94,17 +118,27 @@ function validateTrainingModel(data, options = {}) {
   duplicateItems(numbers).forEach((week) => errors.push(`Duplicate week number "${week}".`));
   numbers.forEach((week, index) => { if (week !== index + 1) errors.push('Weeks must be sequential and start at 1.'); });
 
+  ['defaultPhase', 'defaultDesc', 'defaultMessage'].forEach((field) => {
+    if (training[field] != null) validateLocalizedText(training[field], `training.${field}`, errors, warnings, { requireBilingual: true });
+  });
+
   const exerciseKeys = new Map();
   weeks.forEach((week, weekIndex) => {
     const weekLabel = `week[${weekIndex}]`;
     if (!isObject(week)) return errors.push(`${weekLabel} must be an object.`);
     if (!Number.isInteger(week.week) || week.week < 1) errors.push(`${weekLabel}.week must be a positive integer.`);
+    ['label', 'phase', 'objective', 'desc', 'msg'].forEach((field) => {
+      if (week[field] != null) validateLocalizedText(week[field], `${weekLabel}.${field}`, errors, warnings, { requireBilingual: true });
+    });
     if (!Number.isInteger(week.targetRir) || week.targetRir < 0 || week.targetRir > 5) (allowLegacy ? warnings : errors).push(`${weekLabel}.targetRir must be an integer from 0 to 5.`);
     if (!isObject(week.sessions)) return errors.push(`${weekLabel}.sessions is required.`);
     Object.entries(week.sessions).forEach(([sessionId, session]) => {
       const sessionLabel = `${weekLabel}.sessions.${sessionId}`;
       if (!catalogIds.includes(sessionId)) errors.push(`${sessionLabel} is missing from sessionCatalog.`);
       if (!isObject(session)) return errors.push(`${sessionLabel} must be an object.`);
+      ['day', 'title', 'warmup'].forEach((field) => {
+        if (session[field] != null && session[field] !== '') validateLocalizedText(session[field], `${sessionLabel}.${field}`, errors, warnings, { requireBilingual: true });
+      });
       const usesLegacyBlocks = Array.isArray(session.blocs) || (Array.isArray(session.blocks) && session.blocks.some((block) => block && block.exs));
       if (usesLegacyBlocks) {
         const message = `${sessionLabel} uses legacy blocs/exs names; use blocks/exercises.`;
@@ -114,7 +148,7 @@ function validateTrainingModel(data, options = {}) {
       blocks.forEach((block, blockIndex) => {
         const blockLabel = `${sessionLabel}.blocks[${blockIndex}]`;
         if (!isObject(block)) return errors.push(`${blockLabel} must be an object.`);
-        if (!String(block.label || '').trim()) errors.push(`${blockLabel}.label is required.`);
+        validateLocalizedText(block.label, `${blockLabel}.label`, errors, warnings, { requireBilingual: true });
         const exercises = Array.isArray(block.exercises) ? block.exercises : (allowLegacy && Array.isArray(block.exs) ? block.exs : []);
         exercises.forEach((exercise, exerciseIndex) => {
           const exerciseLabel = `${blockLabel}.exercises[${exerciseIndex}]`;
@@ -123,8 +157,9 @@ function validateTrainingModel(data, options = {}) {
           if (exerciseKeys.has(exercise.key) && exerciseKeys.get(exercise.key) !== exercise.name) errors.push(`Exercise key "${exercise.key}" refers to more than one exercise name.`);
           exerciseKeys.set(exercise.key, exercise.name);
           if (!String(exercise.name || '').trim()) errors.push(`${exerciseLabel}.name is required.`);
-          const cue=String(exercise.cue||exercise.note||'').trim();
-          if(cue.length>80)(allowLegacy?warnings:errors).push(`${exerciseLabel}.cue must remain 80 characters or fewer for mobile readability.`);
+          const cues=textValues(exercise.cue||exercise.note||'').map((value) => value.trim());
+          if (exercise.cue != null) validateLocalizedText(exercise.cue, `${exerciseLabel}.cue`, errors, warnings, { requireBilingual: true });
+          if(cues.some((cue) => cue.length > 80))(allowLegacy?warnings:errors).push(`${exerciseLabel}.cue must remain 80 characters or fewer in every language for mobile readability.`);
           ['results', 'actuals', 'completedSets', 'actualLoad', 'actualReps', 'actualRir', 'painResult'].forEach((field) => {
             if (Object.prototype.hasOwnProperty.call(exercise, field)) errors.push(`${exerciseLabel}.${field} is a result and must not appear in training-program.json.`);
           });
@@ -154,7 +189,13 @@ function validateTrainingModel(data, options = {}) {
     if (!['posing', 'mobility', 'cardio'].includes(protocol.type)) errors.push(`${label}.type must be posing, mobility or cardio.`);
     if (!Number.isInteger(protocol.frequencyPerWeek) || protocol.frequencyPerWeek < 1) errors.push(`${label}.frequencyPerWeek must be positive.`);
     if (protocol.scheduleMode !== 'flexible') errors.push(`${label}.scheduleMode must be "flexible".`);
+    if (protocol.title != null) validateLocalizedText(protocol.title, `${label}.title`, errors, warnings, { requireBilingual: true });
+    (Array.isArray(protocol.instructions) ? protocol.instructions : []).forEach((instruction, instructionIndex) => validateLocalizedText(instruction, `${label}.instructions[${instructionIndex}]`, errors, warnings, { requireBilingual: true }));
   });
+
+  if (data.updateTitle != null) validateLocalizedText(data.updateTitle, 'updateTitle', errors, warnings, { requireBilingual: true });
+  if (data.updateMessage != null) validateLocalizedText(data.updateMessage, 'updateMessage', errors, warnings, { requireBilingual: true });
+  (Array.isArray(data.releaseNotes) ? data.releaseNotes : []).forEach((note, index) => validateLocalizedText(note, `releaseNotes[${index}]`, errors, warnings, { requireBilingual: true }));
 
   infos.push(`${weeks.length} week(s), ${catalog.length} catalog session(s), ${exerciseKeys.size} unique exercise key(s).`);
   return { errors, warnings, infos };

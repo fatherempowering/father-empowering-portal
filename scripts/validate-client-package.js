@@ -43,6 +43,18 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function validateLocalizedContent(value, label, options = {}) {
+  if (value == null || value === '') return;
+  if (typeof value === 'string') {
+    if (options.requireBilingual) warnings.push(`${label} uses a legacy single-language string; new content should include en and fr`);
+    return;
+  }
+  if (!isObject(value)) return errors.push(`${label} must be a string or an { en, fr } object`);
+  ['en', 'fr'].forEach((language) => {
+    if (!String(value[language] || '').trim()) errors.push(`${label}.${language} is required`);
+  });
+}
+
 function unique(values) {
   return new Set(values).size === values.length;
 }
@@ -342,7 +354,7 @@ function validateTraining(record) {
     if (!phase.id || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(phase.id)) {
       errors.push('training-program: training.phase.id must be a stable lowercase kebab-case identifier');
     }
-    if (!phase.label || typeof phase.label !== 'string') {
+    if (!phase.label || !(typeof phase.label === 'string' || isObject(phase.label))) {
       errors.push('training-program: training.phase.label is required');
     }
     if (!Number.isInteger(phase.order) || phase.order < 1) {
@@ -453,6 +465,17 @@ function validateNutrition(record, clientInfo) {
     return;
   }
 
+  ['kicker', 'title', 'phase', 'desc', 'futureNote'].forEach((field) => validateLocalizedContent(nutrition[field], `nutrition-program: nutrition.${field}`, { requireBilingual: true }));
+  asArray(nutrition.targets).forEach((target, index) => validateLocalizedContent(target && target.label, `nutrition-program: targets[${index}].label`, { requireBilingual: true }));
+  asArray(nutrition.rules).forEach((rule, index) => {
+    validateLocalizedContent(rule && rule.title, `nutrition-program: rules[${index}].title`, { requireBilingual: true });
+    validateLocalizedContent(rule && rule.detail, `nutrition-program: rules[${index}].detail`, { requireBilingual: true });
+  });
+  asArray(nutrition.meals).forEach((meal, index) => ['time', 'name', 'detail'].forEach((field) => validateLocalizedContent(meal && meal[field], `nutrition-program: meals[${index}].${field}`, { requireBilingual: true })));
+  validateLocalizedContent(data.updateTitle, 'nutrition-program: updateTitle', { requireBilingual: true });
+  validateLocalizedContent(data.updateMessage, 'nutrition-program: updateMessage', { requireBilingual: true });
+  asArray(data.releaseNotes).forEach((note, index) => validateLocalizedContent(note, `nutrition-program: releaseNotes[${index}]`, { requireBilingual: true }));
+
   const plans = asArray(nutrition.plans);
   if (plans.length) {
     const planIds = plans.map((plan) => plan && plan.id).filter(Boolean);
@@ -461,7 +484,10 @@ function validateNutrition(record, clientInfo) {
     plans.forEach((plan) => {
       if (!plan.label) warnings.push(`nutrition-program: plan ${plan.id} should include a label`);
       if (!plan.title) warnings.push(`nutrition-program: plan ${plan.id} should include a title`);
+      validateLocalizedContent(plan.label, `nutrition-program: plan ${plan.id}.label`, { requireBilingual: true });
+      validateLocalizedContent(plan.title, `nutrition-program: plan ${plan.id}.title`, { requireBilingual: true });
       if (!Array.isArray(plan.sections)) warnings.push(`nutrition-program: plan ${plan.id} should include sections[]`);
+      asArray(plan.sections).forEach((section, index) => ['label', 'title', 'detail'].forEach((field) => validateLocalizedContent(section && section[field], `nutrition-program: plan ${plan.id}.sections[${index}].${field}`, { requireBilingual: true })));
     });
     if (clientInfo && clientInfo.features && clientInfo.features.nutrition === false) {
       warnings.push('client-info/nutrition-program: nutrition file exists while features.nutrition is false');

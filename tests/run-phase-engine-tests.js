@@ -63,6 +63,9 @@ inlineScripts.forEach((script, index) => {
 });
 
 const context = {
+  localizedText(value) {
+    return value && typeof value === 'object' ? String(value.en || value.fr || '') : String(value || '');
+  },
   phaseId(value) {
     return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }

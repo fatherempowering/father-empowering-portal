@@ -8,6 +8,21 @@ Ce document est le contrat de données officiel entre Coach Max, l’outil de va
 
 Le modèle canonique utilise les noms `sessions`, `blocks` et `exercises`. Les anciens noms `seances`, `blocs` et `exs` restent lisibles par le portail pour les migrations, mais ne doivent plus être utilisés dans un nouveau programme.
 
+## Contenu bilingue
+
+Tout nouveau texte destiné au client utilise un objet avec les deux langues :
+
+```json
+{
+  "en": "Upper Body",
+  "fr": "Haut du corps"
+}
+```
+
+Ce format s’applique notamment aux titres de phase, séances, semaines et blocs, aux objectifs, consignes courtes, messages de progression et notes de mise à jour. Le portail choisit automatiquement la bonne version, même hors ligne.
+
+Exception volontaire : `exercises[].name` demeure une chaîne anglaise unique. Les noms d’exercices restent donc en anglais dans les deux langues, conformément au standard Father Empowering. Les identifiants techniques, unités, clés de stockage et résultats saisis ne sont jamais traduits.
+
 ## Capacités officielles
 
 Le format représente :

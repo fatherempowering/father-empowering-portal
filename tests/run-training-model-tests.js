@@ -53,7 +53,15 @@ assert('prescription-and-results-are-separated', !JSON.stringify(example).includ
 assert('progression-requires-confirmation', example.training.progression.mode === 'coach-confirmed' && example.training.progression.clientConfirmationRequired === true);
 assert('per-set-results-are-declared', ['load', 'reps', 'rir'].every((field) => example.training.resultTracking.perSetFields.includes(field)));
 
-const portal = { configuredWeek() { return example.training.weeks[0]; } };
+const portal = {
+  configuredWeek() { return example.training.weeks[0]; },
+  tr(value, vars) {
+    return String(value).replace(/\{([^}]+)\}/g, (_match, key) => vars && vars[key] != null ? String(vars[key]) : '');
+  },
+  localizedText(value) {
+    return value && typeof value === 'object' ? String(value.en || value.fr || '') : String(value || '');
+  }
+};
 vm.createContext(portal);
 ['uniqueList', 'phaseId', 'trainingSessionCatalog', 'trainingSessionIds', 'trainingSessionDays'].forEach((name) => {
   vm.runInContext(extractFunction(name), portal);

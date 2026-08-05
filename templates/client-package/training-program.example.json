@@ -5,9 +5,15 @@
   "training": {
     "phase": {
       "id": "phase-1",
-      "label": "PHASE 1",
+      "label": {
+        "en": "PHASE 1",
+        "fr": "PHASE 1"
+      },
       "order": 1,
-      "objective": "Built after Week 0 review"
+      "objective": {
+        "en": "Built after Week 0 review",
+        "fr": "Construit après l’analyse de la Semaine 0"
+      }
     },
     "progression": {
       "mode": "coach-confirmed",
@@ -16,49 +22,104 @@
     },
     "resultTracking": {
       "scope": "per-set",
-      "perSetFields": ["load", "reps", "rir"]
+      "perSetFields": [
+        "load",
+        "reps",
+        "rir"
+      ]
     },
     "sessionCatalog": [
       {
         "id": "a",
-        "label": "SESSION A",
-        "title": "Upper + Hinge Strength",
+        "label": {
+          "en": "SESSION A",
+          "fr": "SÉANCE A"
+        },
+        "title": {
+          "en": "Upper + Hinge Strength",
+          "fr": "Haut du corps + force en hinge"
+        },
         "type": "training",
         "required": true,
-        "schedule": {"mode": "suggested", "suggestedDay": "MON"},
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "MON"
+        },
         "order": 1
       },
       {
         "id": "b",
-        "label": "SESSION B",
-        "title": "Lower + Push + Unilateral",
+        "label": {
+          "en": "SESSION B",
+          "fr": "SÉANCE B"
+        },
+        "title": {
+          "en": "Lower + Push + Unilateral",
+          "fr": "Bas du corps + poussée + unilatéral"
+        },
         "type": "training",
         "required": true,
-        "schedule": {"mode": "suggested", "suggestedDay": "WED"},
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "WED"
+        },
         "order": 2
       },
       {
         "id": "c",
-        "label": "SESSION C",
-        "title": "Conditioning",
+        "label": {
+          "en": "SESSION C",
+          "fr": "SÉANCE C"
+        },
+        "title": {
+          "en": "Conditioning",
+          "fr": "Conditionnement"
+        },
         "type": "training",
         "required": true,
-        "schedule": {"mode": "suggested", "suggestedDay": "FRI"},
+        "schedule": {
+          "mode": "suggested",
+          "suggestedDay": "FRI"
+        },
         "order": 3
       }
     ],
     "complementaryProtocols": [],
-    "defaultPhase": "PROTOCOL BUILD",
-    "defaultDesc": "Your personalized training will be built after Coach Max reviews your Week 0 data.",
-    "defaultMessage": "Complete Week 0 first. Your training plan will appear here once Coach Max builds the protocol.",
+    "defaultPhase": {
+      "en": "PROTOCOL BUILD",
+      "fr": "CONSTRUCTION DU PROTOCOLE"
+    },
+    "defaultDesc": {
+      "en": "Your personalized training will be built after Coach Max reviews your Week 0 data.",
+      "fr": "Ton entraînement personnalisé sera construit après l’analyse de tes données de Semaine 0 par Coach Max."
+    },
+    "defaultMessage": {
+      "en": "Complete Week 0 first. Your training plan will appear here once Coach Max builds the protocol.",
+      "fr": "Complète d’abord la Semaine 0. Ton entraînement apparaîtra ici lorsque Coach Max aura construit le protocole."
+    },
     "keyLifts": [],
     "weeks": []
   },
-  "updateTitle": "CoachMax has prepared your training plan.",
-  "updateMessage": "Your training plan is ready.",
+  "updateTitle": {
+    "en": "CoachMax has prepared your training plan.",
+    "fr": "CoachMax a préparé ton plan d’entraînement."
+  },
+  "updateMessage": {
+    "en": "Your training plan is ready.",
+    "fr": "Ton plan d’entraînement est prêt."
+  },
   "releaseNotes": [
-    "Client-specific training structure",
-    "Flexible session recommendations",
-    "Local progress preserved"
+    {
+      "en": "Client-specific training structure",
+      "fr": "Structure d’entraînement personnalisée"
+    },
+    {
+      "en": "Flexible session recommendations",
+      "fr": "Recommandations de séances flexibles"
+    },
+    {
+      "en": "Local progress preserved",
+      "fr": "Progression locale préservée"
+    }
   ]
 }

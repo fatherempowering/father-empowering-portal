@@ -1,18 +1,36 @@
 {
   "schemaVersion": 1,
-  "programVersion": "nutrition-maxime-bourdon-onboarding-v1",
-  "updatedAt": "2026-07-31T16:09:11.620Z",
+  "programVersion": "nutrition-maxime-bourdon-onboarding-v2",
+  "updatedAt": "2026-08-04T12:00:00-04:00",
   "nutrition": {
-    "kicker": "NUTRITION",
-    "title": "NUTRITION PLAN",
-    "phase": "NUTRITION BUILD",
-    "desc": "Nutrition content will be added after Coach Max reviews the intake data.",
+    "kicker": {
+      "en": "NUTRITION",
+      "fr": "NUTRITION"
+    },
+    "title": {
+      "en": "NUTRITION PLAN",
+      "fr": "PLAN NUTRITIONNEL"
+    },
+    "phase": {
+      "en": "NUTRITION BUILD",
+      "fr": "CONSTRUCTION DU PLAN NUTRITIONNEL"
+    },
+    "desc": {
+      "en": "Nutrition content will be added after Coach Max reviews the intake data.",
+      "fr": "Le contenu nutritionnel sera ajouté après l’analyse des données par Coach Max."
+    },
     "targets": [],
     "plans": [
       {
         "id": "plan-1",
-        "label": "PLAN 1",
-        "title": "CLASSIC",
+        "label": {
+          "en": "PLAN 1",
+          "fr": "PLAN 1"
+        },
+        "title": {
+          "en": "CLASSIC",
+          "fr": "CLASSIQUE"
+        },
         "sections": []
       }
     ],
@@ -20,11 +38,26 @@
     "meals": [],
     "futureNote": ""
   },
-  "updateTitle": "CoachMax has prepared your nutrition plan.",
-  "updateMessage": "Your nutrition plan is ready.",
+  "updateTitle": {
+    "en": "Your nutrition section is now bilingual.",
+    "fr": "Ta section nutrition est maintenant bilingue."
+  },
+  "updateMessage": {
+    "en": "The current nutrition build status is available in French and English.",
+    "fr": "L’état actuel de construction du plan nutritionnel est disponible en français et en anglais."
+  },
   "releaseNotes": [
-    "Client-specific nutrition targets",
-    "Meal plan sections",
-    "Grocery list support"
+    {
+      "en": "Client-specific nutrition targets",
+      "fr": "Cibles nutritionnelles personnalisées"
+    },
+    {
+      "en": "Meal plan sections",
+      "fr": "Sections du plan de repas"
+    },
+    {
+      "en": "Grocery list support",
+      "fr": "Prise en charge de la liste d’épicerie"
+    }
   ]
 }

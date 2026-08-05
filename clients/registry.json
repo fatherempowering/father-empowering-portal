@@ -1,6 +1,6 @@
 {
   "schemaVersion": "fe-client-registry-v1",
-  "updatedAt": "2026-08-03T23:43:08.671Z",
+  "updatedAt": "2026-08-05T01:17:51.374Z",
   "clients": [
     {
       "id": "clt_89bcb047f2dc",
@@ -10,15 +10,15 @@
       "namespace": "maxime_bourdon",
       "status": "active",
       "phaseId": "phase-1",
-      "phaseLabel": "PHASE 1 — CLASSIC PHYSIQUE PREP",
+      "phaseLabel": "PHASE 1 — PRÉPARATION CLASSIC PHYSIQUE",
       "phaseOrder": 1,
-      "programVersion": "training-maxime-bourdon-phase-1-v1",
+      "programVersion": "training-maxime-bourdon-phase-1-v2",
       "totalWeeks": 3,
       "nutritionEnabled": true,
-      "nutritionVersion": "nutrition-maxime-bourdon-onboarding-v1",
+      "nutritionVersion": "nutrition-maxime-bourdon-onboarding-v2",
       "createdAt": "2026-07-31T16:09:11.620Z",
       "startDate": "2026-07-31",
-      "updatedAt": "2026-07-31T17:39:08.945Z",
+      "updatedAt": "2026-08-04T12:00:00-04:00",
       "path": "clients/maxime-bourdon",
       "urlPath": "/clients/maxime-bourdon/"
     }
