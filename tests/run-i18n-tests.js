@@ -55,13 +55,30 @@ const writesAfterEnglish=textWrites;
 domContext.window.FE_I18N.apply('en');
 assert('english-application-is-idempotent',textWrites===writesAfterEnglish,'repeated text writes can trigger an observer loop');
 
+let styleWrites=0;
+let currentStyleValue='#install-overlay{display:none}';
+const styleNode={nodeType:1,tagName:'STYLE',parentNode:bodyNode};
+const styleTextNode={nodeType:3,parentNode:styleNode};
+Object.defineProperty(styleTextNode,'nodeValue',{get(){return currentStyleValue;},set(value){styleWrites++;currentStyleValue=value;}});
+domContext.window.FE_I18N.translateTree(styleTextNode);
+domContext.window.FE_I18N.apply('fr');
+assert('style-content-is-never-translated',styleWrites===0&&currentStyleValue==='#install-overlay{display:none}','translation must not corrupt CSS while the document is loading');
+
+let scriptWrites=0;
+let currentScriptValue='window.portalReady=true;';
+const scriptNode={nodeType:1,tagName:'SCRIPT',parentNode:bodyNode};
+const scriptTextNode={nodeType:3,parentNode:scriptNode};
+Object.defineProperty(scriptTextNode,'nodeValue',{get(){return currentScriptValue;},set(value){scriptWrites++;currentScriptValue=value;}});
+domContext.window.FE_I18N.translateTree(scriptTextNode);
+assert('script-content-is-never-translated',scriptWrites===0&&currentScriptValue==='window.portalReady=true;','translation must not rewrite application code');
+
 const portal=fs.readFileSync(path.join(repo,'index.html'),'utf8');
 const sw=fs.readFileSync(path.join(repo,'sw.js'),'utf8');
 const generator=fs.readFileSync(path.join(repo,'generate-portal.js'),'utf8');
 assert('settings-has-two-language-buttons',portal.includes('data-language-choice="fr"')&&portal.includes('data-language-choice="en"'));
 assert('preference-has-client-specific-storage-key',portal.includes("'_language_v1'"));
-assert('language-survives-offline',sw.includes("'./i18n.js?v=2'"));
-assert('installed-app-bypasses-legacy-language-cache',portal.includes('<script src="i18n.js?v=2"></script>'));
+assert('language-survives-offline',sw.includes("'./i18n.js?v=3'"));
+assert('installed-app-bypasses-legacy-language-cache',portal.includes('<script src="i18n.js?v=3"></script>'));
 assert('generator-copies-language-engine',generator.includes("'i18n.js'"));
 
 for(const file of ['training-program.json','templates/client-package/training-program.example.json','clients/maxime-bourdon/training-program.json']){
