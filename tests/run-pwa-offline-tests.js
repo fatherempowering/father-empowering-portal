@@ -136,13 +136,20 @@ async function run() {
   const harness = makeServiceWorkerHarness();
   const pwa = harness.self.__pwa;
   assert('app-shell-includes-programs', ['./training-program.json', './nutrition-program.json'].every((item) => pwa.APP_SHELL.includes(item)));
-  assert('app-shell-includes-language-engine', pwa.APP_SHELL.includes('./i18n.js'));
+  assert('app-shell-includes-versioned-language-engine', pwa.APP_SHELL.includes('./i18n.js?v=2'));
   assert('app-shell-includes-branding-and-measure-icons', ['./fe-logo-home.png', './fe-logo-splash.png', './measure-icons/waist.png'].every((item) => pwa.APP_SHELL.includes(item)));
   assert('client-info-is-an-offline-optional-source', pwa.OPTIONAL_SHELL.includes('./client-info.json'));
   assert('chart-and-font-origins-are-runtime-cached', ['https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'].every((origin) => pwa.TRUSTED_EXTERNAL_ORIGINS.includes(origin)));
   pwa.APP_SHELL.filter((item) => item !== './').forEach((item) => {
-    assert('shell-file-exists-' + item.replace(/^\.\//, ''), fs.existsSync(path.join(repo, item.replace(/^\.\//, ''))));
+    const fileName = item.replace(/^\.\//, '').split('?')[0];
+    assert('shell-file-exists-' + fileName, fs.existsSync(path.join(repo, fileName)));
   });
+
+  const upgradeHarness = makeServiceWorkerHarness();
+  await upgradeHarness.cacheFor('legacy-client-cache').put('i18n.js', new Response('broken-legacy-language-engine', { status: 200 }));
+  upgradeHarness.setNetwork(true, 'fixed-language-engine');
+  const upgradedLanguageEngine = await upgradeHarness.request('i18n.js?v=2');
+  assert('installed-app-bypasses-legacy-language-cache', upgradedLanguageEngine && (await upgradedLanguageEngine.text()).startsWith('fixed-language-engine:'));
 
   await harness.lifecycle('install');
   const activeCache = harness.stores.get(pwa.CACHE_NAME);
