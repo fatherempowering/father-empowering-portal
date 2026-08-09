@@ -25,6 +25,35 @@ assert('pattern-translation',i18n.t('WEEK 3',null,'fr')==='SEMAINE 3');
 assert('localized-object-french',i18n.localized({en:'Training',fr:'Entraînement'},'fr')==='Entraînement');
 assert('localized-object-english',i18n.localized({en:'Training',fr:'Entraînement'},'en')==='Training');
 
+const frenchCoverage={
+  'ONBOARDING NEEDED':'ONBOARDING REQUIS',
+  'Complete your onboarding to begin Week 0 data acquisition.':'Complète ton onboarding pour commencer l’acquisition de données de la Semaine 0.',
+  'PREVIOUS WEEK REFERENCE':'RÉFÉRENCE DE LA SEMAINE PRÉCÉDENTE',
+  'Use this snapshot to compare how this week feels before archiving.':'Utilise cet aperçu pour comparer tes sensations de cette semaine avant de l’archiver.',
+  'Last recorded scale weight':'Dernier poids enregistré',
+  'Average per night':'Moyenne par nuit',
+  'Higher is better':'Plus élevé est préférable',
+  'Lower is better':'Plus bas est préférable',
+  'CARDIO CONTEXT':'CONTEXTE CARDIO',
+  'COACHING NOTE':'NOTE DE COACHING',
+  'Waist':'Taille',
+  'Chest':'Poitrine',
+  'Flex Arm':'Bras fléchi',
+  'waist':'taille',
+  'chest':'poitrine',
+  'flex arm':'bras fléchi',
+  'CHANGE':'CHANGEMENT',
+  'Missing data':'Données manquantes',
+  'LOADS NOTED':'CHARGES NOTÉES',
+  'VOLUME LBS':'VOLUME LB',
+  'Before side photo':'Photo de profil avant',
+  'After side photo':'Photo de profil après',
+  'Poster status':'Statut de l’affiche',
+  'READY TO GENERATE':'PRÊT À GÉNÉRER'
+};
+for(const [english,french] of Object.entries(frenchCoverage))assert('french-coverage-'+english,i18n.t(english,null,'fr')===french);
+assert('french-dynamic-poster-week',i18n.t('Your final result poster will be generated after Week 3 using your Week 0 side photo and your final side photo.',null,'fr').startsWith('Ton affiche finale de résultat'));
+
 let textWrites=0;
 let currentNodeValue='TRAINING';
 const textNode={nodeType:3};
@@ -54,6 +83,12 @@ domContext.window.FE_I18N.apply('en');
 const writesAfterEnglish=textWrites;
 domContext.window.FE_I18N.apply('en');
 assert('english-application-is-idempotent',textWrites===writesAfterEnglish,'repeated text writes can trigger an observer loop');
+currentNodeValue='PREVIOUS WEEK REFERENCE';
+domContext.window.FE_I18N.apply('fr');
+domContext.window.FE_I18N.translateTree(textNode);
+assert('dynamic-text-replacement-is-translated',currentNodeValue==='RÉFÉRENCE DE LA SEMAINE PRÉCÉDENTE');
+domContext.window.FE_I18N.apply('en');
+assert('dynamic-text-replacement-returns-to-english',currentNodeValue==='PREVIOUS WEEK REFERENCE');
 
 let styleWrites=0;
 let currentStyleValue='#install-overlay{display:none}';
@@ -77,9 +112,11 @@ const sw=fs.readFileSync(path.join(repo,'sw.js'),'utf8');
 const generator=fs.readFileSync(path.join(repo,'generate-portal.js'),'utf8');
 assert('settings-has-two-language-buttons',portal.includes('data-language-choice="fr"')&&portal.includes('data-language-choice="en"'));
 assert('preference-has-client-specific-storage-key',portal.includes("'_language_v1'"));
-assert('language-survives-offline',sw.includes("'./i18n.js?v=3'"));
-assert('installed-app-bypasses-legacy-language-cache',portal.includes('<script src="i18n.js?v=3"></script>'));
+assert('language-survives-offline',sw.includes("'./i18n.js?v=4'"));
+assert('installed-app-bypasses-legacy-language-cache',portal.includes('<script src="i18n.js?v=4"></script>'));
 assert('generator-copies-language-engine',generator.includes("'i18n.js'"));
+assert('week-zero-summary-localizes-dynamic-labels',portal.includes("const add=(label,value)=>L.push(tr(label)")&&portal.includes("tr('Ready for Coach Summary and personalized protocol creation.')"));
+assert('modal-localizes-dynamic-lines',portal.includes('function translatedModalText(value)')&&portal.includes("textContent=translatedModalText(opts.message||'')"));
 
 for(const file of ['training-program.json','templates/client-package/training-program.example.json','clients/maxime-bourdon/training-program.json']){
   const data=JSON.parse(fs.readFileSync(path.join(repo,file),'utf8'));

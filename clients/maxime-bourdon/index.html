@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Biryani:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="i18n.js?v=3"></script>
+<script src="i18n.js?v=4"></script>
 <style>
 /* ═══ THEMES ═══ */
 :root{--bg:#F4F3EF;--card:#FFFFFF;--card2:#F8F7F3;--black:#1C1C1C;--black2:#252525;--orange:#C85A00;--ol:#E8751A;--wh:#FFFFFF;--txt:#1C1C1C;--txt2:#444444;--txt3:#888888;--br:rgba(0,0,0,0.07);--shadow:0 2px 12px rgba(0,0,0,0.07);--green:#2a7a3b;--yellow:#C99A15;--red:#c0392b;--tint:rgba(200,90,0,0.06)}
@@ -5298,7 +5298,9 @@ function renderWeekZeroProgress(){
   }).join('');
   const ready=result.complete&&!D.weekZero.submitted;
   ['wz-send-inline','wz-send-modal'].forEach(id=>{const btn=el(id);if(btn){btn.disabled=!ready;btn.setAttribute('aria-disabled',ready?'false':'true');}});
-  const note=result.complete?'All required Week 0 data is complete. Ready to send.':'Complete: '+result.missing.map(key=>result.details[key].label).join(', ')+'.';
+  const note=result.complete
+    ?tr('All required Week 0 data is complete. Ready to send.')
+    :tr('Complete: {items}.',{items:result.missing.map(key=>tr(result.details[key].label)).join(', ')});
   const inline=el('wz-validation-note-inline');
   const modal=el('wz-validation-note-modal');
   if(inline)inline.textContent=D.weekZero.submitted?'Week 0 has been sent.':note;
@@ -5675,21 +5677,21 @@ function renderWeekZeroStatus(){
   const activeSub=document.querySelector('#wz-active-state .wz-sub');
   const overall=weekZeroOverallStatus();
   if(D.weekZero.submitted){
-    if(status)status.textContent='SENT TO COACHMAX';
-    if(header)header.textContent='SENT TO COACHMAX';
-    if(note)note.textContent='Your Week 0 data has been sent to Max.';
-    if(inlineNote)inlineNote.textContent='Your Week 0 data has been sent to Coach Max.';
-    if(action)action.textContent='SENT TO COACHMAX';
-    if(activeTitle)activeTitle.textContent='SENT TO COACHMAX';
-    if(activeSub)activeSub.textContent='Your Week 0 data has been sent. Coach Max will now build your personalized protocol.';
+    if(status)status.textContent=tr('SENT TO COACHMAX');
+    if(header)header.textContent=tr('SENT TO COACHMAX');
+    if(note)note.textContent=tr('Your Week 0 data has been sent to Max.');
+    if(inlineNote)inlineNote.textContent=tr('Your Week 0 data has been sent to Coach Max.');
+    if(action)action.textContent=tr('SENT TO COACHMAX');
+    if(activeTitle)activeTitle.textContent=tr('SENT TO COACHMAX');
+    if(activeSub)activeSub.textContent=tr('Your Week 0 data has been sent. Coach Max will now build your personalized protocol.');
   }else{
-    if(status)status.textContent=overall;
-    if(header)header.textContent=D.weekZero.onboardingComplete?'DATA ACQUISITION':'ONBOARDING';
-    if(note)note.textContent='Your data is saved automatically on this page.';
-    if(inlineNote)inlineNote.textContent='Your data is saved automatically on this page.';
-    if(action)action.textContent=overall==='READY TO SEND'?'REVIEW & SEND':'REVIEW';
-    if(activeTitle)activeTitle.textContent='DATA ACQUISITION';
-    if(activeSub)activeSub.textContent='This is the starting point of your protocol. Complete each step below so Coach Max can build your plan with precision.';
+    if(status)status.textContent=tr(overall);
+    if(header)header.textContent=tr(D.weekZero.onboardingComplete?'DATA ACQUISITION':'ONBOARDING');
+    if(note)note.textContent=tr('Your data is saved automatically on this page.');
+    if(inlineNote)inlineNote.textContent=tr('Your data is saved automatically on this page.');
+    if(action)action.textContent=tr(overall==='READY TO SEND'?'REVIEW & SEND':'REVIEW');
+    if(activeTitle)activeTitle.textContent=tr('DATA ACQUISITION');
+    if(activeSub)activeSub.textContent=tr('This is the starting point of your protocol. Complete each step below so Coach Max can build your plan with precision.');
   }
   renderWeekZeroProgress();
 }
@@ -5769,72 +5771,73 @@ function closeWeekZeroReview(){
   const modal=el('wz-review-modal');
   if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
 }
-function yn(v){return v?'Yes':'No';}
+function yn(v){return tr(v?'Yes':'No');}
 function line(label,value){return label+(value||value===0?String(value):'');}
 function loadLines(data,key,label){
   const item=data.loads[key]||{};
   return [
     label+' : '+(item.exercise||''),
-    'Load : '+(item.load||''),
-    'Reps'+(key==='splitSquat'?' per side':'')+' : '+(item.reps||''),
+    tr('Load')+' : '+(item.load||''),
+    tr('Reps')+(key==='splitSquat'?tr('per side'):'')+' : '+(item.reps||''),
     'RIR : '+(item.rir||''),
-    'Pain / note : '+(item.note||'')
+    tr('Pain / note')+' : '+(item.note||'')
   ];
 }
 function buildCoachMaxMessage(data){
   data=data||collectWeekZeroData();
   const L=[];
-  L.push('NEW WEEK 0 — FATHER EMPOWERING');
+  const add=(label,value)=>L.push(tr(label)+' : '+(value||value===0?String(value):''));
+  L.push(tr('NEW WEEK 0 — FATHER EMPOWERING'));
   L.push('');
-  L.push('Name : '+(data.client.name||CLIENT_PROFILE.athleteName||''));
-  L.push('Date : '+new Date().toISOString().slice(0,10));
+  add('Name',data.client.name||CLIENT_PROFILE.athleteName||'');
+  add('Date',new Date().toISOString().slice(0,10));
   L.push('');
-  L.push('ONBOARDING :');
-  L.push('Onboarding completed : '+yn(D.weekZero&&D.weekZero.onboardingComplete));
+  L.push(tr('ONBOARDING')+' :');
+  add('Onboarding completed',yn(D.weekZero&&D.weekZero.onboardingComplete));
   L.push('');
-  L.push('PHOTOS :');
-  L.push('Front : '+yn(data.photos.face));
-  L.push('Side : '+yn(data.photos.side));
-  L.push('Back : '+yn(data.photos.back));
-  L.push('Photo notes : '+(data.photos.comment||''));
+  L.push(tr('PHOTOS')+' :');
+  add('Front',yn(data.photos.face));
+  add('Side',yn(data.photos.side));
+  add('Back',yn(data.photos.back));
+  add('Photo notes',data.photos.comment||'');
   L.push('');
-  L.push('MEASUREMENTS :');
-  L.push('Bodyweight : '+(data.measurements.weight||'')+(data.measurements.weight?' lbs':''));
-  L.push('Waist : '+(data.measurements.waist||'')+(data.measurements.waist?' in':''));
-  L.push('Chest : '+(data.measurements.chest||'')+(data.measurements.chest?' in':''));
-  L.push('Hips : '+(data.measurements.hips||'')+(data.measurements.hips?' in':''));
-  L.push('Right flex arm : '+(data.measurements.arm||'')+(data.measurements.arm?' in':''));
-  L.push('Right thigh : '+(data.measurements.thigh||'')+(data.measurements.thigh?' in':''));
-  L.push('Other : '+(data.measurements.other||''));
+  L.push(tr('MEASUREMENTS')+' :');
+  add('Bodyweight',(data.measurements.weight||'')+(data.measurements.weight?' lbs':''));
+  add('Waist',(data.measurements.waist||'')+(data.measurements.waist?' in':''));
+  add('Chest',(data.measurements.chest||'')+(data.measurements.chest?' in':''));
+  add('Hips',(data.measurements.hips||'')+(data.measurements.hips?' in':''));
+  add('Right flex arm',(data.measurements.arm||'')+(data.measurements.arm?' in':''));
+  add('Right thigh',(data.measurements.thigh||'')+(data.measurements.thigh?' in':''));
+  add('Other',data.measurements.other||'');
   L.push('');
-  L.push('CALIBRATION LOADS :');
+  L.push(tr('CALIBRATION LOADS')+' :');
   WEEK_ZERO_LIFTS.forEach(([key,label])=>{L.push(...loadLines(data,key,label));L.push('');});
-  L.push('BASELINE CARDIO :');
-  L.push('Test : Concept2 Rower 2000 m');
-  L.push('Age : '+(data.cardio.age||''));
-  L.push('Bodyweight : '+(data.cardio.weight||'')+(data.cardio.weight?' lbs':''));
-  L.push('Sex : '+(data.cardio.sex||''));
-  L.push('Training level : '+(data.cardio.trainingLevel||''));
-  L.push('2000 m time : '+(data.cardio.duration||''));
-  L.push('Average pace : '+(data.cardio.pace||'')+(data.cardio.pace?' /500 m':''));
-  L.push('Average power : '+(data.cardio.watts||'')+(data.cardio.watts?' W':''));
-  L.push('Estimated VO2 max : '+(data.cardio.vo2max||'')+(data.cardio.vo2max?' mL/kg/min':''));
-  L.push('Fitness classification : '+(data.cardio.classification||''));
-  L.push('CoachMax interpretation : '+(data.cardio.interpretation||''));
-  L.push('Comment : '+(data.cardio.comment||''));
+  L.push(tr('BASELINE CARDIO')+' :');
+  add('Test','Concept2 Rower 2000 m');
+  add('Age',data.cardio.age||'');
+  add('Bodyweight',(data.cardio.weight||'')+(data.cardio.weight?' lbs':''));
+  add('Sex',tr(data.cardio.sex||''));
+  add('Training level',tr(data.cardio.trainingLevel||''));
+  add('2000 m time',data.cardio.duration||'');
+  add('Average pace',(data.cardio.pace||'')+(data.cardio.pace?' /500 m':''));
+  add('Average power',(data.cardio.watts||'')+(data.cardio.watts?' W':''));
+  add('Estimated VO2 max',(data.cardio.vo2max||'')+(data.cardio.vo2max?' mL/kg/min':''));
+  add('Fitness classification',tr(data.cardio.classification||''));
+  add('CoachMax interpretation',tr(data.cardio.interpretation||''));
+  add('Comment',data.cardio.comment||'');
   L.push('');
-  L.push('MOBILITY / PAIN :');
-  L.push('Pain during squat / legs : '+(data.mobility.painSquat||''));
-  L.push('Pain during hinge : '+(data.mobility.painHinge||''));
-  L.push('Pain during push : '+(data.mobility.painPush||''));
-  L.push('Pain during pull : '+(data.mobility.painPull||''));
-  L.push('Pain during cardio : '+(data.mobility.painCardio||''));
-  L.push('Most limited movement : '+(data.mobility.limitedMovement||''));
-  L.push('Most comfortable movement : '+(data.mobility.comfortableMovement||''));
-  L.push('Tight / stiff area : '+(data.mobility.tightZone||''));
+  L.push(tr('MOBILITY / PAIN')+' :');
+  add('Pain during squat / legs',tr(data.mobility.painSquat||''));
+  add('Pain during hinge',tr(data.mobility.painHinge||''));
+  add('Pain during push',tr(data.mobility.painPush||''));
+  add('Pain during pull',tr(data.mobility.painPull||''));
+  add('Pain during cardio',tr(data.mobility.painCardio||''));
+  add('Most limited movement',data.mobility.limitedMovement||'');
+  add('Most comfortable movement',data.mobility.comfortableMovement||'');
+  add('Tight / stiff area',data.mobility.tightZone||'');
   L.push('');
-  L.push('DECISION :');
-  L.push('Ready for Coach Summary and personalized protocol creation.');
+  L.push(tr('DECISION')+' :');
+  L.push(tr('Ready for Coach Summary and personalized protocol creation.'));
   return L.join('\n');
 }
 function renderWeekZeroSummary(){
@@ -6088,10 +6091,10 @@ function renderTrainingWeekZero(){
   if(panel)panel.classList.add('week-zero-mode');
   const protocol=el('ent-protocol'),title=el('ent-title'),phase=el('ent-phase'),desc=el('ent-desc');
   D.weekZero=normalizeWeekZero(D.weekZero);
-  if(protocol)protocol.textContent='FATHER EMPOWERING — WEEK ZERO';
-  if(title)title.textContent='WEEK 0';
-  if(phase)phase.textContent=D.weekZero.submitted?'SENT TO COACHMAX':(D.weekZero.onboardingComplete?'DATA ACQUISITION':'ONBOARDING');
-  if(desc)desc.textContent=D.weekZero.submitted?'Your Week 0 data has been sent. Coach Max will now build your personalized protocol.':(D.weekZero.onboardingComplete?'Collect your starting data so Coach Max can build your protocol with precision.':'Complete your onboarding before data acquisition begins.');
+  if(protocol)protocol.textContent=tr('FATHER EMPOWERING — WEEK ZERO');
+  if(title)title.textContent=tr('WEEK 0');
+  if(phase)phase.textContent=tr(D.weekZero.submitted?'SENT TO COACHMAX':(D.weekZero.onboardingComplete?'DATA ACQUISITION':'ONBOARDING'));
+  if(desc)desc.textContent=tr(D.weekZero.submitted?'Your Week 0 data has been sent. Coach Max will now build your personalized protocol.':(D.weekZero.onboardingComplete?'Collect your starting data so Coach Max can build your protocol with precision.':'Complete your onboarding before data acquisition begins.'));
   document.querySelectorAll('#panel-entrainement .sub-panel').forEach(p=>p.classList.remove('active'));
   const host=el('sub-weekzero');
   attachWeekZeroShellToTraining();
@@ -7670,6 +7673,14 @@ function closeAppModal(result){
   if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
   if(appModalResolver){const resolve=appModalResolver;appModalResolver=null;resolve(result);}
 }
+function translatedModalText(value){
+  return String(value==null?'':value).split('\n').map(line=>{
+    if(!line)return '';
+    if(line.indexOf('- ')===0)return '- '+tr(line.slice(2));
+    if(line.indexOf('Error: ')===0)return tr('Error:')+' '+line.slice(7);
+    return tr(line);
+  }).join('\n');
+}
 function showAppModal(opts){
   opts=opts||{};
   return new Promise(resolve=>{
@@ -7678,11 +7689,11 @@ function showAppModal(opts){
     const modal=el('app-modal');
     const confirm=el('app-modal-confirm');
     const cancel=el('app-modal-cancel');
-    el('app-modal-kicker').textContent=opts.kicker||'FATHER EMPOWERING';
-    el('app-modal-title').textContent=opts.title||'CONFIRM';
-    el('app-modal-message').textContent=opts.message||'';
-    confirm.textContent=opts.confirmText||'OK';
-    cancel.textContent=opts.cancelText||'CANCEL';
+    el('app-modal-kicker').textContent=tr(opts.kicker||'FATHER EMPOWERING');
+    el('app-modal-title').textContent=tr(opts.title||'CONFIRM');
+    el('app-modal-message').textContent=translatedModalText(opts.message||'');
+    confirm.textContent=tr(opts.confirmText||'OK');
+    cancel.textContent=tr(opts.cancelText||'CANCEL');
     confirm.className='app-btn '+(opts.confirmClass||'app-btn-primary');
     cancel.style.display=opts.cancelText?'block':'none';
     confirm.onclick=()=>closeAppModal(true);
