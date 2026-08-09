@@ -53,6 +53,11 @@ const frenchCoverage={
 };
 for(const [english,french] of Object.entries(frenchCoverage))assert('french-coverage-'+english,i18n.t(english,null,'fr')===french);
 assert('french-dynamic-poster-week',i18n.t('Your final result poster will be generated after Week 3 using your Week 0 side photo and your final side photo.',null,'fr').startsWith('Ton affiche finale de résultat'));
+assert('french-training-card-action',i18n.t('Tap to open session',null,'fr')==='Touche pour ouvrir la séance');
+assert('french-training-card-completed',i18n.t('Completed',null,'fr')==='Terminée');
+assert('french-rir-accessibility-label',i18n.t('RIR for Hack Squat set 2',null,'fr')==='RIR pour Hack Squat, série 2');
+assert('french-compact-reps-heading',i18n.t('REP.',null,'fr')==='RÉP.');
+assert('french-compact-target-heading',i18n.t('TARGET',null,'fr')==='CIBLE');
 
 let textWrites=0;
 let currentNodeValue='TRAINING';

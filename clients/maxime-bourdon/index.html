@@ -22,8 +22,8 @@
 <script src="i18n.js?v=4"></script>
 <style>
 /* ═══ THEMES ═══ */
-:root{--bg:#F4F3EF;--card:#FFFFFF;--card2:#F8F7F3;--black:#1C1C1C;--black2:#252525;--orange:#C85A00;--ol:#E8751A;--wh:#FFFFFF;--txt:#1C1C1C;--txt2:#444444;--txt3:#888888;--br:rgba(0,0,0,0.07);--shadow:0 2px 12px rgba(0,0,0,0.07);--green:#2a7a3b;--yellow:#C99A15;--red:#c0392b;--tint:rgba(200,90,0,0.06)}
-[data-theme="dark"]{--bg:#0D0D0D;--card:#161616;--card2:#1F1F1F;--black:#1A1A1A;--black2:#131313;--orange:#E8761A;--ol:#F08A2E;--wh:#FFFFFF;--txt:#F2F2F2;--txt2:#C8C8C8;--txt3:#8C8C8C;--br:rgba(255,255,255,0.09);--shadow:0 2px 14px rgba(0,0,0,0.4);--green:#3FA456;--yellow:#F0C43A;--red:#E05545;--tint:rgba(232,118,26,0.08)}
+:root{--bg:#F4F3EF;--card:#FFFFFF;--card2:#F8F7F3;--black:#1C1C1C;--black2:#252525;--orange:#C85A00;--ol:#E8751A;--wh:#FFFFFF;--txt:#1C1C1C;--txt2:#444444;--txt3:#6B6B6B;--br:rgba(0,0,0,0.07);--shadow:0 2px 12px rgba(0,0,0,0.07);--green:#2a7a3b;--yellow:#C99A15;--red:#c0392b;--tint:rgba(200,90,0,0.06)}
+[data-theme="dark"]{--bg:#0D0D0D;--card:#161616;--card2:#1F1F1F;--black:#1A1A1A;--black2:#131313;--orange:#E8761A;--ol:#F08A2E;--wh:#FFFFFF;--txt:#F2F2F2;--txt2:#C8C8C8;--txt3:#A3A3A3;--br:rgba(255,255,255,0.09);--shadow:0 2px 14px rgba(0,0,0,0.4);--green:#3FA456;--yellow:#F0C43A;--red:#E05545;--tint:rgba(232,118,26,0.08)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-height:100vh;padding-bottom:80px;-webkit-font-smoothing:antialiased;font-size:15px;transition:background .25s}
@@ -209,6 +209,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 .ex-thead{display:grid;grid-template-columns:minmax(0,1fr) 44px 54px 76px;gap:5px;padding:8px 14px;background:var(--black);border-bottom:1px solid rgba(255,255,255,0.07)}
 .ex-th{font-size:9px;letter-spacing:1.5px;color:rgba(255,255,255,0.5);font-weight:600;font-family:'Bebas Neue',sans-serif;text-align:center}
 .ex-th:first-child{text-align:left}
+.ex-th-short{display:none}
 .ex-row{display:grid;grid-template-columns:minmax(0,1fr) 44px 54px 76px;gap:5px;padding:12px 14px;border-bottom:1px solid var(--br);align-items:center}
 .ex-row:last-child{border-bottom:none}
 .ex-name{font-size:13px;font-weight:700;color:var(--txt);line-height:1.3}
@@ -511,7 +512,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
   --black2:#111111;
   --txt:#1C1C1C;
   --txt2:#444444;
-  --txt3:#777777;
+  --txt3:#6B6B6B;
   --br:rgba(0,0,0,0.08);
   --shadow:0 8px 26px rgba(0,0,0,0.10);
   background:#FFFFFF;
@@ -523,7 +524,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-
 #panel-progression .change-card{background:#F8F7F3}
 #panel-progression .stats-row{background:rgba(0,0,0,0.08);border-color:rgba(0,0,0,0.08)}
 #panel-progression .stat-cell{background:#FFFFFF}
-#panel-progression .stat-l{color:#777777}
+#panel-progression .stat-l{color:#6B6B6B}
 .prog-secondary-nav{display:flex;gap:8px;justify-content:center;max-width:900px;margin:14px auto 0;padding:0 14px}
 .prog-secondary-btn{border:1px solid var(--br);border-radius:10px;background:var(--card);color:var(--txt2);box-shadow:var(--shadow);font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.8px;padding:12px 18px;cursor:pointer;min-width:112px}
 .prog-secondary-btn:active{transform:translateY(1px)}
@@ -5988,7 +5989,7 @@ function buildExCard(bloc,week,sid){
   bloc.exs.forEach(ex=>{
     const restSeconds=normalizeRestTimerSeconds(ex.restSeconds);
     const timerButton=restSeconds?'<button class="timer-btn" style="display:inline-flex;vertical-align:middle;width:24px;height:24px;font-size:11px;margin-left:6px" onclick="startTimer(\''+escapeHTML(ex.name).replace(/'/g,"\\'")+'\','+restSeconds+')" title="Timer repos">⏱</button>':'';
-    h+='<div class="ex-card"><div class="ex-thead"><div class="ex-th">EXERCISE</div><div class="ex-th">SETS</div><div class="ex-th">REPS</div><div class="ex-th">TARGET LOAD</div></div>'
+    h+='<div class="ex-card"><div class="ex-thead"><div class="ex-th">EXERCISE</div><div class="ex-th">SETS</div><div class="ex-th" aria-label="REPETITIONS"><span class="ex-th-full">REPS</span><span class="ex-th-short" aria-hidden="true">REP.</span></div><div class="ex-th" aria-label="TARGET LOAD"><span class="ex-th-full">TARGET LOAD</span><span class="ex-th-short" aria-hidden="true">TARGET</span></div></div>'
       +'<div class="ex-row">'
       +'<div><div class="ex-name">'+escapeHTML(ex.name)+timerButton+'</div><div class="ex-note">'+escapeHTML(ex.note)+'</div></div>'
       +'<div class="ex-prescribed">'+escapeHTML(ex.sets)+'</div>'
@@ -9004,5 +9005,75 @@ document.addEventListener('DOMContentLoaded',function(){
 })();
 </script>
 <!-- ════════════════ END PREMIUM PHASE 1 MODULE ════════════════ -->
+<style id="fe-accessible-typography">
+/* Mobile readability baseline for a 40+ audience. Titles keep the FE display
+   treatment; supporting copy uses calmer spacing and a larger text floor. */
+@media(max-width:759px){
+  body{font-size:16px;line-height:1.5}
+
+  /* True labels and compact titles: never smaller than 12 px. */
+  .hdr-protocol,.hdr-chip,.install-btn,.update-btn,.clock-date,.net-pill,
+  .appearance-btn,.language-btn,.cbadge,.sdiv-txt,.home-sub,.home-phase,
+  .v2-focus-label,.v2-focus-pill,.ws-label,.stat-l,.seance-protocol,.seance-day,
+  .week-card-count,.week-card-phase,.day-card-status,.wz-step-status,.warmup-label,
+  .bloc-label,.ex-th,.set-results-head,.set-result-label,.duration-unit,.notes-label,
+  .dash-title,.dash-unit,.kpi-label,.side-photo .sp-l,.nutri-goal-l,.macro-pill,
+  .day-total-l,.epic-cat,.mens-field label,.ci-ref-k,.ci-ref-section-title,
+  .photo-slot-label,.wz-kicker,.wz-progress-item,.wz-tab-num,
+  .prog-chart-badge,.prog-leg-item,.measure-label,.change-label,.hist-date,
+  .hist-seance-date,.hist-seance-stat-l,.hist-week-divider-txt,.reset-countdown,
+  .app-kicker,.timer-exname,.coach-banner-btn,.coach-field label,
+  .ex-row.duration-row .duration-control::before,.fe-stat-bigsub,.fe-gi-label,
+  .fe-result-item-k,.fe-result-field label{
+    font-size:12px;
+  }
+
+  /* Supporting text is sentence copy, not a display title. */
+  .hdr-welcome,.settings-sub,.home-btn-sub,.v2-focus-sub,.chart-empty-txt,
+  .checkin-cta-sub,.seance-desc,.day-card-sub,.ex-note,.fin-note,.dash-sub,
+  .kpi-sub,.meal-time,.ci-sub,.ci-last-ref-sub,.ci-ref-hint,.ci-ref-pill,
+  .photo-hint,.wz-validation-note,.measure-sub,.change-sub,.hist-note,
+  .report-btn-sub,.coach-editor-sub,.fe-result-card-sub,.fe-result-note{
+    font-size:13px;
+    line-height:1.5;
+    letter-spacing:0;
+    text-transform:none;
+  }
+
+  /* Prescriptions and user-entered values must remain immediately readable. */
+  .ex-name{font-size:16px;line-height:1.35}
+  .ex-target,.mens-name,.mens-val,.perf-name,.perf-val,.hist-label,.hist-val,
+  .ci-ref-v small,.fe-result-item-v{font-size:15px}
+  .set-result-input,.ex-input,.duration-input,.notes-area,.ci-input,.ci-select,
+  .mens-field input,.wz-field input,.wz-field select,.wz-field textarea,
+  .coach-field input,.coach-field select,.coach-field textarea,
+  .fe-result-field input{
+    font-size:16px;
+  }
+
+  /* Small dynamic fragments and photo captions carry real information. */
+  .ci-label span[style],.perf-val span[style],.timer-btn[style]{font-size:12px!important}
+  .wz-photo-grid .photo-slot-label{font-size:12px;line-height:1.3;letter-spacing:.5px}
+  .ci-ref-note,.ci-ref-empty,.reset-sub,.app-message,.fe-pop-submsg,
+  .fe-stat-tl.l2,.fe-stat-tl.l2muted,.fe-stat-note,.fe-ios-note{
+    font-size:13px;
+    line-height:1.55;
+  }
+}
+@media(max-width:420px){
+  /* Short mobile headings keep the four prescription columns clearly separated. */
+  .ex-th-full{display:none}
+  .ex-th-short{display:inline}
+}
+@media(max-width:359px){
+  /* On the narrowest supported phones, the exercise cue gets its own readable row. */
+  .ex-row>div:first-child{display:contents}
+  .ex-row .ex-name{grid-column:1/-1;grid-row:1}
+  .ex-row .ex-prescribed{grid-column:2;grid-row:2}
+  .ex-row .ex-prescribed-reps{grid-column:3;grid-row:2}
+  .ex-row .ex-target{grid-column:4;grid-row:2;font-size:14px}
+  .ex-row .ex-note{grid-column:1/-1;grid-row:3;margin-top:4px}
+}
+</style>
 </body>
 </html>
