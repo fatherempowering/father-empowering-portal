@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'client-maxime-bourdon-msmbiwtb';
+const CACHE_VERSION = 'client-maxime-bourdon-portal-3-3-0-msmhj9uk';
 const CACHE_SCOPE_KEY = self.registration.scope.replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase()||'root';
 const CACHE_PREFIX = 'legacy-protocol-'+CACHE_SCOPE_KEY+'-';
 const CACHE_NAME = CACHE_PREFIX+CACHE_VERSION;
@@ -10,7 +10,8 @@ const TRUSTED_EXTERNAL_ORIGINS=[
 const APP_SHELL=[
   './',
   './index.html',
-  './i18n.js?v=4',
+  './i18n.js?v=5',
+  './version.json',
   './site.webmanifest',
   './training-program.json',
   './nutrition-program.json',
@@ -77,11 +78,12 @@ self.addEventListener('fetch',event=>{
     return;
   }
   const isProgramFile=url.pathname.endsWith('/training-program.json')||url.pathname.endsWith('/nutrition-program.json');
-  if(isProgramFile){
+  const isPortalReleaseFile=url.pathname.endsWith('/version.json');
+  if(isProgramFile||isPortalReleaseFile){
     const cacheKey=canonicalProgramRequest(url);
     event.respondWith(
       fetch(req,{cache:'no-store'}).then(res=>{
-        if(!res.ok)throw new Error('Program fetch failed: '+res.status);
+        if(!res.ok)throw new Error('Fresh JSON fetch failed: '+res.status);
         return cacheSuccessful(cacheKey,res);
       }).catch(()=>caches.match(cacheKey).then(cached=>cached||caches.match(req,{ignoreSearch:true})))
     );
@@ -90,7 +92,7 @@ self.addEventListener('fetch',event=>{
   const isAppDocument=req.mode==='navigate'||url.pathname.endsWith('/')||url.pathname.endsWith('/index.html');
   if(isAppDocument){
     event.respondWith(
-      fetch(req).then(res=>{
+      fetch(req,{cache:'no-store'}).then(res=>{
         if(!res.ok)throw new Error('Navigation fetch failed: '+res.status);
         return cacheSuccessful(req,res);
       }).catch(()=>caches.match(req).then(cached=>cached||caches.match('./index.html')))

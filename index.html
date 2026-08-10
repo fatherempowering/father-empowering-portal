@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Biryani:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="i18n.js?v=4"></script>
+<script src="i18n.js?v=5"></script>
 <style>
 /* ═══ THEMES ═══ */
 :root{--bg:#F4F3EF;--card:#FFFFFF;--card2:#F8F7F3;--black:#1C1C1C;--black2:#252525;--orange:#C85A00;--ol:#E8751A;--wh:#FFFFFF;--txt:#1C1C1C;--txt2:#444444;--txt3:#6B6B6B;--br:rgba(0,0,0,0.07);--shadow:0 2px 12px rgba(0,0,0,0.07);--green:#2a7a3b;--yellow:#C99A15;--red:#c0392b;--tint:rgba(200,90,0,0.06)}
@@ -744,7 +744,7 @@ canvas{display:block;width:100%!important}
         <button class="language-btn" data-language-choice="fr" onclick="setPortalLanguage('fr')">FRANÇAIS</button>
         <button class="language-btn" data-language-choice="en" onclick="setPortalLanguage('en')">ENGLISH</button>
       </div>
-      <button class="settings-item" onclick="manualUpdateCheck()"><span><span>Check for updates</span><span class="settings-sub">Refresh training and nutrition plans</span></span><span class="settings-chevron">›</span></button>
+      <button class="settings-item" onclick="manualUpdateCheck()"><span><span>Check for updates</span><span class="settings-sub">Refresh portal, training and nutrition plans</span></span><span class="settings-chevron">›</span></button>
       <button class="settings-item" onclick="settingsExportData()"><span><span>Export my data</span><span class="settings-sub">Download a private backup of your progress</span></span><span class="settings-chevron">›</span></button>
       <div class="settings-item" style="cursor:default"><span><span>Appearance</span><span class="settings-sub">Choose how Legacy Protocol looks</span></span></div>
       <div class="appearance-row">
@@ -1351,7 +1351,8 @@ const TEMPLATE_CONFIG={
     sidebarSubtitle:'CLIENT NAME · PROGRAM TEMPLATE',
     messageSignature:'— Coach',
     totalWeeks:12,
-    portalVersion:'1.0',
+    portalVersion:'3.3.0',
+    portalReleasedAt:'2026-08-09',
     protocolVersion:'Phase 1 — Fat Loss',
     lastUpdated:'July 11, 2026',
     language:'en',
@@ -1533,7 +1534,13 @@ let SEANCE_IDS=trainingSessionIds(TRAINING_CONFIG);
 let SEANCE_DAYS=trainingSessionDays(TRAINING_CONFIG);
 const el=id=>document.getElementById(id);
 const activeLocale=()=>window.FE_I18N&&window.FE_I18N.getLanguage()==='fr'?'fr-CA':'en-CA';
-const APP_VERSION='2.8.0';
+const INSTALLED_PORTAL_RELEASE=Object.freeze({
+  version:String(CLIENT_PROFILE.portalVersion||'3.3.0'),
+  releasedAt:String(CLIENT_PROFILE.portalReleasedAt||'2026-08-09')
+});
+let portalServiceWorkerPromise=null;
+let portalUpdatePromptShown=false;
+const APP_VERSION=INSTALLED_PORTAL_RELEASE.version;
 const TRAINING_PLAN_URL=(STORAGE_CONFIG.trainingProgramUrl||'training-program.json');
 const NUTRITION_PLAN_URL=(STORAGE_CONFIG.nutritionProgramUrl||'nutrition-program.json');
 const TRAINING_PLAN_CACHE_KEY='faem_'+STORAGE_NAMESPACE+'_training_plan_v1';
@@ -1778,9 +1785,7 @@ function initAppShell(){
     deferredInstallPrompt=ev;
     const btn=el('install-btn'); if(btn)btn.classList.add('show');
   });
-  if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  }
+  ensurePortalServiceWorker().catch(()=>{});
 }
 function applyFeatureConfig(){
   const featurePanels={
@@ -1857,6 +1862,80 @@ function isDark(){return (document.documentElement.getAttribute('data-theme')||'
 function gridColor(){return isDark()?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';}
 function tickColor(){return isDark()?'#9a9a9a':'#888';}
 
+function isLocalPortalPreview(){
+  return location.protocol==='file:'||location.hostname==='127.0.0.1'||location.hostname==='localhost';
+}
+async function fetchLatestPortalRelease(){
+  const response=await fetch('./version.json?portal_check='+Date.now(),{cache:'no-store'});
+  if(!response.ok)throw new Error('Portal release check failed: '+response.status);
+  const release=await response.json();
+  if(!release||release.schemaVersion!=='fe-portal-release-v1'||!String(release.version||'').trim())throw new Error('Invalid portal release file');
+  return {version:String(release.version),releasedAt:String(release.releasedAt||'')};
+}
+async function ensurePortalServiceWorker(){
+  if(isLocalPortalPreview()||!('serviceWorker' in navigator)||location.protocol.indexOf('http')!==0)return null;
+  if(portalServiceWorkerPromise)return portalServiceWorkerPromise;
+  portalServiceWorkerPromise=(async()=>{
+    let registration;
+    try{registration=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});}
+    catch(error){registration=await navigator.serviceWorker.register('./sw.js');}
+    try{await registration.update();}catch(error){}
+    return registration;
+  })().catch(error=>{portalServiceWorkerPromise=null;throw error;});
+  return portalServiceWorkerPromise;
+}
+function waitForPortalControllerChange(timeoutMs){
+  if(!('serviceWorker' in navigator))return Promise.resolve();
+  return new Promise(resolve=>{
+    let settled=false;
+    let timer=null;
+    const finish=()=>{
+      if(settled)return;
+      settled=true;
+      if(timer)clearTimeout(timer);
+      navigator.serviceWorker.removeEventListener('controllerchange',finish);
+      resolve();
+    };
+    navigator.serviceWorker.addEventListener('controllerchange',finish);
+    timer=setTimeout(finish,timeoutMs||2200);
+  });
+}
+async function reloadIntoPortalRelease(release){
+  try{await ensurePortalServiceWorker();await waitForPortalControllerChange(2200);}catch(error){}
+  const target=new URL(location.href);
+  target.searchParams.set('portal_version',String(release&&release.version||Date.now()));
+  location.replace(target.toString());
+}
+async function offerPortalReleaseUpdate(release,forcePrompt){
+  if(portalUpdatePromptShown&&!forcePrompt)return false;
+  portalUpdatePromptShown=true;
+  const accepted=await appConfirm(
+    'PORTAL UPDATE READY',
+    tr('Version {version} is ready. Update now to load the latest interface. Your training results and local data will stay saved.',{version:release.version}),
+    {kicker:'FATHER EMPOWERING',confirmText:'UPDATE NOW',cancelText:'LATER',confirmClass:'app-btn-success'}
+  );
+  if(accepted){await reloadIntoPortalRelease(release);return true;}
+  return false;
+}
+async function checkPortalRelease(options){
+  const prompt=!!(options&&options.prompt);
+  const forcePrompt=!!(options&&options.forcePrompt);
+  if(isLocalPortalPreview())return false;
+  if(navigator.onLine===false)return false;
+  try{
+    const release=await fetchLatestPortalRelease();
+    const available=release.version!==INSTALLED_PORTAL_RELEASE.version;
+    if(available){
+      try{await ensurePortalServiceWorker();}catch(error){}
+      if(prompt)await offerPortalReleaseUpdate(release,forcePrompt);
+    }
+    return available;
+  }catch(error){
+    console.warn('Portal release check failed',error);
+    return false;
+  }
+}
+
 function openSettings(){
   const sheet=el('settings-sheet'); if(!sheet)return;
   const pref=(function(){try{return localStorage.getItem(THEME_KEY)||'light';}catch(e){return 'light';}})();
@@ -1881,7 +1960,11 @@ function setPortalLanguage(language){
 }
 function closeSettings(){const sheet=el('settings-sheet');if(sheet){sheet.classList.remove('show');sheet.setAttribute('aria-hidden','true');}}
 function settingsBackdropClose(event){if(event&&event.target===el('settings-sheet'))closeSettings();}
-async function manualUpdateCheck(){closeSettings();await updatePortal();}
+async function manualUpdateCheck(){
+  closeSettings();
+  const shellUpdate=await checkPortalRelease({prompt:true,forcePrompt:true});
+  if(!shellUpdate)await updatePortal();
+}
 function settingsExportData(){closeSettings();exportData();}
 function showAbout(){
   closeSettings();
@@ -1892,7 +1975,7 @@ function showAbout(){
   const message='Legacy Protocol\n\n'+tr('Portal Version')+'\n'+(CLIENT_PROFILE.portalVersion||'1.0')+'\n\n'+tr('Protocol Version')+'\n'+localizedText(CLIENT_PROFILE.protocolVersion||'Phase 1 — Fat Loss')+'\n\n'+tr('Last Updated')+'\n'+last+'\n\n'+tr('Designed by Father Empowering.')+'\n\n'+tr('Legacy Protocol is a high-performance coaching platform built to help you execute your training, nutrition, and recovery with precision. Every update is designed to improve your coaching experience while preserving your progress.')+'\n\n'+tr('Powered by CoachMax');
   return appAlert('ABOUT LEGACY PROTOCOL',message,{kicker:'LEGACY PROTOCOL',confirmClass:'app-btn-success'});
 }
-window.openSettings=openSettings;window.closeSettings=closeSettings;window.setThemePreference=setThemePreference;window.setPortalLanguage=setPortalLanguage;window.manualUpdateCheck=manualUpdateCheck;window.settingsExportData=settingsExportData;window.showAbout=showAbout;
+window.openSettings=openSettings;window.closeSettings=closeSettings;window.setThemePreference=setThemePreference;window.setPortalLanguage=setPortalLanguage;window.manualUpdateCheck=manualUpdateCheck;window.settingsExportData=settingsExportData;window.showAbout=showAbout;window.checkPortalRelease=checkPortalRelease;
 
 /* ═════════ HORLOGE ═════════ */
 function tickClock(){
@@ -4929,8 +5012,12 @@ function restore(){
 async function bootstrapPortal(){
   try{await loadPortalPlans();}catch(e){console.warn('External plans unavailable; using embedded fallback.',e);applyPortalPlans({plan:TEMPLATE_CONFIG.training,version:'embedded'},{plan:TEMPLATE_CONFIG.nutrition,version:'embedded'});}
   restore();
-  // Quietly detect coach-published program versions after the app is visible.
-  setTimeout(()=>checkForPortalUpdate({silent:true}),1200);
+  // Check the application shell first, then coach-published plans. This avoids
+  // competing update prompts and keeps all client data on the same device.
+  setTimeout(async()=>{
+    const shellUpdate=await checkPortalRelease({prompt:true});
+    if(!shellUpdate)await checkForPortalUpdate({silent:true});
+  },1200);
 }
 document.addEventListener('DOMContentLoaded',bootstrapPortal);
 </script>

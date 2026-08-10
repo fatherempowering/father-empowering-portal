@@ -32,6 +32,7 @@ function makeServiceWorkerHarness() {
   let networkBody = 'network';
   let skipWaitingCalled = false;
   let claimCalled = false;
+  const fetchCalls = [];
 
   function keyFor(input, options = {}) {
     const raw = typeof input === 'string' ? input : input.url;
@@ -73,7 +74,8 @@ function makeServiceWorkerHarness() {
     }
   };
 
-  async function fetchMock(request) {
+  async function fetchMock(request, options = {}) {
+    fetchCalls.push({ url: keyFor(request), options });
     if (!networkOnline) throw new Error('offline');
     return new Response(networkBody + ':' + keyFor(request), {
       status: 200,
@@ -110,6 +112,7 @@ function makeServiceWorkerHarness() {
   return {
     self,
     stores,
+    fetchCalls,
     cacheFor,
     lifecycle,
     request,
@@ -136,7 +139,8 @@ async function run() {
   const harness = makeServiceWorkerHarness();
   const pwa = harness.self.__pwa;
   assert('app-shell-includes-programs', ['./training-program.json', './nutrition-program.json'].every((item) => pwa.APP_SHELL.includes(item)));
-  assert('app-shell-includes-versioned-language-engine', pwa.APP_SHELL.includes('./i18n.js?v=4'));
+  assert('app-shell-includes-versioned-language-engine', pwa.APP_SHELL.includes('./i18n.js?v=5'));
+  assert('app-shell-includes-portal-release', pwa.APP_SHELL.includes('./version.json'));
   assert('app-shell-includes-branding-and-measure-icons', ['./fe-logo-home.png', './fe-logo-splash.png', './measure-icons/waist.png'].every((item) => pwa.APP_SHELL.includes(item)));
   assert('client-info-is-an-offline-optional-source', pwa.OPTIONAL_SHELL.includes('./client-info.json'));
   assert('chart-and-font-origins-are-runtime-cached', ['https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'].every((origin) => pwa.TRUSTED_EXTERNAL_ORIGINS.includes(origin)));
@@ -148,7 +152,7 @@ async function run() {
   const upgradeHarness = makeServiceWorkerHarness();
   await upgradeHarness.cacheFor('legacy-client-cache').put('i18n.js', new Response('broken-legacy-language-engine', { status: 200 }));
   upgradeHarness.setNetwork(true, 'fixed-language-engine');
-  const upgradedLanguageEngine = await upgradeHarness.request('i18n.js?v=4');
+  const upgradedLanguageEngine = await upgradeHarness.request('i18n.js?v=5');
   assert('installed-app-bypasses-legacy-language-cache', upgradedLanguageEngine && (await upgradedLanguageEngine.text()).startsWith('fixed-language-engine:'));
 
   await harness.lifecycle('install');
@@ -170,9 +174,18 @@ async function run() {
   harness.setNetwork(true, 'fresh-program');
   const freshProgram = await harness.request('training-program.json?v=version-2');
   assert('online-program-is-network-first', freshProgram && (await freshProgram.text()).startsWith('fresh-program:'));
+  assert('online-program-bypasses-http-cache', harness.fetchCalls.at(-1).options.cache === 'no-store');
   harness.setNetwork(false);
   const refreshedOfflineProgram = await harness.request('training-program.json?v=version-3');
   assert('latest-program-response-is-reused-offline', refreshedOfflineProgram && (await refreshedOfflineProgram.text()).startsWith('fresh-program:'));
+
+  harness.setNetwork(true, 'fresh-release');
+  const freshRelease = await harness.request('version.json?v=3.3.0');
+  assert('portal-release-is-network-first', freshRelease && (await freshRelease.text()).startsWith('fresh-release:'));
+  assert('portal-release-bypasses-http-cache', harness.fetchCalls.at(-1).options.cache === 'no-store');
+  harness.setNetwork(false);
+  const offlineRelease = await harness.request('version.json?v=offline');
+  assert('latest-portal-release-is-reused-offline', offlineRelease && (await offlineRelease.text()).startsWith('fresh-release:'));
 
   const offlineNavigation = await harness.request('dashboard/deep-link', 'navigate');
   assert('offline-navigation-falls-back-to-index', offlineNavigation && offlineNavigation.status === 200 && (await offlineNavigation.text()).includes('cached:./index.html'));
@@ -190,7 +203,15 @@ async function run() {
   const untrustedExternal = await harness.request('https://untrusted.example/app.js');
   assert('untrusted-cross-origin-request-is-not-intercepted', untrustedExternal === undefined);
 
-  assert('portal-registers-service-worker', portalSource.includes("navigator.serviceWorker.register('./sw.js')"));
+  harness.setNetwork(true, 'fresh-navigation');
+  const onlineNavigation = await harness.request('index.html', 'navigate');
+  assert('online-navigation-is-network-first', onlineNavigation && (await onlineNavigation.text()).startsWith('fresh-navigation:'));
+  assert('online-navigation-bypasses-http-cache', harness.fetchCalls.at(-1).options.cache === 'no-store');
+
+  assert('portal-registers-service-worker-with-cache-bypass', portalSource.includes("navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'})"));
+  assert('portal-forces-service-worker-update-on-launch', portalSource.includes('await registration.update()'));
+  assert('portal-checks-release-without-cache', portalSource.includes("fetch('./version.json?portal_check='+Date.now(),{cache:'no-store'})"));
+  assert('about-displays-installed-version', portalSource.includes('function showAbout()') && portalSource.includes("tr('Portal Version')") && portalSource.includes('CLIENT_PROFILE.portalVersion'));
   assert('portal-listens-for-network-changes', portalSource.includes("window.addEventListener('online',updateNetworkStatus)") && portalSource.includes("window.addEventListener('offline',updateNetworkStatus)"));
   assert('client-results-persist-locally', portalSource.includes('localStorage.setItem(SK,JSON.stringify(D))') && portalSource.includes('setResults:f.setResults'));
   assert('offline-checkins-use-an-outbox', portalSource.includes('feOutboxEnqueue') && portalSource.includes("window.addEventListener('online',function(){setTimeout(feFlushOutbox,1500);})"));

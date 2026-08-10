@@ -2,11 +2,11 @@
 'use strict';
 
 const FRENCH={
-  "SETTINGS":"PARAMÈTRES","Check for updates":"Vérifier les mises à jour","Refresh training and nutrition plans":"Actualiser les plans d’entraînement et de nutrition",
+  "SETTINGS":"PARAMÈTRES","Check for updates":"Vérifier les mises à jour","Refresh training and nutrition plans":"Actualiser les plans d’entraînement et de nutrition","Refresh portal, training and nutrition plans":"Actualiser le portail et les plans d’entraînement et de nutrition",
   "Choose your portal language":"Choisis la langue de ton portail",
   "Export my data":"Exporter mes données","Download a private backup of your progress":"Télécharger une sauvegarde privée de ta progression",
   "Appearance":"APPARENCE","Choose how Legacy Protocol looks":"Choisis l’apparence du Legacy Protocol","LIGHT":"CLAIR","DARK":"SOMBRE",
-  "About":"À PROPOS","Portal and protocol information":"Informations sur le portail et le protocole","Close settings":"Fermer les paramètres","Open settings":"Ouvrir les paramètres","Settings":"Paramètres",
+  "About":"À PROPOS","Portal and protocol information":"Informations sur le portail et le protocole","Close settings":"Fermer les paramètres","Open settings":"Ouvrir les paramètres","Settings":"Paramètres","PORTAL UPDATE READY":"MISE À JOUR DU PORTAIL PRÊTE","LATER":"PLUS TARD","Version {version} is ready. Update now to load the latest interface. Your training results and local data will stay saved.":"La version {version} est prête. Mets à jour maintenant pour charger la nouvelle interface. Tes résultats d’entraînement et tes données locales resteront sauvegardés.",
   "HOME":"ACCUEIL","TRAINING":"ENTRAÎNEMENT","NUTRITION":"NUTRITION","CHECK-IN":"CHECK-IN","PROGRESSION":"PROGRESSION","HISTORY":"HISTORIQUE",
   "ONLINE":"EN LIGNE","OFFLINE":"HORS LIGNE","INSTALL":"INSTALLER","CLIENT PROTOCOL":"PROTOCOLE CLIENT","SELECT WEEK":"CHOISIR LA SEMAINE",
   "Welcome back.":"Bon retour.","Loading...":"Chargement…","START TODAY'S SESSION":"COMMENCER LA SÉANCE DU JOUR","Open today's training":"Ouvrir l’entraînement du jour",
