@@ -65,6 +65,7 @@ assert('generator-reports-ready', generatedText.includes('PORTAL READY'), genera
 [
   'index.html',
   'i18n.js',
+  'version.json',
   'client-info.json',
   'training-program.json',
   'nutrition-program.json',
@@ -85,7 +86,11 @@ assert('client-slug-is-compiled', html.includes('"clientSlug": "test-client"'));
 assert('storage-namespace-is-compiled', html.includes('"keyPrefix": "test_client"'));
 assert('tally-url-is-compiled', html.includes('"publicFormUrl": "https://tally.so/r/test123"'));
 assert('training-phase-is-compiled', html.includes('"id": "phase-1"'));
-assert('language-engine-is-loaded-with-cache-buster', html.includes('<script src="i18n.js?v=4"></script>'));
+assert('portal-release-is-compiled', html.includes('"portalVersion": "3.3.0"') && html.includes('"portalReleasedAt": "2026-08-09"'));
+assert('language-engine-is-loaded-with-cache-buster', html.includes('<script src="i18n.js?v=5"></script>'));
+
+const portalRelease = readJson(path.join(output, 'version.json'));
+assert('portal-release-file-is-copied', portalRelease.schemaVersion === 'fe-portal-release-v1' && portalRelease.version === '3.3.0');
 
 const manifest = readJson(path.join(output, 'site.webmanifest'));
 assert('manifest-is-personalized', manifest.name.includes('Test Client') && manifest.short_name === 'Test Protocol');
@@ -93,9 +98,10 @@ assert('manifest-language-is-personalized', manifest.lang === 'en');
 assert('manifest-has-stable-install-id', manifest.id === './');
 
 const sw = fs.readFileSync(path.join(output, 'sw.js'), 'utf8');
-assert('service-worker-cache-is-unique', /const CACHE_VERSION = 'client-test-client-[^']+';/.test(sw));
+assert('service-worker-cache-is-unique', /const CACHE_VERSION = 'client-test-client-portal-3-3-0-[^']+';/.test(sw));
 assert('service-worker-keeps-programs', sw.includes("'./training-program.json'") && sw.includes("'./nutrition-program.json'"));
-assert('service-worker-keeps-versioned-language-engine', sw.includes("'./i18n.js?v=4'"));
+assert('service-worker-keeps-versioned-language-engine', sw.includes("'./i18n.js?v=5'"));
+assert('service-worker-keeps-release-file-offline', sw.includes("'./version.json'"));
 assert('service-worker-keeps-client-info-offline', sw.includes("const OPTIONAL_SHELL=['./client-info.json']"));
 assert('installed-app-name-is-personalized', html.includes('<meta name="apple-mobile-web-app-title" content="Test Protocol">') && html.includes('<meta name="application-name" content="Test Protocol">'));
 

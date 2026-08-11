@@ -44,6 +44,15 @@ function readJson(file, required = true) {
   }
 }
 
+function readRepoJson(file) {
+  const fullPath = path.join(repoRoot, file);
+  try {
+    return JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+  } catch (error) {
+    throw new Error(file + ' is not valid JSON: ' + error.message);
+  }
+}
+
 function runValidator(folder, strict) {
   const validator = path.join(repoRoot, 'scripts', 'validate-client-package.js');
   const result = spawnSync(process.execPath, [validator, folder].concat(strict ? ['--strict'] : []), { encoding: 'utf8' });
@@ -93,6 +102,12 @@ function copyDirectoryFiles(sourceDir, destinationDir) {
 runValidator(packageDir, true);
 
 const clientInfo = readJson('client-info.json');
+const portalRelease = readRepoJson('version.json');
+if (portalRelease.schemaVersion !== 'fe-portal-release-v1'
+  || !String(portalRelease.version || '').trim()
+  || !String(portalRelease.releasedAt || '').trim()) {
+  throw new Error('version.json must declare schemaVersion, version and releasedAt.');
+}
 const features = clientInfo.features || {};
 const trainingRecord = readJson('training-program.json', features.training !== false);
 const nutritionRecord = readJson('nutrition-program.json', features.nutrition !== false);
@@ -147,7 +162,8 @@ const generatedConfig = {
     sidebarSubtitle: portal.sidebarSubtitle || defaults.client.sidebarSubtitle,
     messageSignature: portal.messageSignature || defaults.client.messageSignature,
     totalWeeks,
-    portalVersion: metadata.portalVersion || defaults.client.portalVersion,
+    portalVersion: String(portalRelease.version),
+    portalReleasedAt: String(portalRelease.releasedAt),
     protocolVersion: metadata.protocolVersionLabel || ((phase && phase.label) || defaults.client.protocolVersion),
     lastUpdated: metadata.lastUpdatedLabel || clientInfo.updatedAt,
     language: client.language || 'en',
@@ -209,6 +225,7 @@ fs.writeFileSync(path.join(outputDir, 'index.html'), html);
 
 const staticAssets = [
   'i18n.js',
+  'version.json',
   'apple-touch-icon.png',
   'favicon-16x16.png',
   'favicon-32x32.png',
@@ -231,7 +248,8 @@ manifest.lang = finalConfig.client.language;
 fs.writeFileSync(path.join(outputDir, 'site.webmanifest'), JSON.stringify(manifest, null, 2) + '\n');
 
 let sw = fs.readFileSync(path.join(repoRoot, 'sw.js'), 'utf8');
-const cacheVersion = 'client-' + client.slug + '-' + Date.now().toString(36);
+const releaseSlug = String(portalRelease.version).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const cacheVersion = 'client-' + client.slug + '-portal-' + releaseSlug + '-' + Date.now().toString(36);
 sw = sw.replace(/const CACHE_VERSION\s*=\s*'[^']*';/, "const CACHE_VERSION = '" + cacheVersion + "';");
 if (!nutritionRecord) sw = sw.replace(/\s*'\.\/nutrition-program\.json',?/, '');
 if (!trainingRecord) sw = sw.replace(/\s*'\.\/training-program\.json',?/, '');

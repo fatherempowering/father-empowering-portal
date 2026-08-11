@@ -58,6 +58,8 @@ assert('french-training-card-completed',i18n.t('Completed',null,'fr')==='Termin�
 assert('french-rir-accessibility-label',i18n.t('RIR for Hack Squat set 2',null,'fr')==='RIR pour Hack Squat, série 2');
 assert('french-compact-reps-heading',i18n.t('REP.',null,'fr')==='RÉP.');
 assert('french-compact-target-heading',i18n.t('TARGET',null,'fr')==='CIBLE');
+assert('french-about-portal-version',i18n.t('Portal Version',null,'fr')==='Version du portail');
+assert('french-portal-update-message',i18n.t('Version {version} is ready. Update now to load the latest interface. Your training results and local data will stay saved.',{version:'3.3.1'},'fr').includes('3.3.1'));
 
 let textWrites=0;
 let currentNodeValue='TRAINING';
@@ -117,8 +119,8 @@ const sw=fs.readFileSync(path.join(repo,'sw.js'),'utf8');
 const generator=fs.readFileSync(path.join(repo,'generate-portal.js'),'utf8');
 assert('settings-has-two-language-buttons',portal.includes('data-language-choice="fr"')&&portal.includes('data-language-choice="en"'));
 assert('preference-has-client-specific-storage-key',portal.includes("'_language_v1'"));
-assert('language-survives-offline',sw.includes("'./i18n.js?v=4'"));
-assert('installed-app-bypasses-legacy-language-cache',portal.includes('<script src="i18n.js?v=4"></script>'));
+assert('language-survives-offline',sw.includes("'./i18n.js?v=5'"));
+assert('installed-app-bypasses-legacy-language-cache',portal.includes('<script src="i18n.js?v=5"></script>'));
 assert('generator-copies-language-engine',generator.includes("'i18n.js'"));
 assert('week-zero-summary-localizes-dynamic-labels',portal.includes("const add=(label,value)=>L.push(tr(label)")&&portal.includes("tr('Ready for Coach Summary and personalized protocol creation.')"));
 assert('modal-localizes-dynamic-lines',portal.includes('function translatedModalText(value)')&&portal.includes("textContent=translatedModalText(opts.message||'')"));

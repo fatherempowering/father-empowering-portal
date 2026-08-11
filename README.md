@@ -7,6 +7,7 @@ Portail maître utilisé pour générer et maintenir les portails clients Father
 - `index.html` : moteur et interface du portail client.
 - `sw.js` : service worker et cache hors ligne isolé par portail.
 - `site.webmanifest` : manifeste PWA.
+- `version.json` : version officielle de l’application, publiée une seule fois par livraison validée.
 - `generate-portal.js` : générateur officiel fondé sur le paquet client à trois fichiers.
 - `client-info.example.json` : copie pratique du modèle d’identité client.
 - `training-program.json` : programme d’entraînement vierge chargé par le portail maître.
@@ -69,6 +70,7 @@ node tests/run-training-model-tests.js
 node tests/run-set-results-tests.js
 node tests/run-today-navigation-tests.js
 node tests/run-pwa-offline-tests.js
+node tests/run-portal-version-tests.js
 node tests/run-client-hub-tests.js
 node tests/run-i18n-tests.js
 ```
