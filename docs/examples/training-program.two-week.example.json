@@ -12,6 +12,7 @@
     "progression": {
       "mode": "coach-confirmed",
       "clientConfirmationRequired": true,
+      "keyLiftChartEnabled": false,
       "rules": [
         "The portal may propose progression but never changes the prescription automatically.",
         "Coach or client confirmation is required before using a higher target load."

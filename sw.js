@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v3.3.0-pwa-release-check-v1';
+const CACHE_VERSION = 'v3.4.0-guided-workout-v1';
 const CACHE_SCOPE_KEY = self.registration.scope.replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase()||'root';
 const CACHE_PREFIX = 'legacy-protocol-'+CACHE_SCOPE_KEY+'-';
 const CACHE_NAME = CACHE_PREFIX+CACHE_VERSION;
@@ -10,7 +10,7 @@ const TRUSTED_EXTERNAL_ORIGINS=[
 const APP_SHELL=[
   './',
   './index.html',
-  './i18n.js?v=5',
+  './i18n.js?v=7',
   './version.json',
   './site.webmanifest',
   './training-program.json',

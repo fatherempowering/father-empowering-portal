@@ -14,6 +14,8 @@ Date souhaitée de publication :
 PROGRESSION GÉNÉRALE
 Mode : confirmation du client
 Règle générale :
+Afficher le graphique des charges pour exercices clés : oui / non (non par défaut)
+Exercices clés à suivre si oui :
 
 SEMAINE 1
 Objectif :
@@ -28,6 +30,8 @@ Jour suggéré :
 Échauffement :
 
 BLOC :
+Structure du bloc : standard / superset / finisher
+Repos après chaque tour du superset ou finisher :
 
 Exercice :
 Séries :

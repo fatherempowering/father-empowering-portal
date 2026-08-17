@@ -22,6 +22,8 @@ assert('french-static-translation',i18n.t('TRAINING',null,'fr')==='ENTRAÎNEMENT
 assert('english-static-translation',i18n.t('TRAINING',null,'en')==='TRAINING');
 assert('interpolated-translation',i18n.t('Welcome back, {name}.',{name:'Max'},'fr')==='Bon retour, Max.');
 assert('pattern-translation',i18n.t('WEEK 3',null,'fr')==='SEMAINE 3');
+assert('embedded-rest-translation-french',i18n.t('RIR 0 · Rest: 30 SEC',null,'fr')==='RIR 0 · Repos : 30 SEC');
+assert('embedded-rest-translation-english',i18n.t('RIR 0 · Repos : 30 s',null,'en')==='RIR 0 · Rest: 30 SEC');
 assert('localized-object-french',i18n.localized({en:'Training',fr:'Entraînement'},'fr')==='Entraînement');
 assert('localized-object-english',i18n.localized({en:'Training',fr:'Entraînement'},'en')==='Training');
 
@@ -119,8 +121,8 @@ const sw=fs.readFileSync(path.join(repo,'sw.js'),'utf8');
 const generator=fs.readFileSync(path.join(repo,'generate-portal.js'),'utf8');
 assert('settings-has-two-language-buttons',portal.includes('data-language-choice="fr"')&&portal.includes('data-language-choice="en"'));
 assert('preference-has-client-specific-storage-key',portal.includes("'_language_v1'"));
-assert('language-survives-offline',sw.includes("'./i18n.js?v=5'"));
-assert('installed-app-bypasses-legacy-language-cache',portal.includes('<script src="i18n.js?v=5"></script>'));
+assert('language-survives-offline',sw.includes("'./i18n.js?v=7'"));
+assert('installed-app-bypasses-legacy-language-cache',portal.includes('<script src="i18n.js?v=7"></script>'));
 assert('generator-copies-language-engine',generator.includes("'i18n.js'"));
 assert('week-zero-summary-localizes-dynamic-labels',portal.includes("const add=(label,value)=>L.push(tr(label)")&&portal.includes("tr('Ready for Coach Summary and personalized protocol creation.')"));
 assert('modal-localizes-dynamic-lines',portal.includes('function translatedModalText(value)')&&portal.includes("textContent=translatedModalText(opts.message||'')"));
