@@ -43,6 +43,16 @@ function invalid(name, mutate, expected) {
 
 const valid = validateTrainingModel(example, { allowEmptyWeeks: false });
 assert('official-two-week-example-is-valid', valid.errors.length === 0, valid.errors.join(' | '));
+const supersetExample = clone(example);
+const supersetBlock = supersetExample.training.weeks[0].sessions['upper-a'].blocks[0];
+supersetBlock.mode = 'superset';
+supersetBlock.restSeconds = 75;
+const supersetSecondExercise = clone(supersetBlock.exercises[0]);
+supersetSecondExercise.key = 'rope_pushdown_superset';
+supersetSecondExercise.name = 'Rope Triceps Pushdown';
+supersetBlock.exercises.push(supersetSecondExercise);
+const validSuperset = validateTrainingModel(supersetExample, { allowEmptyWeeks: false });
+assert('official-superset-is-valid', validSuperset.errors.length === 0, validSuperset.errors.join(' | '));
 assert('two-distinct-weeks', example.training.weeks.length === 2);
 assert('four-required-training-sessions', example.training.sessionCatalog.filter((item) => item.type === 'training' && item.required).length === 4);
 assert('one-optional-training-session', example.training.sessionCatalog.filter((item) => item.type === 'training' && !item.required).length === 1);
@@ -51,7 +61,14 @@ assert('posing-is-flexible', example.training.complementaryProtocols.some((item)
 assert('week-rir-can-change', example.training.weeks[0].targetRir !== example.training.weeks[1].targetRir);
 assert('prescription-and-results-are-separated', !JSON.stringify(example).includes('actualLoad'));
 assert('progression-requires-confirmation', example.training.progression.mode === 'coach-confirmed' && example.training.progression.clientConfirmationRequired === true);
+assert('key-lift-chart-is-disabled-by-default', example.training.progression.keyLiftChartEnabled === false);
+assert('portal-hides-key-lift-chart-by-default', portalSource.includes('id="key-lift-chart-card" hidden style="display:none"') && portalSource.includes('progression.keyLiftChartEnabled===true'));
 assert('per-set-results-are-declared', ['load', 'reps', 'rir'].every((field) => example.training.resultTracking.perSetFields.includes(field)));
+
+const keyLiftChartOptIn = clone(example);
+keyLiftChartOptIn.training.progression.keyLiftChartEnabled = true;
+const validKeyLiftChartOptIn = validateTrainingModel(keyLiftChartOptIn, { allowEmptyWeeks: false });
+assert('key-lift-chart-can-be-enabled-explicitly', validKeyLiftChartOptIn.errors.length === 0, validKeyLiftChartOptIn.errors.join(' | '));
 
 const portal = {
   configuredWeek() { return example.training.weeks[0]; },
@@ -71,7 +88,7 @@ vm.runInContext(extractFunction('normalizeExercise'), portal);
 const canonicalExercise = example.training.weeks[0].sessions['upper-a'].blocks[0].exercises[0];
 const normalized = portal.normalizeExercise(canonicalExercise, 1, 'upper-a', 0, 0);
 assert('portal-reads-canonical-prescription', normalized.sets === 3 && normalized.reps === '8-10' && normalized.target === 'Calibration load' && normalized.unit === 'lb');
-assert('portal-displays-rir-rest-and-tempo', ['RIR 3', 'Rest: 120 sec', 'Tempo 3-1-1-0'].every((part) => normalized.note.includes(part)), normalized.note);
+assert('portal-displays-rir-rest-and-tempo', ['RIR 3', 'Rest: 120 SEC', 'Tempo 3-1-1-0'].every((part) => normalized.note.includes(part)), normalized.note);
 assert('optional-session-is-excluded-from-required-completion', portalSource.includes('definition.required!==false'));
 assert('portal-starts-from-canonical-session-catalog', JSON.stringify(portal.trainingSessionIds(example.training)) === JSON.stringify(example.training.sessionCatalog.map((item) => item.id)));
 assert('portal-builds-session-labels-from-catalog', portal.trainingSessionDays(example.training)['upper-a'] === 'MON · UPPER A');
@@ -126,6 +143,8 @@ assert(
 );
 
 invalid('automatic-progression-is-blocked', (value) => { value.training.progression.mode = 'automatic'; }, 'coach-confirmed');
+invalid('invalid-key-lift-chart-flag-is-blocked', (value) => { value.training.progression.keyLiftChartEnabled = 'yes'; }, 'true or false');
+invalid('key-lift-chart-needs-configured-exercises', (value) => { value.training.progression.keyLiftChartEnabled = true; value.training.keyLifts = []; }, 'requires at least one');
 invalid('missing-per-set-rir-is-blocked', (value) => { value.training.resultTracking.perSetFields = ['load', 'reps']; }, '"rir"');
 invalid('per-exercise-notes-are-blocked-as-result-fields', (value) => { value.training.resultTracking.perSetFields.push('notes'); }, 'Unknown result field "notes"');
 invalid('long-mobile-cues-are-blocked', (value) => { value.training.weeks[0].sessions['upper-a'].blocks[0].exercises[0].cue = 'This instruction is intentionally far too long to remain readable during a mobile training session and must be shortened.'; }, '80 characters or fewer');
@@ -138,6 +157,9 @@ invalid('unknown-session-is-blocked', (value) => { value.training.weeks[0].sessi
 invalid('legacy-block-names-are-blocked', (value) => { value.training.weeks[0].sessions['upper-a'].blocs = []; }, 'legacy blocs/exs');
 invalid('kilograms-are-blocked', (value) => { value.training.weeks[0].sessions['upper-a'].blocks[0].exercises[0].prescription.unit = 'kg'; }, 'must be lb, min, sec, distance or level');
 invalid('machine-settings-are-blocked', (value) => { value.training.weeks[0].sessions['upper-a'].blocks[0].exercises[0].prescription.machineSetup = 'Seat 4'; }, 'machineSetup');
+invalid('superset-needs-two-exercises', (value) => { const block=value.training.weeks[0].sessions['upper-a'].blocks[0];block.mode='superset';block.restSeconds=75; }, 'exactly two exercises');
+invalid('superset-needs-round-rest', (value) => { const block=value.training.weeks[0].sessions['upper-a'].blocks[0];block.mode='superset';block.exercises.push({...clone(block.exercises[0]),key:'superset_second',name:'Second Exercise'}); }, 'requires a positive restSeconds');
+invalid('superset-needs-matching-sets', (value) => { const block=value.training.weeks[0].sessions['upper-a'].blocks[0];block.mode='superset';block.restSeconds=75;const second={...clone(block.exercises[0]),key:'superset_second',name:'Second Exercise'};second.prescription.sets=2;block.exercises.push(second); }, 'same number of sets');
 
 if (failed) {
   console.error('\n' + failed + ' Training model test(s) failed.');

@@ -139,7 +139,7 @@ async function run() {
   const harness = makeServiceWorkerHarness();
   const pwa = harness.self.__pwa;
   assert('app-shell-includes-programs', ['./training-program.json', './nutrition-program.json'].every((item) => pwa.APP_SHELL.includes(item)));
-  assert('app-shell-includes-versioned-language-engine', pwa.APP_SHELL.includes('./i18n.js?v=5'));
+  assert('app-shell-includes-versioned-language-engine', pwa.APP_SHELL.includes('./i18n.js?v=7'));
   assert('app-shell-includes-portal-release', pwa.APP_SHELL.includes('./version.json'));
   assert('app-shell-includes-branding-and-measure-icons', ['./fe-logo-home.png', './fe-logo-splash.png', './measure-icons/waist.png'].every((item) => pwa.APP_SHELL.includes(item)));
   assert('client-info-is-an-offline-optional-source', pwa.OPTIONAL_SHELL.includes('./client-info.json'));
@@ -152,7 +152,7 @@ async function run() {
   const upgradeHarness = makeServiceWorkerHarness();
   await upgradeHarness.cacheFor('legacy-client-cache').put('i18n.js', new Response('broken-legacy-language-engine', { status: 200 }));
   upgradeHarness.setNetwork(true, 'fixed-language-engine');
-  const upgradedLanguageEngine = await upgradeHarness.request('i18n.js?v=5');
+  const upgradedLanguageEngine = await upgradeHarness.request('i18n.js?v=7');
   assert('installed-app-bypasses-legacy-language-cache', upgradedLanguageEngine && (await upgradedLanguageEngine.text()).startsWith('fixed-language-engine:'));
 
   await harness.lifecycle('install');
@@ -180,7 +180,7 @@ async function run() {
   assert('latest-program-response-is-reused-offline', refreshedOfflineProgram && (await refreshedOfflineProgram.text()).startsWith('fresh-program:'));
 
   harness.setNetwork(true, 'fresh-release');
-  const freshRelease = await harness.request('version.json?v=3.3.0');
+  const freshRelease = await harness.request('version.json?v=3.4.0');
   assert('portal-release-is-network-first', freshRelease && (await freshRelease.text()).startsWith('fresh-release:'));
   assert('portal-release-bypasses-http-cache', harness.fetchCalls.at(-1).options.cache === 'no-store');
   harness.setNetwork(false);

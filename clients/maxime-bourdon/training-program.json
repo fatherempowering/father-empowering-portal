@@ -18,6 +18,7 @@
     "progression": {
       "mode": "coach-confirmed",
       "clientConfirmationRequired": true,
+      "keyLiftChartEnabled": false,
       "rules": [
         {
           "en": "Keep the same target loads for Weeks 1 to 3.",

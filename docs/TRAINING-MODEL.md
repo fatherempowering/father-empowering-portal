@@ -34,6 +34,7 @@ Le format représente :
 - un protocole de posing flexible, sans journée imposée;
 - une cible de RIR globale par semaine et une surcharge par exercice;
 - la prescription des séries, répétitions, tempo, repos et charge cible;
+- des supersets explicites de deux exercices, exécutés et validés par tour;
 - les substitutions autorisées;
 - une progression proposée par le coach et soumise à confirmation;
 - une liste explicite des champs de résultats attendus par série.
@@ -85,6 +86,46 @@ Chaque exercice contient une clé stable et un objet `prescription` :
 
 La cible `week.targetRir` s’applique par défaut. `prescription.targetRir` la remplace seulement pour cet exercice.
 
+## Superset
+
+Un superset est déclaré au niveau du bloc. Il contient exactement deux exercices ayant le même nombre de séries. `restSeconds` représente le repos pris après avoir exécuté les deux exercices du tour.
+
+```json
+{
+  "label": { "en": "ARMS SUPERSET", "fr": "SUPERSET BRAS" },
+  "mode": "superset",
+  "restSeconds": 75,
+  "exercises": [
+    {
+      "key": "barbell_curl",
+      "name": "Barbell Curl",
+      "prescription": {
+        "sets": 3,
+        "reps": "10",
+        "targetRir": 1,
+        "restSeconds": 0,
+        "loadTarget": "50 lb",
+        "unit": "lb"
+      }
+    },
+    {
+      "key": "rope_pushdown",
+      "name": "Rope Triceps Pushdown",
+      "prescription": {
+        "sets": 3,
+        "reps": "12",
+        "targetRir": 1,
+        "restSeconds": 0,
+        "loadTarget": "40 lb",
+        "unit": "lb"
+      }
+    }
+  ]
+}
+```
+
+Dans l’entraînement guidé, les deux exercices apparaissent dans le même écran. Le client inscrit les résultats des deux mouvements, valide le tour, puis le minuteur utilise le repos du bloc. Le mode `finisher` suit la même logique avec deux mouvements ou plus.
+
 ## Résultats
 
 `training.resultTracking.perSetFields` décrit les données que le portail doit recueillir pour chaque série : charge, répétitions et RIR.
@@ -100,6 +141,8 @@ Les résultats n’apparaissent jamais dans `training-program.json`; ils sont ra
 ## Progression
 
 La progression officielle est `coach-confirmed`. Le programme peut proposer une augmentation, mais le portail ne doit jamais modifier automatiquement la prescription. Une correction conserve le même `phase.id`; une nouvelle phase reçoit un nouvel ID et passe par la confirmation du client.
+
+Le graphique **Charges — exercices clés** est optionnel et masqué par défaut. Il apparaît uniquement lorsque `training.progression.keyLiftChartEnabled` vaut `true` et que `training.keyLifts` contient au moins un exercice à suivre. Ce réglage doit être réservé aux phases où l’évolution de la charge constitue réellement un indicateur pertinent; un changement durable d’exercice reçoit une nouvelle clé ou une nouvelle phase afin de préserver l’historique.
 
 ## Exemple complet
 

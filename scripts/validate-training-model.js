@@ -76,6 +76,8 @@ function validateTrainingModel(data, options = {}) {
   else {
     if (progression.mode !== 'coach-confirmed') errors.push('training.progression.mode must be "coach-confirmed".');
     if (progression.clientConfirmationRequired !== true) errors.push('training.progression.clientConfirmationRequired must be true.');
+    if (progression.keyLiftChartEnabled != null && typeof progression.keyLiftChartEnabled !== 'boolean') errors.push('training.progression.keyLiftChartEnabled must be true or false.');
+    if (progression.keyLiftChartEnabled === true && (!Array.isArray(training.keyLifts) || !training.keyLifts.length)) errors.push('training.progression.keyLiftChartEnabled requires at least one training.keyLifts entry.');
     (Array.isArray(progression.rules) ? progression.rules : []).forEach((rule, index) => validateLocalizedText(rule, `training.progression.rules[${index}]`, errors, warnings, { requireBilingual: true }));
   }
 
@@ -149,7 +151,11 @@ function validateTrainingModel(data, options = {}) {
         const blockLabel = `${sessionLabel}.blocks[${blockIndex}]`;
         if (!isObject(block)) return errors.push(`${blockLabel} must be an object.`);
         validateLocalizedText(block.label, `${blockLabel}.label`, errors, warnings, { requireBilingual: true });
+        const blockMode = String(block.mode || 'standard').trim().toLowerCase();
+        if (!['standard', 'superset', 'finisher'].includes(blockMode)) errors.push(`${blockLabel}.mode must be standard, superset or finisher.`);
+        if (block.restSeconds != null && !(Number.isInteger(block.restSeconds) && block.restSeconds >= 0)) errors.push(`${blockLabel}.restSeconds must be a non-negative integer.`);
         const exercises = Array.isArray(block.exercises) ? block.exercises : (allowLegacy && Array.isArray(block.exs) ? block.exs : []);
+        const exerciseSetCounts = [];
         exercises.forEach((exercise, exerciseIndex) => {
           const exerciseLabel = `${blockLabel}.exercises[${exerciseIndex}]`;
           if (!isObject(exercise)) return errors.push(`${exerciseLabel} must be an object.`);
@@ -167,6 +173,7 @@ function validateTrainingModel(data, options = {}) {
           if (!isObject(prescription)) return errors.push(`${exerciseLabel}.prescription is required.`);
           if (!isObject(exercise.prescription) && allowLegacy) warnings.push(`${exerciseLabel} uses legacy flat prescription fields.`);
           if (!(Number.isInteger(prescription.sets) && prescription.sets > 0)) errors.push(`${exerciseLabel}.prescription.sets must be a positive integer.`);
+          else exerciseSetCounts.push(prescription.sets);
           if (!String(prescription.reps || '').trim()) errors.push(`${exerciseLabel}.prescription.reps is required.`);
           if (prescription.targetRir != null && !(Number.isInteger(prescription.targetRir) && prescription.targetRir >= 0 && prescription.targetRir <= 5)) errors.push(`${exerciseLabel}.prescription.targetRir must be 0 to 5.`);
           if (prescription.restSeconds != null && !(Number.isInteger(prescription.restSeconds) && prescription.restSeconds >= 0)) errors.push(`${exerciseLabel}.prescription.restSeconds must be a non-negative integer.`);
@@ -177,6 +184,12 @@ function validateTrainingModel(data, options = {}) {
           });
           if (isObject(prescription.progression) && prescription.progression.confirmationRequired !== true) errors.push(`${exerciseLabel}.prescription.progression.confirmationRequired must be true.`);
         });
+        if (blockMode === 'superset') {
+          if (exercises.length !== 2) errors.push(`${blockLabel} superset must contain exactly two exercises.`);
+          if (!(Number.isInteger(block.restSeconds) && block.restSeconds > 0)) errors.push(`${blockLabel} superset requires a positive restSeconds value after each round.`);
+          if (exerciseSetCounts.length === exercises.length && new Set(exerciseSetCounts).size > 1) errors.push(`${blockLabel} superset exercises must use the same number of sets.`);
+        }
+        if (blockMode === 'finisher' && exercises.length < 2) errors.push(`${blockLabel} finisher must contain at least two exercises.`);
       });
     });
   });
