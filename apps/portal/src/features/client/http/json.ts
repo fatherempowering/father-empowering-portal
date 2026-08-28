@@ -1,26 +1,11 @@
 import { isClientActivationError } from "../activation/errors";
 import { M1ContractError } from "@/lib/contracts/m1";
-
-const MAX_JSON_BYTES = 4_096;
+import { readM1JsonObject } from "@/lib/http/json-body";
 
 export async function readSmallJsonObject(request: Request): Promise<Record<string, unknown>> {
-  const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > MAX_JSON_BYTES) {
-    throw new HttpInputError("Request body is too large.");
-  }
-
-  let value: unknown;
-  try {
-    value = await request.json();
-  } catch {
-    throw new HttpInputError("Request body must be valid JSON.");
-  }
-
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new HttpInputError("Request body must be a JSON object.");
-  }
-
-  return value as Record<string, unknown>;
+  // The shared reader measures the bytes actually received, so a missing or
+  // dishonest Content-Length header cannot bypass the 4 KiB public API cap.
+  return readM1JsonObject(request);
 }
 
 export function assertSameOrigin(request: Request): void {

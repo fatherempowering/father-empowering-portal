@@ -118,18 +118,42 @@ select ok(
 select ok(
   not has_function_privilege(
     'anon',
-    'public.accept_client_invitation(text)',
+    'public.accept_client_invitation(text,uuid)',
     'EXECUTE'
   ),
   'anonymous cannot execute accept_client_invitation'
 );
 select ok(
-  has_function_privilege(
+  not has_function_privilege(
     'authenticated',
-    'public.accept_client_invitation(text)',
+    'public.accept_client_invitation(text,uuid)',
     'EXECUTE'
   ),
-  'authenticated can invoke accept_client_invitation'
+  'authenticated browsers cannot bypass server-owned acceptance'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.accept_client_invitation(text,uuid)',
+    'EXECUTE'
+  ),
+  'the trusted server can invoke accept_client_invitation'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.assert_m1_invitation_identity_safe(uuid)',
+    'EXECUTE'
+  ),
+  'authenticated browsers cannot probe invitation identity safety'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.assert_m1_invitation_identity_safe(uuid)',
+    'EXECUTE'
+  ),
+  'the delivery worker can enforce invitation identity safety'
 );
 select ok(
   not has_function_privilege(

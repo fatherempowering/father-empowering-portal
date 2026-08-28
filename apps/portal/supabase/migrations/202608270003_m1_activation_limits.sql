@@ -27,6 +27,11 @@ create table app_private.client_otp_rate_limits (
 
 revoke all on table app_private.client_otp_rate_limits from public, anon, authenticated;
 
+create index client_otp_rate_limits_window_idx
+  on app_private.client_otp_rate_limits (window_started_at);
+create index client_otp_rate_limits_fingerprint_window_idx
+  on app_private.client_otp_rate_limits (fingerprint_hash, kind, window_started_at);
+
 create or replace function public.consume_m1_activation_limit(
   p_invitation_id uuid,
   p_fingerprint_hash text,
@@ -137,6 +142,8 @@ as $$
 declare
   v_attempts integer;
   v_global_attempts integer;
+  v_fingerprint_attempts integer;
+  v_fingerprint_limit integer;
   v_limit integer;
   v_window interval := interval '15 minutes';
 begin
@@ -149,6 +156,17 @@ begin
   end if;
 
   v_limit := case p_kind when 'REQUEST_OTP' then 5 else 10 end;
+  v_fingerprint_limit := case p_kind when 'REQUEST_OTP' then 20 else 40 end;
+
+  -- Always take the broader fingerprint lock before the email lock. This
+  -- serializes the cross-address cap and gives every caller the same lock
+  -- order, avoiding a race (or a lock-order deadlock) across email buckets.
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended(
+      concat_ws(':', 'm1-client-otp-fingerprint-limit', p_fingerprint_hash, p_kind),
+      0
+    )
+  );
   perform pg_catalog.pg_advisory_xact_lock(
     pg_catalog.hashtextextended(
       concat_ws(':', 'm1-client-otp-limit', p_email_hash, p_kind),
@@ -156,15 +174,33 @@ begin
     )
   );
 
+  -- Unknown addresses are deliberately throttled before account lookup. Purge
+  -- a bounded batch of expired buckets so maintenance cannot turn one request
+  -- into an unbounded DELETE while still reclaiming arbitrary-address rows.
   delete from app_private.client_otp_rate_limits rate
-  where rate.email_hash = p_email_hash
+  where rate.ctid in (
+    select expired.ctid
+    from app_private.client_otp_rate_limits expired
+    where expired.window_started_at <= now() - v_window
+    order by expired.window_started_at
+    limit 1000
+  );
+
+  select coalesce(sum(rate.attempts), 0)::integer into v_fingerprint_attempts
+  from app_private.client_otp_rate_limits rate
+  where rate.fingerprint_hash = p_fingerprint_hash
     and rate.kind = p_kind
-    and rate.window_started_at <= now() - v_window;
+    and rate.window_started_at > now() - v_window;
+
+  if v_fingerprint_attempts >= v_fingerprint_limit then
+    raise exception using errcode = 'P0001', message = 'FE_RATE_LIMITED';
+  end if;
 
   select coalesce(sum(rate.attempts), 0)::integer into v_global_attempts
   from app_private.client_otp_rate_limits rate
   where rate.email_hash = p_email_hash
-    and rate.kind = p_kind;
+    and rate.kind = p_kind
+    and rate.window_started_at > now() - v_window;
 
   if v_global_attempts >= v_limit then
     raise exception using errcode = 'P0001', message = 'FE_RATE_LIMITED';
@@ -186,7 +222,14 @@ begin
     now()
   )
   on conflict (email_hash, fingerprint_hash, kind) do update
-    set attempts = app_private.client_otp_rate_limits.attempts + 1,
+    set attempts = case
+          when app_private.client_otp_rate_limits.window_started_at <= now() - v_window then 1
+          else app_private.client_otp_rate_limits.attempts + 1
+        end,
+        window_started_at = case
+          when app_private.client_otp_rate_limits.window_started_at <= now() - v_window then now()
+          else app_private.client_otp_rate_limits.window_started_at
+        end,
         updated_at = now()
   returning attempts into v_attempts;
 

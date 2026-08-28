@@ -24,7 +24,10 @@ as $$
   );
 $$;
 
-create or replace function app_private.is_assigned_coach(p_client_id uuid)
+create or replace function app_private.is_assigned_coach(
+  p_organization_id uuid,
+  p_client_id uuid
+)
 returns boolean
 language sql
 stable
@@ -37,7 +40,8 @@ as $$
     join public.organization_memberships membership
       on membership.organization_id = assignment.organization_id
      and membership.user_id = assignment.coach_user_id
-    where assignment.client_id = p_client_id
+    where assignment.organization_id = p_organization_id
+      and assignment.client_id = p_client_id
       and assignment.coach_user_id = auth.uid()
       and coalesce(auth.jwt() ->> 'aal', 'aal1') = 'aal2'
       and assignment.status in ('PENDING', 'ACTIVE', 'PAUSED')
@@ -46,7 +50,10 @@ as $$
   );
 $$;
 
-create or replace function app_private.is_own_client(p_client_id uuid)
+create or replace function app_private.is_own_client(
+  p_organization_id uuid,
+  p_client_id uuid
+)
 returns boolean
 language sql
 stable
@@ -56,19 +63,20 @@ as $$
   select exists (
     select 1
     from public.clients client
-    where client.id = p_client_id
+    where client.organization_id = p_organization_id
+      and client.id = p_client_id
       and client.auth_user_id = auth.uid()
       and client.status = 'ACTIVE'
   );
 $$;
 
 revoke all on function app_private.has_org_role(uuid, public.app_role[]) from public;
-revoke all on function app_private.is_assigned_coach(uuid) from public;
-revoke all on function app_private.is_own_client(uuid) from public;
+revoke all on function app_private.is_assigned_coach(uuid, uuid) from public;
+revoke all on function app_private.is_own_client(uuid, uuid) from public;
 grant usage on schema app_private to authenticated;
 grant execute on function app_private.has_org_role(uuid, public.app_role[]) to authenticated;
-grant execute on function app_private.is_assigned_coach(uuid) to authenticated;
-grant execute on function app_private.is_own_client(uuid) to authenticated;
+grant execute on function app_private.is_assigned_coach(uuid, uuid) to authenticated;
+grant execute on function app_private.is_own_client(uuid, uuid) to authenticated;
 
 alter table public.organizations enable row level security;
 alter table public.profiles enable row level security;
@@ -124,8 +132,8 @@ create policy clients_select_authorized
 on public.clients for select to authenticated
 using (
   app_private.has_org_role(organization_id, array['ADMIN']::public.app_role[])
-  or app_private.is_assigned_coach(id)
-  or app_private.is_own_client(id)
+  or app_private.is_assigned_coach(organization_id, id)
+  or app_private.is_own_client(organization_id, id)
 );
 
 create policy assignments_select_authorized
@@ -136,14 +144,14 @@ using (
     coach_user_id = auth.uid()
     and app_private.has_org_role(organization_id, array['ADMIN', 'COACH']::public.app_role[])
   )
-  or app_private.is_own_client(client_id)
+  or app_private.is_own_client(organization_id, client_id)
 );
 
 create policy invitations_select_coach_or_admin
 on public.client_invitations for select to authenticated
 using (
   app_private.has_org_role(organization_id, array['ADMIN']::public.app_role[])
-  or app_private.is_assigned_coach(client_id)
+  or app_private.is_assigned_coach(organization_id, client_id)
 );
 
 create policy audit_select_admin
@@ -245,10 +253,15 @@ begin
     if v_invitation.request_fingerprint <> v_request_fingerprint then
       raise exception using errcode = 'P0001', message = 'FE_IDEMPOTENCY_CONFLICT';
     end if;
-    select client.* into strict v_client from public.clients client where client.id = v_invitation.client_id;
+    select client.* into strict v_client
+      from public.clients client
+      where client.organization_id = v_invitation.organization_id
+        and client.id = v_invitation.client_id;
     select assignment.* into strict v_assignment
       from public.coach_client_assignments assignment
-      where assignment.client_id = v_client.id and assignment.is_primary;
+      where assignment.organization_id = v_client.organization_id
+        and assignment.client_id = v_client.id
+        and assignment.is_primary;
     return jsonb_build_object(
       'client', jsonb_build_object(
         'id', v_client.id,
@@ -284,6 +297,32 @@ begin
   end if;
   if p_expires_at <= now() or p_expires_at > now() + interval '7 days' then
     raise exception using errcode = 'P0001', message = 'FE_INVALID_EXPIRY';
+  end if;
+
+  -- M1 has one active identity context. In particular, never turn a Coach or
+  -- Admin email into a passwordless Client login. Idempotent retries returned
+  -- above remain valid after the worker creates the invited Auth user.
+  if exists (
+    select 1
+    from auth.users auth_user
+    where lower(auth_user.email) = v_email
+      and (
+        exists (
+          select 1 from public.profiles profile
+          where profile.auth_user_id = auth_user.id
+        )
+        or exists (
+          select 1 from public.organization_memberships membership
+          where membership.user_id = auth_user.id
+            and membership.status = 'ACTIVE'
+        )
+        or exists (
+          select 1 from public.clients existing_client
+          where existing_client.auth_user_id = auth_user.id
+        )
+      )
+  ) then
+    raise exception using errcode = 'P0001', message = 'FE_EMAIL_IDENTITY_CONFLICT';
   end if;
 
   if exists (
@@ -351,15 +390,19 @@ exception
 end;
 $$;
 
-create or replace function public.accept_client_invitation(p_token_hash text)
+create or replace function public.accept_client_invitation(
+  p_token_hash text,
+  p_user_id uuid
+)
 returns jsonb
 language plpgsql
 security definer
 set search_path = ''
 as $$
 declare
-  v_user_id uuid := auth.uid();
-  v_jwt_email text := lower(auth.jwt() ->> 'email');
+  v_user_id uuid := p_user_id;
+  v_verified_email text;
+  v_invitation_id uuid;
   v_invitation public.client_invitations%rowtype;
   v_client public.clients%rowtype;
   v_membership public.organization_memberships%rowtype;
@@ -368,27 +411,58 @@ begin
   if v_user_id is null then
     raise exception using errcode = 'P0001', message = 'FE_UNAUTHENTICATED';
   end if;
+  select lower(auth_user.email) into v_verified_email
+  from auth.users auth_user
+  where auth_user.id = v_user_id
+    and auth_user.email_confirmed_at is not null;
+  if not found then
+    raise exception using errcode = 'P0001', message = 'FE_UNAUTHENTICATED';
+  end if;
   if p_token_hash !~ '^[0-9a-f]{64}$' then
     raise exception using errcode = 'P0001', message = 'FE_INVALID_INVITATION_HASH';
   end if;
 
   select invitation.* into v_invitation
   from public.client_invitations invitation
-  where invitation.token_hash = p_token_hash
-  for update;
+  where invitation.token_hash = p_token_hash;
 
+  if not found then
+    raise exception using errcode = 'P0001', message = 'FE_INVITATION_NOT_FOUND';
+  end if;
+  v_invitation_id := v_invitation.id;
+
+  -- All invitation lifecycle mutations lock the owning Client before the
+  -- invitation. Re-read the invitation under lock afterwards so a concurrent
+  -- revoke/resend cannot be accepted from the unlocked snapshot.
+  select client.* into v_client
+  from public.clients client
+  where client.organization_id = v_invitation.organization_id
+    and client.id = v_invitation.client_id
+  for update;
+  if not found then
+    raise exception using errcode = 'P0001', message = 'FE_CLIENT_NOT_FOUND';
+  end if;
+
+  select invitation.* into v_invitation
+  from public.client_invitations invitation
+  where invitation.id = v_invitation_id
+    and invitation.organization_id = v_client.organization_id
+    and invitation.client_id = v_client.id
+    and invitation.token_hash = p_token_hash
+  for update;
   if not found then
     raise exception using errcode = 'P0001', message = 'FE_INVITATION_NOT_FOUND';
   end if;
 
   if v_invitation.status = 'ACCEPTED' and v_invitation.accepted_by = v_user_id then
-    select client.* into strict v_client from public.clients client where client.id = v_invitation.client_id;
     select membership.* into strict v_membership
       from public.organization_memberships membership
       where membership.organization_id = v_invitation.organization_id and membership.user_id = v_user_id;
     select assignment.* into strict v_assignment
       from public.coach_client_assignments assignment
-      where assignment.client_id = v_client.id and assignment.is_primary;
+      where assignment.organization_id = v_client.organization_id
+        and assignment.client_id = v_client.id
+        and assignment.is_primary;
     return jsonb_build_object(
       'clientId', v_client.id,
       'organizationId', v_invitation.organization_id,
@@ -404,17 +478,25 @@ begin
   if v_invitation.expires_at <= now() then
     raise exception using errcode = 'P0001', message = 'FE_INVITATION_EXPIRED';
   end if;
-  if v_jwt_email is null or v_jwt_email <> v_invitation.email then
+  if v_verified_email is null or v_verified_email <> v_invitation.email then
     raise exception using errcode = 'P0001', message = 'FE_INVITATION_EMAIL_MISMATCH';
   end if;
 
-  select client.* into strict v_client
-  from public.clients client
-  where client.id = v_invitation.client_id
-  for update;
-
   if v_client.auth_user_id is not null and v_client.auth_user_id <> v_user_id then
     raise exception using errcode = 'P0001', message = 'FE_CLIENT_ALREADY_ACTIVATED';
+  end if;
+
+  if exists (
+    select 1
+    from public.organization_memberships existing_membership
+    where existing_membership.user_id = v_user_id
+      and existing_membership.status = 'ACTIVE'
+      and (
+        existing_membership.organization_id <> v_invitation.organization_id
+        or existing_membership.role <> 'CLIENT'
+      )
+  ) then
+    raise exception using errcode = 'P0001', message = 'FE_ROLE_CONFLICT';
   end if;
 
   select membership.* into v_membership
@@ -449,12 +531,16 @@ begin
 
   update public.clients
     set auth_user_id = v_user_id, status = 'ACTIVE'
-    where id = v_client.id
+    where organization_id = v_client.organization_id
+      and id = v_client.id
     returning * into v_client;
 
   update public.coach_client_assignments
     set status = 'ACTIVE', starts_at = coalesce(starts_at, now())
-    where client_id = v_client.id and is_primary and status = 'PENDING'
+    where organization_id = v_client.organization_id
+      and client_id = v_client.id
+      and is_primary
+      and status = 'PENDING'
     returning * into v_assignment;
   if not found then
     raise exception using errcode = 'P0001', message = 'FE_ASSIGNMENT_NOT_PENDING';
@@ -462,7 +548,9 @@ begin
 
   update public.client_invitations
     set status = 'ACCEPTED', accepted_at = now(), accepted_by = v_user_id
-    where id = v_invitation.id;
+    where organization_id = v_client.organization_id
+      and client_id = v_client.id
+      and id = v_invitation.id;
 
   insert into public.audit_events (
     organization_id, actor_user_id, actor_role, command, entity_type, entity_id,
@@ -487,6 +575,55 @@ begin
     'assignmentId', v_assignment.id,
     'status', 'ACTIVE'
   );
+end;
+$$;
+
+-- The delivery worker may legitimately see the Auth user it created on a
+-- previous retry. It may not deliver an invitation to an identity already
+-- bound to a profile, active membership, or another Client aggregate.
+create or replace function public.assert_m1_invitation_identity_safe(
+  p_invitation_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_invitation public.client_invitations%rowtype;
+  v_auth_user_id uuid;
+begin
+  select invitation.* into v_invitation
+  from public.client_invitations invitation
+  where invitation.id = p_invitation_id
+    and invitation.status in ('PENDING', 'SENT');
+  if not found then
+    raise exception using errcode = 'P0001', message = 'FE_INVITATION_NOT_FOUND';
+  end if;
+
+  select auth_user.id into v_auth_user_id
+  from auth.users auth_user
+  where lower(auth_user.email) = v_invitation.email;
+  if not found then
+    return;
+  end if;
+
+  if exists (
+       select 1 from public.profiles profile
+       where profile.auth_user_id = v_auth_user_id
+     )
+     or exists (
+       select 1 from public.organization_memberships membership
+       where membership.user_id = v_auth_user_id
+         and membership.status = 'ACTIVE'
+     )
+     or exists (
+       select 1 from public.clients client
+       where client.auth_user_id = v_auth_user_id
+         and client.id <> v_invitation.client_id
+     ) then
+    raise exception using errcode = 'P0001', message = 'FE_EMAIL_IDENTITY_CONFLICT';
+  end if;
 end;
 $$;
 
@@ -539,16 +676,13 @@ begin
   end if;
   if v_actor_role = 'COACH' and not exists (
     select 1 from public.coach_client_assignments assignment
-    where assignment.client_id = v_client.id
+    where assignment.organization_id = v_client.organization_id
+      and assignment.client_id = v_client.id
       and assignment.coach_user_id = v_actor_id
       and assignment.status in ('PENDING', 'ACTIVE', 'PAUSED')
   ) then
     raise exception using errcode = 'P0001', message = 'FE_FORBIDDEN';
   end if;
-  if v_client.status <> 'INVITED' or v_client.auth_user_id is not null then
-    raise exception using errcode = 'P0001', message = 'FE_CLIENT_ALREADY_ACTIVATED';
-  end if;
-
   v_request_fingerprint := encode(
     extensions.digest(
       convert_to(
@@ -583,9 +717,17 @@ begin
     );
   end if;
 
+  -- An exact network retry must replay even when this invitation has activated
+  -- the Client since the original command committed.
+  if v_client.status <> 'INVITED' or v_client.auth_user_id is not null then
+    raise exception using errcode = 'P0001', message = 'FE_CLIENT_ALREADY_ACTIVATED';
+  end if;
+
   update public.client_invitations
     set status = 'REVOKED'
-    where client_id = v_client.id and status in ('PENDING', 'SENT');
+    where organization_id = v_client.organization_id
+      and client_id = v_client.id
+      and status in ('PENDING', 'SENT');
 
   insert into public.client_invitations (
     organization_id, client_id, email, token_hash, expires_at, status,
@@ -635,6 +777,7 @@ as $$
 declare
   v_actor_id uuid := auth.uid();
   v_actor_role public.app_role;
+  v_client public.clients%rowtype;
   v_invitation public.client_invitations%rowtype;
   v_existing_audit public.audit_events%rowtype;
   v_reason text := nullif(btrim(p_reason), '');
@@ -652,7 +795,25 @@ begin
 
   select invitation.* into v_invitation
   from public.client_invitations invitation
+  where invitation.id = p_invitation_id;
+  if not found then
+    raise exception using errcode = 'P0001', message = 'FE_INVITATION_NOT_FOUND';
+  end if;
+
+  select client.* into v_client
+  from public.clients client
+  where client.organization_id = v_invitation.organization_id
+    and client.id = v_invitation.client_id
+  for update;
+  if not found then
+    raise exception using errcode = 'P0001', message = 'FE_CLIENT_NOT_FOUND';
+  end if;
+
+  select invitation.* into v_invitation
+  from public.client_invitations invitation
   where invitation.id = p_invitation_id
+    and invitation.organization_id = v_client.organization_id
+    and invitation.client_id = v_client.id
   for update;
   if not found then
     raise exception using errcode = 'P0001', message = 'FE_INVITATION_NOT_FOUND';
@@ -668,7 +829,8 @@ begin
   end if;
   if v_actor_role = 'COACH' and not exists (
     select 1 from public.coach_client_assignments assignment
-    where assignment.client_id = v_invitation.client_id
+    where assignment.organization_id = v_invitation.organization_id
+      and assignment.client_id = v_invitation.client_id
       and assignment.coach_user_id = v_actor_id
       and assignment.status in ('PENDING', 'ACTIVE', 'PAUSED')
   ) then
@@ -796,7 +958,8 @@ begin
   end if;
   if v_actor_role = 'COACH' and not exists (
     select 1 from public.coach_client_assignments assignment
-    where assignment.client_id = v_client.id
+    where assignment.organization_id = v_client.organization_id
+      and assignment.client_id = v_client.id
       and assignment.coach_user_id = v_actor_id
       and assignment.status in ('PENDING', 'ACTIVE', 'PAUSED')
   ) then
@@ -844,7 +1007,8 @@ begin
 
   select invitation.* into v_invitation
   from public.client_invitations invitation
-  where invitation.client_id = v_client.id
+  where invitation.organization_id = v_client.organization_id
+    and invitation.client_id = v_client.id
     and invitation.status in ('PENDING', 'SENT')
   order by invitation.created_at desc
   limit 1
@@ -999,7 +1163,8 @@ as $$
 $$;
 
 revoke all on function public.create_invited_client(uuid, text, text, text, text, text, text, timestamptz, uuid, uuid) from public, anon;
-revoke all on function public.accept_client_invitation(text) from public, anon;
+revoke all on function public.accept_client_invitation(text, uuid) from public, anon, authenticated;
+revoke all on function public.assert_m1_invitation_identity_safe(uuid) from public, anon, authenticated;
 revoke all on function public.resend_client_invitation(uuid, text, timestamptz, uuid) from public, anon;
 revoke all on function public.revoke_client_invitation(uuid, text, uuid) from public, anon;
 revoke all on function public.revoke_client_invitation_for_client(uuid, text, uuid) from public, anon;
@@ -1008,7 +1173,8 @@ revoke all on function public.complete_outbox_event(uuid, uuid) from public, ano
 revoke all on function public.fail_outbox_event(uuid, uuid, text, timestamptz, boolean) from public, anon, authenticated;
 revoke all on function public.record_m1_auth_event(text, jsonb) from public, anon, authenticated;
 grant execute on function public.create_invited_client(uuid, text, text, text, text, text, text, timestamptz, uuid, uuid) to authenticated;
-grant execute on function public.accept_client_invitation(text) to authenticated;
+grant execute on function public.accept_client_invitation(text, uuid) to service_role;
+grant execute on function public.assert_m1_invitation_identity_safe(uuid) to service_role;
 grant execute on function public.resend_client_invitation(uuid, text, timestamptz, uuid) to authenticated;
 grant execute on function public.revoke_client_invitation(uuid, text, uuid) to authenticated;
 grant execute on function public.revoke_client_invitation_for_client(uuid, text, uuid) to authenticated;

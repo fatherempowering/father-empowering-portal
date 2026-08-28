@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   close: vi.fn(),
   invitationUpdate: vi.fn(),
   createUser: vi.fn(),
+  assertIdentitySafe: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -29,6 +30,7 @@ vi.mock("@/lib/env", () => ({
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminSupabaseClient: () => ({
     auth: { admin: { createUser: mocks.createUser } },
+    rpc: mocks.assertIdentitySafe,
     from(table: string) {
       if (table === "clients") {
         return {
@@ -85,6 +87,7 @@ describe("M1 invitation delivery", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.createUser.mockResolvedValue({ error: null });
+    mocks.assertIdentitySafe.mockResolvedValue({ error: null });
     mocks.invitationUpdate.mockReturnValue({
       eq: () => ({
         in: () => ({
@@ -115,5 +118,17 @@ describe("M1 invitation delivery", () => {
     expect(mocks.invitationUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ status: "SENT", token_hash: expect.stringMatching(/^[0-9a-f]{64}$/) }),
     );
+  });
+
+  it("does not deliver to an Auth identity already assigned to another role", async () => {
+    mocks.assertIdentitySafe.mockResolvedValue({
+      error: { message: "FE_EMAIL_IDENTITY_CONFLICT" },
+    });
+
+    await expect(deliverClientInvitation(event)).rejects.toThrow(
+      "Invitation identity is already assigned",
+    );
+    expect(mocks.sendMail).not.toHaveBeenCalled();
+    expect(mocks.invitationUpdate).not.toHaveBeenCalled();
   });
 });

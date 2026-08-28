@@ -9,6 +9,7 @@ vi.mock("@/lib/auth/client-otp-login", () => auth);
 
 import { POST as requestOtp } from "@/app/api/v1/auth/client-otp/request/route";
 import { POST as verifyOtp } from "@/app/api/v1/auth/client-otp/verify/route";
+import { M1ContractError } from "@/lib/contracts/m1";
 
 const url = "https://app.fatherempowering.com/api/v1/auth/client-otp";
 
@@ -48,6 +49,21 @@ describe("returning Client OTP routes", () => {
     );
   });
 
+  it("does not expose provider, throttling or account-state failures", async () => {
+    auth.requestClientLoginOtp.mockRejectedValueOnce(new Error("internal state differs"));
+    const response = await requestOtp(new Request(`${url}/request`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: "https://app.fatherempowering.com",
+      },
+      body: JSON.stringify({ email: "unknown@example.test" }),
+    }));
+
+    expect(response.status).toBe(202);
+    expect(await response.json()).toEqual({ data: { accepted: true } });
+  });
+
   it("establishes the Client session only through the verify command", async () => {
     const response = await verifyOtp(new Request(`${url}/verify`, {
       method: "POST",
@@ -67,5 +83,27 @@ describe("returning Client OTP routes", () => {
       "123456",
       expect.any(String),
     );
+  });
+
+  it("uses the same verification denial for unknown and throttled identities", async () => {
+    for (const error of [
+      new M1ContractError("UNAUTHENTICATED", "Invalid or expired code", 401),
+      new M1ContractError("UNAUTHENTICATED", "Invalid or expired code", 401),
+    ]) {
+      auth.verifyClientLoginOtp.mockRejectedValueOnce(error);
+      const response = await verifyOtp(new Request(`${url}/verify`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://app.fatherempowering.com",
+        },
+        body: JSON.stringify({ email: "client@example.test", otp: "123456" }),
+      }));
+
+      expect(response.status).toBe(401);
+      expect(await response.json()).toEqual({
+        error: { code: "UNAUTHENTICATED", message: "Invalid or expired code" },
+      });
+    }
   });
 });

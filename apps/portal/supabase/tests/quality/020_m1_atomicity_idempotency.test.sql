@@ -23,7 +23,8 @@ insert into auth.users (
 values
   ('00000000-0000-0000-0000-000000000000', '11000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'max.atomic@example.test', '', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', '11000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'activate@example.test', '', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '11000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'rollback@example.test', '', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '');
+  ('00000000-0000-0000-0000-000000000000', '11000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'rollback@example.test', '', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '11000000-0000-4000-8000-000000000004', 'authenticated', 'authenticated', 'lifecycle@example.test', '', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '');
 
 insert into public.organizations (id, name, created_by)
 values ('21000000-0000-4000-8000-000000000001', 'Father Empowering Atomic', '11000000-0000-4000-8000-000000000001');
@@ -177,6 +178,72 @@ select is(
   'failed creation leaves no partial client'
 );
 
+select throws_ok(
+  $$select public.create_invited_client(
+    '21000000-0000-4000-8000-000000000001',
+    'max.atomic@example.test',
+    'Unsafe',
+    'Identity',
+    'fr-CA',
+    'America/Montreal',
+    repeat('e', 64),
+    now() + interval '2 days',
+    '61000000-0000-4000-8000-000000000009',
+    null
+  )$$,
+  'P0001',
+  'FE_EMAIL_IDENTITY_CONFLICT',
+  'a Coach or existing Auth identity cannot be invited as a Client'
+);
+select is(
+  (select count(*) from public.clients where email = 'max.atomic@example.test'),
+  0::bigint,
+  'identity conflict creates no partial Client'
+);
+
+reset role;
+insert into public.clients (
+  id, organization_id, email, first_name, last_name, locale, time_zone, status, created_by
+) values (
+  '41000000-0000-4000-8000-000000000009',
+  '21000000-0000-4000-8000-000000000001',
+  'max.atomic@example.test',
+  'Unsafe',
+  'Delivery',
+  'fr-CA',
+  'America/Montreal',
+  'INVITED',
+  '11000000-0000-4000-8000-000000000001'
+);
+insert into public.client_invitations (
+  id, organization_id, client_id, email, token_hash, expires_at, status,
+  idempotency_key, request_fingerprint, created_by
+) values (
+  '71000000-0000-4000-8000-000000000009',
+  '21000000-0000-4000-8000-000000000001',
+  '41000000-0000-4000-8000-000000000009',
+  'max.atomic@example.test',
+  repeat('e', 64),
+  now() + interval '2 days',
+  'PENDING',
+  '61000000-0000-4000-8000-000000000009',
+  repeat('9', 64),
+  '11000000-0000-4000-8000-000000000001'
+);
+set local role service_role;
+select throws_ok(
+  $$select public.assert_m1_invitation_identity_safe(
+    '71000000-0000-4000-8000-000000000009'
+  )$$,
+  'P0001',
+  'FE_EMAIL_IDENTITY_CONFLICT',
+  'the worker refuses delivery to an active staff identity'
+);
+
+set local role authenticated;
+set local request.jwt.claim.sub = '11000000-0000-4000-8000-000000000001';
+set local "request.jwt.claims" = '{"sub":"11000000-0000-4000-8000-000000000001","role":"authenticated","email":"max.atomic@example.test","aal":"aal2"}';
+
 -- Revocation and resend remain retry-safe and a revoked invited client can be
 -- invited again without creating another client or assignment.
 select lives_ok(
@@ -311,14 +378,69 @@ select is(
 reset role;
 update public.client_invitations
 set status = 'SENT', sent_at = now()
-where token_hash = repeat('a', 64);
+where token_hash in (repeat('a', 64), repeat('d', 64));
+
+-- A resend retry is an idempotent command replay even if its invitation was
+-- accepted before the HTTP response reached the Coach.
+set local role service_role;
+set local request.jwt.claim.sub = '11000000-0000-4000-8000-000000000004';
+set local "request.jwt.claims" = '{"sub":"11000000-0000-4000-8000-000000000004","role":"authenticated","email":"lifecycle@example.test","aal":"aal1"}';
+select lives_ok(
+  $$select public.accept_client_invitation(
+    repeat('d', 64),
+    '11000000-0000-4000-8000-000000000004'
+  )$$,
+  'the current lifecycle invitation can activate its Client'
+);
+
+set local role authenticated;
+set local request.jwt.claim.sub = '11000000-0000-4000-8000-000000000001';
+set local "request.jwt.claims" = '{"sub":"11000000-0000-4000-8000-000000000001","role":"authenticated","email":"max.atomic@example.test","aal":"aal2"}';
+select lives_ok(
+  $$select public.resend_client_invitation(
+    (select id from public.clients where email = 'lifecycle@example.test'),
+    repeat('c', 64),
+    now() + interval '2 days',
+    '61000000-0000-4000-8000-000000000014'
+  )$$,
+  'an exact resend retry replays after Client activation'
+);
+select is(
+  (select count(*) from public.audit_events
+   where command = 'ResendClientInvitation'
+     and context ->> 'clientId' = (
+       select id::text from public.clients where email = 'lifecycle@example.test'
+     )),
+  2::bigint,
+  'post-activation resend replay creates no extra audit'
+);
+select lives_ok(
+  $$select public.revoke_client_invitation_for_client(
+    (select id from public.clients where email = 'lifecycle@example.test'),
+    'Second revocation',
+    '61000000-0000-4000-8000-000000000013'
+  )$$,
+  'an exact old revocation retry replays after a later activation'
+);
+select is(
+  (select count(*) from public.audit_events
+   where command = 'RevokeClientInvitation'
+     and context ->> 'clientId' = (
+       select id::text from public.clients where email = 'lifecycle@example.test'
+     )),
+  2::bigint,
+  'post-activation revoke replay creates no extra audit'
+);
 
 -- Activate the delivered invitation as the invitation-owned Auth identity.
-set local role authenticated;
+set local role service_role;
 set local request.jwt.claim.sub = '11000000-0000-4000-8000-000000000002';
 set local "request.jwt.claims" = '{"sub":"11000000-0000-4000-8000-000000000002","role":"authenticated","email":"activate@example.test","aal":"aal1"}';
 select lives_ok(
-  $$select public.accept_client_invitation(repeat('a', 64))$$,
+  $$select public.accept_client_invitation(
+    repeat('a', 64),
+    '11000000-0000-4000-8000-000000000002'
+  )$$,
   'invitation-owned identity activates atomically'
 );
 
@@ -363,7 +485,10 @@ select is(
 
 -- Replaying acceptance as the same identity is idempotent.
 select lives_ok(
-  $$select public.accept_client_invitation(repeat('a', 64))$$,
+  $$select public.accept_client_invitation(
+    repeat('a', 64),
+    '11000000-0000-4000-8000-000000000002'
+  )$$,
   'same identity can safely replay activation'
 );
 select is(
@@ -450,11 +575,14 @@ update public.client_invitations
 set sent_at = now()
 where id = '71000000-0000-4000-8000-000000000003';
 
-set local role authenticated;
+set local role service_role;
 set local request.jwt.claim.sub = '11000000-0000-4000-8000-000000000003';
 set local "request.jwt.claims" = '{"sub":"11000000-0000-4000-8000-000000000003","role":"authenticated","email":"rollback@example.test","aal":"aal1"}';
 select throws_ok(
-  $$select public.accept_client_invitation(repeat('c', 64))$$,
+  $$select public.accept_client_invitation(
+    repeat('c', 64),
+    '11000000-0000-4000-8000-000000000003'
+  )$$,
   'P0001',
   'FE_ASSIGNMENT_NOT_PENDING',
   'failed activation raises its invariant error'

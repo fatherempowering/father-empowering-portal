@@ -2,7 +2,7 @@ import "server-only";
 
 import { recordStaffAuthAudit } from "@/lib/audit/staff-auth";
 import { M1ContractError } from "@/lib/contracts/m1";
-import { requireRole } from "@/lib/auth/actor";
+import { requireCoachAal2, requireRole } from "@/lib/auth/actor";
 import { assertMfaEnrollmentAllowed } from "@/lib/auth/authorization";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -75,7 +75,7 @@ export async function verifyTotpFactor(factorId: string, code: string) {
 }
 
 export async function unenrollTotp(factorId: string) {
-  await requireRole("ADMIN", "COACH");
+  await requireCoachAal2();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.auth.mfa.unenroll({ factorId });
   if (error) throw new M1ContractError("INVALID_STATE", "Unable to remove MFA factor", 409);

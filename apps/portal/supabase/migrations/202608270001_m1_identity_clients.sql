@@ -68,7 +68,8 @@ create table public.clients (
   created_by uuid not null references auth.users(id) on delete restrict,
   updated_at timestamptz not null default now(),
   row_version bigint not null default 1,
-  archived_at timestamptz
+  archived_at timestamptz,
+  unique (organization_id, id)
 );
 create unique index clients_organization_email_unique on public.clients (organization_id, lower(email));
 
@@ -76,7 +77,7 @@ create table public.coach_client_assignments (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id) on delete restrict,
   coach_user_id uuid not null references auth.users(id) on delete restrict,
-  client_id uuid not null references public.clients(id) on delete restrict,
+  client_id uuid not null,
   status assignment_status not null default 'PENDING',
   is_primary boolean not null default true,
   starts_at timestamptz,
@@ -87,6 +88,9 @@ create table public.coach_client_assignments (
   updated_at timestamptz not null default now(),
   row_version bigint not null default 1,
   archived_at timestamptz,
+  constraint coach_client_assignments_organization_client_fkey
+    foreign key (organization_id, client_id)
+    references public.clients (organization_id, id) on delete restrict,
   unique (organization_id, coach_user_id, client_id)
 );
 create unique index coach_client_one_primary_idx
@@ -96,7 +100,7 @@ create unique index coach_client_one_primary_idx
 create table public.client_invitations (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id) on delete restrict,
-  client_id uuid not null references public.clients(id) on delete restrict,
+  client_id uuid not null,
   email text not null check (email = lower(btrim(email)) and char_length(email) between 3 and 320),
   token_hash text not null unique check (token_hash ~ '^[0-9a-f]{64}$'),
   expires_at timestamptz not null,
@@ -111,6 +115,9 @@ create table public.client_invitations (
   updated_at timestamptz not null default now(),
   row_version bigint not null default 1,
   archived_at timestamptz,
+  constraint client_invitations_organization_client_fkey
+    foreign key (organization_id, client_id)
+    references public.clients (organization_id, id) on delete restrict,
   unique (organization_id, created_by, idempotency_key)
 );
 comment on column public.client_invitations.token_hash is 'SHA-256 lowercase hex digest only. Raw invitation tokens must never be persisted.';

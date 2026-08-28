@@ -101,6 +101,84 @@ export async function listCoachClients(): Promise<
   });
 }
 
+export async function getCoachClientInvitationBundle(input: {
+  clientId: string;
+  invitationId: string;
+}): Promise<{ client: ClientSummary; invitation: InvitationSummary }> {
+  const actor = await requireCoachAal2();
+  const clientId = uuidSchema.parse(input.clientId);
+  const invitationId = uuidSchema.parse(input.invitationId);
+  const supabase = await createServerSupabaseClient();
+
+  const [clientResult, assignmentResult, invitationResult] = await Promise.all([
+    supabase
+      .from("clients")
+      .select(
+        "id, organization_id, auth_user_id, email, first_name, last_name, locale, time_zone, status, created_at",
+      )
+      .eq("id", clientId)
+      .eq("organization_id", actor.organizationId)
+      .maybeSingle(),
+    supabase
+      .from("coach_client_assignments")
+      .select("client_id, coach_user_id")
+      .eq("client_id", clientId)
+      .eq("organization_id", actor.organizationId)
+      .eq("is_primary", true)
+      .in("status", ["PENDING", "ACTIVE", "PAUSED"])
+      .maybeSingle(),
+    supabase
+      .from("client_invitations")
+      .select("id, client_id, email, status, expires_at, sent_at, accepted_at")
+      .eq("id", invitationId)
+      .eq("client_id", clientId)
+      .eq("organization_id", actor.organizationId)
+      .maybeSingle(),
+  ]);
+
+  if (clientResult.error || assignmentResult.error || invitationResult.error) {
+    throw new M1ContractError(
+      "INVALID_STATE",
+      "Client invitation could not be loaded",
+      409,
+    );
+  }
+  if (!clientResult.data || !assignmentResult.data || !invitationResult.data) {
+    throw new M1ContractError("NOT_FOUND", "Client invitation could not be loaded", 404);
+  }
+
+  const client = clientResult.data;
+  const assignment = assignmentResult.data;
+  const invitation = invitationResult.data;
+  return {
+    client: {
+      id: client.id,
+      organizationId: client.organization_id,
+      authUserId: client.auth_user_id,
+      firstName: client.first_name,
+      lastName: client.last_name,
+      preferredName: null,
+      displayName: `${client.first_name} ${client.last_name}`,
+      email: client.email,
+      locale: client.locale === "en-CA" ? "en" : "fr",
+      timezone: client.time_zone,
+      plannedStartDate: null,
+      status: client.status,
+      primaryCoachUserId: assignment.coach_user_id,
+      createdAt: client.created_at,
+    },
+    invitation: {
+      id: invitation.id,
+      clientId: invitation.client_id,
+      email: invitation.email,
+      status: invitation.status,
+      expiresAt: invitation.expires_at,
+      sentAt: invitation.sent_at,
+      acceptedAt: invitation.accepted_at,
+    },
+  };
+}
+
 export async function getOwnClientDashboard() {
   const actor = await requireRole("CLIENT");
   if (!actor.clientId) {
@@ -133,6 +211,9 @@ function mapRpcError(error: { message: string } | null) {
   }
   if (message.includes("FE_DUPLICATE")) {
     return new M1ContractError("DUPLICATE", "Client or invitation already exists", 409);
+  }
+  if (message.includes("FE_EMAIL_IDENTITY_CONFLICT")) {
+    return new M1ContractError("DUPLICATE", "Email already belongs to an account", 409);
   }
   if (message.includes("FE_FORBIDDEN") || message.includes("FE_MFA")) {
     return new M1ContractError("FORBIDDEN", "Operation is not permitted", 403);
@@ -184,7 +265,7 @@ export async function revokeClientInvitation(input: {
   clientId: string;
   idempotencyKey: string;
   reason?: string;
-}) {
+}): Promise<{ invitationId: string; status: "REVOKED" }> {
   await requireCoachAal2();
   const clientId = uuidSchema.parse(input.clientId);
   const idempotencyKey = uuidSchema.parse(input.idempotencyKey);
@@ -195,5 +276,12 @@ export async function revokeClientInvitation(input: {
     p_idempotency_key: idempotencyKey,
   });
   if (error) throw mapRpcError(error);
-  return data as { invitationId: string; status: "REVOKED" };
+  const result = data as { invitationId?: unknown; status?: unknown } | null;
+  if (result?.status !== "REVOKED") {
+    throw new M1ContractError("INVALID_STATE", "Invitation was not revoked", 409);
+  }
+  return {
+    invitationId: uuidSchema.parse(result.invitationId),
+    status: "REVOKED",
+  };
 }

@@ -37,14 +37,20 @@ async function resolveInvitation(opaqueToken: string, now = new Date()): Promise
     .eq("token_hash", tokenHash)
     .eq("status", "SENT")
     .maybeSingle();
-  if (error || !invitation || Date.parse(invitation.expires_at) <= now.getTime()) return null;
+  if (error) {
+    throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Invitation lookup failed", 503);
+  }
+  if (!invitation || Date.parse(invitation.expires_at) <= now.getTime()) return null;
 
   const { data: client, error: clientError } = await admin
     .from("clients")
     .select("locale")
     .eq("id", invitation.client_id)
     .single();
-  if (clientError || !client) return null;
+  if (clientError) {
+    throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Client lookup failed", 503);
+  }
+  if (!client) return null;
   return {
     id: invitation.id,
     emailHint: maskEmail(invitation.email),
@@ -62,7 +68,10 @@ async function invitationEmail(opaqueToken: string) {
     .eq("token_hash", tokenHash)
     .eq("status", "SENT")
     .maybeSingle();
-  if (error || !data || Date.parse(data.expires_at) <= Date.now()) {
+  if (error) {
+    throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Invitation lookup failed", 503);
+  }
+  if (!data || Date.parse(data.expires_at) <= Date.now()) {
     throw new ClientActivationError("INVITATION_UNAVAILABLE", "Invitation is unavailable.");
   }
   return { ...data, tokenHash };
@@ -80,13 +89,23 @@ export function createClientM1Dependencies(): {
   const activation: ClientActivationDependencies = {
     invitations: {
       findUsableByOpaqueToken: resolveInvitation,
-      async acceptAtomically({ opaqueToken }) {
+      async acceptAtomically({ opaqueToken, authUserId }) {
         const supabase = await serverClient();
-        const { data, error } = await supabase.rpc("accept_client_invitation", {
-          p_token_hash: hashInvitationToken(opaqueToken),
-        });
-        if (error) throw new M1ContractError("INVALID_STATE", "Activation failed", 409);
-        return acceptClientInvitationResultSchema.parse(data);
+        try {
+          const admin = createAdminSupabaseClient();
+          const { data, error } = await admin.rpc("accept_client_invitation", {
+            p_token_hash: hashInvitationToken(opaqueToken),
+            p_user_id: authUserId,
+          });
+          if (error) throw new M1ContractError("INVALID_STATE", "Activation failed", 409);
+          return acceptClientInvitationResultSchema.parse(data);
+        } catch (error) {
+          // OTP verification has already established an SSR cookie session.
+          // Never leave that identity authenticated when atomic activation did
+          // not commit (stale/revoked invite, RLS error or malformed result).
+          await supabase.auth.signOut().catch(() => undefined);
+          throw error;
+        }
       },
     },
     otp: {
@@ -128,6 +147,13 @@ export function createClientM1Dependencies(): {
           p_kind: input.kind,
         });
         if (error) {
+          if (!error.message.includes("FE_RATE_LIMITED")) {
+            throw new M1ContractError(
+              "TEMPORARILY_UNAVAILABLE",
+              "Activation protection failed",
+              503,
+            );
+          }
           throw new ClientActivationError("RATE_LIMITED", "Too many activation attempts.");
         }
       },

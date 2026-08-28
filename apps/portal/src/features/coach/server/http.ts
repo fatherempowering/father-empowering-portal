@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { M1ContractError } from "@/lib/contracts/m1";
+import { readM1JsonObject } from "@/lib/http/json-body";
 
 import type { CoachActor } from "../model";
 import { CoachInputError, parseCreateClientForm, parseInvitationMutation } from "../validation";
@@ -83,7 +84,7 @@ function jsonError(error: unknown): NextResponse<ErrorBody> {
 
 async function requestJson(request: Request): Promise<unknown> {
   try {
-    return await request.json();
+    return await readM1JsonObject(request);
   } catch {
     throw new CoachInputError("Le corps JSON est invalide.", {
       body: "Un objet JSON valide est requis.",

@@ -10,6 +10,10 @@ import type {
   InvitationMutationResult,
 } from "../model";
 import { CreateClientDialog } from "./create-client-dialog";
+import {
+  invitationMutationKey,
+  type InvitationMutationAction,
+} from "./invitation-mutation-key";
 import styles from "./coach-dashboard.module.css";
 
 interface ApiEnvelope<T> {
@@ -154,8 +158,12 @@ export function CoachDashboard() {
     }
   }
 
-  async function mutateInvitation(client: CoachDashboardClient, action: "resend" | "revoke") {
-    const key = `${action}:${client.id}`;
+  async function mutateInvitation(client: CoachDashboardClient, action: InvitationMutationAction) {
+    if (!client.invitation) {
+      setError("L’invitation ciblée n’est plus disponible. Actualise la page et réessaie.");
+      return;
+    }
+    const key = invitationMutationKey(action, client.id, client.invitation.id);
     const clientMutationId = invitationMutations.current.get(key) ?? mutationId();
     invitationMutations.current.set(key, clientMutationId);
     setBusyKey(key);
@@ -246,6 +254,12 @@ export function CoachDashboard() {
               {clients.map((client) => {
                 const canResend = invitationCanResend(client);
                 const canRevoke = invitationCanRevoke(client);
+                const resendBusyKey = client.invitation
+                  ? invitationMutationKey("resend", client.id, client.invitation.id)
+                  : null;
+                const revokeBusyKey = client.invitation
+                  ? invitationMutationKey("revoke", client.id, client.invitation.id)
+                  : null;
                 return (
                   <li className={styles.clientRow} key={client.id}>
                     <div className={styles.clientMain}>
@@ -276,7 +290,7 @@ export function CoachDashboard() {
                             onClick={() => void mutateInvitation(client, "resend")}
                             type="button"
                           >
-                            {busyKey === `resend:${client.id}` ? "Renvoi…" : "Renvoyer"}
+                            {busyKey === resendBusyKey ? "Renvoi…" : "Renvoyer"}
                           </button>
                         ) : null}
                         {canRevoke ? (
@@ -286,7 +300,7 @@ export function CoachDashboard() {
                             onClick={() => void mutateInvitation(client, "revoke")}
                             type="button"
                           >
-                            {busyKey === `revoke:${client.id}` ? "Révocation…" : "Révoquer"}
+                            {busyKey === revokeBusyKey ? "Révocation…" : "Révoquer"}
                           </button>
                         ) : null}
                       </div>

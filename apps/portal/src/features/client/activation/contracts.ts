@@ -53,6 +53,7 @@ export interface ClientInvitationPort {
    */
   acceptAtomically(input: {
     opaqueToken: string;
+    authUserId: string;
     correlationId: string;
   }): Promise<ActivatedClient>;
 }

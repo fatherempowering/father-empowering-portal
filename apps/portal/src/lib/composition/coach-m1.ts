@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import type { CoachM1Dependencies } from "@/features/coach/server/ports";
 import {
   createInvitedClient,
+  getCoachClientInvitationBundle,
   listCoachClients,
   resendClientInvitation,
   revokeClientInvitation,
@@ -57,18 +58,51 @@ export const coachM1Dependencies: CoachM1Dependencies = {
   },
 
   async resendInvitationAtomically({ clientId, clientMutationId }) {
-    await resendClientInvitation({
+    const resent = await resendClientInvitation({
       clientId,
       idempotencyKey: mutationUuid(clientMutationId),
     });
-    return requireBundle(clientId);
+    const bundle = await getCoachClientInvitationBundle({
+      clientId,
+      invitationId: resent.invitationId,
+    });
+    return {
+      ...bundle,
+      client: {
+        ...bundle.client,
+        authUserId: null,
+        status: "INVITED" as const,
+      },
+      invitation: {
+        ...bundle.invitation,
+        status: "PENDING" as const,
+        expiresAt: resent.expiresAt,
+        sentAt: null,
+        acceptedAt: null,
+      },
+    };
   },
 
   async revokeInvitationAtomically({ clientId, clientMutationId }) {
-    await revokeClientInvitation({
+    const revoked = await revokeClientInvitation({
       clientId,
       idempotencyKey: mutationUuid(clientMutationId),
     });
-    return requireBundle(clientId);
+    const bundle = await getCoachClientInvitationBundle({
+      clientId,
+      invitationId: revoked.invitationId,
+    });
+    return {
+      ...bundle,
+      client: {
+        ...bundle.client,
+        authUserId: null,
+        status: "INVITED" as const,
+      },
+      invitation: {
+        ...bundle.invitation,
+        status: revoked.status,
+      },
+    };
   },
 };

@@ -94,6 +94,31 @@ describe("client activation HTTP handlers", () => {
     expect(workflow.verifyOtpAndActivate).not.toHaveBeenCalled();
   });
 
+  it("rejects an oversized body even without Content-Length", async () => {
+    const workflow = mockWorkflow();
+    const handler = createInspectInvitationHandler({ workflow, createContext: () => context });
+    const request = new Request(
+      "https://app.fatherempowering.com/api/v1/client/activation",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://app.fatherempowering.com",
+        },
+        body: JSON.stringify({ invitationToken: TOKEN, padding: "x".repeat(4_096) }),
+      },
+    );
+
+    expect(request.headers.get("content-length")).toBeNull();
+    const response = await handler(request);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: { code: "VALIDATION_FAILED" },
+    });
+    expect(workflow.inspectInvitation).not.toHaveBeenCalled();
+  });
+
   it("returns the client route only after OTP verification and atomic activation", async () => {
     const workflow = mockWorkflow();
     const handler = createVerifyOtpHandler({ workflow, createContext: () => context });

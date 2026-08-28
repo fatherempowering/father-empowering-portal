@@ -64,7 +64,8 @@ export function ClientActivationCard() {
     const fragment = new URLSearchParams(window.location.hash.slice(1));
     const token = fragment.get("token") ?? "";
     // Erase the bearer secret immediately after capturing it in this page's
-    // memory. It is never placed in localStorage, history or an HTTP request.
+    // memory. It is never placed in localStorage or URL history and is sent
+    // only in same-origin, no-store POST bodies required by activation.
     window.history.replaceState(null, "", "/activate");
     setInvitationToken(token);
   }, []);

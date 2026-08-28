@@ -279,6 +279,129 @@ select throws_ok(
   'returning-client verification limit survives fingerprint rotation'
 );
 
+select lives_ok(
+  $$select public.consume_m1_client_otp_limit(
+    lpad(to_hex(candidate), 64, '0'),
+    repeat('9', 64),
+    'REQUEST_OTP'
+  ) from generate_series(1, 20) as candidate$$,
+  'a stable fingerprint has a bounded allowance across arbitrary addresses'
+);
+select throws_ok(
+  $$select public.consume_m1_client_otp_limit(
+    repeat('8', 64),
+    repeat('9', 64),
+    'REQUEST_OTP'
+  )$$,
+  'P0001',
+  'FE_RATE_LIMITED',
+  'rotating arbitrary addresses cannot bypass the fingerprint-wide cap'
+);
+
 reset role;
+insert into app_private.client_otp_rate_limits (
+  email_hash,
+  fingerprint_hash,
+  kind,
+  window_started_at,
+  attempts,
+  updated_at
+) values (
+  repeat('1', 64),
+  repeat('2', 64),
+  'REQUEST_OTP',
+  now() - interval '1 day',
+  1,
+  now() - interval '1 day'
+);
+
+set local role service_role;
+select lives_ok(
+  $$select public.consume_m1_client_otp_limit(
+    repeat('3', 64),
+    repeat('4', 64),
+    'REQUEST_OTP'
+  )$$,
+  'a later public attempt can trigger bounded-bucket maintenance'
+);
+
+reset role;
+select is(
+  (
+    select count(*)::integer
+    from app_private.client_otp_rate_limits
+    where email_hash = repeat('1', 64)
+      and fingerprint_hash = repeat('2', 64)
+  ),
+  0,
+  'expired arbitrary-address buckets are purged globally'
+);
+
+-- Even if bounded maintenance cannot reach this expired target in one pass,
+-- its own UPSERT must open a fresh counted window rather than incrementing an
+-- expired row that the aggregate queries ignore.
+insert into app_private.client_otp_rate_limits (
+  email_hash,
+  fingerprint_hash,
+  kind,
+  window_started_at,
+  attempts,
+  updated_at
+)
+select
+  lpad(to_hex(candidate + 1000), 64, '0'),
+  lpad(to_hex(candidate + 3000), 64, '0'),
+  'REQUEST_OTP',
+  now() - interval '1 day',
+  1,
+  now() - interval '1 day'
+from generate_series(1, 1000) candidate;
+insert into app_private.client_otp_rate_limits (
+  email_hash,
+  fingerprint_hash,
+  kind,
+  window_started_at,
+  attempts,
+  updated_at
+) values (
+  repeat('6', 64),
+  repeat('7', 64),
+  'REQUEST_OTP',
+  now() - interval '1 hour',
+  5,
+  now() - interval '1 hour'
+);
+
+set local role service_role;
+select lives_ok(
+  $$select public.consume_m1_client_otp_limit(
+    repeat('6', 64),
+    repeat('7', 64),
+    'REQUEST_OTP'
+  )$$,
+  'an expired target surviving bounded cleanup opens a new window'
+);
+reset role;
+select is(
+  (
+    select attempts
+    from app_private.client_otp_rate_limits
+    where email_hash = repeat('6', 64)
+      and fingerprint_hash = repeat('7', 64)
+      and kind = 'REQUEST_OTP'
+  ),
+  1,
+  'the surviving expired target resets its attempt counter'
+);
+select ok(
+  (
+    select window_started_at > now() - interval '1 minute'
+    from app_private.client_otp_rate_limits
+    where email_hash = repeat('6', 64)
+      and fingerprint_hash = repeat('7', 64)
+      and kind = 'REQUEST_OTP'
+  ),
+  'the surviving expired target receives a current window'
+);
 select * from finish();
 rollback;

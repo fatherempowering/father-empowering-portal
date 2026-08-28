@@ -6,24 +6,32 @@ const outputPath = resolve(process.argv[2] ?? "artifacts/m1-gate/supabase.env");
 const workdir = process.env.SUPABASE_WORKDIR;
 if (!workdir) throw new Error("SUPABASE_WORKDIR is required.");
 
-const raw = execFileSync(
-  "pnpm",
-  [
-    "--filter",
-    "@father-empowering/portal",
-    "exec",
-    "supabase",
-    "status",
-    "--workdir",
-    workdir,
-    "-o",
-    "json",
-  ],
-  {
-    encoding: "utf8",
-  },
-);
-const status = JSON.parse(raw);
+let status;
+try {
+  const raw = execFileSync(
+    "pnpm",
+    [
+      "--filter",
+      "@father-empowering/portal",
+      "exec",
+      "supabase",
+      "status",
+      "--workdir",
+      workdir,
+      "-o",
+      "json",
+    ],
+    {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    },
+  );
+  status = JSON.parse(raw);
+} catch {
+  // Never attach the child-process error: Node includes captured stdout in it,
+  // and Supabase status output contains disposable local credentials.
+  throw new Error("Unable to read local Supabase status safely.");
+}
 
 const apiUrl = status.API_URL ?? status.api_url;
 const anonKey = status.ANON_KEY ?? status.anon_key;

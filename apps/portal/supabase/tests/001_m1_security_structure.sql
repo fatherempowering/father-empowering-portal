@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(34);
 
 select has_table('public', 'organizations', 'organizations exists');
 select has_table('public', 'profiles', 'profiles exists');
@@ -34,7 +34,7 @@ select has_function(
   array['uuid', 'text', 'text', 'text', 'text', 'text', 'text', 'timestamp with time zone', 'uuid', 'uuid'],
   'create_invited_client exists'
 );
-select has_function('public', 'accept_client_invitation', array['text'], 'accept_client_invitation exists');
+select has_function('public', 'accept_client_invitation', array['text', 'uuid'], 'accept_client_invitation exists');
 select has_function(
   'public', 'resend_client_invitation',
   array['uuid', 'text', 'timestamp with time zone', 'uuid'],
@@ -58,7 +58,7 @@ select ok(
   procedure.prosecdef and array_to_string(procedure.proconfig, ',') like '%search_path=%',
   'accept_client_invitation is security definer with fixed search_path'
 ) from pg_catalog.pg_proc procedure where procedure.oid =
-  'public.accept_client_invitation(text)'::regprocedure;
+  'public.accept_client_invitation(text,uuid)'::regprocedure;
 select ok(
   procedure.prosecdef and array_to_string(procedure.proconfig, ',') like '%search_path=%',
   'resend_client_invitation is security definer with fixed search_path'
@@ -80,8 +80,16 @@ select ok(
   'anon cannot create an invited client'
 );
 select ok(
-  not has_function_privilege('anon', 'public.accept_client_invitation(text)', 'EXECUTE'),
+  not has_function_privilege('anon', 'public.accept_client_invitation(text,uuid)', 'EXECUTE'),
   'anon cannot accept an invitation'
+);
+select ok(
+  not has_function_privilege('authenticated', 'public.accept_client_invitation(text,uuid)', 'EXECUTE'),
+  'authenticated browsers cannot bypass server-owned invitation acceptance'
+);
+select ok(
+  has_function_privilege('service_role', 'public.accept_client_invitation(text,uuid)', 'EXECUTE'),
+  'the trusted server can accept a verified invitation identity'
 );
 select ok(
   not has_function_privilege('anon', 'public.resend_client_invitation(uuid,text,timestamptz,uuid)', 'EXECUTE'),

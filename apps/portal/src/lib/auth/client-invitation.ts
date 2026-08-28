@@ -73,21 +73,30 @@ export async function verifyInvitationOtp(
   }
   const invitation = await resolveInvitationForOtp(tokenHash);
   const supabase = await createServerSupabaseClient();
-  const { error: verificationError } = await supabase.auth.verifyOtp({
+  const { data: verification, error: verificationError } = await supabase.auth.verifyOtp({
     email: invitation.email,
     token: otp,
     type: "email",
   });
-  if (verificationError) {
+  if (verificationError || !verification.user) {
     throw new M1ContractError("FORBIDDEN", "Invalid or expired login code", 403);
   }
 
-  // The RPC derives the user and verified email from the new Auth session.
-  const { data, error } = await supabase.rpc("accept_client_invitation", {
+  // Only the server-owned service role can invoke acceptance. The identity is
+  // taken from the OTP result, never from caller input.
+  const admin = createAdminSupabaseClient();
+  const { data, error } = await admin.rpc("accept_client_invitation", {
     p_token_hash: tokenHash,
+    p_user_id: verification.user.id,
   });
   if (error) {
+    await supabase.auth.signOut();
     throw new M1ContractError("INVALID_STATE", "Unable to activate invitation", 409);
   }
-  return acceptClientInvitationResultSchema.parse(data);
+  try {
+    return acceptClientInvitationResultSchema.parse(data);
+  } catch (parseError) {
+    await supabase.auth.signOut();
+    throw parseError;
+  }
 }

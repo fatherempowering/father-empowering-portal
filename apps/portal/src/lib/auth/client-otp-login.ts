@@ -19,7 +19,6 @@ type ActiveClientIdentity = Readonly<{
   id: string;
   organizationId: string;
   authUserId: string;
-  email: string;
 }>;
 
 type ClientAuditIdentity = Pick<
@@ -35,7 +34,7 @@ async function findActiveClient(email: string): Promise<ActiveClientIdentity | n
   const admin = createAdminSupabaseClient();
   const { data, error } = await admin
     .from("clients")
-    .select("id, organization_id, auth_user_id, email")
+    .select("id, organization_id, auth_user_id")
     .eq("email", email)
     .eq("status", "ACTIVE")
     .not("auth_user_id", "is", null)
@@ -44,11 +43,22 @@ async function findActiveClient(email: string): Promise<ActiveClientIdentity | n
     throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Unable to resolve client login", 503);
   }
   if (data.length !== 1 || !data[0]?.auth_user_id) return null;
+  const { data: membership, error: membershipError } = await admin
+    .from("organization_memberships")
+    .select("id")
+    .eq("organization_id", data[0].organization_id)
+    .eq("user_id", data[0].auth_user_id)
+    .eq("role", "CLIENT")
+    .eq("status", "ACTIVE")
+    .maybeSingle();
+  if (membershipError) {
+    throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Unable to resolve client access", 503);
+  }
+  if (!membership) return null;
   return {
     id: data[0].id,
     organizationId: data[0].organization_id,
     authUserId: data[0].auth_user_id,
-    email: data[0].email,
   };
 }
 
@@ -65,7 +75,13 @@ async function consumeLimit(
   });
   if (!error) return;
   if (error.message.includes("FE_RATE_LIMITED")) {
+    if (kind === "VERIFY_OTP") {
+      throw new M1ContractError("UNAUTHENTICATED", "Invalid or expired code", 401);
+    }
     throw new M1ContractError("RATE_LIMITED", "Too many login attempts", 429);
+  }
+  if (kind === "VERIFY_OTP") {
+    throw new M1ContractError("UNAUTHENTICATED", "Invalid or expired code", 401);
   }
   throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Unable to protect client login", 503);
 }
@@ -84,7 +100,9 @@ async function appendClientAuthAudit(
     entity_id: actor.clientId,
     result: "SUCCEEDED",
     correlation_id: randomUUID(),
-    context: { aal: actor.aal, flow: "email_otp" },
+    context: command === "ClientSignedIn"
+      ? { aal: actor.aal, flow: "email_otp" }
+      : { flow: "email_otp" },
   });
   if (error) {
     throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Unable to audit client login", 503);
@@ -96,13 +114,15 @@ export async function requestClientLoginOtp(
   fingerprint: string,
 ): Promise<void> {
   const email = emailSchema.parse(rawEmail);
+  // Consume the public bucket before resolving account state. Unknown and
+  // active addresses therefore follow the same abuse-control boundary.
+  await consumeLimit(email, fingerprint, "REQUEST_OTP");
   const client = await findActiveClient(email);
 
   // The public response is intentionally identical for unknown or inactive
   // addresses and no Auth user is ever created by this path.
   if (!client) return;
 
-  await consumeLimit(email, fingerprint, "REQUEST_OTP");
   const environment = getPublicEnvironment();
   const authClient = createClient(
     environment.NEXT_PUBLIC_SUPABASE_URL,
@@ -139,9 +159,11 @@ export async function verifyClientLoginOtp(
     throw new M1ContractError("VALIDATION_FAILED", "A six-digit code is required", 400);
   }
 
+  // Do not let an unknown address bypass verification throttling or reveal
+  // whether the following identity lookup succeeds.
+  await consumeLimit(email, fingerprint, "VERIFY_OTP");
   const client = await findActiveClient(email);
   if (!client) throw new M1ContractError("UNAUTHENTICATED", "Invalid or expired code", 401);
-  await consumeLimit(email, fingerprint, "VERIFY_OTP");
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.auth.verifyOtp({ email, token: otp, type: "email" });

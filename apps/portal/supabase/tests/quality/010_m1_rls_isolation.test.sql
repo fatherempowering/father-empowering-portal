@@ -85,6 +85,40 @@ values
   ('50000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002', '40000000-0000-4000-8000-000000000002', 'ACTIVE', true, now(), '10000000-0000-4000-8000-000000000002'),
   ('50000000-0000-4000-8000-000000000003', '20000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000006', '40000000-0000-4000-8000-000000000003', 'ACTIVE', true, now(), '10000000-0000-4000-8000-000000000006');
 
+-- Tenant ownership is a database invariant, including for privileged writes
+-- that bypass RLS. An organization A row cannot point at organization B's
+-- Client even when both standalone UUID foreign keys would otherwise exist.
+select throws_ok(
+  $$insert into public.coach_client_assignments (
+      id, organization_id, coach_user_id, client_id, status, is_primary, created_by
+    ) values (
+      '50000000-0000-4000-8000-000000000004',
+      '20000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000003',
+      'ACTIVE', false, '10000000-0000-4000-8000-000000000001'
+    )$$,
+  '23503',
+  null,
+  'assignment composite foreign key rejects a cross-organization Client'
+);
+select throws_ok(
+  $$insert into public.client_invitations (
+      id, organization_id, client_id, email, token_hash, expires_at,
+      idempotency_key, request_fingerprint, created_by
+    ) values (
+      '70000000-0000-4000-8000-000000000001',
+      '20000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000003',
+      'cross-tenant@example.test', repeat('e', 64), now() + interval '2 days',
+      '60000000-0000-4000-8000-000000000010', repeat('f', 64),
+      '10000000-0000-4000-8000-000000000001'
+    )$$,
+  '23503',
+  null,
+  'invitation composite foreign key rejects a cross-organization Client'
+);
+
 -- Client A sees only Client A, and receives no invitation or audit visibility.
 set local role authenticated;
 set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000004';

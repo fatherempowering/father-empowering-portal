@@ -66,6 +66,14 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
     throw authUserError;
   }
 
+  const { error: identityConflict } = await admin.rpc(
+    "assert_m1_invitation_identity_safe",
+    { p_invitation_id: invitation.id },
+  );
+  if (identityConflict) {
+    throw new Error("Invitation identity is already assigned");
+  }
+
   // The raw token is deterministic for this outbox event, exists only in this
   // worker invocation, and remains retry-safe with the provider idempotency key.
   const opaqueToken = deriveOpaqueToken(event, invitation.id, environment.INVITATION_TOKEN_SECRET);

@@ -1,6 +1,7 @@
 import type {
   ActivatedClient,
   ActivationContext,
+  AuthenticatedIdentity,
   ClientActivationDependencies,
   InvitationRecord,
   PublicInvitation,
@@ -75,8 +76,9 @@ export class ClientActivationWorkflow {
       requestFingerprint: context.requestFingerprint,
     });
 
+    let identity: AuthenticatedIdentity;
     try {
-      await this.dependencies.otp.verifyInvitationOtp({
+      identity = await this.dependencies.otp.verifyInvitationOtp({
         opaqueToken: invitationToken,
         token: otp,
         correlationId: context.correlationId,
@@ -89,6 +91,7 @@ export class ClientActivationWorkflow {
 
     return this.dependencies.invitations.acceptAtomically({
       opaqueToken: invitationToken,
+      authUserId: identity.authUserId,
       correlationId: context.correlationId,
     });
   }

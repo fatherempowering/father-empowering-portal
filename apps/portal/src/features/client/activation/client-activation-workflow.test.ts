@@ -99,6 +99,7 @@ describe("ClientActivationWorkflow", () => {
     });
     expect(invitations.acceptAtomically).toHaveBeenCalledWith({
       opaqueToken: TOKEN,
+      authUserId: "auth-user-1",
       correlationId: context.correlationId,
     });
     expect(result.status).toBe("ACTIVE");
