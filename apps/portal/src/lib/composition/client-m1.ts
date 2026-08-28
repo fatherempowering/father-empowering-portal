@@ -155,7 +155,9 @@ export function createClientM1Dependencies(): {
           correlation_id: correlationUuid(input.correlationId),
           context: { clientId: invitation.client_id },
         });
-        if (error) throw error;
+        const duplicateView =
+          input.action === "CLIENT_INVITATION_VIEWED" && error?.code === "23505";
+        if (error && !duplicateView) throw error;
       },
     },
     clock: () => new Date(),

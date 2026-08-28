@@ -77,7 +77,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   expect(storedInvitation.data?.token_hash).toBe(
     createHash("sha256").update(activation.token).digest("hex"),
   );
-  expect(JSON.stringify(storedInvitation.data)).not.toContain(activation.token);
+  assertSecretAbsent(JSON.stringify(storedInvitation.data), activation.token, "invitation row");
 
   const sensitivePersistence = await Promise.all([
     admin
@@ -91,7 +91,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   ]);
   for (const result of sensitivePersistence) {
     expect(result.error).toBeNull();
-    expect(JSON.stringify(result.data)).not.toContain(activation.token);
+    assertSecretAbsent(JSON.stringify(result.data), activation.token, "persisted side effect");
   }
 
   const clientContext = await browser.newContext();
@@ -100,7 +100,11 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   clientPage.on("request", (request) => {
     if (request.isNavigationRequest()) activationNavigationRequests.push(request.url());
   });
-  await clientPage.goto(activation.url);
+  try {
+    await clientPage.goto(activation.url);
+  } catch {
+    throw new Error("Activation navigation failed before the bearer fragment was erased.");
+  }
   await expect(clientPage.getByRole("heading", { name: /active ton portail/i })).toBeVisible();
   await expect(clientPage).toHaveURL(`${environment.appUrl}/activate`);
   expect(activationNavigationRequests.every((url) => !url.includes(activation.token))).toBe(true);
@@ -121,7 +125,11 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     { excludeIds: new Set([invitationMail.id]) },
   );
   const otp = extractSixDigitOtp(otpMail);
-  await clientPage.getByLabel(/code à 6 chiffres/i).fill(otp);
+  try {
+    await clientPage.getByLabel(/code à 6 chiffres/i).fill(otp);
+  } catch {
+    throw new Error("Unable to enter the captured OTP.");
+  }
   await clientPage.getByRole("button", { name: /activer mon portail/i }).click();
 
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
@@ -131,7 +139,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   const ownProfile = await clientContext.request.get(`${environment.appUrl}/api/v1/client/me`);
   expect(ownProfile.status()).toBe(200);
   const ownProfileBody = await ownProfile.json();
-  expect(ownProfileBody.client.id).toBe(storedInvitation.data?.client_id);
+  expect(ownProfileBody.client.clientId).toBe(storedInvitation.data?.client_id);
   expect(JSON.stringify(ownProfileBody)).not.toContain(max.userId);
 
   const forbiddenCoachApi = await clientContext.request.get(
@@ -141,9 +149,43 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await clientPage.goto(`${environment.appUrl}/coach`);
   await expect(clientPage.getByRole("heading", { name: /espace coach/i })).toHaveCount(0);
 
-  await maxPage.goto(`${environment.appUrl}/coach`);
+  const returningContext = await browser.newContext();
+  const returningPage = await returningContext.newPage();
+  await returningPage.goto(`${environment.appUrl}/client-login`);
+  await returningPage.getByLabel(/^courriel$/i).fill(clientEmail);
+  await returningPage.getByRole("button", { name: /envoyer mon code/i }).click();
+  await expect(returningPage.getByText(/si ce compte est actif/i)).toBeVisible();
+  const returningOtpMail = await waitForMail(
+    environment.mailpitUrl,
+    clientEmail,
+    (message) => {
+      try {
+        extractSixDigitOtp(message);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { excludeIds: new Set([invitationMail.id, otpMail.id]) },
+  );
+  try {
+    await returningPage
+      .getByLabel(/code à 6 chiffres/i)
+      .fill(extractSixDigitOtp(returningOtpMail));
+  } catch {
+    throw new Error("Unable to enter the returning-client OTP.");
+  }
+  await returningPage.getByRole("button", { name: /ouvrir mon portail/i }).click();
+  await expect(returningPage).toHaveURL(/\/client(?:\?.*)?$/);
+  await expect(
+    returningPage.getByRole("heading", { name: /bienvenue, Client Vertical/i }),
+  ).toBeVisible();
+  const authUsers = await admin.auth.admin.listUsers({ page: 1, perPage: 1_000 });
+  expect(authUsers.error).toBeNull();
+  expect(authUsers.data.users.filter((user) => user.email === clientEmail)).toHaveLength(1);
+
   const activeRow = maxPage.getByRole("listitem").filter({ hasText: clientEmail });
-  await expect(activeRow).toContainText(/actif/i);
+  await expect(activeRow).toContainText(/actif/i, { timeout: 20_000 });
 
   const persistedState = await Promise.all([
     admin
@@ -191,9 +233,11 @@ test("Max → création → invitation → OTP → activation → accès isolé"
       "CoachMfaVerified",
       "CreateInvitedClient",
       "AcceptClientInvitation",
+      "ClientSignedIn",
     ]),
   );
 
+  await returningContext.close();
   await clientContext.close();
   await maxContext.close();
 });
@@ -210,7 +254,17 @@ async function loginMaxAtAal2(page: Page): Promise<void> {
   if (periodProgress > 27_000) {
     await new Promise((resolve) => setTimeout(resolve, 30_250 - periodProgress));
   }
-  await factorInput.fill(currentTotp(maxTotpSecret));
+  try {
+    await factorInput.fill(currentTotp(maxTotpSecret));
+  } catch {
+    throw new Error("Unable to enter the current MFA code.");
+  }
   await page.getByRole("button", { name: /vérifier|verify|continuer/i }).click();
   await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
+}
+
+function assertSecretAbsent(serialized: string, secret: string, location: string): void {
+  if (serialized.includes(secret)) {
+    throw new Error(`Raw invitation secret was persisted in ${location}.`);
+  }
 }

@@ -11,7 +11,6 @@ import {
 } from "@/lib/contracts/m1";
 import { getPublicEnvironment } from "@/lib/env";
 export { hashInvitationToken } from "@/lib/auth/invitation-token";
-import { hashInvitationToken } from "@/lib/auth/invitation-token";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 

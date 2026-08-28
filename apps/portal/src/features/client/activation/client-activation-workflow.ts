@@ -75,9 +75,8 @@ export class ClientActivationWorkflow {
       requestFingerprint: context.requestFingerprint,
     });
 
-    let identity;
     try {
-      identity = await this.dependencies.otp.verifyInvitationOtp({
+      await this.dependencies.otp.verifyInvitationOtp({
         opaqueToken: invitationToken,
         token: otp,
         correlationId: context.correlationId,

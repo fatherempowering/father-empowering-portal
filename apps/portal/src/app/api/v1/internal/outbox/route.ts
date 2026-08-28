@@ -17,7 +17,16 @@ function authorized(request: Request, expected: string) {
 export async function POST(request: Request) {
   const environment = getOutboxWorkerEnvironment();
   if (!authorized(request, environment.OUTBOX_WORKER_SECRET)) {
-    return NextResponse.json({ error: { code: "FORBIDDEN" } }, { status: 403 });
+    return NextResponse.json(
+      { error: { code: "UNAUTHENTICATED" } },
+      {
+        status: 401,
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+          "WWW-Authenticate": "Bearer",
+        },
+      },
+    );
   }
 
   const outcomes = await processOutboxBatch(m1OutboxHandlers);

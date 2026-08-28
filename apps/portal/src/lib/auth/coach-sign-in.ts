@@ -2,7 +2,12 @@ import "server-only";
 
 import { z } from "zod";
 
-import { M1ContractError, emailSchema } from "@/lib/contracts/m1";
+import { recordStaffAuthAudit } from "@/lib/audit/staff-auth";
+import {
+  M1ContractError,
+  emailSchema,
+  serverActorSchema,
+} from "@/lib/contracts/m1";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const coachCredentialsSchema = z.object({
@@ -20,7 +25,7 @@ export async function signInCoachWithPassword(input: { email: string; password: 
 
   const { data: membership, error: membershipError } = await supabase
     .from("organization_memberships")
-    .select("role, status")
+    .select("id, organization_id, role, status")
     .eq("user_id", data.user.id)
     .eq("status", "ACTIVE")
     .maybeSingle();
@@ -29,15 +34,27 @@ export async function signInCoachWithPassword(input: { email: string; password: 
     throw new M1ContractError("FORBIDDEN", "Coach access required", 403);
   }
 
-  const { error: auditError } = await supabase.rpc("record_m1_auth_event", {
-    p_command: "CoachSignedIn",
-    p_context: {},
-  });
-  if (auditError) {
+  const { data: assurance, error: assuranceError } =
+    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (assuranceError || !assurance?.currentLevel) {
     await supabase.auth.signOut();
-    throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Unable to audit sign-in", 503);
+    throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Unable to verify assurance", 503);
   }
 
-  const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  return { destination: assurance?.currentLevel === "aal2" ? "/coach" : "/mfa" } as const;
+  const actor = serverActorSchema.parse({
+    userId: data.user.id,
+    organizationId: membership.organization_id,
+    membershipId: membership.id,
+    clientId: null,
+    role: membership.role,
+    aal: assurance.currentLevel,
+  });
+  try {
+    await recordStaffAuthAudit(actor, { command: "CoachSignedIn" });
+  } catch (error) {
+    await supabase.auth.signOut();
+    throw error;
+  }
+
+  return { destination: actor.aal === "aal2" ? "/coach" : "/mfa" } as const;
 }

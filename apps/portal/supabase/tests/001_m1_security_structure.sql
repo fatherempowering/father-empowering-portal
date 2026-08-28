@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(29);
+select plan(32);
 
 select has_table('public', 'organizations', 'organizations exists');
 select has_table('public', 'profiles', 'profiles exists');
@@ -44,6 +44,10 @@ select has_function(
   'public', 'revoke_client_invitation', array['uuid', 'text', 'uuid'],
   'revoke_client_invitation exists'
 );
+select has_function(
+  'public', 'revoke_client_invitation_for_client', array['uuid', 'text', 'uuid'],
+  'revoke_client_invitation_for_client exists'
+);
 
 select ok(
   procedure.prosecdef and array_to_string(procedure.proconfig, ',') like '%search_path=%',
@@ -65,6 +69,11 @@ select ok(
   'revoke_client_invitation is security definer with fixed search_path'
 ) from pg_catalog.pg_proc procedure where procedure.oid =
   'public.revoke_client_invitation(uuid,text,uuid)'::regprocedure;
+select ok(
+  procedure.prosecdef and array_to_string(procedure.proconfig, ',') like '%search_path=%',
+  'revoke_client_invitation_for_client is security definer with fixed search_path'
+) from pg_catalog.pg_proc procedure where procedure.oid =
+  'public.revoke_client_invitation_for_client(uuid,text,uuid)'::regprocedure;
 
 select ok(
   not has_function_privilege('anon', 'public.create_invited_client(uuid,text,text,text,text,text,text,timestamptz,uuid,uuid)', 'EXECUTE'),
@@ -81,6 +90,10 @@ select ok(
 select ok(
   not has_function_privilege('anon', 'public.revoke_client_invitation(uuid,text,uuid)', 'EXECUTE'),
   'anon cannot revoke an invitation'
+);
+select ok(
+  not has_function_privilege('anon', 'public.revoke_client_invitation_for_client(uuid,text,uuid)', 'EXECUTE'),
+  'anon cannot revoke an invitation by client id'
 );
 
 select is(

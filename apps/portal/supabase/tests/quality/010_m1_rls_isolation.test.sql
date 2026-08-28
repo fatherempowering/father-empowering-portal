@@ -109,12 +109,6 @@ select is(
   0::bigint,
   'Client A cannot read audit events'
 );
-select throws_ok(
-  $$select public.record_m1_auth_event('CoachSignedIn', '{}'::jsonb)$$,
-  'P0001',
-  'FE_FORBIDDEN',
-  'Client A cannot forge a staff authentication audit'
-);
 
 -- Coach data access is denied at aal1, including direct PostgREST-style reads.
 reset role;
@@ -144,18 +138,18 @@ select throws_ok(
   'Coach mutations reject aal1'
 );
 select throws_ok(
-  $$select public.record_m1_auth_event('CoachMfaVerified', '{}'::jsonb)$$,
+  $$select public.revoke_client_invitation_for_client(
+    '40000000-0000-4000-8000-000000000001',
+    'Denied at aal1',
+    '60000000-0000-4000-8000-000000000003'
+  )$$,
   'P0001',
   'FE_MFA_AAL2_REQUIRED',
-  'Coach cannot forge an MFA-verified audit at aal1'
+  'Coach revocation rejects aal1 before reading client state'
 );
 
 -- Max at aal2 sees only the assigned Client A.
 set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated","email":"max@example.test","aal":"aal2"}';
-select lives_ok(
-  $$select public.record_m1_auth_event('CoachMfaVerified', '{}'::jsonb)$$,
-  'Coach records MFA verification only once the JWT is aal2'
-);
 select results_eq(
   $$select id from public.clients order by id$$,
   $$values ('40000000-0000-4000-8000-000000000001'::uuid)$$,
@@ -176,6 +170,27 @@ select results_eq(
   $$select id from public.clients order by id$$,
   $$values ('40000000-0000-4000-8000-000000000002'::uuid)$$,
   'another Coach reads assigned Client B only'
+);
+select throws_ok(
+  $$select public.revoke_client_invitation_for_client(
+    '40000000-0000-4000-8000-000000000001',
+    'Not assigned',
+    '60000000-0000-4000-8000-000000000004'
+  )$$,
+  'P0001',
+  'FE_FORBIDDEN',
+  'another Coach cannot revoke Max client invitation'
+);
+select throws_ok(
+  $$select public.resend_client_invitation(
+    '40000000-0000-4000-8000-000000000001',
+    repeat('f', 64),
+    now() + interval '2 days',
+    '60000000-0000-4000-8000-000000000005'
+  )$$,
+  'P0001',
+  'FE_FORBIDDEN',
+  'another Coach cannot resend Max client invitation'
 );
 
 -- Admin sees the two clients in its organization, never the other organization.

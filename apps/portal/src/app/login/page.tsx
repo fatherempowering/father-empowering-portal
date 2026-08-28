@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { signInCoachAction } from "./actions";
 
 export default async function LoginPage({
@@ -30,6 +32,7 @@ export default async function LoginPage({
         </label>
         <button type="submit">Se connecter</button>
       </form>
+      <p><Link href="/client-login">Accès Client par code courriel</Link></p>
     </main>
   );
 }

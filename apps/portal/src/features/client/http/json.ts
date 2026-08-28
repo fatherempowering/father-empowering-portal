@@ -25,7 +25,7 @@ export async function readSmallJsonObject(request: Request): Promise<Record<stri
 
 export function assertSameOrigin(request: Request): void {
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) {
+  if (!origin || origin !== new URL(request.url).origin) {
     throw new HttpForbiddenError();
   }
 }

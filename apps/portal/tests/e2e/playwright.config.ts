@@ -18,16 +18,15 @@ export default defineConfig({
   timeout: 90_000,
   expect: { timeout: 10_000 },
   outputDir: resolve(repositoryRoot, "test-results/m1-e2e"),
-  reporter: [
-    ["list"],
-    ["html", { open: "never", outputFolder: resolve(repositoryRoot, "playwright-report") }],
-  ],
+  reporter: [["list"]],
   use: {
     baseURL,
     browserName: "chromium",
     ...devices["Desktop Chrome"],
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    // This flow handles bearer invitation secrets and OTPs. Playwright traces,
+    // screenshots, videos and HTML step reports can serialize those values.
+    trace: "off",
+    screenshot: "off",
+    video: "off",
   },
 });

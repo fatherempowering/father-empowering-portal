@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { assertActorRole, assertCoachAal2 } from "@/lib/auth/authorization";
+import {
+  assertActorRole,
+  assertCoachAal2,
+  assertMfaEnrollmentAllowed,
+} from "@/lib/auth/authorization";
 import type { ServerActor } from "@/lib/contracts/m1";
 
 function actor(role: ServerActor["role"], aal: ServerActor["aal"]): ServerActor {
@@ -34,5 +38,13 @@ describe("M1 authorization guards", () => {
 
   it("never treats a Client at aal2 as a Coach", () => {
     expect(() => assertCoachAal2(actor("CLIENT", "aal2"))).toThrow("Role is not permitted");
+  });
+
+  it("requires the existing MFA factor before enrolling another", () => {
+    expect(() => assertMfaEnrollmentAllowed(actor("COACH", "aal1"), false)).not.toThrow();
+    expect(() => assertMfaEnrollmentAllowed(actor("COACH", "aal2"), true)).not.toThrow();
+    expect(() => assertMfaEnrollmentAllowed(actor("COACH", "aal1"), true)).toThrow(
+      "existing MFA factor",
+    );
   });
 });

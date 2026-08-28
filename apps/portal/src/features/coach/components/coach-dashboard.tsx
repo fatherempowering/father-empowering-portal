@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   CoachDashboardClient,
@@ -34,11 +34,15 @@ function initials(client: CoachDashboardClient): string {
   return `${client.firstName[0] ?? ""}${client.lastName[0] ?? ""}`.toUpperCase();
 }
 
-function invitationCanChange(client: CoachDashboardClient): boolean {
+function invitationCanResend(client: CoachDashboardClient): boolean {
   return client.status === "INVITED" &&
     client.invitation !== null &&
-    client.invitation.status !== "REVOKED" &&
     client.invitation.status !== "ACCEPTED";
+}
+
+function invitationCanRevoke(client: CoachDashboardClient): boolean {
+  return client.status === "INVITED" &&
+    (client.invitation?.status === "PENDING" || client.invitation?.status === "SENT");
 }
 
 function mergeClient(
@@ -79,6 +83,8 @@ export function CoachDashboard() {
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const createMutation = useRef<{ fingerprint: string; id: string } | null>(null);
+  const invitationMutations = useRef(new Map<string, string>());
 
   const activeCount = useMemo(
     () => clients.filter((client) => client.status === "ACTIVE").length,
@@ -105,7 +111,26 @@ export function CoachDashboard() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    const interval = window.setInterval(refreshWhenVisible, 10_000);
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [load]);
+
   async function createClient(values: CreateClientFormValues) {
+    const fingerprint = JSON.stringify(values);
+    if (createMutation.current?.fingerprint !== fingerprint) {
+      createMutation.current = { fingerprint, id: mutationId() };
+    }
+    const clientMutationId = createMutation.current.id;
     setBusyKey("create");
     setError(null);
     setNotice(null);
@@ -113,9 +138,10 @@ export function CoachDashboard() {
       const response = await fetch("/api/v1/coach/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, clientMutationId: mutationId() }),
+        body: JSON.stringify({ ...values, clientMutationId }),
       });
       const result = await readResponse<CreateClientResult>(response);
+      createMutation.current = null;
       setClients((current) => mergeClient(current, toDashboardClient(result)));
       setDialogOpen(false);
       setNotice(
@@ -130,6 +156,8 @@ export function CoachDashboard() {
 
   async function mutateInvitation(client: CoachDashboardClient, action: "resend" | "revoke") {
     const key = `${action}:${client.id}`;
+    const clientMutationId = invitationMutations.current.get(key) ?? mutationId();
+    invitationMutations.current.set(key, clientMutationId);
     setBusyKey(key);
     setError(null);
     setNotice(null);
@@ -139,10 +167,11 @@ export function CoachDashboard() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ clientMutationId: mutationId() }),
+          body: JSON.stringify({ clientMutationId }),
         },
       );
       const result = await readResponse<InvitationMutationResult>(response);
+      invitationMutations.current.delete(key);
       setClients((current) => mergeClient(current, toDashboardClient(result)));
       setNotice(
         action === "resend"
@@ -215,7 +244,8 @@ export function CoachDashboard() {
           ) : (
             <ul className={styles.list}>
               {clients.map((client) => {
-                const canChange = invitationCanChange(client);
+                const canResend = invitationCanResend(client);
+                const canRevoke = invitationCanRevoke(client);
                 return (
                   <li className={styles.clientRow} key={client.id}>
                     <div className={styles.clientMain}>
@@ -237,24 +267,28 @@ export function CoachDashboard() {
                       </span>
                     </div>
 
-                    {canChange ? (
+                    {canResend || canRevoke ? (
                       <div className={styles.actions}>
-                        <button
-                          className={styles.buttonSecondary}
-                          disabled={busyKey !== null}
-                          onClick={() => void mutateInvitation(client, "resend")}
-                          type="button"
-                        >
-                          {busyKey === `resend:${client.id}` ? "Renvoi…" : "Renvoyer"}
-                        </button>
-                        <button
-                          className={styles.buttonDanger}
-                          disabled={busyKey !== null}
-                          onClick={() => void mutateInvitation(client, "revoke")}
-                          type="button"
-                        >
-                          {busyKey === `revoke:${client.id}` ? "Révocation…" : "Révoquer"}
-                        </button>
+                        {canResend ? (
+                          <button
+                            className={styles.buttonSecondary}
+                            disabled={busyKey !== null}
+                            onClick={() => void mutateInvitation(client, "resend")}
+                            type="button"
+                          >
+                            {busyKey === `resend:${client.id}` ? "Renvoi…" : "Renvoyer"}
+                          </button>
+                        ) : null}
+                        {canRevoke ? (
+                          <button
+                            className={styles.buttonDanger}
+                            disabled={busyKey !== null}
+                            onClick={() => void mutateInvitation(client, "revoke")}
+                            type="button"
+                          >
+                            {busyKey === `revoke:${client.id}` ? "Révocation…" : "Révoquer"}
+                          </button>
+                        ) : null}
                       </div>
                     ) : null}
                   </li>
@@ -270,6 +304,7 @@ export function CoachDashboard() {
         error={dialogOpen ? error : null}
         onClose={() => {
           if (busyKey === null) {
+            createMutation.current = null;
             setDialogOpen(false);
             setError(null);
           }
@@ -280,4 +315,3 @@ export function CoachDashboard() {
     </main>
   );
 }
-

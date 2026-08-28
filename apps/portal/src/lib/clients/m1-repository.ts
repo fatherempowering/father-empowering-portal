@@ -189,19 +189,8 @@ export async function revokeClientInvitation(input: {
   const clientId = uuidSchema.parse(input.clientId);
   const idempotencyKey = uuidSchema.parse(input.idempotencyKey);
   const supabase = await createServerSupabaseClient();
-  const { data: invitation, error: lookupError } = await supabase
-    .from("client_invitations")
-    .select("id")
-    .eq("client_id", clientId)
-    .in("status", ["PENDING", "SENT"])
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (lookupError || !invitation) {
-    throw new M1ContractError("NOT_FOUND", "Active invitation not found", 404);
-  }
-  const { data, error } = await supabase.rpc("revoke_client_invitation", {
-    p_invitation_id: invitation.id,
+  const { data, error } = await supabase.rpc("revoke_client_invitation_for_client", {
+    p_client_id: clientId,
     p_reason: input.reason ?? "Révoquée par le coach",
     p_idempotency_key: idempotencyKey,
   });

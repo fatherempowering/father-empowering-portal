@@ -14,3 +14,17 @@ export function assertCoachAal2(actor: ServerActor): ServerActor {
   }
   return actor;
 }
+
+export function assertMfaEnrollmentAllowed(
+  actor: ServerActor,
+  hasVerifiedFactor: boolean,
+): void {
+  assertActorRole(actor, "ADMIN", "COACH");
+  if (hasVerifiedFactor && actor.aal !== "aal2") {
+    throw new M1ContractError(
+      "FORBIDDEN",
+      "An existing MFA factor must be verified before another can be enrolled",
+      403,
+    );
+  }
+}

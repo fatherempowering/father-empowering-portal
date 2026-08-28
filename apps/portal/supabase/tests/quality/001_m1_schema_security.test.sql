@@ -71,6 +71,16 @@ select has_check(
   'audit_context_m1_no_secret_keys',
   'audit context rejects known secret-bearing keys'
 );
+select ok(
+  exists (
+    select 1
+    from pg_catalog.pg_indexes
+    where schemaname = 'public'
+      and tablename = 'audit_events'
+      and indexname = 'audit_client_invitation_viewed_once_idx'
+  ),
+  'invitation view audit is deduplicated in PostgreSQL'
+);
 
 select is(
   (
@@ -123,6 +133,22 @@ select ok(
 );
 select ok(
   not has_function_privilege(
+    'anon',
+    'public.revoke_client_invitation_for_client(uuid,text,uuid)',
+    'EXECUTE'
+  ),
+  'anonymous cannot revoke a client invitation'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.revoke_client_invitation_for_client(uuid,text,uuid)',
+    'EXECUTE'
+  ),
+  'authenticated staff can invoke the guarded client revocation command'
+);
+select ok(
+  not has_function_privilege(
     'authenticated',
     'public.claim_outbox_events(integer,uuid)',
     'EXECUTE'
@@ -146,12 +172,12 @@ select ok(
   'anonymous cannot invoke M1 auth audit recording'
 );
 select ok(
-  has_function_privilege(
+  not has_function_privilege(
     'authenticated',
     'public.record_m1_auth_event(text,jsonb)',
     'EXECUTE'
   ),
-  'authenticated staff can invoke the guarded auth audit RPC'
+  'authenticated sessions cannot forge staff authentication audits'
 );
 
 select ok(

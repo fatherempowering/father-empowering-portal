@@ -177,6 +177,135 @@ select is(
   'failed creation leaves no partial client'
 );
 
+-- Revocation and resend remain retry-safe and a revoked invited client can be
+-- invited again without creating another client or assignment.
+select lives_ok(
+  $$select public.create_invited_client(
+    '21000000-0000-4000-8000-000000000001',
+    'lifecycle@example.test',
+    'Invitation',
+    'Lifecycle',
+    'fr-CA',
+    'America/Montreal',
+    repeat('b', 64),
+    now() + interval '2 days',
+    '61000000-0000-4000-8000-000000000010',
+    null
+  )$$,
+  'a second invited client is created for invitation lifecycle tests'
+);
+select lives_ok(
+  $$select public.revoke_client_invitation_for_client(
+    (select id from public.clients where email = 'lifecycle@example.test'),
+    'Coach cancelled invitation',
+    '61000000-0000-4000-8000-000000000011'
+  )$$,
+  'Coach revokes the current invitation by client id'
+);
+select lives_ok(
+  $$select public.revoke_client_invitation_for_client(
+    (select id from public.clients where email = 'lifecycle@example.test'),
+    'Coach cancelled invitation',
+    '61000000-0000-4000-8000-000000000011'
+  )$$,
+  'an identical revocation retry succeeds after state became REVOKED'
+);
+select is(
+  (select count(*) from public.audit_events
+   where command = 'RevokeClientInvitation'
+     and context ->> 'clientId' = (
+       select id::text from public.clients where email = 'lifecycle@example.test'
+     )),
+  1::bigint,
+  'revocation retry does not duplicate audit'
+);
+select is(
+  (select count(*) from public.outbox_events
+   where event_type = 'ClientInvitationRevoked'
+     and payload ->> 'clientId' = (
+       select id::text from public.clients where email = 'lifecycle@example.test'
+     )),
+  1::bigint,
+  'revocation retry does not duplicate outbox delivery'
+);
+select throws_ok(
+  $$select public.revoke_client_invitation_for_client(
+    (select id from public.clients where email = 'lifecycle@example.test'),
+    'Different command payload',
+    '61000000-0000-4000-8000-000000000011'
+  )$$,
+  'P0001',
+  'FE_IDEMPOTENCY_CONFLICT',
+  'revocation key reuse with another payload is rejected'
+);
+select lives_ok(
+  $$select public.resend_client_invitation(
+    (select id from public.clients where email = 'lifecycle@example.test'),
+    repeat('f', 64),
+    now() + interval '2 days',
+    '61000000-0000-4000-8000-000000000012'
+  )$$,
+  'a revoked invited client can receive a new invitation'
+);
+select lives_ok(
+  $$select public.resend_client_invitation(
+    (select id from public.clients where email = 'lifecycle@example.test'),
+    repeat('f', 64),
+    now() + interval '2 days',
+    '61000000-0000-4000-8000-000000000012'
+  )$$,
+  'an identical resend retry succeeds'
+);
+select is(
+  (select count(*) from public.audit_events
+   where command = 'ResendClientInvitation'
+     and context ->> 'clientId' = (
+       select id::text from public.clients where email = 'lifecycle@example.test'
+     )),
+  1::bigint,
+  'resend retry does not duplicate audit'
+);
+select is(
+  (select count(*) from public.outbox_events
+   where event_type = 'ClientInvitationResent'
+     and payload ->> 'clientId' = (
+       select id::text from public.clients where email = 'lifecycle@example.test'
+     )),
+  1::bigint,
+  'resend retry does not duplicate outbox delivery'
+);
+select is(
+  (select count(*) from public.client_invitations invitation
+   join public.clients client on client.id = invitation.client_id
+   where client.email = 'lifecycle@example.test' and invitation.status = 'PENDING'),
+  1::bigint,
+  'resend leaves exactly one current pending invitation'
+);
+select lives_ok(
+  $$select public.revoke_client_invitation_for_client(
+    (select id from public.clients where email = 'lifecycle@example.test'),
+    'Second revocation',
+    '61000000-0000-4000-8000-000000000013'
+  )$$,
+  'the resent invitation can be revoked'
+);
+select lives_ok(
+  $$select public.resend_client_invitation(
+    (select id from public.clients where email = 'lifecycle@example.test'),
+    repeat('d', 64),
+    now() + interval '2 days',
+    '61000000-0000-4000-8000-000000000014'
+  )$$,
+  'the UI-supported revoke then resend lifecycle succeeds'
+);
+select is(
+  (select count(*) from public.client_invitations invitation
+   join public.clients client on client.id = invitation.client_id
+   where client.email = 'lifecycle@example.test' and invitation.status = 'PENDING'),
+  1::bigint,
+  'revoke then resend again leaves one current invitation'
+);
+
 -- Simulate the trusted delivery worker. Activation is intentionally forbidden
 -- until the invitation has actually reached SENT.
 reset role;

@@ -1,5 +1,6 @@
 import type { ActivationContext } from "../activation/contracts";
 import type { ClientActivationWorkflow } from "../activation/client-activation-workflow";
+import { requestFingerprint } from "@/lib/http/request-fingerprint";
 import {
   assertSameOrigin,
   jsonResponse,
@@ -72,11 +73,8 @@ export function createVerifyOtpHandler({
 }
 
 function defaultContext(request: Request): ActivationContext {
-  const forwardedFor = request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
-  const userAgent = request.headers.get("user-agent")?.slice(0, 160) ?? "unknown";
-
   return {
-    requestFingerprint: `${forwardedFor ?? "unknown"}:${userAgent}`,
+    requestFingerprint: requestFingerprint(request),
     correlationId: request.headers.get("x-request-id") ?? crypto.randomUUID(),
   };
 }

@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/:path*", headers: securityHeaders },
       {
-        source: "/:protected(coach|client|mfa|activate)/:path*",
+        source: "/:protected(coach|client|client-login|mfa|activate)/:path*",
         headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }],
       },
     ];

@@ -1,6 +1,8 @@
-export class InvalidOriginError extends Error {
+import { M1ContractError } from "@/lib/contracts/m1";
+
+export class InvalidOriginError extends M1ContractError {
   constructor() {
-    super("Cross-origin mutation denied");
+    super("FORBIDDEN", "Cross-origin mutation denied", 403);
     this.name = "InvalidOriginError";
   }
 }

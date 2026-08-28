@@ -749,6 +749,118 @@ begin
 end;
 $$;
 
+create or replace function public.revoke_client_invitation_for_client(
+  p_client_id uuid,
+  p_reason text,
+  p_idempotency_key uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_actor_id uuid := auth.uid();
+  v_actor_role public.app_role;
+  v_client public.clients%rowtype;
+  v_invitation public.client_invitations%rowtype;
+  v_existing_audit public.audit_events%rowtype;
+  v_reason text := nullif(btrim(p_reason), '');
+  v_request_fingerprint text;
+begin
+  if v_actor_id is null then
+    raise exception using errcode = 'P0001', message = 'FE_UNAUTHENTICATED';
+  end if;
+  if coalesce(auth.jwt() ->> 'aal', 'aal1') <> 'aal2' then
+    raise exception using errcode = 'P0001', message = 'FE_MFA_AAL2_REQUIRED';
+  end if;
+  if v_reason is null or char_length(v_reason) > 500 then
+    raise exception using errcode = 'P0001', message = 'FE_INVALID_REASON';
+  end if;
+
+  select client.* into v_client
+  from public.clients client
+  where client.id = p_client_id
+  for update;
+  if not found then
+    raise exception using errcode = 'P0001', message = 'FE_CLIENT_NOT_FOUND';
+  end if;
+
+  select membership.role into v_actor_role
+  from public.organization_memberships membership
+  where membership.organization_id = v_client.organization_id
+    and membership.user_id = v_actor_id
+    and membership.status = 'ACTIVE';
+  if v_actor_role is null or v_actor_role not in ('ADMIN', 'COACH') then
+    raise exception using errcode = 'P0001', message = 'FE_FORBIDDEN';
+  end if;
+  if v_actor_role = 'COACH' and not exists (
+    select 1 from public.coach_client_assignments assignment
+    where assignment.client_id = v_client.id
+      and assignment.coach_user_id = v_actor_id
+      and assignment.status in ('PENDING', 'ACTIVE', 'PAUSED')
+  ) then
+    raise exception using errcode = 'P0001', message = 'FE_FORBIDDEN';
+  end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended(
+      concat_ws(':', v_client.organization_id::text, v_actor_id::text, p_idempotency_key::text),
+      0
+    )
+  );
+
+  select audit.* into v_existing_audit
+  from public.audit_events audit
+  where audit.organization_id = v_client.organization_id
+    and audit.actor_user_id = v_actor_id
+    and audit.command = 'RevokeClientInvitation'
+    and audit.correlation_id = p_idempotency_key;
+  if found then
+    v_request_fingerprint := encode(
+      extensions.digest(
+        convert_to(
+          jsonb_build_object(
+            'operation', 'revoke',
+            'invitationId', v_existing_audit.entity_id,
+            'reason', v_reason
+          )::text,
+          'UTF8'
+        ),
+        'sha256'
+      ),
+      'hex'
+    );
+    if v_existing_audit.entity_type <> 'client_invitation'
+       or v_existing_audit.context ->> 'clientId' is distinct from v_client.id::text
+       or v_existing_audit.context ->> 'requestFingerprint' is distinct from v_request_fingerprint then
+      raise exception using errcode = 'P0001', message = 'FE_IDEMPOTENCY_CONFLICT';
+    end if;
+    return jsonb_build_object(
+      'invitationId', v_existing_audit.entity_id,
+      'status', 'REVOKED'
+    );
+  end if;
+
+  select invitation.* into v_invitation
+  from public.client_invitations invitation
+  where invitation.client_id = v_client.id
+    and invitation.status in ('PENDING', 'SENT')
+  order by invitation.created_at desc
+  limit 1
+  for update;
+  if not found then
+    raise exception using errcode = 'P0001', message = 'FE_INVITATION_NOT_FOUND';
+  end if;
+
+  return public.revoke_client_invitation(
+    v_invitation.id,
+    v_reason,
+    p_idempotency_key
+  );
+end;
+$$;
+
 create or replace function public.claim_outbox_events(
   p_limit integer,
   p_worker_id uuid
@@ -890,17 +1002,18 @@ revoke all on function public.create_invited_client(uuid, text, text, text, text
 revoke all on function public.accept_client_invitation(text) from public, anon;
 revoke all on function public.resend_client_invitation(uuid, text, timestamptz, uuid) from public, anon;
 revoke all on function public.revoke_client_invitation(uuid, text, uuid) from public, anon;
+revoke all on function public.revoke_client_invitation_for_client(uuid, text, uuid) from public, anon;
 revoke all on function public.claim_outbox_events(integer, uuid) from public, anon, authenticated;
 revoke all on function public.complete_outbox_event(uuid, uuid) from public, anon, authenticated;
 revoke all on function public.fail_outbox_event(uuid, uuid, text, timestamptz, boolean) from public, anon, authenticated;
-revoke all on function public.record_m1_auth_event(text, jsonb) from public, anon;
+revoke all on function public.record_m1_auth_event(text, jsonb) from public, anon, authenticated;
 grant execute on function public.create_invited_client(uuid, text, text, text, text, text, text, timestamptz, uuid, uuid) to authenticated;
 grant execute on function public.accept_client_invitation(text) to authenticated;
 grant execute on function public.resend_client_invitation(uuid, text, timestamptz, uuid) to authenticated;
 grant execute on function public.revoke_client_invitation(uuid, text, uuid) to authenticated;
+grant execute on function public.revoke_client_invitation_for_client(uuid, text, uuid) to authenticated;
 grant execute on function public.claim_outbox_events(integer, uuid) to service_role;
 grant execute on function public.complete_outbox_event(uuid, uuid) to service_role;
 grant execute on function public.fail_outbox_event(uuid, uuid, text, timestamptz, boolean) to service_role;
-grant execute on function public.record_m1_auth_event(text, jsonb) to authenticated;
 
 commit;

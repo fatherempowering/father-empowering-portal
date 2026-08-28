@@ -8,7 +8,17 @@ if (!workdir) throw new Error("SUPABASE_WORKDIR is required.");
 
 const raw = execFileSync(
   "pnpm",
-  ["exec", "supabase", "status", "--workdir", workdir, "-o", "json"],
+  [
+    "--filter",
+    "@father-empowering/portal",
+    "exec",
+    "supabase",
+    "status",
+    "--workdir",
+    workdir,
+    "-o",
+    "json",
+  ],
   {
     encoding: "utf8",
   },

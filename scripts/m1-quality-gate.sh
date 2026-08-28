@@ -44,7 +44,8 @@ cleanup() {
   fi
 
   if [[ "${M1_SUPABASE_STARTED}" == "1" ]] && [[ "${M1_KEEP_SERVICES:-0}" != "1" ]]; then
-    pnpm exec supabase stop --workdir "${M1_SUPABASE_WORKDIR}" --no-backup >/dev/null 2>&1 || true
+    pnpm --filter @father-empowering/portal exec supabase stop \
+      --workdir "${M1_SUPABASE_WORKDIR}" --no-backup >/dev/null 2>&1 || true
   fi
 
   if [[ -n "${M1_ENV_FILE}" ]] && [[ -f "${M1_ENV_FILE}" ]]; then
@@ -98,6 +99,16 @@ verify_legacy_unchanged() {
   git -C "${M1_REPOSITORY_ROOT}" diff --exit-code "${M1_BASE_COMMIT}" -- "${legacy_paths[@]}"
 }
 
+verify_artifacts_safe() {
+  if rg --quiet -i \
+    '#token=[A-Za-z0-9_-]{32,}|"(invitationToken|opaqueToken|rawToken|otp)"[[:space:]]*:' \
+    "${M1_ARTIFACT_ROOT}" 2>/dev/null; then
+    : > "${M1_ARTIFACT_ROOT}/UNSAFE_ARTIFACTS_DO_NOT_UPLOAD"
+    echo "FAIL: un artefact M1 contient un motif de jeton ou OTP brut." >&2
+    return 1
+  fi
+}
+
 export_local_supabase_environment() {
   M1_ENV_FILE="$(mktemp "${TMPDIR:-/tmp}/father-empowering-m1-env.XXXXXX")"
   node "${M1_REPOSITORY_ROOT}/scripts/m1-supabase-env.mjs" \
@@ -146,8 +157,8 @@ require_command rg
 {
   node --version
   pnpm --version
-  pnpm exec supabase --version
-  pnpm exec playwright --version
+  pnpm --filter @father-empowering/portal exec supabase --version
+  pnpm --filter @father-empowering/portal exec playwright --version
 } > "${M1_ARTIFACT_ROOT}/versions.txt"
 
 M1_FAILURE_STATE=FAIL
@@ -158,12 +169,14 @@ run_logged lint pnpm lint
 run_logged typecheck pnpm typecheck
 
 M1_FAILURE_STATE=BLOCKED
-run_logged supabase-start pnpm exec supabase start --workdir "${M1_SUPABASE_WORKDIR}"
+run_logged supabase-start pnpm --filter @father-empowering/portal exec supabase start \
+  --workdir "${M1_SUPABASE_WORKDIR}"
 M1_SUPABASE_STARTED=1
 export_local_supabase_environment
 
 M1_FAILURE_STATE=FAIL
-run_logged rls pnpm exec supabase test db quality --workdir "${M1_SUPABASE_WORKDIR}"
+run_logged rls pnpm --filter @father-empowering/portal exec supabase test db quality \
+  --workdir "${M1_SUPABASE_WORKDIR}"
 run_logged build pnpm build
 
 start_application
@@ -171,8 +184,9 @@ M1_FAILURE_STATE=BLOCKED
 start_worker
 M1_FAILURE_STATE=FAIL
 run_logged integration pnpm --filter @father-empowering/portal test:integration
-run_logged e2e pnpm exec playwright test \
+run_logged e2e pnpm --filter @father-empowering/portal exec playwright test \
   --config apps/portal/tests/e2e/playwright.config.ts
+run_logged artifact-safety verify_artifacts_safe
 
 record_summary PASS
 echo "PASS: gate M1 réussi sur $(git rev-parse --short HEAD)."

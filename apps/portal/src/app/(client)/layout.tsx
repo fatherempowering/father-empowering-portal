@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 
-import { requireRole } from "@/lib/auth/actor";
+import { getServerActor } from "@/lib/auth/actor";
 import { RegisterClientShell } from "@/features/client/pwa/register-client-shell";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,9 @@ export const metadata: Metadata = {
 };
 
 export default async function ClientLayout({ children }: { children: ReactNode }) {
-  await requireRole("CLIENT");
+  const actor = await getServerActor();
+  if (!actor) redirect("/client-login");
+  if (actor.role !== "CLIENT") redirect(actor.aal === "aal2" ? "/coach" : "/mfa");
 
   return (
     <>

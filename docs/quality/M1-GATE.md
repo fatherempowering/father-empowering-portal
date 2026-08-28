@@ -37,6 +37,8 @@ Le parcours de référence est le suivant :
    membership `CLIENT`, accepte l'invitation et écrit l'audit atomiquement.
 8. Le tableau Coach affiche le Client comme actif et toujours assigné à Max.
 9. Le tableau Client n'affiche que sa propre fiche.
+10. Dans une nouvelle session, le Client redemande un OTP sans mot de passe et
+    retrouve uniquement son propre portail.
 
 ## Matrice obligatoire
 
@@ -60,10 +62,12 @@ Le parcours de référence est le suivant :
 | M1-S10 | Le lien d'invitation place le jeton dans le fragment, jamais la query string | Unitaire + E2E | Oui |
 | M1-S11 | Le navigateur ne peut lire ni le condensat ni l'état privé du throttling | Privilèges DB | Oui |
 | M1-S12 | L'activation limite à 5 demandes et 10 vérifications OTP par 15 minutes | DB | Oui |
+| M1-S13 | La rotation IP/UA ne réinitialise pas la limite globale invitation/email | DB | Oui |
 | M1-A01 | Création, invitation et activation produisent les audits M1 | DB | Oui |
 | M1-I01 | Max → création → invitation → OTP → activation → Client actif | E2E | Oui |
 | M1-I02 | Le Client activé accède à `/client`, pas à `/coach` | E2E | Oui |
 | M1-I03 | Un Client différent ne peut pas obtenir la fiche activée | E2E/RLS | Oui |
+| M1-I04 | Un Client actif peut se reconnecter par OTP sans créer de compte | E2E | Oui |
 | M1-L01 | Aucun fichier du portail legacy n'a changé depuis le commit de base | Diff | Oui |
 
 ## Harness local et CI
@@ -114,11 +118,13 @@ Chaque exécution conserve dans `artifacts/m1-gate/` :
 - `rls.log` (tests pgTAP sous `apps/portal/supabase/tests/quality`);
 - `integration.log`;
 - `e2e.log`;
-- le rapport HTML Playwright en cas d'échec;
+- `artifact-safety.log`, produit par le scan anti-secret avant publication;
 - les informations de version de Node, Supabase CLI et Playwright;
 - aucune clé, aucun OTP et aucun jeton d'invitation.
 
-Les artefacts CI sont conservés même après échec. Ils ne sont jamais commités.
+Les traces, captures, vidéos et rapports HTML Playwright sont désactivés pour ce
+parcours, car ils peuvent sérialiser le fragment d'invitation ou un OTP. Les
+journaux textuels CI sont conservés même après échec et ne sont jamais commités.
 
 ## Conditions de blocage immédiat
 
@@ -145,3 +151,8 @@ Agent 4 bloque M1 si l'une des situations suivantes est observée :
 
 Ce gate couvre M0/M1 uniquement. Il ne valide ni Week Zero, ni Exercise
 Library, ni Program Builder, ni publication, ni migration legacy, ni production.
+
+Le worker lancé par ce gate est volontairement limité à l'environnement local.
+Avant tout essai en staging, un déclencheur privé et authentifié de l'outbox doit
+être configuré dans l'environnement cible et repasser ce même parcours. Aucun
+cron staging/production ni déploiement n'est autorisé par le présent milestone.

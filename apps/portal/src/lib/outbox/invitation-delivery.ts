@@ -70,16 +70,6 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
   // worker invocation, and remains retry-safe with the provider idempotency key.
   const opaqueToken = deriveOpaqueToken(event, invitation.id, environment.INVITATION_TOKEN_SECRET);
   const tokenHash = hashInvitationToken(opaqueToken);
-  const sentAt = new Date().toISOString();
-  const { data: rotated, error: rotationError } = await admin
-    .from("client_invitations")
-    .update({ token_hash: tokenHash, status: "SENT", sent_at: sentAt })
-    .eq("id", invitation.id)
-    .in("status", ["PENDING", "SENT"])
-    .select("id")
-    .maybeSingle();
-  if (rotationError || !rotated) throw rotationError ?? new Error("Invitation is no longer deliverable");
-
   const activationUrl = new URL("/activate", environment.NEXT_PUBLIC_APP_URL);
   // URL fragments are never sent in HTTP requests, so the bearer secret stays
   // out of reverse-proxy and access logs.
@@ -107,24 +97,37 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
     } finally {
       transport.close();
     }
-    return;
+  } else {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${environment.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+        "Idempotency-Key": event.id,
+      },
+      body: JSON.stringify({
+        from: environment.INVITATION_EMAIL_FROM,
+        to: [invitation.email],
+        subject,
+        text,
+      }),
+    });
+    if (!response.ok) throw new Error(`Invitation provider failed with status ${response.status}`);
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${environment.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-      "Idempotency-Key": event.id,
-    },
-    body: JSON.stringify({
-      from: environment.INVITATION_EMAIL_FROM,
-      to: [invitation.email],
-      subject,
-      text,
-    }),
-  });
-  if (!response.ok) throw new Error(`Invitation provider failed with status ${response.status}`);
+  // SENT means the provider accepted the message. A failed provider call keeps
+  // the invitation PENDING, so Coach status and activation never claim a
+  // delivery that did not happen.
+  const { data: delivered, error: deliveryError } = await admin
+    .from("client_invitations")
+    .update({ token_hash: tokenHash, status: "SENT", sent_at: new Date().toISOString() })
+    .eq("id", invitation.id)
+    .in("status", ["PENDING", "SENT"])
+    .select("id")
+    .maybeSingle();
+  if (deliveryError || !delivered) {
+    throw deliveryError ?? new Error("Invitation is no longer deliverable");
+  }
 };
 
 const acknowledgeM1Signal: OutboxHandler = async () => {

@@ -8,6 +8,11 @@ select has_table(
   'activation_rate_limits',
   'M1 owns a private activation rate-limit table'
 );
+select has_table(
+  'app_private',
+  'client_otp_rate_limits',
+  'M1 owns a private returning-client OTP rate-limit table'
+);
 select ok(
   not has_table_privilege('anon', 'app_private.activation_rate_limits', 'SELECT'),
   'anonymous cannot read activation rate-limit state'
@@ -15,6 +20,10 @@ select ok(
 select ok(
   not has_table_privilege('authenticated', 'app_private.activation_rate_limits', 'SELECT'),
   'authenticated browser sessions cannot read activation rate-limit state'
+);
+select ok(
+  not has_table_privilege('authenticated', 'app_private.client_otp_rate_limits', 'SELECT'),
+  'authenticated browser sessions cannot read returning-client OTP limits'
 );
 select ok(
   not has_function_privilege(
@@ -39,6 +48,22 @@ select ok(
     'EXECUTE'
   ),
   'the trusted service role can enforce activation limits'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.consume_m1_client_otp_limit(text,text,text)',
+    'EXECUTE'
+  ),
+  'authenticated browser sessions cannot consume client login limits'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.consume_m1_client_otp_limit(text,text,text)',
+    'EXECUTE'
+  ),
+  'the trusted service role enforces returning-client OTP limits'
 );
 
 insert into auth.users (
@@ -152,6 +177,16 @@ select throws_ok(
   'FE_RATE_LIMITED',
   'the sixth OTP request is rate limited'
 );
+select throws_ok(
+  $$select public.consume_m1_activation_limit(
+    '72000000-0000-4000-8000-000000000001',
+    repeat('b', 64),
+    'REQUEST_OTP'
+  )$$,
+  'P0001',
+  'FE_RATE_LIMITED',
+  'rotating the request fingerprint does not reset the invitation limit'
+);
 
 select lives_ok(
   $$select public.consume_m1_activation_limit(
@@ -170,6 +205,16 @@ select throws_ok(
   'P0001',
   'FE_RATE_LIMITED',
   'the eleventh OTP verification is rate limited'
+);
+select throws_ok(
+  $$select public.consume_m1_activation_limit(
+    '72000000-0000-4000-8000-000000000001',
+    repeat('c', 64),
+    'VERIFY_OTP'
+  )$$,
+  'P0001',
+  'FE_RATE_LIMITED',
+  'rotating the verification fingerprint does not reset the invitation limit'
 );
 
 reset role;
@@ -196,5 +241,44 @@ select is(
   'a rejected OTP verification does not persist an over-limit increment'
 );
 
+set local role service_role;
+select lives_ok(
+  $$select public.consume_m1_client_otp_limit(
+    repeat('d', 64),
+    repeat('e', 64),
+    'REQUEST_OTP'
+  ) from generate_series(1, 5)$$,
+  'five returning-client OTP requests are permitted'
+);
+select throws_ok(
+  $$select public.consume_m1_client_otp_limit(
+    repeat('d', 64),
+    repeat('f', 64),
+    'REQUEST_OTP'
+  )$$,
+  'P0001',
+  'FE_RATE_LIMITED',
+  'returning-client request limit survives fingerprint rotation'
+);
+select lives_ok(
+  $$select public.consume_m1_client_otp_limit(
+    repeat('d', 64),
+    repeat('a', 64),
+    'VERIFY_OTP'
+  ) from generate_series(1, 10)$$,
+  'ten returning-client OTP verifications are permitted'
+);
+select throws_ok(
+  $$select public.consume_m1_client_otp_limit(
+    repeat('d', 64),
+    repeat('b', 64),
+    'VERIFY_OTP'
+  )$$,
+  'P0001',
+  'FE_RATE_LIMITED',
+  'returning-client verification limit survives fingerprint rotation'
+);
+
+reset role;
 select * from finish();
 rollback;

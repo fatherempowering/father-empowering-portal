@@ -58,19 +58,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm --filter @father-empowering/portal exec playwright install --with-deps chromium
 
       - name: Run canonical M1 gate
         run: bash scripts/m1-quality-gate.sh
 
       - name: Upload evidence
-        if: always()
+        if: always() && hashFiles('artifacts/m1-gate/UNSAFE_ARTIFACTS_DO_NOT_UPLOAD') == ''
         uses: actions/upload-artifact@v4
         with:
           name: m1-gate-${{ github.sha }}
           path: |
             artifacts/m1-gate/
-            playwright-report/
-            test-results/
           if-no-files-found: warn
           retention-days: 14
