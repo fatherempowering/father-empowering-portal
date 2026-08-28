@@ -2,7 +2,7 @@
   "name": "father-empowering",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "npm@10.9.2",
+  "packageManager": "pnpm@11.19.0",
   "engines": {
     "node": ">=22.0.0"
   },
@@ -10,15 +10,16 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace @father-empowering/portal",
-    "build": "npm run build --workspace @father-empowering/portal",
-    "lint": "npm run lint --workspace @father-empowering/portal",
-    "typecheck": "npm run typecheck --workspace @father-empowering/portal",
-    "test": "npm run test --workspace @father-empowering/portal",
-    "test:unit": "npm run test:unit --workspace @father-empowering/portal",
-    "test:integration": "npm run test:integration --workspace @father-empowering/portal",
-    "test:sql": "npm run test:sql --workspace @father-empowering/portal",
-    "test:e2e": "npm run test:e2e --workspace @father-empowering/portal",
-    "test:m1": "npm run test:m1 --workspace @father-empowering/portal"
+    "dev": "pnpm --filter @father-empowering/portal dev",
+    "build": "pnpm --filter @father-empowering/portal build",
+    "lint": "pnpm --filter @father-empowering/portal lint",
+    "typecheck": "pnpm --filter @father-empowering/portal typecheck",
+    "test": "pnpm --filter @father-empowering/portal test",
+    "test:unit": "pnpm --filter @father-empowering/portal test:unit",
+    "test:integration": "pnpm --filter @father-empowering/portal test:integration",
+    "test:sql": "pnpm --filter @father-empowering/portal test:sql",
+    "test:e2e": "pnpm --filter @father-empowering/portal test:e2e",
+    "test:m1": "pnpm --filter @father-empowering/portal test:m1",
+    "worker:m1": "pnpm --filter @father-empowering/portal worker:m1"
   }
 }

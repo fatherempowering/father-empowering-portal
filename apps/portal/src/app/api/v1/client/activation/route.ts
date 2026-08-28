@@ -3,7 +3,7 @@ import { getClientActivationWorkflow } from "@/features/client/server/runtime";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request): Promise<Response> {
+export async function POST(request: Request): Promise<Response> {
   return createInspectInvitationHandler({
     workflow: getClientActivationWorkflow(),
   })(request);

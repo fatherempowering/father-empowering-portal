@@ -41,7 +41,14 @@ describe("client activation HTTP handlers", () => {
     const handler = createInspectInvitationHandler({ workflow, createContext: () => context });
 
     const response = await handler(
-      new Request(`https://app.fatherempowering.com/api/v1/client/activation?token=${TOKEN}`),
+      new Request("https://app.fatherempowering.com/api/v1/client/activation", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://app.fatherempowering.com",
+        },
+        body: JSON.stringify({ invitationToken: TOKEN }),
+      }),
     );
 
     expect(response.status).toBe(200);

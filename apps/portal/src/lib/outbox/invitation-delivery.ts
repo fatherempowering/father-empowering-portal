@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHmac } from "node:crypto";
+import nodemailer from "nodemailer";
 
 import { hashInvitationToken } from "@/lib/auth/invitation-token";
 import { getInvitationDeliveryEnvironment } from "@/lib/env";
@@ -35,7 +36,16 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
   if (invitationError || !invitation) throw invitationError ?? new Error("Invitation not found");
 
   // An accepted/revoked/expired invitation makes a delayed delivery a safe no-op.
-  if (!['PENDING', 'SENT'].includes(invitation.status)) return;
+  if (!["PENDING", "SENT"].includes(invitation.status)) return;
+  if (Date.parse(invitation.expires_at) <= Date.now()) {
+    const { error: expiryError } = await admin
+      .from("client_invitations")
+      .update({ status: "EXPIRED" })
+      .eq("id", invitation.id)
+      .in("status", ["PENDING", "SENT"]);
+    if (expiryError) throw expiryError;
+    return;
+  }
 
   const { data: client, error: clientError } = await admin
     .from("clients")
@@ -71,12 +81,34 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
   if (rotationError || !rotated) throw rotationError ?? new Error("Invitation is no longer deliverable");
 
   const activationUrl = new URL("/activate", environment.NEXT_PUBLIC_APP_URL);
-  activationUrl.searchParams.set("token", opaqueToken);
+  // URL fragments are never sent in HTTP requests, so the bearer secret stays
+  // out of reverse-proxy and access logs.
+  activationUrl.hash = new URLSearchParams({ token: opaqueToken }).toString();
   const french = client.locale === "fr-CA";
   const subject = french ? "Ton accès Father Empowering" : "Your Father Empowering access";
   const text = french
     ? `Bonjour ${client.first_name},\n\nActive ton accès sécurisé : ${activationUrl.toString()}\n\nCe lien expire le ${invitation.expires_at}.`
     : `Hello ${client.first_name},\n\nActivate your secure access: ${activationUrl.toString()}\n\nThis link expires on ${invitation.expires_at}.`;
+
+  if (environment.M1_EMAIL_TRANSPORT === "smtp") {
+    const transport = nodemailer.createTransport({
+      host: environment.M1_TEST_SMTP_HOST,
+      port: environment.M1_TEST_SMTP_PORT,
+      secure: false,
+    });
+    try {
+      await transport.sendMail({
+        from: environment.INVITATION_EMAIL_FROM,
+        to: invitation.email,
+        subject,
+        text,
+        headers: { "X-Father-Empowering-Event": event.id },
+      });
+    } finally {
+      transport.close();
+    }
+    return;
+  }
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -95,7 +127,14 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
   if (!response.ok) throw new Error(`Invitation provider failed with status ${response.status}`);
 };
 
+const acknowledgeM1Signal: OutboxHandler = async () => {
+  // Realtime and post-activation email effects are deliberately deferred. The
+  // transactional signal is still consumed so the M1 outbox remains healthy.
+};
+
 export const m1OutboxHandlers = {
   ClientInvitationCreated: deliverClientInvitation,
   ClientInvitationResent: deliverClientInvitation,
+  ClientInvitationRevoked: acknowledgeM1Signal,
+  ClientActivated: acknowledgeM1Signal,
 } as const;

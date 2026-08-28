@@ -10,13 +10,6 @@ export const metadata: Metadata = {
   referrer: "no-referrer",
 };
 
-export default async function ActivatePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ token?: string | string[] }>;
-}) {
-  const params = await searchParams;
-  const token = typeof params.token === "string" ? params.token : "";
-
-  return <ClientActivationCard invitationToken={token} />;
+export default function ActivatePage() {
+  return <ClientActivationCard />;
 }

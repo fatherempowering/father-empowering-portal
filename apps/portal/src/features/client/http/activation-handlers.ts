@@ -20,8 +20,12 @@ export function createInspectInvitationHandler({
 }: ActivationHandlerDependencies) {
   return async function inspectInvitation(request: Request): Promise<Response> {
     try {
-      const token = new URL(request.url).searchParams.get("token");
-      const invitation = await workflow.inspectInvitation(token, createContext(request));
+      assertSameOrigin(request);
+      const body = await readSmallJsonObject(request);
+      const invitation = await workflow.inspectInvitation(
+        body.invitationToken,
+        createContext(request),
+      );
       return jsonResponse({ invitation });
     } catch (error) {
       return safeHttpError(error);

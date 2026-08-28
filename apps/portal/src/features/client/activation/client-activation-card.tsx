@@ -51,8 +51,9 @@ const COPY: Record<"fr" | "en", Copy> = {
   },
 };
 
-export function ClientActivationCard({ invitationToken }: { invitationToken: string }) {
+export function ClientActivationCard() {
   const [step, setStep] = useState<Step>("LOADING");
+  const [invitationToken, setInvitationToken] = useState<string | null>(null);
   const [invitation, setInvitation] = useState<PublicInvitation | null>(null);
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -60,6 +61,16 @@ export function ClientActivationCard({ invitationToken }: { invitationToken: str
   const copy = COPY[locale];
 
   useEffect(() => {
+    const fragment = new URLSearchParams(window.location.hash.slice(1));
+    const token = fragment.get("token") ?? "";
+    // Erase the bearer secret immediately after capturing it in this page's
+    // memory. It is never placed in localStorage, history or an HTTP request.
+    window.history.replaceState(null, "", "/activate");
+    setInvitationToken(token);
+  }, []);
+
+  useEffect(() => {
+    if (invitationToken === null) return;
     const controller = new AbortController();
 
     async function inspect() {
@@ -69,10 +80,13 @@ export function ClientActivationCard({ invitationToken }: { invitationToken: str
       }
 
       try {
-        const response = await fetch(
-          `/api/v1/client/activation?token=${encodeURIComponent(invitationToken)}`,
-          { cache: "no-store", signal: controller.signal },
-        );
+        const response = await fetch("/api/v1/client/activation", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ invitationToken }),
+          cache: "no-store",
+          signal: controller.signal,
+        });
         const payload = await readPayload(response);
         setInvitation(requireInvitation(payload));
         setStep("READY");
@@ -89,6 +103,7 @@ export function ClientActivationCard({ invitationToken }: { invitationToken: str
   }, [invitationToken]);
 
   async function requestOtp() {
+    if (!invitationToken) return;
     setMessage(null);
     try {
       const response = await fetch("/api/v1/client/activation/request-otp", {
@@ -107,6 +122,7 @@ export function ClientActivationCard({ invitationToken }: { invitationToken: str
 
   async function activate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!invitationToken) return;
     setMessage(null);
     setStep("ACTIVATING");
 
