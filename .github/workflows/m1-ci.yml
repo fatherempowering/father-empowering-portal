@@ -1,0 +1,76 @@
+name: M1 quality gate
+
+on:
+  pull_request:
+    paths:
+      - "apps/portal/**"
+      - "supabase/**"
+      - "tests/rls/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "scripts/m1-*"
+      - "docs/quality/M1-GATE.md"
+      - ".github/workflows/m1-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m1-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  m1-gate:
+    name: Security, RLS and vertical journey
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Initialize blocking verdict
+        run: |
+          mkdir -p artifacts/m1-gate
+          {
+            echo "state=BLOCKED"
+            echo "commit=${GITHUB_SHA}"
+            echo "date_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > artifacts/m1-gate/summary.txt
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run canonical M1 gate
+        run: bash scripts/m1-quality-gate.sh
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m1-gate-${{ github.sha }}
+          path: |
+            artifacts/m1-gate/
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14
