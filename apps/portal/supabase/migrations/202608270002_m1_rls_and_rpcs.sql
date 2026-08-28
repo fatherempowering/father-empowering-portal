@@ -807,6 +807,10 @@ begin
   if p_command not in ('CoachSignedIn', 'CoachMfaVerified') then
     raise exception using errcode = 'P0001', message = 'FE_INVALID_AUDIT_COMMAND';
   end if;
+  if p_command = 'CoachMfaVerified'
+     and coalesce(auth.jwt() ->> 'aal', 'aal1') <> 'aal2' then
+    raise exception using errcode = 'P0001', message = 'FE_MFA_AAL2_REQUIRED';
+  end if;
   if jsonb_typeof(coalesce(p_context, '{}'::jsonb)) <> 'object' then
     raise exception using errcode = 'P0001', message = 'FE_INVALID_AUDIT_CONTEXT';
   end if;
