@@ -1,0 +1,138 @@
+.page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #f4efe4;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(181, 144, 71, 0.2), transparent 44%),
+    #0d0d0d;
+}
+
+.card {
+  width: min(100%, 440px);
+  padding: clamp(28px, 7vw, 48px);
+  border: 1px solid rgba(218, 188, 123, 0.24);
+  border-radius: 24px;
+  background: rgba(24, 24, 23, 0.94);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+}
+
+.mark {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 28px;
+  border: 1px solid #b9944c;
+  color: #d7b76f;
+  font: 700 14px/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.12em;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #c9a967;
+  font: 600 11px/1.4 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.22em;
+}
+
+.card h1 {
+  margin: 0;
+  font: 500 clamp(30px, 8vw, 42px)/1.08 Georgia, serif;
+  letter-spacing: -0.025em;
+}
+
+.intro {
+  margin: 24px 0;
+  color: #c9c4ba;
+  font: 400 15px/1.65 ui-sans-serif, system-ui, sans-serif;
+}
+
+.intro strong {
+  color: #f4efe4;
+  font-weight: 600;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.form label {
+  color: #dbd5ca;
+  font: 600 13px/1.4 ui-sans-serif, system-ui, sans-serif;
+}
+
+.form input {
+  min-height: 56px;
+  padding: 0 16px;
+  border: 1px solid #4a4741;
+  border-radius: 12px;
+  outline: 0;
+  color: #fff;
+  background: #111;
+  font: 600 24px/1 ui-monospace, monospace;
+  letter-spacing: 0.24em;
+}
+
+.form input:focus-visible {
+  border-color: #c9a967;
+  box-shadow: 0 0 0 3px rgba(201, 169, 103, 0.18);
+}
+
+.primary,
+.secondary {
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font: 700 14px/1 ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.primary {
+  width: 100%;
+  border: 1px solid #caaa65;
+  color: #111;
+  background: linear-gradient(135deg, #e0c17e, #b88e3e);
+}
+
+.secondary {
+  border: 1px solid #4a4741;
+  color: #e4ded3;
+  background: transparent;
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.success,
+.error {
+  margin: 0;
+  font: 600 13px/1.5 ui-sans-serif, system-ui, sans-serif;
+}
+
+.success { color: #9ed0ad; }
+.error { color: #f0a6a2; }
+
+.loading {
+  width: 30px;
+  height: 30px;
+  margin: 34px auto 4px;
+  border: 2px solid #3f3b34;
+  border-top-color: #c9a967;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading { animation: none; }
+}
