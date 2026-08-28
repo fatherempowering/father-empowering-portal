@@ -44,6 +44,18 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
     .single();
   if (clientError) throw clientError;
 
+  const { error: authUserError } = await admin.auth.admin.createUser({
+    email: invitation.email,
+    email_confirm: true,
+  });
+  const authErrorCode = (authUserError as { code?: string } | null)?.code;
+  const authUserAlreadyExists =
+    ["email_exists", "user_already_exists"].includes(authErrorCode ?? "") ||
+    /already (?:been )?registered|already exists/i.test(authUserError?.message ?? "");
+  if (authUserError && !authUserAlreadyExists) {
+    throw authUserError;
+  }
+
   // The raw token is deterministic for this outbox event, exists only in this
   // worker invocation, and remains retry-safe with the provider idempotency key.
   const opaqueToken = deriveOpaqueToken(event, invitation.id, environment.INVITATION_TOKEN_SECRET);

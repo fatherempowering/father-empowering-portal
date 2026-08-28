@@ -46,10 +46,14 @@ export async function verifyTotpFactor(factorId: string, code: string) {
     code,
   });
   if (error) throw new M1ContractError("FORBIDDEN", "Invalid MFA code", 403);
-  await supabase.rpc("record_m1_auth_event", {
+  const { error: auditError } = await supabase.rpc("record_m1_auth_event", {
     p_command: "CoachMfaVerified",
     p_context: { factorId },
   });
+  if (auditError) {
+    await supabase.auth.signOut();
+    throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Unable to audit MFA verification", 503);
+  }
   return data;
 }
 

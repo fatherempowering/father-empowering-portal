@@ -57,7 +57,7 @@ export async function requestInvitationOtp(tokenHash: string): Promise<Invitatio
   );
   const { error } = await authClient.auth.signInWithOtp({
     email: invitation.email,
-    options: { shouldCreateUser: true },
+    options: { shouldCreateUser: false },
   });
   if (error) {
     throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Unable to send login code", 503);

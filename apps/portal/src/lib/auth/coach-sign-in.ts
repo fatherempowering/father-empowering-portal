@@ -29,10 +29,14 @@ export async function signInCoachWithPassword(input: { email: string; password: 
     throw new M1ContractError("FORBIDDEN", "Coach access required", 403);
   }
 
-  await supabase.rpc("record_m1_auth_event", {
+  const { error: auditError } = await supabase.rpc("record_m1_auth_event", {
     p_command: "CoachSignedIn",
     p_context: {},
   });
+  if (auditError) {
+    await supabase.auth.signOut();
+    throw new M1ContractError("TEMPORARILY_UNAVAILABLE", "Unable to audit sign-in", 503);
+  }
 
   const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   return { destination: assurance?.currentLevel === "aal2" ? "/coach" : "/mfa" } as const;
