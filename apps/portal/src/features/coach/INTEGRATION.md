@@ -14,13 +14,13 @@ files.
 - `@/lib/auth/actor`
   - `requireCoachAal2()`
 
-## Platform adapter required
+## Platform adapter
 
-At server startup, platform integration must call
-`installCoachM1Dependencies()` with a PostgreSQL-backed implementation of
-`CoachM1Dependencies` from `server/ports.ts`.
+`server/runtime.ts` installs the PostgreSQL-backed implementation by default.
+`installCoachM1Dependencies()` remains available only as an explicit test seam.
 
-The implementation must guarantee that `runIdempotentMutation`:
+The three mutation ports map one-to-one to transaction-owning PostgreSQL RPCs.
+The implementation guarantees that each RPC:
 
 1. stores `clientMutationId` and a request fingerprint;
 2. returns the original result when the same key and fingerprint are retried;
@@ -30,15 +30,15 @@ The implementation must guarantee that `runIdempotentMutation`:
 5. checks organization membership and active Coach↔Client assignment in SQL;
 6. never uses a browser-exposed `service_role` key.
 
-For `createClient`, the transaction must cover client creation, primary Coach
-assignment, invitation creation, two audit records and the invitation-delivery
-outbox row. Separate RPC calls without a surrounding database transaction do
-not satisfy this port.
+For `createClient`, one RPC covers client creation, primary Coach assignment,
+invitation creation, audit and the invitation-delivery outbox row. There is no
+JavaScript callback pretending to hold a database transaction open.
 
 Invitation resend must invalidate the previous activation secret and create a
 new expiry. Only a hash may be retained as the durable verification value. The
-delivery worker may receive the one-time plaintext token through the
-transactional outbox, but it must never be written to logs or audit metadata.
+delivery worker derives the retry-stable opaque token in memory; the
+transactional outbox contains only identifiers. Plaintext tokens are never
+stored in the database, logs or audit metadata.
 
 ## Deliberately excluded
 
@@ -48,4 +48,3 @@ transactional outbox, but it must never be written to logs or audit metadata.
 - publishing
 - legacy portal changes
 - advanced multi-Coach administration
-

@@ -1,5 +1,6 @@
 import { CoachM1Service } from "./coach-m1-service";
 import type { CoachM1Dependencies } from "./ports";
+import { coachM1Dependencies } from "@/lib/composition/coach-m1";
 
 type RuntimeGlobal = typeof globalThis & {
   __fatherEmpoweringCoachM1Dependencies?: CoachM1Dependencies;
@@ -15,9 +16,7 @@ export function installCoachM1Dependencies(dependencies: CoachM1Dependencies): v
 }
 
 export function getCoachM1Service(): CoachM1Service {
-  const dependencies = (globalThis as RuntimeGlobal).__fatherEmpoweringCoachM1Dependencies;
-  if (!dependencies) {
-    throw new Error("COACH_M1_RUNTIME_NOT_CONFIGURED");
-  }
+  const dependencies =
+    (globalThis as RuntimeGlobal).__fatherEmpoweringCoachM1Dependencies ?? coachM1Dependencies;
   return new CoachM1Service(dependencies);
 }

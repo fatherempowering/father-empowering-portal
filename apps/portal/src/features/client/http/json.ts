@@ -1,4 +1,5 @@
 import { isClientActivationError } from "../activation/errors";
+import { M1ContractError } from "@/lib/contracts/m1";
 
 const MAX_JSON_BYTES = 4_096;
 
@@ -38,6 +39,12 @@ export function jsonResponse(body: unknown, init?: ResponseInit): Response {
 }
 
 export function safeHttpError(error: unknown): Response {
+  if (error instanceof M1ContractError) {
+    return jsonResponse(
+      { error: { code: error.code, message: error.message } },
+      { status: error.status },
+    );
+  }
   if (error instanceof HttpForbiddenError) {
     return jsonResponse({ error: { code: "FORBIDDEN", message: "Request denied." } }, { status: 403 });
   }

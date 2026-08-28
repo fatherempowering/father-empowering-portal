@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { M1ContractError } from "@/lib/contracts/m1";
 
 import type { CoachActor } from "../model";
 import { CoachInputError, parseCreateClientForm, parseInvitationMutation } from "../validation";
@@ -13,6 +14,12 @@ interface ErrorBody {
 }
 
 function jsonError(error: unknown): NextResponse<ErrorBody> {
+  if (error instanceof M1ContractError) {
+    return NextResponse.json(
+      { error: { code: error.code, message: error.message } },
+      { status: error.status },
+    );
+  }
   if (error instanceof CoachInputError) {
     return NextResponse.json(
       {
@@ -68,13 +75,6 @@ function jsonError(error: unknown): NextResponse<ErrorBody> {
       { status: 409 },
     );
   }
-  if (code === "COACH_M1_RUNTIME_NOT_CONFIGURED") {
-    return NextResponse.json(
-      { error: { code: "TEMPORARILY_UNAVAILABLE", message: "Service temporairement indisponible." } },
-      { status: 503 },
-    );
-  }
-
   return NextResponse.json(
     { error: { code: "INTERNAL_ERROR", message: "Une erreur est survenue. Réessaie." } },
     { status: 500 },
@@ -151,4 +151,3 @@ export async function revokeInvitationHttp(
     return jsonError(error);
   }
 }
-

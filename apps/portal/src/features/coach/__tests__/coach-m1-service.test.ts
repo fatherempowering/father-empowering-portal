@@ -7,12 +7,7 @@ import type {
   CoachInvitationSummary,
 } from "../model";
 import { CoachM1Service } from "../server/coach-m1-service";
-import type {
-  CoachAuditRecord,
-  CoachM1Dependencies,
-  CoachM1Transaction,
-  CoachMutationEnvelope,
-} from "../server/ports";
+import type { CoachM1Dependencies } from "../server/ports";
 
 const actor: CoachActor = {
   userId: "10000000-0000-4000-8000-000000000001",
@@ -59,44 +54,10 @@ const invitation: CoachInvitationSummary = {
   acceptedAt: null,
 };
 
-class FakeTransaction implements CoachM1Transaction {
-  readonly audits: CoachAuditRecord[] = [];
-  readonly deliveryKinds: Array<"INITIAL" | "RESEND"> = [];
+class FakeDependencies implements CoachM1Dependencies {
   creates = 0;
   resends = 0;
   revokes = 0;
-
-  async createClientAndPrimaryAssignment() {
-    this.creates += 1;
-    return client;
-  }
-
-  async issueInvitation() {
-    return invitation;
-  }
-
-  async resendCurrentInvitation() {
-    this.resends += 1;
-    return { client, invitation: { ...invitation, status: "SENT" as const } };
-  }
-
-  async revokeCurrentInvitation() {
-    this.revokes += 1;
-    return { client, invitation: { ...invitation, status: "REVOKED" as const } };
-  }
-
-  async appendAudit(record: CoachAuditRecord) {
-    this.audits.push(record);
-  }
-
-  async enqueueInvitationDelivery(input: { kind: "INITIAL" | "RESEND" }) {
-    this.deliveryKinds.push(input.kind);
-  }
-}
-
-class FakeDependencies implements CoachM1Dependencies {
-  readonly transaction = new FakeTransaction();
-  readonly envelopes: CoachMutationEnvelope[] = [];
   private readonly results = new Map<string, { fingerprint: string; value: unknown }>();
 
   async listAssignedClients() {
@@ -116,44 +77,44 @@ class FakeDependencies implements CoachM1Dependencies {
     };
   }
 
-  async runIdempotentMutation<T>(
-    envelope: CoachMutationEnvelope,
-    work: (transaction: CoachM1Transaction) => Promise<T>,
-  ): Promise<T> {
-    this.envelopes.push(envelope);
-    const existing = this.results.get(envelope.clientMutationId);
+  async createInvitedClientAtomically({
+    request: input,
+  }: {
+    actor: CoachActor;
+    request: CoachCreateClientRequest;
+  }) {
+    const fingerprint = JSON.stringify(input);
+    const existing = this.results.get(input.clientMutationId);
     if (existing) {
-      if (existing.fingerprint !== envelope.requestFingerprint) throw new Error("DUPLICATE");
-      return existing.value as T;
+      if (existing.fingerprint !== fingerprint) throw new Error("DUPLICATE");
+      return existing.value as { client: CoachClientSummary; invitation: CoachInvitationSummary };
     }
-    const value = await work(this.transaction);
-    this.results.set(envelope.clientMutationId, {
-      fingerprint: envelope.requestFingerprint,
-      value,
-    });
+    this.creates += 1;
+    const value = { client, invitation };
+    this.results.set(input.clientMutationId, { fingerprint, value });
     return value;
+  }
+
+  async resendInvitationAtomically() {
+    this.resends += 1;
+    return { client, invitation: { ...invitation, status: "SENT" as const } };
+  }
+
+  async revokeInvitationAtomically() {
+    this.revokes += 1;
+    return { client, invitation: { ...invitation, status: "REVOKED" as const } };
   }
 }
 
 describe("CoachM1Service", () => {
-  it("crée le client, son assignation primaire, son invitation et les audits", async () => {
+  it("délègue la création complète à la commande PostgreSQL atomique", async () => {
     const dependencies = new FakeDependencies();
     const service = new CoachM1Service(dependencies);
 
     const result = await service.createClient(actor, request);
 
     expect(result).toEqual({ client, invitation, deliveryQueued: true });
-    expect(dependencies.transaction.creates).toBe(1);
-    expect(dependencies.transaction.deliveryKinds).toEqual(["INITIAL"]);
-    expect(dependencies.transaction.audits.map((audit) => audit.action)).toEqual([
-      "CLIENT_CREATED",
-      "CLIENT_INVITATION_SENT",
-    ]);
-    expect(dependencies.envelopes[0]).toMatchObject({
-      actor,
-      clientMutationId: request.clientMutationId,
-      action: "CLIENT_CREATED",
-    });
+    expect(dependencies.creates).toBe(1);
   });
 
   it("retourne le résultat initial pour une répétition idempotente", async () => {
@@ -164,9 +125,7 @@ describe("CoachM1Service", () => {
     const second = await service.createClient(actor, request);
 
     expect(second).toEqual(first);
-    expect(dependencies.transaction.creates).toBe(1);
-    expect(dependencies.transaction.audits).toHaveLength(2);
-    expect(dependencies.transaction.deliveryKinds).toEqual(["INITIAL"]);
+    expect(dependencies.creates).toBe(1);
   });
 
   it("refuse le même identifiant de mutation pour un contenu différent", async () => {
@@ -177,7 +136,7 @@ describe("CoachM1Service", () => {
     await expect(
       service.createClient(actor, { ...request, email: "different@example.test" }),
     ).rejects.toThrow("DUPLICATE");
-    expect(dependencies.transaction.creates).toBe(1);
+    expect(dependencies.creates).toBe(1);
   });
 
   it("renvoie une invitation et inscrit un effet d’email dans l’outbox", async () => {
@@ -191,11 +150,7 @@ describe("CoachM1Service", () => {
 
     expect(result.invitation.status).toBe("SENT");
     expect(result.deliveryQueued).toBe(true);
-    expect(dependencies.transaction.resends).toBe(1);
-    expect(dependencies.transaction.deliveryKinds).toEqual(["RESEND"]);
-    expect(dependencies.transaction.audits.at(-1)?.action).toBe(
-      "CLIENT_INVITATION_RESENT",
-    );
+    expect(dependencies.resends).toBe(1);
   });
 
   it("révoque sans mettre un email en attente", async () => {
@@ -209,8 +164,7 @@ describe("CoachM1Service", () => {
 
     expect(result.invitation.status).toBe("REVOKED");
     expect(result.deliveryQueued).toBe(false);
-    expect(dependencies.transaction.revokes).toBe(1);
-    expect(dependencies.transaction.deliveryKinds).toEqual([]);
+    expect(dependencies.revokes).toBe(1);
   });
 
   it("refuse un Client même si un adaptateur est mal branché", async () => {
@@ -220,7 +174,7 @@ describe("CoachM1Service", () => {
     await expect(
       service.listClients({ ...actor, role: "CLIENT", clientId: client.id }),
     ).rejects.toThrow("FORBIDDEN");
-    expect(dependencies.envelopes).toHaveLength(0);
+    expect(dependencies.creates).toBe(0);
   });
 
   it("refuse un Coach sans assurance MFA AAL2", async () => {
@@ -230,7 +184,6 @@ describe("CoachM1Service", () => {
     await expect(service.createClient({ ...actor, aal: "aal1" }, request)).rejects.toThrow(
       "MFA_REQUIRED",
     );
-    expect(dependencies.transaction.creates).toBe(0);
+    expect(dependencies.creates).toBe(0);
   });
 });
-

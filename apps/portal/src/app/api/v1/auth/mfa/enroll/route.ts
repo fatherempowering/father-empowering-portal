@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { enrollTotp } from "@/lib/auth/mfa";
+import { m1ErrorResponse } from "@/lib/http/m1-error";
 import { requireSameOrigin } from "@/lib/http/origin";
 
 export async function POST(request: Request) {
@@ -17,10 +18,9 @@ export async function POST(request: Request) {
       },
       { headers: { "Cache-Control": "no-store" } },
     );
-  } catch {
-    return NextResponse.json(
-      { error: { code: "FORBIDDEN" } },
-      { status: 403, headers: { "Cache-Control": "no-store" } },
-    );
+  } catch (error) {
+    const response = m1ErrorResponse(error);
+    response.headers.set("Cache-Control", "no-store");
+    return response;
   }
 }

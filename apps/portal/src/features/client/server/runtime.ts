@@ -1,6 +1,7 @@
 import { ClientActivationWorkflow } from "../activation/client-activation-workflow";
 import type { ClientActivationDependencies } from "../activation/contracts";
 import type { ClientDashboardDependencies } from "../dashboard/contracts";
+import { createClientM1Dependencies } from "@/lib/composition/client-m1";
 
 export type ClientM1Dependencies = Readonly<{
   activation: ClientActivationDependencies;
@@ -29,9 +30,8 @@ export function getClientDashboardDependencies(): ClientDashboardDependencies {
 }
 
 function getDependencies(): ClientM1Dependencies {
-  const dependencies = (globalThis as RuntimeGlobal).__fatherEmpoweringClientM1Dependencies;
-  if (!dependencies) {
-    throw new Error("CLIENT_M1_RUNTIME_NOT_CONFIGURED");
-  }
-  return dependencies;
+  return (
+    (globalThis as RuntimeGlobal).__fatherEmpoweringClientM1Dependencies ??
+    createClientM1Dependencies()
+  );
 }
