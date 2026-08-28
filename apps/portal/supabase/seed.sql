@@ -1,0 +1,2 @@
+-- M1 intentionally has no shared seed data. Local/E2E identities are created
+-- by the test harness so no credential or stable personal data enters Git.

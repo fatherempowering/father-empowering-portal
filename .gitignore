@@ -1,2 +1,15 @@
 .DS_Store
 .ai
+
+# Father Empowering Portal (M1)
+node_modules/
+.next/
+out/
+coverage/
+.env
+.env.local
+.env.*.local
+!.env.example
+*.tsbuildinfo
+.vercel/
+supabase/.temp/
