@@ -91,7 +91,6 @@ const values = {
   OUTBOX_WORKER_SECRET: "m1-local-worker-secret-not-for-production",
   INVITATION_TOKEN_SECRET: "m1-local-invitation-token-secret-32-characters-minimum",
   INVITATION_EMAIL_FROM: "Father Empowering <portal@example.test>",
-  M1_APP_URL: appUrl,
 };
 
 writeFileSync(
