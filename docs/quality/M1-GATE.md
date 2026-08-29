@@ -110,7 +110,12 @@ la base Supabase locale jetable du projet M1; elle ne se connecte jamais à un
 projet lié, staging ou production.
 
 Le workflow `.github/workflows/m1-ci.yml` exécute le même gate. Une étape CI
-isolée n'a pas le droit de contourner le script canonique.
+isolée n'a pas le droit de contourner le script canonique. Il se déclenche pour
+tout `push`, toute pull request et toute merge queue, sans filtre de chemins :
+une modification legacy ou de configuration ne peut donc pas éviter le gate.
+Les actions tierces sont épinglées à des empreintes immuables, le checkout ne
+conserve aucun credential Git et le workflow n'a que la permission de lecture
+du dépôt.
 
 ## Preuves exigées
 
@@ -128,7 +133,18 @@ Chaque exécution conserve dans `artifacts/m1-gate/` :
 
 Les traces, captures, vidéos et rapports HTML Playwright sont désactivés pour ce
 parcours, car ils peuvent sérialiser le fragment d'invitation ou un OTP. Les
-journaux textuels CI sont conservés même après échec et ne sont jamais commités.
+sorties brutes des contrôles d'intégration et E2E sont d'abord capturées dans un
+fichier privé hors des artefacts, puis scannées sans être affichées. Une sortie
+contenant un OTP, un jeton, une clé synthétique ou une erreur de lecture est
+supprimée et maintient irréversiblement le marqueur qui interdit son upload.
+Seule une preuve déjà déclarée sûre rejoint les artefacts, sans être réémise
+dans le journal GitHub.
+
+Next écoute explicitement sur `127.0.0.1:3000`. La sonde exige la réponse 401
+contractuelle de l'endpoint outbox, puis le worker ne signale sa readiness
+qu'après un POST authentifié reçu en 200 avec une réponse JSON valide. Les URL
+application, Supabase et Mailpit sont toutes validées sur leurs ports loopback
+canoniques avant utilisation.
 
 ## Conditions de blocage immédiat
 

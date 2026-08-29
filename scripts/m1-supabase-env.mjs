@@ -36,27 +36,38 @@ try {
 const apiUrl = status.API_URL ?? status.api_url;
 const anonKey = status.ANON_KEY ?? status.anon_key;
 const serviceRoleKey = status.SERVICE_ROLE_KEY ?? status.service_role_key;
-const databaseUrl = status.DB_URL ?? status.db_url;
 const inbucketUrl = status.INBUCKET_URL ?? status.inbucket_url;
+const appUrlInput = process.env.M1_APP_URL ?? "http://127.0.0.1:3000";
 
-if (
-  typeof apiUrl !== "string" ||
-  !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(apiUrl)
-) {
-  throw new Error("Refusing non-local Supabase API URL in the M1 test harness.");
-}
-
-for (const [name, value] of Object.entries({ anonKey, serviceRoleKey, databaseUrl })) {
-  if (typeof value !== "string" || value.length < 1) {
-    throw new Error(`Missing local Supabase value: ${name}`);
+function canonicalLoopbackOrigin(value, port) {
+  try {
+    const parsed = new URL(value);
+    if (
+      parsed.protocol !== "http:" ||
+      parsed.hostname !== "127.0.0.1" ||
+      parsed.port !== port ||
+      parsed.username !== "" ||
+      parsed.password !== "" ||
+      parsed.pathname !== "/" ||
+      parsed.search !== "" ||
+      parsed.hash !== ""
+    ) {
+      throw new Error("non-canonical URL");
+    }
+    return parsed.origin;
+  } catch {
+    throw new Error("Refusing non-canonical local URL in the M1 test harness.");
   }
 }
 
-if (
-  typeof inbucketUrl !== "string" ||
-  !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(inbucketUrl)
-) {
-  throw new Error("Refusing non-local Supabase mail URL in the M1 test harness.");
+const appUrl = canonicalLoopbackOrigin(appUrlInput, "3000");
+const localApiUrl = canonicalLoopbackOrigin(apiUrl, "54321");
+const localMailpitUrl = canonicalLoopbackOrigin(inbucketUrl, "54324");
+
+for (const [name, value] of Object.entries({ anonKey, serviceRoleKey })) {
+  if (typeof value !== "string" || value.length < 1) {
+    throw new Error(`Missing local Supabase value: ${name}`);
+  }
 }
 
 function shellValue(value) {
@@ -64,16 +75,15 @@ function shellValue(value) {
 }
 
 const values = {
-  NEXT_PUBLIC_SUPABASE_URL: apiUrl,
+  NEXT_PUBLIC_SUPABASE_URL: localApiUrl,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: anonKey,
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: anonKey,
-  NEXT_PUBLIC_APP_URL: process.env.M1_APP_URL ?? "http://127.0.0.1:3000",
+  NEXT_PUBLIC_APP_URL: appUrl,
   SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey,
-  M1_TEST_DATABASE_URL: databaseUrl,
-  M1_TEST_SUPABASE_URL: apiUrl,
+  M1_TEST_SUPABASE_URL: localApiUrl,
   M1_TEST_SUPABASE_ANON_KEY: anonKey,
   M1_TEST_SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey,
-  M1_TEST_INBUCKET_URL: inbucketUrl,
+  M1_TEST_INBUCKET_URL: localMailpitUrl,
   M1_TEST_SMTP_HOST: "127.0.0.1",
   M1_TEST_SMTP_PORT: "54325",
   M1_TEST_EMAIL_TRANSPORT: "mailpit",
@@ -81,7 +91,7 @@ const values = {
   OUTBOX_WORKER_SECRET: "m1-local-worker-secret-not-for-production",
   INVITATION_TOKEN_SECRET: "m1-local-invitation-token-secret-32-characters-minimum",
   INVITATION_EMAIL_FROM: "Father Empowering <portal@example.test>",
-  M1_APP_URL: process.env.M1_APP_URL ?? "http://127.0.0.1:3000",
+  M1_APP_URL: appUrl,
 };
 
 writeFileSync(
