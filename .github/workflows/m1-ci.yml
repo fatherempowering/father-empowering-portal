@@ -53,6 +53,11 @@ jobs:
       - name: Install Chromium
         run: pnpm --filter @father-empowering/portal exec playwright install --with-deps chromium
 
+      - name: Install ripgrep for the fail-closed gate
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ripgrep
+
       - name: Run canonical M1 gate
         run: bash scripts/m1-quality-gate.sh
 
