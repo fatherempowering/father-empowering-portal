@@ -83,6 +83,8 @@ select is(
   1::bigint,
   'create_invited_client creates one invitation'
 );
+
+set local role service_role;
 select is(
   (select count(*) from public.audit_events where command = 'CreateInvitedClient'),
   1::bigint,
@@ -93,6 +95,8 @@ select is(
   1::bigint,
   'create_invited_client creates one outbox event'
 );
+
+set local role authenticated;
 select ok(
   position(repeat('a', 64) in (select value::text from m1_create_result)) = 0,
   'create result does not return the invitation hash'
@@ -119,6 +123,8 @@ select is(
   1::bigint,
   'identical retry does not duplicate the client'
 );
+
+set local role service_role;
 select is(
   (select count(*) from public.audit_events where command = 'CreateInvitedClient'),
   1::bigint,
@@ -129,6 +135,8 @@ select is(
   1::bigint,
   'identical retry does not duplicate outbox delivery'
 );
+
+set local role authenticated;
 
 -- A key reused for a different payload must be rejected, not replayed.
 select throws_ok(
@@ -277,6 +285,8 @@ select lives_ok(
   )$$,
   'an identical revocation retry succeeds after state became REVOKED'
 );
+
+set local role service_role;
 select is(
   (select count(*) from public.audit_events
    where command = 'RevokeClientInvitation'
@@ -295,6 +305,8 @@ select is(
   1::bigint,
   'revocation retry does not duplicate outbox delivery'
 );
+
+set local role authenticated;
 select throws_ok(
   $$select public.revoke_client_invitation_for_client(
     (select id from public.clients where email = 'lifecycle@example.test'),
@@ -323,6 +335,8 @@ select lives_ok(
   )$$,
   'an identical resend retry succeeds'
 );
+
+set local role service_role;
 select is(
   (select count(*) from public.audit_events
    where command = 'ResendClientInvitation'
@@ -341,6 +355,8 @@ select is(
   1::bigint,
   'resend retry does not duplicate outbox delivery'
 );
+
+set local role authenticated;
 select is(
   (select count(*) from public.client_invitations invitation
    join public.clients client on client.id = invitation.client_id
@@ -405,6 +421,8 @@ select lives_ok(
   )$$,
   'an exact resend retry replays after Client activation'
 );
+
+set local role service_role;
 select is(
   (select count(*) from public.audit_events
    where command = 'ResendClientInvitation'
@@ -414,6 +432,8 @@ select is(
   2::bigint,
   'post-activation resend replay creates no extra audit'
 );
+
+set local role authenticated;
 select lives_ok(
   $$select public.revoke_client_invitation_for_client(
     (select id from public.clients where email = 'lifecycle@example.test'),
@@ -422,6 +442,8 @@ select lives_ok(
   )$$,
   'an exact old revocation retry replays after a later activation'
 );
+
+set local role service_role;
 select is(
   (select count(*) from public.audit_events
    where command = 'RevokeClientInvitation'
@@ -618,6 +640,7 @@ select is(
 );
 
 -- The clear invitation sentinel must not appear anywhere persisted by M1.
+set local role service_role;
 select is(
   (
     select count(*)

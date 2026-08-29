@@ -62,13 +62,26 @@ select has_column(
 select has_check(
   'public',
   'audit_events',
-  'audit_context_m1_safe_size',
+  'audit_events has CHECK constraints'
+);
+select ok(
+  exists (
+    select 1
+    from pg_catalog.pg_constraint
+    where conrelid = 'public.audit_events'::regclass
+      and contype = 'c'
+      and conname = 'audit_context_m1_safe_size'
+  ),
   'audit context has a strict size ceiling'
 );
-select has_check(
-  'public',
-  'audit_events',
-  'audit_context_m1_no_secret_keys',
+select ok(
+  exists (
+    select 1
+    from pg_catalog.pg_constraint
+    where conrelid = 'public.audit_events'::regclass
+      and contype = 'c'
+      and conname = 'audit_context_m1_no_secret_keys'
+  ),
   'audit context rejects known secret-bearing keys'
 );
 select ok(
