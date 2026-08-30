@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const auth = vi.hoisted(() => ({ verifyTotpFactor: vi.fn() }));
 
@@ -11,7 +11,12 @@ const url = "https://app.fatherempowering.com/api/v1/auth/mfa/verify";
 describe("MFA verification route", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.fatherempowering.com");
     auth.verifyTotpFactor.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("rejects an oversized chunked-style body before invoking Auth", async () => {

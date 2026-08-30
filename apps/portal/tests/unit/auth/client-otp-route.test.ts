@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const auth = vi.hoisted(() => ({
   requestClientLoginOtp: vi.fn(),
@@ -16,8 +16,13 @@ const url = "https://app.fatherempowering.com/api/v1/auth/client-otp";
 describe("returning Client OTP routes", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.fatherempowering.com");
     auth.requestClientLoginOtp.mockResolvedValue(undefined);
     auth.verifyClientLoginOtp.mockResolvedValue({ role: "CLIENT" });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("rejects a mutation without a same-origin browser signal", async () => {
