@@ -282,6 +282,70 @@ globalThis.fetch = async (_url, init) => {
     expect(output).not.toContain(workerSecret);
   });
 
+  it("treats a failed outbox outcome as blocking without leaking response data", async () => {
+    const fixture = temporaryDirectory("m1-worker-outcome-failed-");
+    const readyFile = join(fixture, "worker.ready");
+    const fetchFixture = join(fixture, "fetch-fixture.mjs");
+    const workerSecret = "synthetic-local-worker-secret-32-characters";
+    const privateEventId = "private-event-identifier";
+    const privateInvitationToken = "private-invitation-token";
+    const privateEmail = "private-client@example.test";
+    writeFileSync(
+      fetchFixture,
+      `let calls = 0;
+globalThis.fetch = async () => {
+  calls += 1;
+  const payload = calls === 1
+    ? { processed: 0, outcomes: [] }
+    : {
+        processed: 1,
+        outcomes: [{
+          id: ${JSON.stringify(privateEventId)},
+          status: "FAILED",
+          payload: {
+            invitationToken: ${JSON.stringify(privateInvitationToken)},
+            email: ${JSON.stringify(privateEmail)},
+          },
+        }],
+      };
+  return new Response(JSON.stringify(payload), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+};
+`,
+    );
+
+    const child = spawn(process.execPath, ["--import", fetchFixture, outboxWorker], {
+      env: {
+        ...process.env,
+        M1_APP_URL: "http://127.0.0.1:3000",
+        M1_WORKER_POLL_MS: "100",
+        M1_WORKER_READY_FILE: readyFile,
+        OUTBOX_WORKER_SECRET: workerSecret,
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    childProcesses.push(child);
+    let output = "";
+    child.stdout?.on("data", (chunk: Buffer) => {
+      output += chunk.toString("utf8");
+    });
+    child.stderr?.on("data", (chunk: Buffer) => {
+      output += chunk.toString("utf8");
+    });
+    await once(child, "exit");
+
+    expect(child.exitCode).toBe(1);
+    expect(readFileSync(readyFile, "utf8")).toBe("ready\n");
+    expect(output).toContain("OUTBOX_EVENT_FAILED");
+    expect(output).toContain("failed_count=1");
+    expect(output).not.toContain(privateEventId);
+    expect(output).not.toContain(privateInvitationToken);
+    expect(output).not.toContain(privateEmail);
+    expect(output).not.toContain(workerSecret);
+  });
+
   it("locks the workflow and gate to the isolated M1 execution contract", () => {
     const gate = readFileSync(gatePath, "utf8");
     const workflow = readFileSync(workflowPath, "utf8");

@@ -79,6 +79,16 @@ while (!stopping) {
       process.exitCode = 1;
       break;
     }
+    const failedOutcomeCount = payload.outcomes.filter(
+      (outcome) => outcome && typeof outcome === "object" && outcome.status === "FAILED",
+    ).length;
+    if (failedOutcomeCount > 0) {
+      process.stderr.write(
+        `[m1-worker] OUTBOX_EVENT_FAILED failed_count=${failedOutcomeCount}\n`,
+      );
+      process.exitCode = 1;
+      break;
+    }
     if (!ready) {
       await writeFile(readyFile, "ready\n", { encoding: "utf8", flag: "wx", mode: 0o600 });
       ready = true;
