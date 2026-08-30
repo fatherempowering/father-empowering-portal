@@ -133,7 +133,9 @@ export class M1SsrSession {
   }
 }
 
-export async function enrollAndVerifyTotp(session: M1SsrSession): Promise<string> {
+export async function enrollAndVerifyTotp(
+  session: M1SsrSession,
+): Promise<string> {
   const enrollment = await session.client.auth.mfa.enroll({
     factorType: "totp",
     friendlyName: `M1-${randomUUID()}`,
@@ -151,7 +153,38 @@ export async function enrollAndVerifyTotp(session: M1SsrSession): Promise<string
     challengeId: challenge.data.id,
     code: currentTotp(secret),
   });
-  if (verification.error) throw verification.error;
+  if (verification.error) {
+    throw new Error("Unable to verify the local TOTP challenge");
+  }
+  if (
+    !verification.data?.user ||
+    !verification.data.access_token ||
+    !verification.data.refresh_token
+  ) {
+    throw new Error("MFA verification did not return a complete AAL2 session");
+  }
+
+  const persistence = await session.client.auth.setSession({
+    access_token: verification.data.access_token,
+    refresh_token: verification.data.refresh_token,
+  });
+  if (persistence.error || !persistence.data.session || !persistence.data.user) {
+    throw new Error("Unable to persist the local AAL2 session");
+  }
+  if (!persistence.data.session.access_token || !persistence.data.session.refresh_token) {
+    throw new Error("Persisted AAL2 session is missing required tokens");
+  }
+  if (persistence.data.user.id !== verification.data.user.id) {
+    throw new Error("Persisted AAL2 session changed the authenticated identity");
+  }
+
+  const assurance = await session.client.auth.mfa.getAuthenticatorAssuranceLevel(
+    persistence.data.session.access_token,
+  );
+  if (assurance.error || assurance.data.currentLevel !== "aal2") {
+    throw new Error("Persisted MFA session did not reach AAL2");
+  }
+
   return secret;
 }
 

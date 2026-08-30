@@ -112,6 +112,14 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
 
   it("crée le parcours invitation de manière atomique et idempotente à aal2", async () => {
     await enrollAndVerifyTotp(session);
+
+    const aal2Boundary = await authenticatedFetch(
+      environment,
+      session,
+      "/api/v1/coach/clients",
+    );
+    expect(aal2Boundary.status).toBe(200);
+
     const clientMutationId = randomUUID();
     const clientEmail = `vertical.integration.${randomUUID()}@example.test`;
     const payload = {
