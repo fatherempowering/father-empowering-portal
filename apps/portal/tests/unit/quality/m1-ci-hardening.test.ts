@@ -238,7 +238,7 @@ globalThis.fetch = async (_url, init) => {
     });
     childProcesses.push(child);
 
-    await waitUntil(() => existsSync(readyFile));
+    await waitUntil(() => existsSync(readyFile) && readFileSync(readyFile, "utf8") === "ready\n");
     expect(readFileSync(authMarker, "utf8")).toBe("authenticated\n");
     expect(readFileSync(readyFile, "utf8")).toBe("ready\n");
     expect(statSync(readyFile).mode & 0o777).toBe(0o600);
