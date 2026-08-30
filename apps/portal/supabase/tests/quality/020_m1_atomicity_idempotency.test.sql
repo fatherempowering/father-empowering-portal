@@ -495,12 +495,22 @@ select is(
   'activation accepts the invitation'
 );
 select is(
-  (select count(*) from public.audit_events where command = 'AcceptClientInvitation'),
+  (select count(*)
+   from public.audit_events
+   where command = 'AcceptClientInvitation'
+     and entity_id = (
+       select id from public.clients where email = 'activate@example.test'
+     )),
   1::bigint,
   'activation writes exactly one audit event'
 );
 select is(
-  (select count(*) from public.outbox_events where event_type = 'ClientActivated'),
+  (select count(*)
+   from public.outbox_events
+   where event_type = 'ClientActivated'
+     and aggregate_id = (
+       select id from public.clients where email = 'activate@example.test'
+     )),
   1::bigint,
   'activation writes exactly one outbox event'
 );
@@ -514,12 +524,22 @@ select lives_ok(
   'same identity can safely replay activation'
 );
 select is(
-  (select count(*) from public.audit_events where command = 'AcceptClientInvitation'),
+  (select count(*)
+   from public.audit_events
+   where command = 'AcceptClientInvitation'
+     and entity_id = (
+       select id from public.clients where email = 'activate@example.test'
+     )),
   1::bigint,
   'activation replay does not duplicate audit'
 );
 select is(
-  (select count(*) from public.outbox_events where event_type = 'ClientActivated'),
+  (select count(*)
+   from public.outbox_events
+   where event_type = 'ClientActivated'
+     and aggregate_id = (
+       select id from public.clients where email = 'activate@example.test'
+     )),
   1::bigint,
   'activation replay does not duplicate outbox delivery'
 );
