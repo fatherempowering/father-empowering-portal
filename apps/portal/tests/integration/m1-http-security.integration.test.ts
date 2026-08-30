@@ -15,6 +15,7 @@ const environment = getM1TestEnvironment();
 const password = "M1-local-only-Max!123";
 let coach: SeededStaff;
 let session: M1SsrSession;
+let authenticatedCoachUserId: string | null = null;
 
 describe.sequential("M1 HTTP security and transaction integration", () => {
   beforeAll(async () => {
@@ -29,6 +30,28 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
       password,
     });
     if (signIn.error) throw signIn.error;
+    authenticatedCoachUserId = signIn.data.user?.id ?? null;
+  });
+
+  it("authentifie par email un Coach créé par service_role", () => {
+    expect(authenticatedCoachUserId).toBe(coach.userId);
+  });
+
+  it("interdit toujours le signup email public", async () => {
+    const signupEmail = `blocked.signup.${randomUUID()}@example.test`;
+    const anonymousSession = new M1SsrSession(environment);
+    const signup = await anonymousSession.client.auth.signUp({
+      email: signupEmail,
+      password: "M1-local-only-anonymous!123",
+    });
+
+    expect(signup.error?.code).toBe("signup_disabled");
+    expect(signup.data.user).toBeNull();
+    expect(signup.data.session).toBeNull();
+
+    const listedUsers = await createM1AdminClient(environment).auth.admin.listUsers();
+    if (listedUsers.error) throw listedUsers.error;
+    expect(listedUsers.data.users.some((user) => user.email === signupEmail)).toBe(false);
   });
 
   it("refuse les routes privées sans session", async () => {
