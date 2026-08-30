@@ -17,6 +17,23 @@ let coach: SeededStaff;
 let session: M1SsrSession;
 let authenticatedCoachUserId: string | null = null;
 
+function safeErrorDiagnostic(body: unknown): { code: string; message: string } {
+  if (!body || typeof body !== "object") {
+    return { code: "UNAVAILABLE", message: "Unavailable" };
+  }
+
+  const error = (body as { error?: unknown }).error;
+  if (!error || typeof error !== "object") {
+    return { code: "UNAVAILABLE", message: "Unavailable" };
+  }
+
+  const fields = error as { code?: unknown; message?: unknown };
+  return {
+    code: typeof fields.code === "string" ? fields.code : "UNAVAILABLE",
+    message: typeof fields.message === "string" ? fields.message : "Unavailable",
+  };
+}
+
 describe.sequential("M1 HTTP security and transaction integration", () => {
   beforeAll(async () => {
     coach = await seedStaffIdentity(environment, {
@@ -141,7 +158,12 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
         body: JSON.stringify(payload),
       },
     );
-    expect(first.status).toBe(201);
+    const firstDiagnosticBody: unknown = await first.clone().json().catch(() => null);
+    const firstDiagnostic = safeErrorDiagnostic(firstDiagnosticBody);
+    expect(
+      first.status,
+      `POST /api/v1/coach/clients failed: error.code=${JSON.stringify(firstDiagnostic.code)}; error.message=${JSON.stringify(firstDiagnostic.message)}`,
+    ).toBe(201);
     const firstBody = await first.json();
     const serialized = JSON.stringify(firstBody);
     expect(serialized).not.toMatch(/opaqueToken|rawToken|invitationToken|tokenHash|token_hash/i);
