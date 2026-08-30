@@ -483,7 +483,7 @@ select is(
   'activation creates the CLIENT membership'
 );
 select is(
-  (select status::text from public.coach_client_assignments assignment
+  (select assignment.status::text from public.coach_client_assignments assignment
    join public.clients client on client.id = assignment.client_id
    where client.email = 'activate@example.test'),
   'ACTIVE',
