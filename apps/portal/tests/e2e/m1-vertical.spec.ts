@@ -97,6 +97,14 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   const clientContext = await browser.newContext();
   const clientPage = await clientContext.newPage();
   const activationNavigationRequests: string[] = [];
+  const activationInspectionResponse = clientPage.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return (
+      response.request().method() === "POST" &&
+      url.origin === environment.appUrl &&
+      url.pathname === "/api/v1/client/activation"
+    );
+  });
   clientPage.on("request", (request) => {
     if (request.isNavigationRequest()) activationNavigationRequests.push(request.url());
   });
@@ -108,6 +116,14 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(clientPage.getByRole("heading", { name: /active ton portail/i })).toBeVisible();
   await expect(clientPage).toHaveURL(`${environment.appUrl}/activate`);
   expect(activationNavigationRequests.every((url) => !url.includes(activation.token))).toBe(true);
+  const inspectionResponse = await activationInspectionResponse;
+  if (!inspectionResponse.ok()) {
+    const diagnostic = await safeActivationDiagnostic(inspectionResponse);
+    throw new Error(
+      `Initial activation inspection failed: status=${inspectionResponse.status()} ` +
+        `error.code=${diagnostic.code} error.message=${diagnostic.message}`,
+    );
+  }
   await clientPage.getByRole("button", { name: /envoyer mon code/i }).click();
   await expect(clientPage.getByText(/code envoyé/i)).toBeVisible();
 
@@ -241,6 +257,52 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await clientContext.close();
   await maxContext.close();
 });
+
+async function safeActivationDiagnostic(response: {
+  json(): Promise<unknown>;
+}): Promise<{ code: string; message: string }> {
+  const allowedCodes = new Set([
+    "FORBIDDEN",
+    "INVITATION_UNAVAILABLE",
+    "RATE_LIMITED",
+    "TEMPORARILY_UNAVAILABLE",
+    "VALIDATION_FAILED",
+  ]);
+  const allowedMessages = new Set([
+    "Cross-origin mutation denied",
+    "Request denied.",
+    "Please try again.",
+    "The invitation is invalid, expired, or has already been used.",
+    "Invitation lookup failed",
+    "Client lookup failed",
+    "Invalid JSON request",
+    "A JSON object is required",
+    "Request body is too large",
+    "Unable to read request body",
+    "Invalid UTF-8 request",
+  ]);
+  const payload = await response.json().catch(() => null);
+  const error =
+    payload && typeof payload === "object" && "error" in payload
+      ? (payload.error as unknown)
+      : null;
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? (error.code as unknown)
+      : null;
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? (error.message as unknown)
+      : null;
+
+  return {
+    code: typeof code === "string" && allowedCodes.has(code) ? code : "REDACTED_OR_ABSENT",
+    message:
+      typeof message === "string" && allowedMessages.has(message)
+        ? message
+        : "REDACTED_OR_ABSENT",
+  };
+}
 
 async function loginMaxAtAal2(page: Page): Promise<void> {
   await page.goto(`${environment.appUrl}/login`);
