@@ -72,6 +72,17 @@ describe("M1 local quality harness", () => {
     expect(template).not.toContain("{{ .ConfirmationURL }}");
   });
 
+  it("expose le SMTP Mailpit uniquement sur les ports locaux attendus", () => {
+    const config = readFileSync(
+      new URL("../../../supabase/config.toml", import.meta.url),
+      "utf8",
+    );
+
+    expect(config).toMatch(
+      /\[local_smtp\]\s+enabled\s*=\s*true\s+port\s*=\s*54324\s+smtp_port\s*=\s*54325/,
+    );
+  });
+
   it("ne journalise jamais la sortie sensible d'un statut Supabase en échec", () => {
     const fixture = mkdtempSync(join(tmpdir(), "m1-supabase-status-"));
     const fakePnpm = join(fixture, "pnpm");

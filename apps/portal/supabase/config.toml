@@ -50,6 +50,11 @@ content_path = "./supabase/templates/magic-link-otp.html"
 enroll_enabled = true
 verify_enabled = true
 
+[local_smtp]
+enabled = true
+port = 54324
+smtp_port = 54325
+
 [storage]
 enabled = true
 file_size_limit = "10MiB"
