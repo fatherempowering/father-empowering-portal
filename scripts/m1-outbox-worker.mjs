@@ -30,6 +30,18 @@ if (!Number.isFinite(pollMilliseconds) || pollMilliseconds < 100 || pollMillisec
 
 const endpoint = new URL("/api/v1/internal/outbox", appUrl);
 const readyFile = resolve(readyFileInput);
+const allowedFailureReasonCodes = new Set([
+  "EVENT_VALIDATION_FAILED",
+  "INVITATION_LOOKUP_FAILED",
+  "CLIENT_LOOKUP_FAILED",
+  "AUTH_PROVISIONING_FAILED",
+  "IDENTITY_VALIDATION_FAILED",
+  "EMAIL_DELIVERY_FAILED",
+  "INVITATION_STATE_TRANSITION_FAILED",
+  "OUTBOX_HANDLER_NOT_REGISTERED",
+  "OUTBOX_HANDLER_FAILED",
+  "OUTBOX_FINALIZATION_FAILED",
+]);
 let stopping = false;
 let ready = false;
 const shutdownController = new AbortController();
@@ -79,12 +91,24 @@ while (!stopping) {
       process.exitCode = 1;
       break;
     }
-    const failedOutcomeCount = payload.outcomes.filter(
+    const failedOutcomes = payload.outcomes.filter(
       (outcome) => outcome && typeof outcome === "object" && outcome.status === "FAILED",
-    ).length;
-    if (failedOutcomeCount > 0) {
+    );
+    if (
+      failedOutcomes.some(
+        (outcome) => !allowedFailureReasonCodes.has(outcome.reason_code),
+      )
+    ) {
+      process.stderr.write("[m1-worker] invalid failure reason code\n");
+      process.exitCode = 1;
+      break;
+    }
+    if (failedOutcomes.length > 0) {
+      const reasonCodes = [...new Set(failedOutcomes.map((outcome) => outcome.reason_code))]
+        .sort()
+        .join(",");
       process.stderr.write(
-        `[m1-worker] OUTBOX_EVENT_FAILED failed_count=${failedOutcomeCount}\n`,
+        `[m1-worker] OUTBOX_EVENT_FAILED failed_count=${failedOutcomes.length} reason_code=${reasonCodes}\n`,
       );
       process.exitCode = 1;
       break;

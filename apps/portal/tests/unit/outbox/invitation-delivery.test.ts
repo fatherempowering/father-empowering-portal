@@ -105,7 +105,9 @@ describe("M1 invitation delivery", () => {
   it("keeps the invitation pending when the email provider fails", async () => {
     mocks.sendMail.mockRejectedValue(new Error("SMTP unavailable"));
 
-    await expect(deliverClientInvitation(event)).rejects.toThrow("SMTP unavailable");
+    await expect(deliverClientInvitation(event)).rejects.toMatchObject({
+      reasonCode: "EMAIL_DELIVERY_FAILED",
+    });
     expect(mocks.invitationUpdate).not.toHaveBeenCalled();
   });
 
@@ -125,9 +127,9 @@ describe("M1 invitation delivery", () => {
       error: { message: "FE_EMAIL_IDENTITY_CONFLICT" },
     });
 
-    await expect(deliverClientInvitation(event)).rejects.toThrow(
-      "Invitation identity is already assigned",
-    );
+    await expect(deliverClientInvitation(event)).rejects.toMatchObject({
+      reasonCode: "IDENTITY_VALIDATION_FAILED",
+    });
     expect(mocks.sendMail).not.toHaveBeenCalled();
     expect(mocks.invitationUpdate).not.toHaveBeenCalled();
   });

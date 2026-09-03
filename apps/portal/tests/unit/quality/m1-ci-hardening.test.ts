@@ -302,6 +302,7 @@ globalThis.fetch = async () => {
         outcomes: [{
           id: ${JSON.stringify(privateEventId)},
           status: "FAILED",
+          reason_code: "EMAIL_DELIVERY_FAILED",
           payload: {
             invitationToken: ${JSON.stringify(privateInvitationToken)},
             email: ${JSON.stringify(privateEmail)},
@@ -340,9 +341,49 @@ globalThis.fetch = async () => {
     expect(readFileSync(readyFile, "utf8")).toBe("ready\n");
     expect(output).toContain("OUTBOX_EVENT_FAILED");
     expect(output).toContain("failed_count=1");
+    expect(output).toContain("reason_code=EMAIL_DELIVERY_FAILED");
     expect(output).not.toContain(privateEventId);
     expect(output).not.toContain(privateInvitationToken);
     expect(output).not.toContain(privateEmail);
+    expect(output).not.toContain(workerSecret);
+  });
+
+  it("rejects a non-allowlisted outbox failure reason without echoing it", async () => {
+    const fixture = temporaryDirectory("m1-worker-outcome-invalid-");
+    const readyFile = join(fixture, "worker.ready");
+    const fetchFixture = join(fixture, "fetch-fixture.mjs");
+    const workerSecret = "synthetic-local-worker-secret-32-characters";
+    const untrustedReason = "private-client@example.test";
+    writeFileSync(
+      fetchFixture,
+      `globalThis.fetch = async () => new Response(JSON.stringify({
+  processed: 1,
+  outcomes: [{ status: "FAILED", reason_code: ${JSON.stringify(untrustedReason)} }],
+}), { status: 200, headers: { "content-type": "application/json" } });
+`,
+    );
+
+    const child = spawn(process.execPath, ["--import", fetchFixture, outboxWorker], {
+      env: {
+        ...process.env,
+        M1_APP_URL: "http://127.0.0.1:3000",
+        M1_WORKER_POLL_MS: "100",
+        M1_WORKER_READY_FILE: readyFile,
+        OUTBOX_WORKER_SECRET: workerSecret,
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    childProcesses.push(child);
+    let output = "";
+    child.stderr?.on("data", (chunk: Buffer) => {
+      output += chunk.toString("utf8");
+    });
+    await once(child, "exit");
+
+    expect(child.exitCode).toBe(1);
+    expect(existsSync(readyFile)).toBe(false);
+    expect(output).toContain("invalid failure reason code");
+    expect(output).not.toContain(untrustedReason);
     expect(output).not.toContain(workerSecret);
   });
 

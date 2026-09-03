@@ -6,11 +6,28 @@ import nodemailer from "nodemailer";
 import { hashInvitationToken } from "@/lib/auth/invitation-token";
 import { getInvitationDeliveryEnvironment } from "@/lib/env";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import type { OutboxEvent, OutboxHandler } from "@/lib/outbox/worker";
+import {
+  OutboxStepFailure,
+  type OutboxEvent,
+  type OutboxFailureReasonCode,
+  type OutboxHandler,
+} from "@/lib/outbox/worker";
+
+async function atOutboxStep<T>(
+  reasonCode: OutboxFailureReasonCode,
+  operation: () => Promise<T>,
+) {
+  try {
+    return await operation();
+  } catch (error) {
+    if (error instanceof OutboxStepFailure) throw error;
+    throw new OutboxStepFailure(reasonCode, error);
+  }
+}
 
 function invitationIdFrom(event: OutboxEvent) {
   const invitationId = event.payload.invitationId;
-  if (typeof invitationId !== "string") throw new Error("Invitation event has no invitationId");
+  if (typeof invitationId !== "string") throw new OutboxStepFailure("EVENT_VALIDATION_FAILED");
   return invitationId;
 }
 
@@ -22,37 +39,45 @@ function deriveOpaqueToken(event: OutboxEvent, invitationId: string, secret: str
 
 export const deliverClientInvitation: OutboxHandler = async (event) => {
   if (!['ClientInvitationCreated', 'ClientInvitationResent'].includes(event.event_type)) {
-    throw new Error(`Unsupported invitation event ${event.event_type}`);
+    throw new OutboxStepFailure("EVENT_VALIDATION_FAILED");
   }
 
   const environment = getInvitationDeliveryEnvironment();
   const admin = createAdminSupabaseClient();
   const invitationId = invitationIdFrom(event);
-  const { data: invitation, error: invitationError } = await admin
-    .from("client_invitations")
-    .select("id, client_id, email, status, expires_at")
-    .eq("id", invitationId)
-    .maybeSingle();
-  if (invitationError || !invitation) throw invitationError ?? new Error("Invitation not found");
+  const invitation = await atOutboxStep("INVITATION_LOOKUP_FAILED", async () => {
+    const { data, error } = await admin
+      .from("client_invitations")
+      .select("id, client_id, email, status, expires_at")
+      .eq("id", invitationId)
+      .maybeSingle();
+    if (error || !data) throw error ?? new Error("Invitation not found");
+    return data;
+  });
 
   // An accepted/revoked/expired invitation makes a delayed delivery a safe no-op.
   if (!["PENDING", "SENT"].includes(invitation.status)) return;
   if (Date.parse(invitation.expires_at) <= Date.now()) {
-    const { error: expiryError } = await admin
-      .from("client_invitations")
-      .update({ status: "EXPIRED" })
-      .eq("id", invitation.id)
-      .in("status", ["PENDING", "SENT"]);
-    if (expiryError) throw expiryError;
+    await atOutboxStep("INVITATION_STATE_TRANSITION_FAILED", async () => {
+      const { error } = await admin
+        .from("client_invitations")
+        .update({ status: "EXPIRED" })
+        .eq("id", invitation.id)
+        .in("status", ["PENDING", "SENT"]);
+      if (error) throw error;
+    });
     return;
   }
 
-  const { data: client, error: clientError } = await admin
-    .from("clients")
-    .select("first_name, locale")
-    .eq("id", invitation.client_id)
-    .single();
-  if (clientError) throw clientError;
+  const client = await atOutboxStep("CLIENT_LOOKUP_FAILED", async () => {
+    const { data, error } = await admin
+      .from("clients")
+      .select("first_name, locale")
+      .eq("id", invitation.client_id)
+      .single();
+    if (error || !data) throw error ?? new Error("Client not found");
+    return data;
+  });
 
   const { error: authUserError } = await admin.auth.admin.createUser({
     email: invitation.email,
@@ -63,7 +88,7 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
     ["email_exists", "user_already_exists"].includes(authErrorCode ?? "") ||
     /already (?:been )?registered|already exists/i.test(authUserError?.message ?? "");
   if (authUserError && !authUserAlreadyExists) {
-    throw authUserError;
+    throw new OutboxStepFailure("AUTH_PROVISIONING_FAILED", authUserError);
   }
 
   const { error: identityConflict } = await admin.rpc(
@@ -71,7 +96,7 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
     { p_invitation_id: invitation.id },
   );
   if (identityConflict) {
-    throw new Error("Invitation identity is already assigned");
+    throw new OutboxStepFailure("IDENTITY_VALIDATION_FAILED", identityConflict);
   }
 
   // The raw token is deterministic for this outbox event, exists only in this
@@ -95,47 +120,51 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
       secure: false,
     });
     try {
-      await transport.sendMail({
-        from: environment.INVITATION_EMAIL_FROM,
-        to: invitation.email,
-        subject,
-        text,
-        headers: { "X-Father-Empowering-Event": event.id },
+      await atOutboxStep("EMAIL_DELIVERY_FAILED", async () => {
+        await transport.sendMail({
+          from: environment.INVITATION_EMAIL_FROM,
+          to: invitation.email,
+          subject,
+          text,
+          headers: { "X-Father-Empowering-Event": event.id },
+        });
       });
     } finally {
       transport.close();
     }
   } else {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${environment.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-        "Idempotency-Key": event.id,
-      },
-      body: JSON.stringify({
-        from: environment.INVITATION_EMAIL_FROM,
-        to: [invitation.email],
-        subject,
-        text,
-      }),
+    await atOutboxStep("EMAIL_DELIVERY_FAILED", async () => {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${environment.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+          "Idempotency-Key": event.id,
+        },
+        body: JSON.stringify({
+          from: environment.INVITATION_EMAIL_FROM,
+          to: [invitation.email],
+          subject,
+          text,
+        }),
+      });
+      if (!response.ok) throw new Error("Invitation provider rejected the message");
     });
-    if (!response.ok) throw new Error(`Invitation provider failed with status ${response.status}`);
   }
 
   // SENT means the provider accepted the message. A failed provider call keeps
   // the invitation PENDING, so Coach status and activation never claim a
   // delivery that did not happen.
-  const { data: delivered, error: deliveryError } = await admin
-    .from("client_invitations")
-    .update({ token_hash: tokenHash, status: "SENT", sent_at: new Date().toISOString() })
-    .eq("id", invitation.id)
-    .in("status", ["PENDING", "SENT"])
-    .select("id")
-    .maybeSingle();
-  if (deliveryError || !delivered) {
-    throw deliveryError ?? new Error("Invitation is no longer deliverable");
-  }
+  await atOutboxStep("INVITATION_STATE_TRANSITION_FAILED", async () => {
+    const { data, error } = await admin
+      .from("client_invitations")
+      .update({ token_hash: tokenHash, status: "SENT", sent_at: new Date().toISOString() })
+      .eq("id", invitation.id)
+      .in("status", ["PENDING", "SENT"])
+      .select("id")
+      .maybeSingle();
+    if (error || !data) throw error ?? new Error("Invitation is no longer deliverable");
+  });
 };
 
 const acknowledgeM1Signal: OutboxHandler = async () => {
