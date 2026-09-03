@@ -1,2 +1,20 @@
 .DS_Store
 .ai
+
+# Local M1 quality evidence (CI uploads it separately).
+artifacts/
+playwright-report/
+test-results/
+
+# Father Empowering Portal (M1)
+node_modules/
+.next/
+out/
+coverage/
+.env
+.env.local
+.env.*.local
+!.env.example
+*.tsbuildinfo
+.vercel/
+**/supabase/.temp/

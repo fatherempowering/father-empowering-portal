@@ -1,0 +1,72 @@
+name: M1 quality gate
+
+on:
+  push:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m1-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  m1-gate:
+    name: Security, RLS and vertical journey
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Initialize blocking verdict
+        run: |
+          mkdir -p artifacts/m1-gate
+          {
+            echo "state=BLOCKED"
+            echo "commit=${GITHUB_SHA}"
+            echo "date_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > artifacts/m1-gate/summary.txt
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm --filter @father-empowering/portal exec playwright install --with-deps chromium
+
+      - name: Install ripgrep for the fail-closed gate
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ripgrep
+
+      - name: Run canonical M1 gate
+        run: bash scripts/m1-quality-gate.sh
+
+      - name: Upload evidence
+        if: always() && hashFiles('artifacts/m1-gate/UNSAFE_ARTIFACTS_DO_NOT_UPLOAD') == ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: m1-gate-${{ github.sha }}
+          path: |
+            artifacts/m1-gate/
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,25 @@
+{
+  "name": "father-empowering",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter @father-empowering/portal dev",
+    "build": "pnpm --filter @father-empowering/portal build",
+    "lint": "pnpm --filter @father-empowering/portal lint",
+    "typecheck": "pnpm --filter @father-empowering/portal typecheck",
+    "test": "pnpm --filter @father-empowering/portal test",
+    "test:unit": "pnpm --filter @father-empowering/portal test:unit",
+    "test:integration": "pnpm --filter @father-empowering/portal test:integration",
+    "test:sql": "pnpm --filter @father-empowering/portal test:sql",
+    "test:e2e": "pnpm --filter @father-empowering/portal test:e2e",
+    "test:m1": "pnpm --filter @father-empowering/portal test:m1",
+    "worker:m1": "pnpm --filter @father-empowering/portal worker:m1"
+  }
+}

@@ -1,0 +1,116 @@
+.page {
+  min-height: 100dvh;
+  padding: clamp(24px, 6vw, 64px);
+  color: #f4efe4;
+  background:
+    radial-gradient(circle at 85% 5%, rgba(185, 148, 76, 0.2), transparent 34%),
+    #0c0c0c;
+}
+
+.header {
+  width: min(100%, 1080px);
+  margin: 0 auto clamp(56px, 9vw, 112px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eyebrow,
+.kicker {
+  margin: 0 0 10px;
+  color: #c9a967;
+  font: 700 11px/1.4 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.2em;
+}
+
+.header h1 {
+  margin: 0;
+  font: 500 clamp(27px, 5vw, 42px)/1.1 Georgia, serif;
+}
+
+.status {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 1px solid rgba(126, 195, 147, 0.38);
+  border-radius: 999px;
+  color: #a9ddb9;
+  background: rgba(77, 131, 93, 0.12);
+  font: 700 12px/1 ui-sans-serif, system-ui, sans-serif;
+}
+
+.status[data-status="PAUSED"] {
+  border-color: rgba(208, 173, 102, 0.42);
+  color: #dec181;
+  background: rgba(160, 121, 51, 0.12);
+}
+
+.hero {
+  width: min(100%, 820px);
+  margin: 0 auto;
+  padding: clamp(28px, 6vw, 60px);
+  border: 1px solid rgba(218, 188, 123, 0.24);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(31, 30, 28, 0.96), rgba(19, 19, 18, 0.96));
+}
+
+.hero h2 {
+  max-width: 620px;
+  margin: 0 0 18px;
+  font: 500 clamp(34px, 7vw, 64px)/1.02 Georgia, serif;
+  letter-spacing: -0.035em;
+}
+
+.hero > p:last-child {
+  max-width: 610px;
+  margin: 0;
+  color: #bbb5ab;
+  font: 400 16px/1.7 ui-sans-serif, system-ui, sans-serif;
+}
+
+.grid {
+  width: min(100%, 820px);
+  margin: 20px auto 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.grid article {
+  display: grid;
+  gap: 7px;
+  padding: 22px;
+  border: 1px solid #2f2e2b;
+  border-radius: 16px;
+  background: #151514;
+}
+
+.grid span,
+.grid strong {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+.grid span { color: #8d8982; font-size: 12px; }
+.grid strong { color: #eee8dc; font-size: 16px; }
+
+.loading,
+.notice {
+  width: min(100%, 520px);
+  margin: 20vh auto 0;
+  color: #c9c4ba;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+.notice {
+  padding: 28px;
+  border: 1px solid #4a3434;
+  border-radius: 16px;
+  background: #1a1414;
+}
+
+.notice h1 { margin-top: 0; color: #f2dfdc; }
+
+@media (max-width: 600px) {
+  .header { align-items: center; }
+  .grid { grid-template-columns: 1fr; }
+}
