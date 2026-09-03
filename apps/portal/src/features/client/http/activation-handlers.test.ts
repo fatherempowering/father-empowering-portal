@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ClientActivationWorkflow } from "../activation/client-activation-workflow";
 import {
@@ -36,6 +36,14 @@ function mockWorkflow() {
 }
 
 describe("client activation HTTP handlers", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.fatherempowering.com");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("inspects an opaque token without caching the response", async () => {
     const workflow = mockWorkflow();
     const handler = createInspectInvitationHandler({ workflow, createContext: () => context });
@@ -56,6 +64,25 @@ describe("client activation HTTP handlers", () => {
     expect(await response.json()).toMatchObject({
       invitation: { emailHint: "cl••••@example.com" },
     });
+  });
+
+  it("uses the configured canonical origin instead of the internal request URL", async () => {
+    const workflow = mockWorkflow();
+    const handler = createInspectInvitationHandler({ workflow, createContext: () => context });
+
+    const response = await handler(
+      new Request("http://internal-next:3000/api/v1/client/activation", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://app.fatherempowering.com",
+        },
+        body: JSON.stringify({ invitationToken: TOKEN }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(workflow.inspectInvitation).toHaveBeenCalledWith(TOKEN, context);
   });
 
   it("never accepts an email in the request OTP contract", async () => {

@@ -1,6 +1,7 @@
 import { isClientActivationError } from "../activation/errors";
 import { M1ContractError } from "@/lib/contracts/m1";
 import { readM1JsonObject } from "@/lib/http/json-body";
+import { requireSameOrigin } from "@/lib/http/origin";
 
 export async function readSmallJsonObject(request: Request): Promise<Record<string, unknown>> {
   // The shared reader measures the bytes actually received, so a missing or
@@ -9,10 +10,7 @@ export async function readSmallJsonObject(request: Request): Promise<Record<stri
 }
 
 export function assertSameOrigin(request: Request): void {
-  const origin = request.headers.get("origin");
-  if (!origin || origin !== new URL(request.url).origin) {
-    throw new HttpForbiddenError();
-  }
+  requireSameOrigin(request);
 }
 
 export function jsonResponse(body: unknown, init?: ResponseInit): Response {
@@ -30,10 +28,6 @@ export function safeHttpError(error: unknown): Response {
       { status: error.status },
     );
   }
-  if (error instanceof HttpForbiddenError) {
-    return jsonResponse({ error: { code: "FORBIDDEN", message: "Request denied." } }, { status: 403 });
-  }
-
   if (error instanceof HttpInputError) {
     return jsonResponse(
       { error: { code: "VALIDATION_FAILED", message: error.message } },
@@ -62,4 +56,3 @@ export function safeHttpError(error: unknown): Response {
 }
 
 export class HttpInputError extends Error {}
-export class HttpForbiddenError extends Error {}
