@@ -7,7 +7,7 @@ export default defineConfig({
   reporter: [["list"]],
   outputDir: "../../test-results/m15-ui",
   webServer: {
-    command: "node tests/ux/serve.mjs",
+    command: "node serve.mjs",
     url: "http://127.0.0.1:3016",
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
