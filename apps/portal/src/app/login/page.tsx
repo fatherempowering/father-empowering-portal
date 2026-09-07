@@ -1,5 +1,8 @@
 import Link from "next/link";
-
+import { AuthShell } from "@/components/fe/auth-shell";
+import { Feedback } from "@/components/fe/feedback";
+import { PasswordField } from "@/components/fe/password-field";
+import { SubmitButton } from "@/components/fe/submit-button";
 import { signInCoachAction } from "./actions";
 
 export default async function LoginPage({
@@ -9,30 +12,26 @@ export default async function LoginPage({
 }) {
   const { error } = await searchParams;
   return (
-    <main style={{ maxWidth: 440, margin: "64px auto", padding: 24, fontFamily: "system-ui" }}>
-      <p>FATHER EMPOWERING</p>
-      <h1>Connexion Coach</h1>
-      <p>Accès réservé à Max et aux administrateurs autorisés.</p>
-      {error ? <p role="alert">Le courriel ou le mot de passe est invalide.</p> : null}
-      <form action={signInCoachAction} style={{ display: "grid", gap: 16 }}>
-        <label>
+    <AuthShell>
+      <p className="fe-kicker">Espace Coach</p>
+      <h1 className="fe-title">Bienvenue, Max.</h1>
+      <p className="fe-intro">
+        Connecte-toi pour retrouver tes clients et gérer leurs accès.
+      </p>
+      {error ? (
+        <Feedback>Le courriel ou le mot de passe est invalide.</Feedback>
+      ) : null}
+      <form action={signInCoachAction} className="fe-form">
+        <label className="fe-field">
           Courriel
-          <input name="email" type="email" autoComplete="email" required style={{ width: "100%" }} />
+          <input name="email" type="email" autoComplete="email" required />
         </label>
-        <label>
-          Mot de passe
-          <input
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            minLength={8}
-            required
-            style={{ width: "100%" }}
-          />
-        </label>
-        <button type="submit">Se connecter</button>
+        <PasswordField />
+        <SubmitButton pendingLabel="Connexion…">Se connecter</SubmitButton>
       </form>
-      <p><Link href="/client-login">Accès Client par code courriel</Link></p>
-    </main>
+      <p className="fe-auth-secondary">
+        Tu es client ? <Link href="/client-login">Accéder à mon portail</Link>
+      </p>
+    </AuthShell>
   );
 }

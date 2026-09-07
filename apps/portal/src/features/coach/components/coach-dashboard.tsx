@@ -14,7 +14,11 @@ import {
   invitationMutationKey,
   type InvitationMutationAction,
 } from "./invitation-mutation-key";
-import styles from "./coach-dashboard.module.css";
+import { AppShell } from "@/components/fe/app-shell";
+import { Feedback, Loading } from "@/components/fe/feedback";
+import { Icon } from "@/components/fe/icon";
+import { Modal } from "@/components/fe/modal";
+import { invitationPresentation } from "./invitation-presentation";
 
 interface ApiEnvelope<T> {
   data?: T;
@@ -22,14 +26,18 @@ interface ApiEnvelope<T> {
 }
 
 function mutationId(): string {
-  return globalThis.crypto?.randomUUID?.() ??
-    `m1-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `m1-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 }
 
 async function readResponse<T>(response: Response): Promise<T> {
   const body = (await response.json().catch(() => ({}))) as ApiEnvelope<T>;
   if (!response.ok || !body.data) {
-    throw new Error(body.error?.message ?? "Une erreur est survenue. Réessaie.");
+    throw new Error(
+      body.error?.message ?? "Une erreur est survenue. Réessaie.",
+    );
   }
   return body.data;
 }
@@ -39,14 +47,19 @@ function initials(client: CoachDashboardClient): string {
 }
 
 function invitationCanResend(client: CoachDashboardClient): boolean {
-  return client.status === "INVITED" &&
+  return (
+    client.status === "INVITED" &&
     client.invitation !== null &&
-    client.invitation.status !== "ACCEPTED";
+    client.invitation.status !== "ACCEPTED"
+  );
 }
 
 function invitationCanRevoke(client: CoachDashboardClient): boolean {
-  return client.status === "INVITED" &&
-    (client.invitation?.status === "PENDING" || client.invitation?.status === "SENT");
+  return (
+    client.status === "INVITED" &&
+    (client.invitation?.status === "PENDING" ||
+      client.invitation?.status === "SENT")
+  );
 }
 
 function mergeClient(
@@ -86,8 +99,14 @@ export function CoachDashboard() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const createMutation = useRef<{ fingerprint: string; id: string } | null>(null);
+  const [revoking, setRevoking] = useState<CoachDashboardClient | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [dialogSession, setDialogSession] = useState(0);
+  const createMutation = useRef<{ fingerprint: string; id: string } | null>(
+    null,
+  );
   const invitationMutations = useRef(new Map<string, string>());
 
   const activeCount = useMemo(
@@ -96,7 +115,6 @@ export function CoachDashboard() {
   );
 
   const load = useCallback(async () => {
-    setError(null);
     try {
       const response = await fetch("/api/v1/coach/clients", {
         cache: "no-store",
@@ -104,8 +122,14 @@ export function CoachDashboard() {
       });
       const result = await readResponse<CoachDashboardResponse>(response);
       setClients(result.clients);
+      setNow(Date.now());
+      setLoadError(null);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Impossible de charger les clients.");
+      setLoadError(
+        cause instanceof Error && !(cause instanceof TypeError)
+          ? cause.message
+          : "Impossible de charger les clients.",
+      );
     } finally {
       setLoading(false);
     }
@@ -148,23 +172,34 @@ export function CoachDashboard() {
       createMutation.current = null;
       setClients((current) => mergeClient(current, toDashboardClient(result)));
       setDialogOpen(false);
+      setDialogSession((value) => value + 1);
       setNotice(
         `La fiche de ${result.client.displayName} est créée et l’invitation est en préparation.`,
       );
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Impossible de créer le client.");
+      setError(
+        cause instanceof Error && !(cause instanceof TypeError)
+          ? cause.message
+          : "Impossible de créer le client.",
+      );
     } finally {
       setBusyKey(null);
     }
   }
 
-  async function mutateInvitation(client: CoachDashboardClient, action: InvitationMutationAction) {
+  async function mutateInvitation(
+    client: CoachDashboardClient,
+    action: InvitationMutationAction,
+  ) {
     if (!client.invitation) {
-      setError("L’invitation ciblée n’est plus disponible. Actualise la page et réessaie.");
+      setError(
+        "L’invitation ciblée n’est plus disponible. Actualise la page et réessaie.",
+      );
       return;
     }
     const key = invitationMutationKey(action, client.id, client.invitation.id);
-    const clientMutationId = invitationMutations.current.get(key) ?? mutationId();
+    const clientMutationId =
+      invitationMutations.current.get(key) ?? mutationId();
     invitationMutations.current.set(key, clientMutationId);
     setBusyKey(key);
     setError(null);
@@ -180,6 +215,7 @@ export function CoachDashboard() {
       );
       const result = await readResponse<InvitationMutationResult>(response);
       invitationMutations.current.delete(key);
+      if (action === "revoke") setRevoking(null);
       setClients((current) => mergeClient(current, toDashboardClient(result)));
       setNotice(
         action === "resend"
@@ -187,133 +223,178 @@ export function CoachDashboard() {
           : `L’invitation de ${result.client.displayName} a été révoquée.`,
       );
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Impossible de modifier l’invitation.");
+      setError(
+        cause instanceof Error && !(cause instanceof TypeError)
+          ? cause.message
+          : "Impossible de modifier l’invitation.",
+      );
     } finally {
       setBusyKey(null);
     }
   }
 
+  const invitedCount = clients.filter(
+    (client) => client.status === "INVITED",
+  ).length;
   return (
-    <main className={styles.page}>
-      <div className={styles.shell}>
-        <header className={styles.header}>
-          <div>
-            <p className={styles.eyebrow}>Father Empowering</p>
-            <h1 className={styles.title}>Espace Coach</h1>
-            <p className={styles.subtitle}>
-              Crée les accès clients et suis leur activation depuis une seule vue
-              sécurisée.
+    <AppShell space="coach">
+      <header className="fe-page-heading">
+        <div>
+          <p className="fe-kicker">Father Empowering</p>
+          <h1 className="fe-title">Clients</h1>
+          <p className="fe-intro">
+            Gère les invitations et suis l’activation des portails.
+          </p>
+        </div>
+        <button
+          className="fe-button fe-button-primary"
+          type="button"
+          onClick={() => {
+            setError(null);
+            setDialogOpen(true);
+          }}
+          disabled={busyKey !== null}
+        >
+          <Icon name="plus" />
+          Ajouter un client
+        </button>
+      </header>
+      {notice ? <Feedback tone="success">{notice}</Feedback> : null}
+      {(loadError || error) && !dialogOpen && !revoking ? (
+        <Feedback>
+          {error ?? loadError}
+          <br />
+          <button
+            className="fe-text-button"
+            onClick={() => {
+              setError(null);
+              void load();
+            }}
+            type="button"
+            disabled={busyKey !== null || loading}
+          >
+            Actualiser la liste
+          </button>
+        </Feedback>
+      ) : null}
+      <section
+        className="fe-panel"
+        aria-labelledby="clients-title"
+        aria-busy={loading}
+      >
+        <header className="fe-panel-header">
+          <h2 id="clients-title">
+            {loading || (loadError && clients.length === 0)
+              ? "Liste des clients"
+              : `${clients.length} client${clients.length === 1 ? "" : "s"}`}
+          </h2>
+          {!loading && !(loadError && clients.length === 0) ? (
+            <p>
+              {activeCount} actif{activeCount === 1 ? "" : "s"} · {invitedCount}{" "}
+              activation{invitedCount === 1 ? "" : "s"} en attente
+            </p>
+          ) : null}
+        </header>
+        {loading ? (
+          <Loading>Chargement des clients…</Loading>
+        ) : clients.length === 0 ? (
+          <div className="fe-empty">
+            <h3>
+              {loadError
+                ? "La liste n’a pas pu être chargée."
+                : "Ton premier client commence ici."}
+            </h3>
+            <p>
+              {loadError
+                ? "Actualise la liste pour réessayer."
+                : "Crée sa fiche et prépare son invitation. Il deviendra actif après avoir ouvert son lien et validé son code courriel."}
             </p>
           </div>
-          <button className={styles.button} onClick={() => setDialogOpen(true)} type="button">
-            Ajouter un client
-          </button>
-        </header>
-
-        {notice ? (
-          <p aria-live="polite" className={styles.notice} role="status">
-            {notice}
-          </p>
-        ) : null}
-        {error && !dialogOpen ? (
-          <p aria-live="assertive" className={styles.error} role="alert">
-            {error}
-          </p>
-        ) : null}
-
-        <section aria-labelledby="clients-title" className={styles.panel}>
-          <header className={styles.sectionHeader}>
-            <div>
-              <p className={styles.eyebrow}>Accès et assignations</p>
-              <h2 className={styles.sectionTitle} id="clients-title">
-                Clients
-              </h2>
-              <p className={styles.muted}>
-                {activeCount} actif{activeCount === 1 ? "" : "s"}
-              </p>
+        ) : (
+          <>
+            <div className="fe-list-head" aria-hidden="true">
+              <span>Client</span>
+              <span>Accès au portail</span>
+              <span>Actions</span>
             </div>
-            <span aria-label={`${clients.length} clients`} className={styles.count}>
-              {clients.length}
-            </span>
-          </header>
-
-          {loading ? (
-            <p aria-live="polite" className={styles.loading}>
-              Chargement des clients…
-            </p>
-          ) : clients.length === 0 ? (
-            <div className={styles.empty}>
-              <h3 className={styles.emptyTitle}>Ton premier client commence ici.</h3>
-              <p className={styles.emptyText}>
-                Crée sa fiche et envoie son invitation. Son état passera de « Invité »
-                à « Actif » après l’activation sécurisée.
-              </p>
-            </div>
-          ) : (
-            <ul className={styles.list}>
+            <ul className="fe-client-list">
               {clients.map((client) => {
                 const canResend = invitationCanResend(client);
                 const canRevoke = invitationCanRevoke(client);
+                const status = invitationPresentation(client, now);
                 const resendBusyKey = client.invitation
-                  ? invitationMutationKey("resend", client.id, client.invitation.id)
-                  : null;
-                const revokeBusyKey = client.invitation
-                  ? invitationMutationKey("revoke", client.id, client.invitation.id)
+                  ? invitationMutationKey(
+                      "resend",
+                      client.id,
+                      client.invitation.id,
+                    )
                   : null;
                 return (
-                  <li className={styles.clientRow} key={client.id}>
-                    <div className={styles.clientMain}>
-                      <span aria-hidden="true" className={styles.avatar}>
+                  <li className="fe-client-row" key={client.id}>
+                    <div className="fe-client-name">
+                      <span className="fe-avatar" aria-hidden="true">
                         {initials(client)}
                       </span>
                       <div>
-                        <p className={styles.clientName}>
+                        <strong>
                           {client.firstName} {client.lastName}
-                        </p>
-                        <p className={styles.clientMeta}>{client.email}</p>
+                        </strong>
+                        <small>{client.email}</small>
                       </div>
-                      <span
-                        className={`${styles.status} ${
-                          client.status === "ACTIVE" ? styles.statusActive : ""
-                        }`}
-                      >
-                        {client.status === "ACTIVE" ? "Actif" : "Invité"}
-                      </span>
                     </div>
-
-                    {canResend || canRevoke ? (
-                      <div className={styles.actions}>
-                        {canResend ? (
-                          <button
-                            className={styles.buttonSecondary}
-                            disabled={busyKey !== null}
-                            onClick={() => void mutateInvitation(client, "resend")}
-                            type="button"
-                          >
-                            {busyKey === resendBusyKey ? "Renvoi…" : "Renvoyer"}
-                          </button>
-                        ) : null}
-                        {canRevoke ? (
-                          <button
-                            className={styles.buttonDanger}
-                            disabled={busyKey !== null}
-                            onClick={() => void mutateInvitation(client, "revoke")}
-                            type="button"
-                          >
-                            {busyKey === revokeBusyKey ? "Révocation…" : "Révoquer"}
-                          </button>
-                        ) : null}
-                      </div>
-                    ) : null}
+                    <div className="fe-client-status">
+                      <span
+                        className={`fe-badge ${status.tone === "active" ? "fe-badge-active" : status.tone === "warning" ? "fe-badge-warning" : ""}`}
+                      >
+                        <Icon name={status.icon} />
+                        {status.label}
+                      </span>
+                      <small className="fe-status-meta">{status.detail}</small>
+                    </div>
+                    <div className="fe-client-actions">
+                      {canResend ? (
+                        <button
+                          className="fe-text-button"
+                          type="button"
+                          disabled={busyKey !== null}
+                          onClick={() =>
+                            void mutateInvitation(client, "resend")
+                          }
+                        >
+                          {busyKey === resendBusyKey ? "Renvoi…" : "Renvoyer"}
+                        </button>
+                      ) : null}
+                      {canRevoke ? (
+                        <button
+                          className="fe-text-button fe-text-danger"
+                          type="button"
+                          disabled={busyKey !== null}
+                          onClick={() => {
+                            setError(null);
+                            setRevoking(client);
+                          }}
+                        >
+                          Révoquer
+                        </button>
+                      ) : null}
+                    </div>
                   </li>
                 );
               })}
             </ul>
-          )}
-        </section>
-      </div>
-
+          </>
+        )}
+      </section>
+      <section className="fe-activation-help">
+        <h2>Comment un client devient actif</h2>
+        <ol>
+          <li>Il ouvre son invitation.</li>
+          <li>Il reçoit son code courriel.</li>
+          <li>Il valide son code et accède au portail.</li>
+        </ol>
+      </section>
       <CreateClientDialog
+        key={dialogSession}
         busy={busyKey === "create"}
         error={dialogOpen ? error : null}
         onClose={() => {
@@ -326,6 +407,56 @@ export function CoachDashboard() {
         onSubmit={createClient}
         open={dialogOpen}
       />
-    </main>
+      <Modal
+        open={revoking !== null}
+        busy={busyKey !== null}
+        onClose={() => {
+          if (busyKey === null) {
+            setRevoking(null);
+            setError(null);
+          }
+        }}
+        labelledBy="revoke-title"
+        describedBy="revoke-description"
+      >
+        <header className="fe-dialog-header">
+          <div>
+            <p className="fe-kicker">Invitation</p>
+            <h2 id="revoke-title">Révoquer cette invitation ?</h2>
+            <p className="fe-intro" id="revoke-description">
+              Le lien de {revoking?.firstName} {revoking?.lastName} ne permettra
+              plus d’activer son portail. Tu pourras envoyer une nouvelle
+              invitation.
+            </p>
+          </div>
+        </header>
+        <div className="fe-dialog-content">
+          {error ? <Feedback>{error}</Feedback> : null}
+          <div className="fe-form-actions">
+            <button
+              className="fe-button"
+              type="button"
+              disabled={busyKey !== null}
+              onClick={() => {
+                setRevoking(null);
+                setError(null);
+              }}
+            >
+              Annuler
+            </button>
+            <button
+              className="fe-button fe-button-danger"
+              type="button"
+              disabled={busyKey !== null}
+              onClick={() => {
+                if (revoking) void mutateInvitation(revoking, "revoke");
+              }}
+            >
+              {busyKey !== null ? "Révocation…" : "Révoquer l’invitation"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </AppShell>
   );
 }

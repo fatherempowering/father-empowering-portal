@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+import { CodeInput } from "@/components/fe/code-input";
+import { Feedback } from "@/components/fe/feedback";
 
 type Enrollment = { factorId: string; qrCode: string; secret: string };
 
-export function MfaPanel({ verifiedFactorId }: { verifiedFactorId: string | null }) {
+export function MfaPanel({
+  verifiedFactorId,
+}: {
+  verifiedFactorId: string | null;
+}) {
   const [factorId, setFactorId] = useState(verifiedFactorId);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [code, setCode] = useState("");
@@ -12,63 +18,106 @@ export function MfaPanel({ verifiedFactorId }: { verifiedFactorId: string | null
   const [busy, setBusy] = useState(false);
 
   async function enroll() {
+    if (busy) return;
     setBusy(true);
     setError(null);
-    const response = await fetch("/api/v1/auth/mfa/enroll", { method: "POST" });
-    const body = await response.json();
-    setBusy(false);
-    if (!response.ok) return setError("Impossible de préparer le MFA.");
-    setEnrollment(body.data);
-    setFactorId(body.data.factorId);
+    try {
+      const response = await fetch("/api/v1/auth/mfa/enroll", {
+        method: "POST",
+      });
+      const body = await response.json();
+      if (!response.ok)
+        throw new Error("Impossible de préparer la vérification. Réessaie.");
+      setEnrollment(body.data);
+      setFactorId(body.data.factorId);
+    } catch {
+      setError(
+        "Impossible de préparer la vérification. Vérifie ta connexion et réessaie.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
-  async function verify(event: React.FormEvent) {
+  async function verify(event: FormEvent) {
     event.preventDefault();
-    if (!factorId) return;
+    if (!factorId || busy || !/^\d{6}$/.test(code)) return;
     setBusy(true);
     setError(null);
-    const response = await fetch("/api/v1/auth/mfa/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ factorId, code }),
-    });
-    setBusy(false);
-    if (!response.ok) return setError("Le code est invalide ou expiré.");
-    window.location.assign("/coach");
+    try {
+      const response = await fetch("/api/v1/auth/mfa/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ factorId, code }),
+      });
+      if (!response.ok) {
+        setError(
+          "Le code est invalide ou expiré. Entre le code actuel de ton application.",
+        );
+        return;
+      }
+      window.location.assign("/coach");
+    } catch {
+      setError(
+        "La connexion a été interrompue. Vérifie ton réseau et réessaie.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
     <section>
       {!factorId ? (
-        <button type="button" onClick={enroll} disabled={busy}>
-          Activer le MFA
+        <button
+          className="fe-button fe-button-primary fe-button-wide"
+          type="button"
+          onClick={enroll}
+          disabled={busy}
+        >
+          {busy ? "Préparation…" : "Configurer la vérification"}
         </button>
       ) : null}
       {enrollment ? (
-        <div>
-          {/* Supabase returns a self-contained QR data URI; no remote image is loaded. */}
+        <div className="fe-mfa-enrollment">
+          <p className="fe-intro">
+            Scanne ce code QR avec ton application d’authentification, puis
+            entre le code qu’elle affiche.
+          </p>
+          {/* The existing Supabase enrollment contract supplies a self-contained QR data URI. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={enrollment.qrCode} alt="Code QR pour l’application d’authentification" />
-          <p>Clé manuelle : <code>{enrollment.secret}</code></p>
+          <img
+            src={enrollment.qrCode}
+            alt="Code QR pour l’application d’authentification"
+          />
+          <details>
+            <summary>Entrer la clé manuellement</summary>
+            <code>{enrollment.secret}</code>
+          </details>
         </div>
       ) : null}
       {factorId ? (
-        <form onSubmit={verify} style={{ display: "grid", gap: 12, marginTop: 20 }}>
-          <label>
-            Code à 6 chiffres
-            <input
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              pattern="[0-9]{6}"
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              required
-            />
-          </label>
-          <button type="submit" disabled={busy || code.length !== 6}>Vérifier</button>
+        <form onSubmit={verify} className="fe-form" aria-busy={busy}>
+          <CodeInput
+            value={code}
+            onChange={setCode}
+            disabled={busy}
+            autoFocus
+            invalid={Boolean(error)}
+            name="code"
+          />
+          {error ? <Feedback>{error}</Feedback> : null}
+          <button
+            className="fe-button fe-button-primary fe-button-wide"
+            type="submit"
+            disabled={busy || !/^\d{6}$/.test(code)}
+          >
+            {busy ? "Vérification…" : "Vérifier et continuer"}
+          </button>
         </form>
+      ) : error ? (
+        <Feedback>{error}</Feedback>
       ) : null}
-      {error ? <p role="alert">{error}</p> : null}
     </section>
   );
 }

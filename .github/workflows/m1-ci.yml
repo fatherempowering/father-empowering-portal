@@ -61,6 +61,9 @@ jobs:
       - name: Run canonical M1 gate
         run: bash scripts/m1-quality-gate.sh
 
+      - name: Verify M1.5 component interactions and responsive layouts
+        run: pnpm --filter @father-empowering/portal exec playwright test --config tests/ux/playwright.config.ts
+
       - name: Upload evidence
         if: always() && hashFiles('artifacts/m1-gate/UNSAFE_ARTIFACTS_DO_NOT_UPLOAD') == ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

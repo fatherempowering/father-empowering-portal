@@ -1,30 +1,26 @@
 import Link from "next/link";
-
-const accessLinkStyle = {
-  display: "block",
-  padding: "14px 18px",
-  border: "1px solid #d1d5db",
-  borderRadius: 10,
-  color: "#111827",
-  fontWeight: 700,
-  textAlign: "center",
-  textDecoration: "none",
-} as const;
+import { AuthShell } from "@/components/fe/auth-shell";
+import { Icon } from "@/components/fe/icon";
 
 export default function HomePage() {
   return (
-    <main style={{ maxWidth: 520, margin: "64px auto", padding: 24, fontFamily: "system-ui" }}>
-      <p>FATHER EMPOWERING</p>
-      <h1>Portail sécurisé Coach et Client</h1>
-      <p>Choisis ton espace pour continuer.</p>
-      <nav aria-label="Accès au portail" style={{ display: "grid", gap: 12, marginTop: 28 }}>
-        <Link href="/login" style={accessLinkStyle}>
+    <AuthShell>
+      <p className="fe-kicker">Father Empowering</p>
+      <h1 className="fe-title">Entre dans ton espace.</h1>
+      <p className="fe-intro">Choisis ton accès pour continuer.</p>
+      <nav aria-label="Accès au portail" className="fe-access-options">
+        <Link
+          className="fe-button fe-button-primary fe-button-wide"
+          href="/login"
+        >
           Connexion Coach
+          <Icon name="arrow" />
         </Link>
-        <Link href="/client-login" style={accessLinkStyle}>
+        <Link className="fe-button fe-button-wide" href="/client-login">
           Connexion Client
+          <Icon name="arrow" />
         </Link>
       </nav>
-    </main>
+    </AuthShell>
   );
 }

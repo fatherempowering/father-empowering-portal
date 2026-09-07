@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { MfaPanel } from "./panel";
 import { getServerActor } from "@/lib/auth/actor";
 import { listTotpFactors } from "@/lib/auth/mfa";
+import { AuthShell } from "@/components/fe/auth-shell";
 
 export default async function MfaPage() {
   const actor = await getServerActor();
@@ -10,13 +11,21 @@ export default async function MfaPage() {
   if (actor.role === "CLIENT") redirect("/client");
   if (actor.aal === "aal2") redirect("/coach");
 
-  const verified = (await listTotpFactors()).find((factor) => factor.status === "verified");
+  const verified = (await listTotpFactors()).find(
+    (factor) => factor.status === "verified",
+  );
   return (
-    <main style={{ maxWidth: 520, margin: "64px auto", padding: 24, fontFamily: "system-ui" }}>
-      <p>FATHER EMPOWERING</p>
-      <h1>Vérification en deux étapes</h1>
-      <p>Cette protection est obligatoire pour accéder aux dossiers clients.</p>
+    <AuthShell>
+      <p className="fe-kicker">Espace Coach · Vérification</p>
+      <h1 className="fe-title">
+        {verified ? "Confirme ton identité." : "Protège ton espace."}
+      </h1>
+      <p className="fe-intro">
+        {verified
+          ? "Entre le code de ton application d’authentification."
+          : "Configure la vérification en deux étapes pour accéder aux dossiers de tes clients."}
+      </p>
       <MfaPanel verifiedFactorId={verified?.id ?? null} />
-    </main>
+    </AuthShell>
   );
 }
