@@ -13,8 +13,10 @@ import {
 
 const environment = getM1TestEnvironment();
 const password = "M1-local-only-Max!123";
+const clientPassword = "M1-local-only-Client!123";
 let coach: SeededStaff;
 let session: M1SsrSession;
+let clientSession: M1SsrSession;
 let authenticatedCoachUserId: string | null = null;
 
 function safeErrorDiagnostic(body: unknown): { code: string; message: string } {
@@ -48,6 +50,60 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
     });
     if (signIn.error) throw signIn.error;
     authenticatedCoachUserId = signIn.data.user?.id ?? null;
+
+    const admin = createM1AdminClient(environment);
+    const clientEmail = `client.session.${randomUUID()}@example.test`;
+    const createdClientUser = await admin.auth.admin.createUser({
+      email: clientEmail,
+      password: clientPassword,
+      email_confirm: true,
+      app_metadata: { m1_test_fixture: true },
+    });
+    if (createdClientUser.error || !createdClientUser.data.user) {
+      throw new Error("Unable to seed the Client session fixture");
+    }
+    const clientUserId = createdClientUser.data.user.id;
+    const clientId = randomUUID();
+    const clientFixtureWrites = await Promise.all([
+      admin.from("profiles").insert({
+        auth_user_id: clientUserId,
+        display_name: "Client Session",
+        locale: "fr-CA",
+        time_zone: "America/Montreal",
+        status: "ACTIVE",
+        created_by: coach.userId,
+      }),
+      admin.from("organization_memberships").insert({
+        organization_id: coach.organizationId,
+        user_id: clientUserId,
+        role: "CLIENT",
+        status: "ACTIVE",
+        activated_at: new Date().toISOString(),
+        created_by: coach.userId,
+      }),
+      admin.from("clients").insert({
+        id: clientId,
+        organization_id: coach.organizationId,
+        auth_user_id: clientUserId,
+        email: clientEmail,
+        first_name: "Client",
+        last_name: "Session",
+        locale: "fr-CA",
+        time_zone: "America/Montreal",
+        status: "ACTIVE",
+        created_by: coach.userId,
+      }),
+    ]);
+    for (const write of clientFixtureWrites) {
+      if (write.error) throw write.error;
+    }
+
+    clientSession = new M1SsrSession(environment);
+    const clientSignIn = await clientSession.client.auth.signInWithPassword({
+      email: clientEmail,
+      password: clientPassword,
+    });
+    if (clientSignIn.error) throw clientSignIn.error;
   });
 
   it("authentifie par email un Coach créé par service_role", () => {
@@ -81,6 +137,41 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
 
     expect(coachResponse.status).toBe(401);
     expect(clientResponse.status).toBe(401);
+  });
+
+  it("protège et efface localement la session Client à la déconnexion", async () => {
+    const beforeLogout = await authenticatedFetch(
+      environment,
+      clientSession,
+      "/api/v1/client/me",
+    );
+    expect(beforeLogout.status).toBe(200);
+
+    const crossOriginLogout = await fetch(
+      `${environment.appUrl}/api/v1/auth/client-logout`,
+      {
+        method: "POST",
+        headers: {
+          cookie: clientSession.cookieHeader(),
+          origin: "https://attacker.example",
+        },
+        redirect: "manual",
+      },
+    );
+    expect(crossOriginLogout.status).toBe(403);
+
+    const logout = await authenticatedFetch(
+      environment,
+      clientSession,
+      "/api/v1/auth/client-logout",
+      { method: "POST" },
+    );
+    expect(logout.status).toBe(200);
+    expect(logout.headers.get("cache-control")).toContain("no-store");
+    expect(logout.headers.get("set-cookie")).toContain("Max-Age=0");
+    expect(await logout.json()).toEqual({
+      data: { signedOut: true, redirectTo: "/client-login" },
+    });
   });
 
   it("refuse le déclenchement du worker sans son secret interne", async () => {

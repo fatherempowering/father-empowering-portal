@@ -10,6 +10,8 @@ export function ClientDashboard() {
   const [dashboard, setDashboard] = useState<ClientDashboardData | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const retry = useCallback(() => {
     setFailed(false);
     setAttempt((value) => value + 1);
@@ -39,6 +41,32 @@ export function ClientDashboard() {
     void load();
     return () => controller.abort();
   }, [attempt]);
+
+  async function signOut() {
+    setSigningOut(true);
+    setSignOutError(null);
+    try {
+      const response = await fetch("/api/v1/auth/client-logout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        data?: { redirectTo?: string };
+        error?: { message?: string };
+      };
+      if (!response.ok) {
+        throw new Error(body.error?.message ?? "Unable to sign out.");
+      }
+      window.location.replace(body.data?.redirectTo ?? "/client-login");
+    } catch {
+      setSignOutError(
+        dashboard?.locale === "en-CA"
+          ? "Unable to sign out. Please try again."
+          : "Impossible de te déconnecter. Réessaie.",
+      );
+      setSigningOut(false);
+    }
+  }
 
   const french = dashboard?.locale !== "en-CA";
   return (
@@ -75,7 +103,22 @@ export function ClientDashboard() {
                   : "Your Father Empowering space."}
               </p>
             </div>
+            <button
+              className="fe-button"
+              type="button"
+              onClick={() => void signOut()}
+              disabled={signingOut}
+            >
+              {signingOut
+                ? french
+                  ? "Déconnexion…"
+                  : "Signing out…"
+                : french
+                  ? "Se déconnecter"
+                  : "Sign out"}
+            </button>
           </header>
+          {signOutError ? <Feedback>{signOutError}</Feedback> : null}
           <div className="fe-welcome-grid">
             <section className="fe-welcome-card" aria-labelledby="portal-ready">
               <span
