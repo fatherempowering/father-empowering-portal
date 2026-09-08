@@ -56,7 +56,7 @@ export function ClientDashboard() {
     setSignOutError(
       dashboard?.locale === "en-CA"
         ? "Unable to sign out. Please try again."
-      : "Impossible de te déconnecter. Réessaie.",
+        : "Impossible de te déconnecter. Réessaie.",
     );
     setSigningOut(false);
   }

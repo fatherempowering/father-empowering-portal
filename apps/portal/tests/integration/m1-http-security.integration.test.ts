@@ -337,7 +337,34 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
       },
     );
     expect(retry.status).toBe(201);
-    expect(await retry.json()).toEqual(firstBody);
+    const retryBody = await retry.json();
+    const firstInvitation = firstBody.data.invitation;
+    const retryInvitation = retryBody.data.invitation;
+
+    expect({
+      ...retryBody,
+      data: {
+        ...retryBody.data,
+        invitation: {
+          ...retryInvitation,
+          status: firstInvitation.status,
+          sentAt: firstInvitation.sentAt,
+        },
+      },
+    }).toEqual(firstBody);
+
+    for (const invitation of [firstInvitation, retryInvitation]) {
+      expect(["PENDING", "SENT"]).toContain(invitation.status);
+      if (invitation.status === "PENDING") {
+        expect(invitation.sentAt).toBeNull();
+      } else {
+        expect(typeof invitation.sentAt).toBe("string");
+        expect(Number.isNaN(Date.parse(invitation.sentAt))).toBe(false);
+      }
+    }
+    expect(
+      firstInvitation.status === "SENT" && retryInvitation.status === "PENDING",
+    ).toBe(false);
 
     const conflict = await authenticatedFetch(
       environment,
