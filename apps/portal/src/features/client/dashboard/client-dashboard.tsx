@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+
+import { requestClientLogout } from "@/features/client/auth/request-client-logout";
 import type { ClientDashboard as ClientDashboardData } from "./contracts";
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
@@ -45,27 +47,18 @@ export function ClientDashboard() {
   async function signOut() {
     setSigningOut(true);
     setSignOutError(null);
-    try {
-      const response = await fetch("/api/v1/auth/client-logout", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-      });
-      const body = (await response.json().catch(() => ({}))) as {
-        data?: { redirectTo?: string };
-        error?: { message?: string };
-      };
-      if (!response.ok) {
-        throw new Error(body.error?.message ?? "Unable to sign out.");
-      }
-      window.location.replace(body.data?.redirectTo ?? "/client-login");
-    } catch {
-      setSignOutError(
-        dashboard?.locale === "en-CA"
-          ? "Unable to sign out. Please try again."
-          : "Impossible de te déconnecter. Réessaie.",
-      );
-      setSigningOut(false);
-    }
+    const responseReceived = await requestClientLogout(() => {
+      setDashboard(null);
+      window.location.replace("/client-login");
+    });
+    if (responseReceived) return;
+
+    setSignOutError(
+      dashboard?.locale === "en-CA"
+        ? "Unable to sign out. Please try again."
+      : "Impossible de te déconnecter. Réessaie.",
+    );
+    setSigningOut(false);
   }
 
   const french = dashboard?.locale !== "en-CA";

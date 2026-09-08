@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { createClient } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -16,7 +17,9 @@ const password = "M1-local-only-Max!123";
 const clientPassword = "M1-local-only-Client!123";
 let coach: SeededStaff;
 let session: M1SsrSession;
-let clientSession: M1SsrSession;
+let clientSessionA: M1SsrSession;
+let clientSessionB: M1SsrSession;
+let sessionClientEmail: string;
 let authenticatedCoachUserId: string | null = null;
 
 function safeErrorDiagnostic(body: unknown): { code: string; message: string } {
@@ -36,6 +39,14 @@ function safeErrorDiagnostic(body: unknown): { code: string; message: string } {
   };
 }
 
+async function localMailCount(recipient: string): Promise<number> {
+  const query = encodeURIComponent(`to:${recipient}`);
+  const response = await fetch(`${environment.mailpitUrl}/api/v1/search?query=${query}`);
+  if (!response.ok) throw new Error("Unable to inspect the local mail boundary");
+  const body = (await response.json()) as { messages?: unknown[] };
+  return Array.isArray(body.messages) ? body.messages.length : 0;
+}
+
 describe.sequential("M1 HTTP security and transaction integration", () => {
   beforeAll(async () => {
     coach = await seedStaffIdentity(environment, {
@@ -52,9 +63,9 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
     authenticatedCoachUserId = signIn.data.user?.id ?? null;
 
     const admin = createM1AdminClient(environment);
-    const clientEmail = `client.session.${randomUUID()}@example.test`;
+    sessionClientEmail = `client.session.${randomUUID()}@example.test`;
     const createdClientUser = await admin.auth.admin.createUser({
-      email: clientEmail,
+      email: sessionClientEmail,
       password: clientPassword,
       email_confirm: true,
       app_metadata: { m1_test_fixture: true },
@@ -85,7 +96,7 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
         id: clientId,
         organization_id: coach.organizationId,
         auth_user_id: clientUserId,
-        email: clientEmail,
+        email: sessionClientEmail,
         first_name: "Client",
         last_name: "Session",
         locale: "fr-CA",
@@ -98,12 +109,19 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
       if (write.error) throw write.error;
     }
 
-    clientSession = new M1SsrSession(environment);
-    const clientSignIn = await clientSession.client.auth.signInWithPassword({
-      email: clientEmail,
+    clientSessionA = new M1SsrSession(environment);
+    const clientSignInA = await clientSessionA.client.auth.signInWithPassword({
+      email: sessionClientEmail,
       password: clientPassword,
     });
-    if (clientSignIn.error) throw clientSignIn.error;
+    if (clientSignInA.error) throw clientSignInA.error;
+
+    clientSessionB = new M1SsrSession(environment);
+    const clientSignInB = await clientSessionB.client.auth.signInWithPassword({
+      email: sessionClientEmail,
+      password: clientPassword,
+    });
+    if (clientSignInB.error) throw clientSignInB.error;
   });
 
   it("authentifie par email un Coach créé par service_role", () => {
@@ -139,20 +157,39 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
     expect(clientResponse.status).toBe(401);
   });
 
-  it("protège et efface localement la session Client à la déconnexion", async () => {
-    const beforeLogout = await authenticatedFetch(
+  it("fait tourner les cookies Client sans OTP et révoque seulement la session locale", async () => {
+    const mailCountBeforeRefresh = await localMailCount(sessionClientEmail);
+    const cookieBeforeRefreshA = clientSessionA.cookieHeader();
+    const refreshA = await clientSessionA.client.auth.refreshSession();
+    expect(refreshA.error).toBeNull();
+    expect(Boolean(refreshA.data.session)).toBe(true);
+    expect(clientSessionA.cookieHeader() !== cookieBeforeRefreshA).toBe(true);
+    const retainedRefreshTokenA = refreshA.data.session?.refresh_token;
+    if (!retainedRefreshTokenA) {
+      throw new Error("The refreshed Client session has no refresh credential");
+    }
+
+    const afterRefreshA = await authenticatedFetch(
       environment,
-      clientSession,
+      clientSessionA,
       "/api/v1/client/me",
     );
-    expect(beforeLogout.status).toBe(200);
+    expect(afterRefreshA.status).toBe(200);
+    expect(await localMailCount(sessionClientEmail)).toBe(mailCountBeforeRefresh);
+
+    const beforeLogoutB = await authenticatedFetch(
+      environment,
+      clientSessionB,
+      "/api/v1/client/me",
+    );
+    expect(beforeLogoutB.status).toBe(200);
 
     const crossOriginLogout = await fetch(
       `${environment.appUrl}/api/v1/auth/client-logout`,
       {
         method: "POST",
         headers: {
-          cookie: clientSession.cookieHeader(),
+          cookie: clientSessionA.cookieHeader(),
           origin: "https://attacker.example",
         },
         redirect: "manual",
@@ -162,7 +199,7 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
 
     const logout = await authenticatedFetch(
       environment,
-      clientSession,
+      clientSessionA,
       "/api/v1/auth/client-logout",
       { method: "POST" },
     );
@@ -172,6 +209,36 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
     expect(await logout.json()).toEqual({
       data: { signedOut: true, redirectTo: "/client-login" },
     });
+
+    const afterLogoutB = await authenticatedFetch(
+      environment,
+      clientSessionB,
+      "/api/v1/client/me",
+    );
+    expect(afterLogoutB.status).toBe(200);
+    const cookieBeforeRefreshB = clientSessionB.cookieHeader();
+    const refreshB = await clientSessionB.client.auth.refreshSession();
+    expect(refreshB.error).toBeNull();
+    expect(Boolean(refreshB.data.session)).toBe(true);
+    expect(clientSessionB.cookieHeader() !== cookieBeforeRefreshB).toBe(true);
+    const afterRefreshB = await authenticatedFetch(
+      environment,
+      clientSessionB,
+      "/api/v1/client/me",
+    );
+    expect(afterRefreshB.status).toBe(200);
+    expect(await localMailCount(sessionClientEmail)).toBe(mailCountBeforeRefresh);
+
+    const revokedSessionProbe = createClient(
+      environment.supabaseUrl,
+      environment.anonKey,
+      { auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false } },
+    );
+    const replayA = await revokedSessionProbe.auth.refreshSession({
+      refresh_token: retainedRefreshTokenA,
+    });
+    expect(replayA.error !== null).toBe(true);
+    expect(replayA.data.session).toBeNull();
   });
 
   it("refuse le déclenchement du worker sans son secret interne", async () => {
