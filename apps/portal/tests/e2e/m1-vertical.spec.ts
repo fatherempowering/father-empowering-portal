@@ -47,7 +47,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   const maxPage = await maxContext.newPage();
   await loginMaxAtAal2(maxPage);
 
-  await expect(maxPage.getByRole("heading", { name: /espace coach/i })).toBeVisible();
+  await expect(maxPage.getByRole("heading", { name: /^clients$/i })).toBeVisible();
   await maxPage.getByRole("button", { name: /ajouter un client/i }).click();
   await maxPage.getByLabel(/prénom/i).fill("Client");
   await maxPage.getByLabel(/^nom$/i).fill("Vertical");
@@ -56,7 +56,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
 
   await expect(maxPage.getByText(/fiche de Client Vertical est créée/i)).toBeVisible();
   const invitedRow = maxPage.getByRole("listitem").filter({ hasText: clientEmail });
-  await expect(invitedRow).toContainText(/invité/i);
+  await expect(invitedRow).toContainText(/activation en attente/i);
 
   const invitationMail = await waitForMail(
     environment.mailpitUrl,
@@ -142,7 +142,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   );
   const otp = extractSixDigitOtp(otpMail);
   try {
-    await clientPage.getByLabel(/code à 6 chiffres/i).fill(otp);
+    await clientPage.getByRole("textbox", { name: /chiffre 1 sur 6/i }).fill(otp);
   } catch {
     throw new Error("Unable to enter the captured OTP.");
   }
@@ -150,7 +150,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
 
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(clientPage.getByRole("heading", { name: /bienvenue, Client Vertical/i })).toBeVisible();
-  await expect(clientPage.getByText(/^actif$/i).first()).toBeVisible();
+  await expect(clientPage.getByText(/^portail activé$/i).first()).toBeVisible();
 
   const ownProfile = await clientContext.request.get(`${environment.appUrl}/api/v1/client/me`);
   expect(ownProfile.status()).toBe(200);
@@ -163,7 +163,8 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   );
   expect(forbiddenCoachApi.status()).toBe(403);
   await clientPage.goto(`${environment.appUrl}/coach`);
-  await expect(clientPage.getByRole("heading", { name: /espace coach/i })).toHaveCount(0);
+  await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
+  await expect(clientPage.getByRole("heading", { name: /^clients$/i })).toHaveCount(0);
 
   const returningContext = await browser.newContext();
   const returningPage = await returningContext.newPage();
@@ -186,7 +187,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   );
   try {
     await returningPage
-      .getByLabel(/code à 6 chiffres/i)
+      .getByRole("textbox", { name: /chiffre 1 sur 6/i })
       .fill(extractSixDigitOtp(returningOtpMail));
   } catch {
     throw new Error("Unable to enter the returning-client OTP.");
@@ -307,10 +308,10 @@ async function safeActivationDiagnostic(response: {
 async function loginMaxAtAal2(page: Page): Promise<void> {
   await page.goto(`${environment.appUrl}/login`);
   await page.getByLabel(/courriel|email/i).fill(max.email);
-  await page.getByLabel(/mot de passe|password/i).fill(maxPassword);
+  await page.getByLabel(/^mot de passe$/i).fill(maxPassword);
   await page.getByRole("button", { name: /se connecter|sign in|continuer/i }).click();
 
-  const factorInput = page.getByLabel(/code.*(6 chiffres|authentification|sécurité|totp|mfa)/i);
+  const factorInput = page.getByRole("textbox", { name: /chiffre 1 sur 6/i });
   await expect(factorInput).toBeVisible();
   const periodProgress = Date.now() % 30_000;
   if (periodProgress > 27_000) {

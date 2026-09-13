@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useId, useState, type FormEvent } from "react";
-
+import { useId, useState, type FormEvent } from "react";
 import type { CreateClientFormValues } from "../model";
-import styles from "./coach-dashboard.module.css";
+import { Modal } from "@/components/fe/modal";
+import { Feedback } from "@/components/fe/feedback";
+import { Icon } from "@/components/fe/icon";
+import { TimezoneField } from "@/components/fe/timezone-field";
 
 interface CreateClientDialogProps {
   open: boolean;
@@ -12,7 +14,6 @@ interface CreateClientDialogProps {
   onClose: () => void;
   onSubmit: (values: CreateClientFormValues) => Promise<void>;
 }
-
 const initialValues: CreateClientFormValues = {
   firstName: "",
   lastName: "",
@@ -30,159 +31,139 @@ export function CreateClientDialog({
 }: CreateClientDialogProps) {
   const titleId = useId();
   const descriptionId = useId();
+  const emailId = useId();
   const [values, setValues] = useState(initialValues);
-
-  useEffect(() => {
-    if (!open) return;
-    const listener = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !busy) onClose();
-    };
-    document.addEventListener("keydown", listener);
-    return () => document.removeEventListener("keydown", listener);
-  }, [busy, onClose, open]);
-
-  if (!open) return null;
-
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await onSubmit(values);
+    if (!busy) await onSubmit(values);
   }
-
   return (
-    <div className={styles.dialogBackdrop} role="presentation">
-      <section
-        aria-describedby={descriptionId}
-        aria-labelledby={titleId}
-        aria-modal="true"
-        className={styles.dialog}
-        role="dialog"
-      >
-        <header className={styles.dialogHeader}>
-          <p className={styles.eyebrow}>Nouvelle relation de coaching</p>
-          <h2 className={styles.dialogTitle} id={titleId}>
-            Inviter un client
-          </h2>
-          <p className={styles.dialogDescription} id={descriptionId}>
-            La fiche sera créée, Max sera assigné comme coach principal et une
-            invitation sécurisée sera préparée pour ce courriel.
+    <Modal
+      open={open}
+      busy={busy}
+      onClose={onClose}
+      labelledBy={titleId}
+      describedBy={descriptionId}
+    >
+      <header className="fe-dialog-header">
+        <div>
+          <p className="fe-kicker">Nouvelle relation</p>
+          <h2 id={titleId}>Inviter un client</h2>
+          <p className="fe-intro" id={descriptionId}>
+            Crée sa fiche et prépare son accès au portail.
           </p>
-        </header>
-
-        <form className={styles.form} onSubmit={submit}>
-          <label className={styles.field}>
-            <span className={styles.label}>Prénom</span>
+        </div>
+        <button
+          className="fe-icon-button"
+          type="button"
+          aria-label="Fermer le formulaire"
+          onClick={onClose}
+          disabled={busy}
+        >
+          <Icon name="close" />
+        </button>
+      </header>
+      <form
+        className="fe-form fe-dialog-content"
+        onSubmit={submit}
+        aria-busy={busy}
+      >
+        <div className="fe-two-fields">
+          <label className="fe-field">
+            Prénom
             <input
               autoComplete="given-name"
-              autoFocus
-              className={styles.input}
+              data-autofocus
               disabled={busy}
               maxLength={80}
               name="firstName"
+              value={values.firstName}
               onChange={(event) =>
-                setValues((current) => ({ ...current, firstName: event.target.value }))
+                setValues({ ...values, firstName: event.target.value })
               }
               required
-              value={values.firstName}
             />
           </label>
-
-          <label className={styles.field}>
-            <span className={styles.label}>Nom</span>
+          <label className="fe-field">
+            Nom
             <input
               autoComplete="family-name"
-              className={styles.input}
               disabled={busy}
               maxLength={80}
               name="lastName"
-              onChange={(event) =>
-                setValues((current) => ({ ...current, lastName: event.target.value }))
-              }
-              required
               value={values.lastName}
-            />
-          </label>
-
-          <label className={styles.fieldWide}>
-            <span className={styles.label}>Courriel du client</span>
-            <input
-              autoComplete="email"
-              className={styles.input}
-              disabled={busy}
-              inputMode="email"
-              maxLength={254}
-              name="email"
               onChange={(event) =>
-                setValues((current) => ({ ...current, email: event.target.value }))
+                setValues({ ...values, lastName: event.target.value })
               }
               required
-              type="email"
-              value={values.email}
             />
-            <p className={styles.fieldHint}>
-              Ce courriel servira à l’activation et aux futurs codes de connexion.
-            </p>
           </label>
-
-          <label className={styles.field}>
-            <span className={styles.label}>Langue</span>
-            <select
-              className={styles.select}
-              disabled={busy}
-              name="locale"
-              onChange={(event) =>
-                setValues((current) => ({
-                  ...current,
-                  locale: event.target.value as "fr" | "en",
-                }))
-              }
-              value={values.locale}
-            >
-              <option value="fr">Français</option>
-              <option value="en">English</option>
-            </select>
-          </label>
-
-          <label className={styles.field}>
-            <span className={styles.label}>Fuseau horaire</span>
-            <select
-              className={styles.select}
-              disabled={busy}
-              name="timezone"
-              onChange={(event) =>
-                setValues((current) => ({ ...current, timezone: event.target.value }))
-              }
-              value={values.timezone}
-            >
-              <option value="America/Toronto">Est — Montréal/Toronto</option>
-              <option value="America/Winnipeg">Centre — Winnipeg</option>
-              <option value="America/Edmonton">Rocheuses — Edmonton</option>
-              <option value="America/Vancouver">Pacifique — Vancouver</option>
-              <option value="America/Halifax">Atlantique — Halifax</option>
-            </select>
-          </label>
-
-          {error ? (
-            <p aria-live="assertive" className={styles.formError} role="alert">
-              {error}
-            </p>
-          ) : null}
-
-          <div className={styles.formActions}>
-            <button
-              className={styles.buttonSecondary}
-              disabled={busy}
-              onClick={onClose}
-              type="button"
-            >
-              Annuler
-            </button>
-            <button className={styles.button} disabled={busy} type="submit">
-              {busy ? "Création…" : "Créer et inviter"}
-            </button>
-          </div>
-        </form>
-      </section>
-    </div>
+        </div>
+        <div className="fe-field">
+          <label htmlFor={emailId}>Courriel du client</label>
+          <input
+            id={emailId}
+            autoComplete="email"
+            disabled={busy}
+            maxLength={254}
+            name="email"
+            type="email"
+            value={values.email}
+            onChange={(event) =>
+              setValues({ ...values, email: event.target.value })
+            }
+            required
+            aria-describedby={`${emailId}-hint`}
+          />
+          <p className="fe-hint" id={`${emailId}-hint`}>
+            Il recevra son invitation et ses codes de connexion à cette adresse.
+          </p>
+        </div>
+        <label className="fe-field">
+          Langue du portail
+          <select
+            name="locale"
+            disabled={busy}
+            value={values.locale}
+            onChange={(event) =>
+              setValues({
+                ...values,
+                locale: event.target.value as "fr" | "en",
+              })
+            }
+          >
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        <TimezoneField
+          value={values.timezone}
+          onChange={(timezone) => setValues({ ...values, timezone })}
+          disabled={busy}
+        />
+        <p className="fe-form-summary">
+          Le client deviendra actif après avoir ouvert son invitation et validé
+          son code courriel.
+        </p>
+        {error ? <Feedback>{error}</Feedback> : null}
+        <div className="fe-form-actions">
+          <button
+            className="fe-button"
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+          >
+            Annuler
+          </button>
+          <button
+            className="fe-button fe-button-primary"
+            type="submit"
+            disabled={busy}
+          >
+            {busy ? "Création…" : "Créer et inviter"}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
-

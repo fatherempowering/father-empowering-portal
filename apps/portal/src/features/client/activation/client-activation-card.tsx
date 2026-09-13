@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { PublicInvitation } from "./contracts";
-import styles from "./client-activation.module.css";
+import Link from "next/link";
+import { AuthShell } from "@/components/fe/auth-shell";
+import { CodeInput } from "@/components/fe/code-input";
+import { Feedback, Loading } from "@/components/fe/feedback";
 
 type Step = "LOADING" | "READY" | "CODE_SENT" | "ACTIVATING" | "ERROR";
 
@@ -20,6 +23,7 @@ type Copy = Readonly<{
   working: string;
   invalid: string;
   retry: string;
+  network: string;
 }>;
 
 const COPY: Record<"fr" | "en", Copy> = {
@@ -35,6 +39,7 @@ const COPY: Record<"fr" | "en", Copy> = {
     working: "Activation…",
     invalid: "Cette invitation est invalide, expirée ou déjà utilisée.",
     retry: "Réessayer",
+    network: "Connexion interrompue. Vérifie ton accès Internet et réessaie.",
   },
   en: {
     eyebrow: "LEGACY PROTOCOL",
@@ -48,6 +53,8 @@ const COPY: Record<"fr" | "en", Copy> = {
     working: "Activating…",
     invalid: "This invitation is invalid, expired, or has already been used.",
     retry: "Try again",
+    network:
+      "Connection interrupted. Check your Internet connection and try again.",
   },
 };
 
@@ -57,6 +64,7 @@ export function ClientActivationCard() {
   const [invitation, setInvitation] = useState<PublicInvitation | null>(null);
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   const locale = invitation?.locale === "en-CA" ? "en" : "fr";
   const copy = COPY[locale];
 
@@ -93,7 +101,13 @@ export function ClientActivationCard() {
         setStep("READY");
       } catch (error) {
         if (!controller.signal.aborted) {
-          setMessage(error instanceof Error ? error.message : null);
+          setMessage(
+            error instanceof TypeError
+              ? COPY.fr.network
+              : error instanceof Error
+                ? error.message
+                : null,
+          );
           setStep("ERROR");
         }
       }
@@ -104,8 +118,9 @@ export function ClientActivationCard() {
   }, [invitationToken]);
 
   async function requestOtp() {
-    if (!invitationToken) return;
+    if (!invitationToken || sending || step === "ACTIVATING") return;
     setMessage(null);
+    setSending(true);
     try {
       const response = await fetch("/api/v1/client/activation/request-otp", {
         method: "POST",
@@ -114,16 +129,31 @@ export function ClientActivationCard() {
       });
       const payload = await readPayload(response);
       setInvitation(requireInvitation(payload));
+      setOtp("");
       setStep("CODE_SENT");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : copy.invalid);
+      setMessage(
+        error instanceof TypeError
+          ? copy.network
+          : error instanceof Error
+            ? error.message
+            : copy.invalid,
+      );
       setStep("ERROR");
+    } finally {
+      setSending(false);
     }
   }
 
   async function activate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!invitationToken) return;
+    if (
+      !invitationToken ||
+      sending ||
+      step === "ACTIVATING" ||
+      !/^\d{6}$/.test(otp)
+    )
+      return;
     setMessage(null);
     setStep("ACTIVATING");
 
@@ -136,77 +166,123 @@ export function ClientActivationCard() {
       const payload = await readPayload(response);
       window.location.replace(payload.redirectTo ?? "/client");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : copy.invalid);
+      setMessage(
+        error instanceof TypeError
+          ? copy.network
+          : error instanceof Error
+            ? error.message
+            : copy.invalid,
+      );
       setStep("CODE_SENT");
     }
   }
 
   return (
-    <main className={styles.page}>
-      <section className={styles.card} aria-labelledby="activation-title">
-        <div className={styles.mark} aria-hidden="true">FE</div>
-        <p className={styles.eyebrow}>{copy.eyebrow}</p>
-        <h1 id="activation-title">{copy.title}</h1>
-
-        {step === "LOADING" ? (
-          <div className={styles.loading} role="status" aria-label="Loading invitation" />
-        ) : null}
-
-        {step === "READY" && invitation ? (
-          <>
-            <p className={styles.intro}>
-              {copy.intro} <strong>{invitation.emailHint}</strong>.
+    <AuthShell locale={locale}>
+      <p className="fe-kicker">The Legacy Protocol</p>
+      <h1 className="fe-title" id="activation-title">
+        {copy.title}.
+      </h1>
+      {step === "LOADING" ? (
+        <Loading>
+          {locale === "fr"
+            ? "Vérification de l’invitation…"
+            : "Checking your invitation…"}
+        </Loading>
+      ) : null}
+      {step === "READY" && invitation ? (
+        <>
+          <p className="fe-intro">
+            {copy.intro} <strong>{invitation.emailHint}</strong>.
+          </p>
+          <button
+            className="fe-button fe-button-primary fe-button-wide"
+            type="button"
+            onClick={() => void requestOtp()}
+            disabled={sending}
+          >
+            {sending ? (locale === "fr" ? "Envoi…" : "Sending…") : copy.send}
+          </button>
+        </>
+      ) : null}
+      {(step === "CODE_SENT" || step === "ACTIVATING") && invitation ? (
+        <form
+          onSubmit={activate}
+          className="fe-form"
+          aria-busy={sending || step === "ACTIVATING"}
+        >
+          <p className="fe-intro">
+            {copy.codeHint}
+            <br />
+            <strong>{invitation.emailHint}</strong>
+          </p>
+          <Feedback tone="success">{copy.sent}</Feedback>
+          <CodeInput
+            value={otp}
+            onChange={setOtp}
+            autoFocus
+            disabled={sending || step === "ACTIVATING"}
+            invalid={Boolean(message)}
+            label={copy.codeLabel}
+            locale={locale}
+          />
+          {message ? <Feedback>{message}</Feedback> : null}
+          <button
+            className="fe-button fe-button-primary fe-button-wide"
+            type="submit"
+            disabled={sending || step === "ACTIVATING" || !/^\d{6}$/.test(otp)}
+          >
+            {step === "ACTIVATING" ? copy.working : copy.activate}
+          </button>
+          <div className="fe-auth-secondary">
+            <p>
+              {locale === "fr"
+                ? "Pas de code dans tes courriels ?"
+                : "No code in your inbox?"}
             </p>
-            <button className={styles.primary} type="button" onClick={() => void requestOtp()}>
-              {copy.send}
+            <button
+              className="fe-text-button"
+              type="button"
+              onClick={() => void requestOtp()}
+              disabled={sending || step === "ACTIVATING"}
+            >
+              {locale === "fr"
+                ? sending
+                  ? "Envoi…"
+                  : "Renvoyer le code"
+                : sending
+                  ? "Sending…"
+                  : "Resend code"}
             </button>
-          </>
-        ) : null}
-
-        {(step === "CODE_SENT" || step === "ACTIVATING") && invitation ? (
-          <form onSubmit={activate} className={styles.form}>
-            <p className={styles.success} role="status">{copy.sent}</p>
-            <p className={styles.intro}>
-              {copy.codeHint} <strong>{invitation.emailHint}</strong>
-            </p>
-            <label htmlFor="activation-otp">{copy.codeLabel}</label>
-            <input
-              id="activation-otp"
-              name="otp"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              pattern="[0-9 ]{6,7}"
-              minLength={6}
-              maxLength={7}
-              value={otp}
-              onChange={(event) => setOtp(event.target.value.replace(/[^0-9 ]/g, ""))}
-              required
-              autoFocus
-              disabled={step === "ACTIVATING"}
-            />
-            {message ? <p className={styles.error} role="alert">{message}</p> : null}
-            <button className={styles.primary} type="submit" disabled={step === "ACTIVATING"}>
-              {step === "ACTIVATING" ? copy.working : copy.activate}
-            </button>
-            <button className={styles.secondary} type="button" onClick={() => void requestOtp()}>
-              {copy.send}
-            </button>
-          </form>
-        ) : null}
-
-        {step === "ERROR" ? (
-          <div className={styles.form}>
-            <p className={styles.error} role="alert">{message ?? copy.invalid}</p>
-            {invitationToken ? (
-              <button className={styles.secondary} type="button" onClick={() => void requestOtp()}>
-                {copy.retry}
-              </button>
-            ) : null}
           </div>
-        ) : null}
-      </section>
-    </main>
+        </form>
+      ) : null}
+      {step === "ERROR" ? (
+        <div className="fe-form">
+          <Feedback>{message ?? copy.invalid}</Feedback>
+          {invitationToken ? (
+            <button
+              className="fe-button fe-button-wide"
+              type="button"
+              onClick={() => void requestOtp()}
+              disabled={sending}
+            >
+              {sending ? (locale === "fr" ? "Envoi…" : "Sending…") : copy.retry}
+            </button>
+          ) : null}
+          <p className="fe-hint">
+            {locale === "fr"
+              ? "Si ton lien ne fonctionne plus, demande une nouvelle invitation à ton coach."
+              : "If your link no longer works, ask your coach for a new invitation."}
+          </p>
+          <Link className="fe-text-button" href="/client-login">
+            {locale === "fr"
+              ? "Mon portail est déjà activé"
+              : "My portal is already active"}
+          </Link>
+        </div>
+      ) : null}
+    </AuthShell>
   );
 }
 
@@ -217,7 +293,9 @@ type ActivationPayload = {
 };
 
 async function readPayload(response: Response): Promise<ActivationPayload> {
-  const payload = (await response.json().catch(() => ({}))) as ActivationPayload;
+  const payload = (await response
+    .json()
+    .catch(() => ({}))) as ActivationPayload;
   if (!response.ok) {
     throw new Error(payload.error?.message ?? "Please try again.");
   }

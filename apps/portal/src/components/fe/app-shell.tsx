@@ -1,0 +1,115 @@
+"use client";
+
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { Brand } from "./brand";
+import { Icon } from "./icon";
+
+export function AppShell({
+  children,
+  space,
+  name,
+  locale = "fr",
+}: {
+  children: ReactNode;
+  space: "coach" | "client";
+  name?: string;
+  locale?: "fr" | "en";
+}) {
+  const [open, setOpen] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const navId = useId();
+  const french = locale === "fr";
+  const label =
+    space === "coach" ? "Clients" : french ? "Mon portail" : "My portal";
+  const spaceLabel = space === "coach" ? "Espace Coach" : "The Legacy Protocol";
+  const identity =
+    name ??
+    (space === "coach"
+      ? "Espace Coach"
+      : french
+        ? "Espace Client"
+        : "Client portal");
+  useEffect(() => {
+    if (!open) return;
+    document
+      .getElementById(navId)
+      ?.querySelector<HTMLAnchorElement>("nav a")
+      ?.focus();
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        toggle.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [open, navId]);
+
+  return (
+    <div className="fe-app-shell" data-menu-open={open} lang={locale}>
+      <aside className="fe-sidebar" id={navId}>
+        <Brand />
+        <nav aria-label={french ? "Navigation principale" : "Main navigation"}>
+          <p className="fe-side-label">{spaceLabel}</p>
+          <Link
+            className="fe-side-link"
+            href={space === "coach" ? "/coach" : "/client"}
+            aria-current="page"
+            onClick={() => setOpen(false)}
+          >
+            <Icon name="users" />
+            {label}
+          </Link>
+        </nav>
+        <div className="fe-side-bottom">
+          <p className="fe-side-motto">Shape your legacy.</p>
+          <div className="fe-identity">
+            <span className="fe-avatar" aria-hidden="true">
+              FE
+            </span>
+            <div>
+              <strong>{identity}</strong>
+              <span>Father Empowering</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <div className="fe-workspace">
+        <header className="fe-topbar">
+          <div className="fe-breadcrumb">
+            <span>{spaceLabel}</span>
+            <span aria-hidden="true">/</span>
+            <strong>{label}</strong>
+          </div>
+          <div className="fe-mobile-brand">
+            <Brand compact />
+          </div>
+          <span className="fe-desktop-identity">{identity}</span>
+          <button
+            className="fe-menu-button"
+            type="button"
+            ref={toggle}
+            aria-controls={navId}
+            aria-expanded={open}
+            aria-label={
+              french
+                ? open
+                  ? "Fermer le menu"
+                  : "Ouvrir le menu"
+                : open
+                  ? "Close menu"
+                  : "Open menu"
+            }
+            onClick={() => setOpen(!open)}
+          >
+            <Icon name={open ? "close" : "menu"} />
+          </button>
+        </header>
+        <main className="fe-main" id="main-content">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}

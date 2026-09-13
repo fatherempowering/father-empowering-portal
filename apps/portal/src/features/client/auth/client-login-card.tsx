@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-
-import styles from "@/features/client/activation/client-activation.module.css";
+import Link from "next/link";
+import { AuthShell } from "@/components/fe/auth-shell";
+import { CodeInput } from "@/components/fe/code-input";
+import { Feedback } from "@/components/fe/feedback";
 
 type Step = "EMAIL" | "CODE" | "VERIFYING";
 
@@ -12,24 +14,36 @@ export function ClientLoginCard() {
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resent, setResent] = useState(false);
 
-  async function requestOtp(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function requestOtp(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    if (busy || step === "VERIFYING") return;
     setBusy(true);
     setError(null);
+    setResent(false);
     try {
       const response = await fetch("/api/v1/auth/client-otp/request", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      const body = await response.json().catch(() => ({})) as {
+      const body = (await response.json().catch(() => ({}))) as {
         error?: { message?: string };
       };
-      if (!response.ok) throw new Error(body.error?.message ?? "Réessaie dans quelques instants.");
+      if (!response.ok)
+        throw new Error(
+          body.error?.message ?? "Réessaie dans quelques instants.",
+        );
+      setResent(step === "CODE");
+      setOtp("");
       setStep("CODE");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Réessaie dans quelques instants.");
+      setError(
+        cause instanceof Error && !(cause instanceof TypeError)
+          ? cause.message
+          : "Réessaie dans quelques instants.",
+      );
     } finally {
       setBusy(false);
     }
@@ -37,6 +51,7 @@ export function ClientLoginCard() {
 
   async function verifyOtp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy || step === "VERIFYING" || !/^\d{6}$/.test(otp)) return;
     setStep("VERIFYING");
     setError(null);
     try {
@@ -45,33 +60,39 @@ export function ClientLoginCard() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, otp }),
       });
-      const body = await response.json().catch(() => ({})) as {
+      const body = (await response.json().catch(() => ({}))) as {
         data?: { redirectTo?: string };
         error?: { message?: string };
       };
-      if (!response.ok) throw new Error(body.error?.message ?? "Le code est invalide ou expiré.");
+      if (!response.ok)
+        throw new Error(
+          body.error?.message ?? "Le code est invalide ou expiré.",
+        );
       window.location.replace(body.data?.redirectTo ?? "/client");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Le code est invalide ou expiré.");
+      setError(
+        cause instanceof Error && !(cause instanceof TypeError)
+          ? cause.message
+          : "Le code est invalide ou expiré.",
+      );
       setStep("CODE");
     }
   }
 
   return (
-    <main className={styles.page}>
-      <section className={styles.card} aria-labelledby="client-login-title">
-        <div className={styles.mark} aria-hidden="true">FE</div>
-        <p className={styles.eyebrow}>FATHER EMPOWERING</p>
-        <h1 id="client-login-title">Connexion Client</h1>
-        <p className={styles.intro}>
-          Reçois un code temporaire par courriel. Aucun mot de passe n’est requis.
-        </p>
-
-        {step === "EMAIL" ? (
-          <form className={styles.form} onSubmit={requestOtp}>
-            <label htmlFor="client-login-email">Courriel</label>
+    <AuthShell>
+      <p className="fe-kicker">The Legacy Protocol</p>
+      <h1 className="fe-title">Retrouve ton portail.</h1>
+      <p className="fe-intro">
+        {step === "EMAIL"
+          ? "Reçois un code de connexion par courriel. Aucun mot de passe n’est requis."
+          : "Entre le code reçu par courriel pour ouvrir ton espace."}
+      </p>
+      {step === "EMAIL" ? (
+        <form className="fe-form" onSubmit={requestOtp} aria-busy={busy}>
+          <label className="fe-field">
+            Courriel
             <input
-              id="client-login-email"
               name="email"
               type="email"
               autoComplete="email"
@@ -79,51 +100,69 @@ export function ClientLoginCard() {
               onChange={(event) => setEmail(event.target.value)}
               required
               disabled={busy}
-              style={{ fontFamily: "system-ui", fontSize: 16, letterSpacing: 0 }}
             />
-            {error ? <p className={styles.error} role="alert">{error}</p> : null}
-            <button className={styles.primary} type="submit" disabled={busy}>
-              {busy ? "Envoi…" : "Envoyer mon code"}
-            </button>
-          </form>
-        ) : (
-          <form className={styles.form} onSubmit={verifyOtp}>
-            <p className={styles.success} role="status">Si ce compte est actif, le code a été envoyé.</p>
-            <label htmlFor="client-login-otp">Code à 6 chiffres</label>
-            <input
-              id="client-login-otp"
-              name="otp"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              pattern="[0-9 ]{6,7}"
-              minLength={6}
-              maxLength={7}
-              value={otp}
-              onChange={(event) => setOtp(event.target.value.replace(/[^0-9 ]/g, ""))}
-              required
-              autoFocus
-              disabled={step === "VERIFYING"}
-            />
-            {error ? <p className={styles.error} role="alert">{error}</p> : null}
-            <button className={styles.primary} type="submit" disabled={step === "VERIFYING"}>
-              {step === "VERIFYING" ? "Connexion…" : "Ouvrir mon portail"}
-            </button>
-            <button
-              className={styles.secondary}
-              type="button"
-              onClick={() => {
-                setStep("EMAIL");
-                setOtp("");
-                setError(null);
-              }}
-              disabled={step === "VERIFYING"}
-            >
-              Changer de courriel
-            </button>
-          </form>
-        )}
-      </section>
-    </main>
+          </label>
+          {error ? <Feedback>{error}</Feedback> : null}
+          <button
+            className="fe-button fe-button-primary fe-button-wide"
+            type="submit"
+            disabled={busy}
+          >
+            {busy ? "Envoi…" : "Envoyer mon code"}
+          </button>
+        </form>
+      ) : (
+        <form
+          className="fe-form"
+          onSubmit={verifyOtp}
+          aria-busy={busy || step === "VERIFYING"}
+        >
+          <Feedback tone="info">
+            {resent
+              ? "Si ce compte est actif, un nouveau code a été envoyé."
+              : "Si ce compte est actif, le code a été envoyé."}
+          </Feedback>
+          <CodeInput
+            value={otp}
+            onChange={setOtp}
+            autoFocus
+            disabled={busy || step === "VERIFYING"}
+            invalid={Boolean(error)}
+          />
+          {error ? <Feedback>{error}</Feedback> : null}
+          <button
+            className="fe-button fe-button-primary fe-button-wide"
+            type="submit"
+            disabled={busy || step === "VERIFYING" || !/^\d{6}$/.test(otp)}
+          >
+            {step === "VERIFYING" ? "Connexion…" : "Ouvrir mon portail"}
+          </button>
+          <button
+            className="fe-text-button"
+            type="button"
+            onClick={() => void requestOtp()}
+            disabled={busy || step === "VERIFYING"}
+          >
+            {busy ? "Envoi…" : "Renvoyer le code"}
+          </button>
+          <button
+            className="fe-text-button"
+            type="button"
+            disabled={busy || step === "VERIFYING"}
+            onClick={() => {
+              setStep("EMAIL");
+              setOtp("");
+              setError(null);
+              setResent(false);
+            }}
+          >
+            Changer de courriel
+          </button>
+        </form>
+      )}
+      <p className="fe-auth-secondary">
+        Tu es coach ? <Link href="/login">Accéder à mon espace Coach</Link>
+      </p>
+    </AuthShell>
   );
 }
