@@ -166,9 +166,43 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(clientPage.getByRole("heading", { name: /^clients$/i })).toHaveCount(0);
 
+  await clientPage.close();
+  const continuedPage = await clientContext.newPage();
+  const continuedOtpRequests: string[] = [];
+  continuedPage.on("request", (request) => {
+    const url = new URL(request.url());
+    if (
+      request.method() === "POST" &&
+      url.origin === environment.appUrl &&
+      url.pathname === "/api/v1/auth/client-otp/request"
+    ) {
+      continuedOtpRequests.push(request.url());
+    }
+  });
+
+  await continuedPage.goto(`${environment.appUrl}/client`);
+  await expect(
+    continuedPage.getByRole("heading", { name: /bienvenue, Client Vertical/i }),
+  ).toBeVisible();
+  await continuedPage.goto(`${environment.appUrl}/client-login`);
+  await expect(continuedPage).toHaveURL(/\/client(?:\?.*)?$/);
+  await expect(
+    continuedPage.getByRole("heading", { name: /bienvenue, Client Vertical/i }),
+  ).toBeVisible();
+  expect(continuedOtpRequests).toHaveLength(0);
+
+  await continuedPage.getByRole("button", { name: /se déconnecter/i }).click();
+  await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
+  await expect(continuedPage.getByLabel(/^courriel$/i)).toBeVisible();
+  const signedOutProfile = await clientContext.request.get(`${environment.appUrl}/api/v1/client/me`);
+  expect(signedOutProfile.status()).toBe(401);
+  await continuedPage.goto(`${environment.appUrl}/client`);
+  await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
+
   const returningContext = await browser.newContext();
   const returningPage = await returningContext.newPage();
   await returningPage.goto(`${environment.appUrl}/client-login`);
+  await expect(returningPage.getByLabel(/^courriel$/i)).toBeVisible();
   await returningPage.getByLabel(/^courriel$/i).fill(clientEmail);
   await returningPage.getByRole("button", { name: /envoyer mon code/i }).click();
   await expect(returningPage.getByText(/si ce compte est actif/i)).toBeVisible();

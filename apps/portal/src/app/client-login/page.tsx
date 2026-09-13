@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { ClientLoginCard } from "@/features/client/auth/client-login-card";
+import { getServerActor } from "@/lib/auth/actor";
 
 export const metadata: Metadata = {
   title: "Connexion Client | Father Empowering",
@@ -8,6 +10,11 @@ export const metadata: Metadata = {
   referrer: "no-referrer",
 };
 
-export default function ClientLoginPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ClientLoginPage() {
+  const actor = await getServerActor();
+  if (actor?.role === "CLIENT") redirect("/client");
+
   return <ClientLoginCard />;
 }

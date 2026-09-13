@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { createClient } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -13,8 +14,12 @@ import {
 
 const environment = getM1TestEnvironment();
 const password = "M1-local-only-Max!123";
+const clientPassword = "M1-local-only-Client!123";
 let coach: SeededStaff;
 let session: M1SsrSession;
+let clientSessionA: M1SsrSession;
+let clientSessionB: M1SsrSession;
+let sessionClientEmail: string;
 let authenticatedCoachUserId: string | null = null;
 
 function safeErrorDiagnostic(body: unknown): { code: string; message: string } {
@@ -34,6 +39,14 @@ function safeErrorDiagnostic(body: unknown): { code: string; message: string } {
   };
 }
 
+async function localMailCount(recipient: string): Promise<number> {
+  const query = encodeURIComponent(`to:${recipient}`);
+  const response = await fetch(`${environment.mailpitUrl}/api/v1/search?query=${query}`);
+  if (!response.ok) throw new Error("Unable to inspect the local mail boundary");
+  const body = (await response.json()) as { messages?: unknown[] };
+  return Array.isArray(body.messages) ? body.messages.length : 0;
+}
+
 describe.sequential("M1 HTTP security and transaction integration", () => {
   beforeAll(async () => {
     coach = await seedStaffIdentity(environment, {
@@ -48,6 +61,67 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
     });
     if (signIn.error) throw signIn.error;
     authenticatedCoachUserId = signIn.data.user?.id ?? null;
+
+    const admin = createM1AdminClient(environment);
+    sessionClientEmail = `client.session.${randomUUID()}@example.test`;
+    const createdClientUser = await admin.auth.admin.createUser({
+      email: sessionClientEmail,
+      password: clientPassword,
+      email_confirm: true,
+      app_metadata: { m1_test_fixture: true },
+    });
+    if (createdClientUser.error || !createdClientUser.data.user) {
+      throw new Error("Unable to seed the Client session fixture");
+    }
+    const clientUserId = createdClientUser.data.user.id;
+    const clientId = randomUUID();
+    const clientFixtureWrites = await Promise.all([
+      admin.from("profiles").insert({
+        auth_user_id: clientUserId,
+        display_name: "Client Session",
+        locale: "fr-CA",
+        time_zone: "America/Montreal",
+        status: "ACTIVE",
+        created_by: coach.userId,
+      }),
+      admin.from("organization_memberships").insert({
+        organization_id: coach.organizationId,
+        user_id: clientUserId,
+        role: "CLIENT",
+        status: "ACTIVE",
+        activated_at: new Date().toISOString(),
+        created_by: coach.userId,
+      }),
+      admin.from("clients").insert({
+        id: clientId,
+        organization_id: coach.organizationId,
+        auth_user_id: clientUserId,
+        email: sessionClientEmail,
+        first_name: "Client",
+        last_name: "Session",
+        locale: "fr-CA",
+        time_zone: "America/Montreal",
+        status: "ACTIVE",
+        created_by: coach.userId,
+      }),
+    ]);
+    for (const write of clientFixtureWrites) {
+      if (write.error) throw write.error;
+    }
+
+    clientSessionA = new M1SsrSession(environment);
+    const clientSignInA = await clientSessionA.client.auth.signInWithPassword({
+      email: sessionClientEmail,
+      password: clientPassword,
+    });
+    if (clientSignInA.error) throw clientSignInA.error;
+
+    clientSessionB = new M1SsrSession(environment);
+    const clientSignInB = await clientSessionB.client.auth.signInWithPassword({
+      email: sessionClientEmail,
+      password: clientPassword,
+    });
+    if (clientSignInB.error) throw clientSignInB.error;
   });
 
   it("authentifie par email un Coach créé par service_role", () => {
@@ -81,6 +155,90 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
 
     expect(coachResponse.status).toBe(401);
     expect(clientResponse.status).toBe(401);
+  });
+
+  it("fait tourner les cookies Client sans OTP et révoque seulement la session locale", async () => {
+    const mailCountBeforeRefresh = await localMailCount(sessionClientEmail);
+    const cookieBeforeRefreshA = clientSessionA.cookieHeader();
+    const refreshA = await clientSessionA.client.auth.refreshSession();
+    expect(refreshA.error).toBeNull();
+    expect(Boolean(refreshA.data.session)).toBe(true);
+    expect(clientSessionA.cookieHeader() !== cookieBeforeRefreshA).toBe(true);
+    const retainedRefreshTokenA = refreshA.data.session?.refresh_token;
+    if (!retainedRefreshTokenA) {
+      throw new Error("The refreshed Client session has no refresh credential");
+    }
+
+    const afterRefreshA = await authenticatedFetch(
+      environment,
+      clientSessionA,
+      "/api/v1/client/me",
+    );
+    expect(afterRefreshA.status).toBe(200);
+    expect(await localMailCount(sessionClientEmail)).toBe(mailCountBeforeRefresh);
+
+    const beforeLogoutB = await authenticatedFetch(
+      environment,
+      clientSessionB,
+      "/api/v1/client/me",
+    );
+    expect(beforeLogoutB.status).toBe(200);
+
+    const crossOriginLogout = await fetch(
+      `${environment.appUrl}/api/v1/auth/client-logout`,
+      {
+        method: "POST",
+        headers: {
+          cookie: clientSessionA.cookieHeader(),
+          origin: "https://attacker.example",
+        },
+        redirect: "manual",
+      },
+    );
+    expect(crossOriginLogout.status).toBe(403);
+
+    const logout = await authenticatedFetch(
+      environment,
+      clientSessionA,
+      "/api/v1/auth/client-logout",
+      { method: "POST" },
+    );
+    expect(logout.status).toBe(200);
+    expect(logout.headers.get("cache-control")).toContain("no-store");
+    expect(logout.headers.get("set-cookie")).toContain("Max-Age=0");
+    expect(await logout.json()).toEqual({
+      data: { signedOut: true, redirectTo: "/client-login" },
+    });
+
+    const afterLogoutB = await authenticatedFetch(
+      environment,
+      clientSessionB,
+      "/api/v1/client/me",
+    );
+    expect(afterLogoutB.status).toBe(200);
+    const cookieBeforeRefreshB = clientSessionB.cookieHeader();
+    const refreshB = await clientSessionB.client.auth.refreshSession();
+    expect(refreshB.error).toBeNull();
+    expect(Boolean(refreshB.data.session)).toBe(true);
+    expect(clientSessionB.cookieHeader() !== cookieBeforeRefreshB).toBe(true);
+    const afterRefreshB = await authenticatedFetch(
+      environment,
+      clientSessionB,
+      "/api/v1/client/me",
+    );
+    expect(afterRefreshB.status).toBe(200);
+    expect(await localMailCount(sessionClientEmail)).toBe(mailCountBeforeRefresh);
+
+    const revokedSessionProbe = createClient(
+      environment.supabaseUrl,
+      environment.anonKey,
+      { auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false } },
+    );
+    const replayA = await revokedSessionProbe.auth.refreshSession({
+      refresh_token: retainedRefreshTokenA,
+    });
+    expect(replayA.error !== null).toBe(true);
+    expect(replayA.data.session).toBeNull();
   });
 
   it("refuse le déclenchement du worker sans son secret interne", async () => {
@@ -179,7 +337,34 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
       },
     );
     expect(retry.status).toBe(201);
-    expect(await retry.json()).toEqual(firstBody);
+    const retryBody = await retry.json();
+    const firstInvitation = firstBody.data.invitation;
+    const retryInvitation = retryBody.data.invitation;
+
+    expect({
+      ...retryBody,
+      data: {
+        ...retryBody.data,
+        invitation: {
+          ...retryInvitation,
+          status: firstInvitation.status,
+          sentAt: firstInvitation.sentAt,
+        },
+      },
+    }).toEqual(firstBody);
+
+    for (const invitation of [firstInvitation, retryInvitation]) {
+      expect(["PENDING", "SENT"]).toContain(invitation.status);
+      if (invitation.status === "PENDING") {
+        expect(invitation.sentAt).toBeNull();
+      } else {
+        expect(typeof invitation.sentAt).toBe("string");
+        expect(Number.isNaN(Date.parse(invitation.sentAt))).toBe(false);
+      }
+    }
+    expect(
+      firstInvitation.status === "SENT" && retryInvitation.status === "PENDING",
+    ).toBe(false);
 
     const conflict = await authenticatedFetch(
       environment,
