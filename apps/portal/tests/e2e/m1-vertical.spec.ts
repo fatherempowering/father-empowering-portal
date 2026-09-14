@@ -45,6 +45,23 @@ test.beforeAll(async () => {
 });
 
 test("Max → création → invitation → OTP → activation → accès isolé", async ({ browser }) => {
+  const staffSessionA = new M1SsrSession(environment);
+  const staffSessionB = new M1SsrSession(environment);
+  const staffSignInA = await staffSessionA.client.auth.signInWithPassword({
+    email: max.email,
+    password: maxPassword,
+  });
+  const staffSignInB = await staffSessionB.client.auth.signInWithPassword({
+    email: max.email,
+    password: maxPassword,
+  });
+  expect(staffSignInA.error).toBeNull();
+  expect(staffSignInB.error).toBeNull();
+  const staffRefreshTokenA = staffSignInA.data.session?.refresh_token;
+  const staffRefreshTokenB = staffSignInB.data.session?.refresh_token;
+  expect(staffRefreshTokenA).toBeTruthy();
+  expect(staffRefreshTokenB).toBeTruthy();
+
   const maxContext = await browser.newContext();
   const maxPage = await maxContext.newPage();
 
@@ -86,6 +103,17 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     );
   }
   await expect(maxPage).toHaveURL(/\/login\?password=updated$/);
+
+  for (const [session, refreshToken] of [
+    [staffSessionA, staffRefreshTokenA],
+    [staffSessionB, staffRefreshTokenB],
+  ] as const) {
+    const refresh = await session.client.auth.refreshSession({
+      refresh_token: refreshToken!,
+    });
+    expect(refresh.data.session).toBeNull();
+    expect(refresh.error).not.toBeNull();
+  }
 
   await loginMaxAtAal2(maxPage, recoveredMaxPassword);
 
@@ -288,6 +316,46 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   expect(authUsers.error).toBeNull();
   expect(authUsers.data.users.filter((user) => user.email === clientEmail)).toHaveLength(1);
 
+  const clientRecoveryContext = await browser.newContext();
+  const clientRecoveryPage = await clientRecoveryContext.newPage();
+  await clientRecoveryPage.goto(`${environment.appUrl}/forgot-password`);
+  await clientRecoveryPage.getByLabel(/^courriel$/i).fill(clientEmail);
+  await clientRecoveryPage
+    .getByRole("button", { name: /envoyer le lien sécurisé/i })
+    .click();
+  await expect(
+    clientRecoveryPage.getByText(/si ce compte est autorisé/i),
+  ).toBeVisible();
+  const clientRecoveryMail = await waitForMail(
+    environment.mailpitUrl,
+    clientEmail,
+    (message) => {
+      try {
+        extractPasswordRecoveryUrl(message);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    {
+      excludeIds: new Set([
+        invitationMail.id,
+        otpMail.id,
+        returningOtpMail.id,
+      ]),
+    },
+  );
+  await clientRecoveryPage.goto(extractPasswordRecoveryUrl(clientRecoveryMail));
+  await expect(clientRecoveryPage).toHaveURL(/\/login\?error=recovery$/);
+  await expect(
+    clientRecoveryPage.getByRole("heading", { name: /choisis ton mot de passe/i }),
+  ).toHaveCount(0);
+  expect(
+    (await clientRecoveryContext.cookies()).some(
+      (cookie) => cookie.name === "fe-staff-recovery",
+    ),
+  ).toBe(false);
+
   const activeRow = maxPage.getByRole("listitem").filter({ hasText: clientEmail });
   await expect(activeRow).toContainText(/actif/i, { timeout: 20_000 });
 
@@ -342,6 +410,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   );
 
   await returningContext.close();
+  await clientRecoveryContext.close();
   await clientContext.close();
   await maxContext.close();
 });
