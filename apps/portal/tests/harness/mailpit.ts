@@ -88,3 +88,20 @@ export function extractSixDigitOtp(message: CapturedMail): string {
   if (!match?.[1]) throw new Error("Auth email does not contain a six-digit OTP");
   return match[1];
 }
+
+export function extractPasswordRecoveryUrl(message: CapturedMail): string {
+  const content = `${message.text}\n${message.html}`.replaceAll("&amp;", "&");
+  const match = content.match(
+    /https?:\/\/[^\s"'<>]+\/auth\/v1\/verify\?[^\s"'<>]+/i,
+  );
+  if (!match) throw new Error("Auth email does not contain a recovery URL");
+
+  const url = new URL(match[0]);
+  if (url.searchParams.get("type") !== "recovery") {
+    throw new Error("Auth email URL is not a password recovery URL");
+  }
+  if (!url.searchParams.get("redirect_to")) {
+    throw new Error("Auth recovery URL has no application callback");
+  }
+  return url.toString();
+}

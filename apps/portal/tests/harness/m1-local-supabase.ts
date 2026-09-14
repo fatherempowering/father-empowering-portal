@@ -18,6 +18,8 @@ export type SeededStaff = Readonly<{
   role: "ADMIN" | "COACH";
 }>;
 
+export type SeededPasswordlessStaff = Readonly<Omit<SeededStaff, "password">>;
+
 type CookieValue = Readonly<{ name: string; value: string }>;
 
 function required(name: string): string {
@@ -82,6 +84,57 @@ export async function seedStaffIdentity(
   const profile = await admin.from("profiles").insert({
     auth_user_id: userId,
     display_name: input.role === "COACH" ? "Max M1" : "Admin M1",
+    locale: "fr-CA",
+    time_zone: "America/Montreal",
+    status: "ACTIVE",
+    created_by: userId,
+  });
+  if (profile.error) throw profile.error;
+
+  const membership = await admin.from("organization_memberships").insert({
+    organization_id: organizationId,
+    user_id: userId,
+    role: input.role,
+    status: "ACTIVE",
+    activated_at: new Date().toISOString(),
+    created_by: userId,
+  });
+  if (membership.error) throw membership.error;
+
+  return { userId, organizationId, ...input };
+}
+
+export async function seedPasswordlessStaffIdentity(
+  environment: M1TestEnvironment,
+  input: { email: string; role: "ADMIN" | "COACH" },
+): Promise<SeededPasswordlessStaff> {
+  const admin = createM1AdminClient(environment);
+  const created = await admin.auth.admin.createUser({
+    email: input.email,
+    email_confirm: true,
+    app_metadata: { m1_test_fixture: true },
+  });
+  if (created.error || !created.data.user) {
+    throw new Error(
+      `Unable to seed passwordless M1 Auth user: ${created.error?.message ?? "unknown"}`,
+    );
+  }
+
+  const userId = created.data.user.id;
+  const organizationId = randomUUID();
+  const organization = await admin.from("organizations").insert({
+    id: organizationId,
+    name: `M1 ${input.role} password ownership`,
+    locale: "fr-CA",
+    default_time_zone: "America/Montreal",
+    status: "ACTIVE",
+    created_by: userId,
+  });
+  if (organization.error) throw organization.error;
+
+  const profile = await admin.from("profiles").insert({
+    auth_user_id: userId,
+    display_name: "M1 Password Owner",
     locale: "fr-CA",
     time_zone: "America/Montreal",
     status: "ACTIVE",

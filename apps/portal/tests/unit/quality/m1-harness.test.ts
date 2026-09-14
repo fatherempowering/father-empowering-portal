@@ -11,7 +11,11 @@ import { delimiter, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 import { currentTotp } from "../../harness/m1-local-supabase";
-import { extractActivation, extractSixDigitOtp } from "../../harness/mailpit";
+import {
+  extractActivation,
+  extractPasswordRecoveryUrl,
+  extractSixDigitOtp,
+} from "../../harness/mailpit";
 
 describe("M1 local quality harness", () => {
   it("génère les codes TOTP SHA-1 à six chiffres attendus", () => {
@@ -54,6 +58,31 @@ describe("M1 local quality harness", () => {
         html: "",
       }),
     ).toBe("123456");
+  });
+
+  it("accepte uniquement un lien Supabase de récupération de mot de passe", () => {
+    const redirectTo = encodeURIComponent(
+      "http://127.0.0.1:3000/auth/callback?next=/reset-password",
+    );
+    const recoveryUrl =
+      `http://127.0.0.1:54321/auth/v1/verify?token=recovery-token` +
+      `&type=recovery&redirect_to=${redirectTo}`;
+    expect(
+      extractPasswordRecoveryUrl({
+        id: "mail-recovery",
+        subject: "Reset",
+        text: recoveryUrl,
+        html: "",
+      }),
+    ).toContain("type=recovery");
+    expect(() =>
+      extractPasswordRecoveryUrl({
+        id: "mail-magic-link",
+        subject: "Login",
+        text: recoveryUrl.replace("type=recovery", "type=magiclink"),
+        html: "",
+      }),
+    ).toThrow(/not a password recovery URL/i);
   });
 
   it("verrouille localement le template OTP et TOTP requis par le parcours", () => {

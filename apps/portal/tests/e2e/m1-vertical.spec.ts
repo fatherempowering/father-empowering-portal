@@ -7,17 +7,20 @@ import {
   currentTotp,
   enrollAndVerifyTotp,
   getM1TestEnvironment,
+  seedPasswordlessStaffIdentity,
   seedStaffIdentity,
   type SeededStaff,
 } from "../harness/m1-local-supabase";
 import {
   extractActivation,
+  extractPasswordRecoveryUrl,
   extractSixDigitOtp,
   waitForMail,
 } from "../harness/mailpit";
 
 const environment = getM1TestEnvironment();
 const maxPassword = "M1-local-only-Max!123";
+const recoveredMaxPassword = "M1-local-only-Max-recovered!456";
 const clientEmail = `client.vertical.${randomUUID()}@example.test`;
 let max: SeededStaff;
 let maxTotpSecret: string;
@@ -42,11 +45,147 @@ test.beforeAll(async () => {
   if (signOut.error) throw signOut.error;
 });
 
+test("Admin sans mot de passe → récupération → enrollment MFA → reconnexion", async ({
+  browser,
+}) => {
+  const email = `owner.vertical.${randomUUID()}@example.test`;
+  const password = "M1-local-only-Owner!789";
+  await seedPasswordlessStaffIdentity(environment, { email, role: "ADMIN" });
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(`${environment.appUrl}/forgot-password`);
+  await page.getByLabel(/^courriel$/i).fill(email);
+  await page.getByRole("button", { name: /envoyer le lien sécurisé/i }).click();
+  await expect(page.getByText(/si ce compte est autorisé/i)).toBeVisible();
+
+  const recoveryMail = await waitForMail(
+    environment.mailpitUrl,
+    email,
+    (message) => {
+      try {
+        extractPasswordRecoveryUrl(message);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  );
+  await page.goto(extractPasswordRecoveryUrl(recoveryMail));
+  await expect(page).toHaveURL(/\/reset-password$/);
+  await page.getByLabel(/^nouveau mot de passe$/i).fill(password);
+  await page.getByLabel(/^confirmer le mot de passe$/i).fill(password);
+  await page.getByRole("button", { name: /enregistrer mon mot de passe/i }).click();
+  await expect(page).toHaveURL(/\/login\?password=updated$/);
+
+  await signInCoach(page, email, password);
+  await expect(page).toHaveURL(/\/mfa(?:\?.*)?$/);
+  await page.getByRole("button", { name: /configurer la vérification/i }).click();
+  const manualSecret = page.locator(".fe-mfa-enrollment details");
+  await expect(manualSecret).toBeVisible();
+  await manualSecret.locator("summary").click();
+  const totpSecret = (await manualSecret.locator("code").textContent())?.trim();
+  expect(totpSecret).toBeTruthy();
+  await verifyMfa(page, totpSecret!);
+  await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
+
+  await page.getByRole("button", { name: /se déconnecter/i }).click();
+  await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
+  await page.goto(`${environment.appUrl}/coach`);
+  await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
+
+  await signInCoach(page, email, password);
+  await verifyMfa(page, totpSecret!);
+  await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
+  await context.close();
+});
+
 test("Max → création → invitation → OTP → activation → accès isolé", async ({ browser }) => {
+  const staffSessionA = new M1SsrSession(environment);
+  const staffSessionB = new M1SsrSession(environment);
+  const staffSignInA = await staffSessionA.client.auth.signInWithPassword({
+    email: max.email,
+    password: maxPassword,
+  });
+  const staffSignInB = await staffSessionB.client.auth.signInWithPassword({
+    email: max.email,
+    password: maxPassword,
+  });
+  expect(staffSignInA.error).toBeNull();
+  expect(staffSignInB.error).toBeNull();
+  const staffRefreshTokenA = staffSignInA.data.session?.refresh_token;
+  const staffRefreshTokenB = staffSignInB.data.session?.refresh_token;
+  expect(staffRefreshTokenA).toBeTruthy();
+  expect(staffRefreshTokenB).toBeTruthy();
+
   const maxContext = await browser.newContext();
   const maxPage = await maxContext.newPage();
-  await loginMaxAtAal2(maxPage);
 
+  await maxPage.goto(`${environment.appUrl}/forgot-password`);
+  await maxPage.getByLabel(/^courriel$/i).fill(max.email);
+  await maxPage.getByRole("button", { name: /envoyer le lien sécurisé/i }).click();
+  await expect(maxPage.getByText(/si ce compte est autorisé/i)).toBeVisible();
+  const recoveryMail = await waitForMail(
+    environment.mailpitUrl,
+    max.email,
+    (message) => {
+      try {
+        extractPasswordRecoveryUrl(message);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  );
+  await maxPage.goto(extractPasswordRecoveryUrl(recoveryMail));
+  await expect(maxPage).toHaveURL(/\/mfa\?next=(?:%2F|\/)reset-password$/i);
+  await verifyMfa(maxPage, maxTotpSecret);
+  await expect(maxPage).toHaveURL(/\/reset-password$/);
+  await maxPage.getByLabel(/^nouveau mot de passe$/i).fill(recoveredMaxPassword);
+  await maxPage.getByLabel(/^confirmer le mot de passe$/i).fill(recoveredMaxPassword);
+  const passwordUpdateResponse = maxPage.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return (
+      response.request().method() === "POST" &&
+      url.origin === environment.appUrl &&
+      url.pathname === "/api/v1/auth/coach-password/update"
+    );
+  });
+  await maxPage.getByRole("button", { name: /enregistrer mon mot de passe/i }).click();
+  const passwordUpdate = await passwordUpdateResponse;
+  if (!passwordUpdate.ok()) {
+    const diagnostic = await safePasswordUpdateDiagnostic(passwordUpdate);
+    throw new Error(
+      `Staff password update failed: status=${passwordUpdate.status()} ` +
+        `error.code=${diagnostic.code} error.message=${diagnostic.message}`,
+    );
+  }
+  await expect(maxPage).toHaveURL(/\/login\?password=updated$/);
+
+  for (const [session, refreshToken] of [
+    [staffSessionA, staffRefreshTokenA],
+    [staffSessionB, staffRefreshTokenB],
+  ] as const) {
+    const refresh = await session.client.auth.refreshSession({
+      refresh_token: refreshToken!,
+    });
+    expect(refresh.data.session).toBeNull();
+    expect(refresh.error).not.toBeNull();
+  }
+
+  await loginMaxAtAal2(maxPage, recoveredMaxPassword);
+
+  await expect(maxPage.getByRole("heading", { name: /^clients$/i })).toBeVisible();
+  await maxPage.getByRole("button", { name: /se déconnecter/i }).click();
+  await expect(maxPage).toHaveURL(/\/login(?:\?.*)?$/);
+  const signedOutCoachApi = await maxContext.request.get(
+    `${environment.appUrl}/api/v1/coach/clients`,
+  );
+  expect(signedOutCoachApi.status()).toBe(401);
+  await maxPage.goto(`${environment.appUrl}/coach`);
+  await expect(maxPage).toHaveURL(/\/login(?:\?.*)?$/);
+
+  await loginMaxAtAal2(maxPage, recoveredMaxPassword);
   await expect(maxPage.getByRole("heading", { name: /^clients$/i })).toBeVisible();
   await maxPage.getByRole("button", { name: /ajouter un client/i }).click();
   await maxPage.getByLabel(/prénom/i).fill("Client");
@@ -235,6 +374,46 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   expect(authUsers.error).toBeNull();
   expect(authUsers.data.users.filter((user) => user.email === clientEmail)).toHaveLength(1);
 
+  const clientRecoveryContext = await browser.newContext();
+  const clientRecoveryPage = await clientRecoveryContext.newPage();
+  await clientRecoveryPage.goto(`${environment.appUrl}/forgot-password`);
+  await clientRecoveryPage.getByLabel(/^courriel$/i).fill(clientEmail);
+  await clientRecoveryPage
+    .getByRole("button", { name: /envoyer le lien sécurisé/i })
+    .click();
+  await expect(
+    clientRecoveryPage.getByText(/si ce compte est autorisé/i),
+  ).toBeVisible();
+  const clientRecoveryMail = await waitForMail(
+    environment.mailpitUrl,
+    clientEmail,
+    (message) => {
+      try {
+        extractPasswordRecoveryUrl(message);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    {
+      excludeIds: new Set([
+        invitationMail.id,
+        otpMail.id,
+        returningOtpMail.id,
+      ]),
+    },
+  );
+  await clientRecoveryPage.goto(extractPasswordRecoveryUrl(clientRecoveryMail));
+  await expect(clientRecoveryPage).toHaveURL(/\/login\?error=recovery$/);
+  await expect(
+    clientRecoveryPage.getByRole("heading", { name: /choisis ton mot de passe/i }),
+  ).toHaveCount(0);
+  expect(
+    (await clientRecoveryContext.cookies()).some(
+      (cookie) => cookie.name === "fe-staff-recovery",
+    ),
+  ).toBe(false);
+
   const activeRow = maxPage.getByRole("listitem").filter({ hasText: clientEmail });
   await expect(activeRow).toContainText(/actif/i, { timeout: 20_000 });
 
@@ -289,6 +468,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   );
 
   await returningContext.close();
+  await clientRecoveryContext.close();
   await clientContext.close();
   await maxContext.close();
 });
@@ -339,12 +519,64 @@ async function safeActivationDiagnostic(response: {
   };
 }
 
-async function loginMaxAtAal2(page: Page): Promise<void> {
-  await page.goto(`${environment.appUrl}/login`);
-  await page.getByLabel(/courriel|email/i).fill(max.email);
-  await page.getByLabel(/^mot de passe$/i).fill(maxPassword);
-  await page.getByRole("button", { name: /se connecter|sign in|continuer/i }).click();
+async function safePasswordUpdateDiagnostic(response: {
+  json(): Promise<unknown>;
+}): Promise<{ code: string; message: string }> {
+  const allowedCodes = new Set([
+    "FORBIDDEN",
+    "UNAUTHENTICATED",
+    "TEMPORARILY_UNAVAILABLE",
+    "VALIDATION_FAILED",
+  ]);
+  const allowedMessages = new Set([
+    "Cross-origin mutation denied",
+    "Authentication required",
+    "Password recovery authorization is invalid or expired",
+    "Staff access required",
+    "Unable to update password",
+    "Unable to close recovery sessions",
+    "Invalid request.",
+    "Service temporarily unavailable.",
+  ]);
+  const payload = await response.json().catch(() => null);
+  const error =
+    payload && typeof payload === "object" && "error" in payload
+      ? (payload.error as unknown)
+      : null;
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? (error.code as unknown)
+      : null;
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? (error.message as unknown)
+      : null;
+  return {
+    code: typeof code === "string" && allowedCodes.has(code) ? code : "REDACTED_OR_ABSENT",
+    message:
+      typeof message === "string" && allowedMessages.has(message)
+        ? message
+        : "REDACTED_OR_ABSENT",
+  };
+}
 
+async function loginMaxAtAal2(
+  page: Page,
+  password = maxPassword,
+): Promise<void> {
+  await signInCoach(page, max.email, password);
+  await verifyMfa(page, maxTotpSecret);
+  await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
+}
+
+async function signInCoach(page: Page, email: string, password: string): Promise<void> {
+  await page.goto(`${environment.appUrl}/login`);
+  await page.getByLabel(/courriel|email/i).fill(email);
+  await page.getByLabel(/^mot de passe$/i).fill(password);
+  await page.getByRole("button", { name: /se connecter|sign in|continuer/i }).click();
+}
+
+async function verifyMfa(page: Page, totpSecret: string): Promise<void> {
   const factorInput = page.getByRole("textbox", { name: /chiffre 1 sur 6/i });
   await expect(factorInput).toBeVisible();
   const periodProgress = Date.now() % 30_000;
@@ -352,12 +584,11 @@ async function loginMaxAtAal2(page: Page): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 30_250 - periodProgress));
   }
   try {
-    await factorInput.fill(currentTotp(maxTotpSecret));
+    await factorInput.fill(currentTotp(totpSecret));
   } catch {
     throw new Error("Unable to enter the current MFA code.");
   }
   await page.getByRole("button", { name: /vérifier|verify|continuer/i }).click();
-  await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
 }
 
 function assertSecretAbsent(serialized: string, secret: string, location: string): void {
