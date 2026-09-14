@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { requestCoachLogout } from "@/features/coach/auth/request-coach-logout";
 
 describe("Coach logout browser boundary", () => {
-  it("leaves the private portal after any HTTP response", async () => {
+  it("leaves the private portal only after a successful logout response", async () => {
     const leavePortal = vi.fn();
-    const transport = vi.fn().mockResolvedValue(new Response(null, { status: 503 }));
+    const transport = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
 
     const responseReceived = await requestCoachLogout(leavePortal, transport);
 
@@ -17,7 +17,17 @@ describe("Coach logout browser boundary", () => {
     );
   });
 
-  it("keeps the portal visible only when no HTTP response is received", async () => {
+  it("does not claim logout when the server refuses or fails the request", async () => {
+    const leavePortal = vi.fn();
+    const transport = vi.fn().mockResolvedValue(new Response(null, { status: 503 }));
+
+    const responseReceived = await requestCoachLogout(leavePortal, transport);
+
+    expect(responseReceived).toBe(false);
+    expect(leavePortal).not.toHaveBeenCalled();
+  });
+
+  it("does not claim logout when no HTTP response is received", async () => {
     const leavePortal = vi.fn();
     const transport = vi.fn().mockRejectedValue(new TypeError("network unavailable"));
 

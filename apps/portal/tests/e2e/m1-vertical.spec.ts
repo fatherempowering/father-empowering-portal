@@ -7,6 +7,7 @@ import {
   currentTotp,
   enrollAndVerifyTotp,
   getM1TestEnvironment,
+  seedPasswordlessStaffIdentity,
   seedStaffIdentity,
   type SeededStaff,
 } from "../harness/m1-local-supabase";
@@ -42,6 +43,61 @@ test.beforeAll(async () => {
   maxTotpSecret = await enrollAndVerifyTotp(enrollmentSession);
   const signOut = await enrollmentSession.client.auth.signOut();
   if (signOut.error) throw signOut.error;
+});
+
+test("Admin sans mot de passe → récupération → enrollment MFA → reconnexion", async ({
+  browser,
+}) => {
+  const email = `owner.vertical.${randomUUID()}@example.test`;
+  const password = "M1-local-only-Owner!789";
+  await seedPasswordlessStaffIdentity(environment, { email, role: "ADMIN" });
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(`${environment.appUrl}/forgot-password`);
+  await page.getByLabel(/^courriel$/i).fill(email);
+  await page.getByRole("button", { name: /envoyer le lien sécurisé/i }).click();
+  await expect(page.getByText(/si ce compte est autorisé/i)).toBeVisible();
+
+  const recoveryMail = await waitForMail(
+    environment.mailpitUrl,
+    email,
+    (message) => {
+      try {
+        extractPasswordRecoveryUrl(message);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  );
+  await page.goto(extractPasswordRecoveryUrl(recoveryMail));
+  await expect(page).toHaveURL(/\/reset-password$/);
+  await page.getByLabel(/^nouveau mot de passe$/i).fill(password);
+  await page.getByLabel(/^confirmer le mot de passe$/i).fill(password);
+  await page.getByRole("button", { name: /enregistrer mon mot de passe/i }).click();
+  await expect(page).toHaveURL(/\/login\?password=updated$/);
+
+  await signInCoach(page, email, password);
+  await expect(page).toHaveURL(/\/mfa(?:\?.*)?$/);
+  await page.getByRole("button", { name: /configurer la vérification/i }).click();
+  const manualSecret = page.locator(".fe-mfa-enrollment details");
+  await expect(manualSecret).toBeVisible();
+  await manualSecret.locator("summary").click();
+  const totpSecret = (await manualSecret.locator("code").textContent())?.trim();
+  expect(totpSecret).toBeTruthy();
+  await verifyMfa(page, totpSecret!);
+  await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
+
+  await page.getByRole("button", { name: /se déconnecter/i }).click();
+  await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
+  await page.goto(`${environment.appUrl}/coach`);
+  await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
+
+  await signInCoach(page, email, password);
+  await verifyMfa(page, totpSecret!);
+  await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
+  await context.close();
 });
 
 test("Max → création → invitation → OTP → activation → accès isolé", async ({ browser }) => {
@@ -83,7 +139,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   );
   await maxPage.goto(extractPasswordRecoveryUrl(recoveryMail));
   await expect(maxPage).toHaveURL(/\/mfa\?next=(?:%2F|\/)reset-password$/i);
-  await verifyCurrentMfa(maxPage);
+  await verifyMfa(maxPage, maxTotpSecret);
   await expect(maxPage).toHaveURL(/\/reset-password$/);
   await maxPage.getByLabel(/^nouveau mot de passe$/i).fill(recoveredMaxPassword);
   await maxPage.getByLabel(/^confirmer le mot de passe$/i).fill(recoveredMaxPassword);
@@ -508,16 +564,19 @@ async function loginMaxAtAal2(
   page: Page,
   password = maxPassword,
 ): Promise<void> {
-  await page.goto(`${environment.appUrl}/login`);
-  await page.getByLabel(/courriel|email/i).fill(max.email);
-  await page.getByLabel(/^mot de passe$/i).fill(password);
-  await page.getByRole("button", { name: /se connecter|sign in|continuer/i }).click();
-
-  await verifyCurrentMfa(page);
+  await signInCoach(page, max.email, password);
+  await verifyMfa(page, maxTotpSecret);
   await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
 }
 
-async function verifyCurrentMfa(page: Page): Promise<void> {
+async function signInCoach(page: Page, email: string, password: string): Promise<void> {
+  await page.goto(`${environment.appUrl}/login`);
+  await page.getByLabel(/courriel|email/i).fill(email);
+  await page.getByLabel(/^mot de passe$/i).fill(password);
+  await page.getByRole("button", { name: /se connecter|sign in|continuer/i }).click();
+}
+
+async function verifyMfa(page: Page, totpSecret: string): Promise<void> {
   const factorInput = page.getByRole("textbox", { name: /chiffre 1 sur 6/i });
   await expect(factorInput).toBeVisible();
   const periodProgress = Date.now() % 30_000;
@@ -525,7 +584,7 @@ async function verifyCurrentMfa(page: Page): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 30_250 - periodProgress));
   }
   try {
-    await factorInput.fill(currentTotp(maxTotpSecret));
+    await factorInput.fill(currentTotp(totpSecret));
   } catch {
     throw new Error("Unable to enter the current MFA code.");
   }
