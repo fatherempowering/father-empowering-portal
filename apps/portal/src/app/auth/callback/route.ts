@@ -31,8 +31,11 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   try {
-    const identity = await exchangeStaffPasswordRecoveryCode(code);
-    const response = redirectResponse("/reset-password");
+    const { requiresMfa, ...identity } =
+      await exchangeStaffPasswordRecoveryCode(code);
+    const response = redirectResponse(
+      requiresMfa ? "/mfa?next=%2Freset-password" : "/reset-password",
+    );
     const canonicalUrl = new URL(getPublicEnvironment().NEXT_PUBLIC_APP_URL);
     response.cookies.set(
       STAFF_PASSWORD_RECOVERY_COOKIE,

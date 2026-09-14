@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   getSession: vi.fn(),
   updateUser: vi.fn(),
+  listFactors: vi.fn(),
+  getAuthenticatorAssuranceLevel: vi.fn(),
   membershipResult: {
     data: [{
       id: "31000000-0000-4000-8000-000000000001",
@@ -27,6 +29,10 @@ vi.mock("@/lib/supabase/server", () => ({
       getUser: mocks.getUser,
       getSession: mocks.getSession,
       updateUser: mocks.updateUser,
+      mfa: {
+        listFactors: mocks.listFactors,
+        getAuthenticatorAssuranceLevel: mocks.getAuthenticatorAssuranceLevel,
+      },
     },
     from: vi.fn(() => {
       const chain = {
@@ -94,6 +100,14 @@ describe("standard Supabase staff password recovery", () => {
       error: null,
     });
     mocks.updateUser.mockResolvedValue({ error: null });
+    mocks.listFactors.mockResolvedValue({
+      data: { totp: [{ id: "factor", status: "verified" }] },
+      error: null,
+    });
+    mocks.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: "aal2", nextLevel: "aal2" },
+      error: null,
+    });
   });
 
   afterEach(() => {
@@ -116,6 +130,7 @@ describe("standard Supabase staff password recovery", () => {
     await expect(exchangeStaffPasswordRecoveryCode("pkce-code")).resolves.toEqual({
       userId,
       sessionId,
+      requiresMfa: true,
     });
 
     mocks.exchangeCodeForSession.mockResolvedValueOnce({
@@ -167,5 +182,31 @@ describe("standard Supabase staff password recovery", () => {
     ).rejects.toMatchObject({ code: "UNAUTHENTICATED", status: 401 });
     expect(mocks.updateUser).not.toHaveBeenCalled();
     expect(mocks.signOut).not.toHaveBeenCalledWith({ scope: "global" });
+  });
+
+  it("requires AAL2 before password update when a verified factor exists", async () => {
+    mocks.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: "aal1", nextLevel: "aal2" },
+      error: null,
+    });
+    const grant = issueStaffPasswordRecoveryGrant({ userId, sessionId });
+
+    await expect(
+      updateStaffPassword(grant, "A-new-password-for-Max!123"),
+    ).rejects.toMatchObject({ code: "FORBIDDEN", status: 403 });
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("allows an AAL1 first-password recovery when no verified factor exists", async () => {
+    mocks.listFactors.mockResolvedValue({ data: { totp: [] }, error: null });
+    mocks.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: "aal1", nextLevel: "aal1" },
+      error: null,
+    });
+    const grant = issueStaffPasswordRecoveryGrant({ userId, sessionId });
+
+    await updateStaffPassword(grant, "A-new-password-for-Max!123");
+    expect(mocks.updateUser).toHaveBeenCalledOnce();
+    expect(mocks.signOut).toHaveBeenCalledWith({ scope: "global" });
   });
 });

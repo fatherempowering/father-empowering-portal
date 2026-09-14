@@ -8,8 +8,10 @@ type Enrollment = { factorId: string; qrCode: string; secret: string };
 
 export function MfaPanel({
   verifiedFactorId,
+  destination = "/coach",
 }: {
   verifiedFactorId: string | null;
+  destination?: "/coach" | "/reset-password";
 }) {
   const [factorId, setFactorId] = useState(verifiedFactorId);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
@@ -56,7 +58,7 @@ export function MfaPanel({
         );
         return;
       }
-      window.location.assign("/coach");
+      window.location.assign(destination);
     } catch {
       setError(
         "La connexion a été interrompue. Vérifie ton réseau et réessaie.",

@@ -37,6 +37,7 @@ export async function requestStaffPasswordRecovery(rawEmail: unknown): Promise<v
 export async function exchangeStaffPasswordRecoveryCode(code: string): Promise<{
   userId: string;
   sessionId: string;
+  requiresMfa: boolean;
 }> {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
@@ -79,7 +80,21 @@ export async function exchangeStaffPasswordRecoveryCode(code: string): Promise<{
     throw new M1ContractError("FORBIDDEN", "Staff access required", 403);
   }
 
-  return identity;
+  const { data: factors, error: factorError } =
+    await supabase.auth.mfa.listFactors();
+  if (factorError) {
+    await supabase.auth.signOut({ scope: "local" });
+    throw new M1ContractError(
+      "TEMPORARILY_UNAVAILABLE",
+      "Unable to verify staff recovery assurance",
+      503,
+    );
+  }
+
+  return {
+    ...identity,
+    requiresMfa: factors.totp.some((factor) => factor.status === "verified"),
+  };
 }
 
 export async function requireStaffPasswordRecoveryGrant(
@@ -141,6 +156,33 @@ export async function updateStaffPassword(
   await requireStaffPasswordRecoveryGrant(token);
   const password = staffPasswordSchema.parse(rawPassword);
   const supabase = await createServerSupabaseClient();
+  const [
+    { data: factors, error: factorError },
+    { data: assurance, error: assuranceError },
+  ] = await Promise.all([
+    supabase.auth.mfa.listFactors(),
+    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+  ]);
+  const assuranceLevel = z.enum(["aal1", "aal2"]).safeParse(
+    assurance?.currentLevel,
+  );
+  if (factorError || assuranceError || !assuranceLevel.success) {
+    throw new M1ContractError(
+      "TEMPORARILY_UNAVAILABLE",
+      "Unable to verify recovery assurance",
+      503,
+    );
+  }
+  if (
+    factors.totp.some((factor) => factor.status === "verified") &&
+    assuranceLevel.data !== "aal2"
+  ) {
+    throw new M1ContractError(
+      "FORBIDDEN",
+      "MFA assurance is required for password recovery",
+      403,
+    );
+  }
   const { error: updateError } = await supabase.auth.updateUser({ password });
   if (updateError) {
     throw new M1ContractError(

@@ -27,6 +27,7 @@ describe("Coach password recovery callback", () => {
     mocks.exchange.mockResolvedValue({
       userId: "11000000-0000-4000-8000-000000000001",
       sessionId: "21000000-0000-4000-8000-000000000001",
+      requiresMfa: true,
     });
     mocks.issueGrant.mockReturnValue("signed-recovery-grant");
   });
@@ -41,7 +42,9 @@ describe("Coach password recovery callback", () => {
     ));
 
     expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe(`${appUrl}/reset-password`);
+    expect(response.headers.get("location")).toBe(
+      `${appUrl}/mfa?next=%2Freset-password`,
+    );
     expect(mocks.exchange).toHaveBeenCalledWith("pkce-code");
     const cookie = response.headers.get("set-cookie") ?? "";
     expect(cookie).toContain("fe-staff-recovery=signed-recovery-grant");
@@ -49,6 +52,20 @@ describe("Coach password recovery callback", () => {
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("Secure");
     expect(cookie).toContain("SameSite=lax");
+  });
+
+  it("lets a staff account without a factor define its first password directly", async () => {
+    mocks.exchange.mockResolvedValueOnce({
+      userId: "11000000-0000-4000-8000-000000000001",
+      sessionId: "21000000-0000-4000-8000-000000000001",
+      requiresMfa: false,
+    });
+
+    const response = await passwordCallback(new Request(
+      `${appUrl}/auth/callback?code=pkce-code&next=%2Freset-password`,
+    ));
+
+    expect(response.headers.get("location")).toBe(`${appUrl}/reset-password`);
   });
 
   it("fails closed for a bad purpose or failed exchange", async () => {

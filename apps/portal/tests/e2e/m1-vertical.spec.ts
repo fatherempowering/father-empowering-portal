@@ -82,6 +82,8 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     },
   );
   await maxPage.goto(extractPasswordRecoveryUrl(recoveryMail));
+  await expect(maxPage).toHaveURL(/\/mfa\?next=(?:%2F|\/)reset-password$/i);
+  await verifyCurrentMfa(maxPage);
   await expect(maxPage).toHaveURL(/\/reset-password$/);
   await maxPage.getByLabel(/^nouveau mot de passe$/i).fill(recoveredMaxPassword);
   await maxPage.getByLabel(/^confirmer le mot de passe$/i).fill(recoveredMaxPassword);
@@ -511,6 +513,11 @@ async function loginMaxAtAal2(
   await page.getByLabel(/^mot de passe$/i).fill(password);
   await page.getByRole("button", { name: /se connecter|sign in|continuer/i }).click();
 
+  await verifyCurrentMfa(page);
+  await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
+}
+
+async function verifyCurrentMfa(page: Page): Promise<void> {
   const factorInput = page.getByRole("textbox", { name: /chiffre 1 sur 6/i });
   await expect(factorInput).toBeVisible();
   const periodProgress = Date.now() % 30_000;
@@ -523,7 +530,6 @@ async function loginMaxAtAal2(
     throw new Error("Unable to enter the current MFA code.");
   }
   await page.getByRole("button", { name: /vérifier|verify|continuer/i }).click();
-  await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
 }
 
 function assertSecretAbsent(serialized: string, secret: string, location: string): void {
