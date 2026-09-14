@@ -27,6 +27,7 @@ const exactSecrets = [
   process.env.M1_TEST_SUPABASE_SERVICE_ROLE_KEY,
   process.env.M1_TEST_SUPABASE_ANON_KEY,
   process.env.INVITATION_TOKEN_SECRET,
+  process.env.STAFF_PASSWORD_RECOVERY_SECRET,
   process.env.OUTBOX_WORKER_SECRET,
 ].filter((value) => typeof value === "string" && value.length > 0);
 

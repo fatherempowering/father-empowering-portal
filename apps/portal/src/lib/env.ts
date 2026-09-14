@@ -10,6 +10,10 @@ const serverEnvironmentSchema = publicEnvironmentSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 });
 
+const staffPasswordRecoveryEnvironmentSchema = publicEnvironmentSchema.extend({
+  STAFF_PASSWORD_RECOVERY_SECRET: z.string().min(32),
+});
+
 const invitationDeliveryCommonSchema = serverEnvironmentSchema.extend({
   INVITATION_TOKEN_SECRET: z.string().min(32),
   INVITATION_EMAIL_FROM: z.string().min(3),
@@ -41,6 +45,14 @@ export function getServerEnvironment() {
   return serverEnvironmentSchema.parse({
     ...getPublicEnvironment(),
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  });
+}
+
+export function getStaffPasswordRecoveryEnvironment() {
+  return staffPasswordRecoveryEnvironmentSchema.parse({
+    ...getPublicEnvironment(),
+    STAFF_PASSWORD_RECOVERY_SECRET:
+      process.env.STAFF_PASSWORD_RECOVERY_SECRET,
   });
 }
 

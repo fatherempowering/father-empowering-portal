@@ -12,12 +12,14 @@ import {
 } from "../harness/m1-local-supabase";
 import {
   extractActivation,
+  extractPasswordRecoveryUrl,
   extractSixDigitOtp,
   waitForMail,
 } from "../harness/mailpit";
 
 const environment = getM1TestEnvironment();
 const maxPassword = "M1-local-only-Max!123";
+const recoveredMaxPassword = "M1-local-only-Max-recovered!456";
 const clientEmail = `client.vertical.${randomUUID()}@example.test`;
 let max: SeededStaff;
 let maxTotpSecret: string;
@@ -45,8 +47,43 @@ test.beforeAll(async () => {
 test("Max → création → invitation → OTP → activation → accès isolé", async ({ browser }) => {
   const maxContext = await browser.newContext();
   const maxPage = await maxContext.newPage();
-  await loginMaxAtAal2(maxPage);
 
+  await maxPage.goto(`${environment.appUrl}/forgot-password`);
+  await maxPage.getByLabel(/^courriel$/i).fill(max.email);
+  await maxPage.getByRole("button", { name: /envoyer le lien sécurisé/i }).click();
+  await expect(maxPage.getByText(/si ce compte est autorisé/i)).toBeVisible();
+  const recoveryMail = await waitForMail(
+    environment.mailpitUrl,
+    max.email,
+    (message) => {
+      try {
+        extractPasswordRecoveryUrl(message);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  );
+  await maxPage.goto(extractPasswordRecoveryUrl(recoveryMail));
+  await expect(maxPage).toHaveURL(/\/reset-password$/);
+  await maxPage.getByLabel(/^nouveau mot de passe$/i).fill(recoveredMaxPassword);
+  await maxPage.getByLabel(/^confirmer le mot de passe$/i).fill(recoveredMaxPassword);
+  await maxPage.getByRole("button", { name: /enregistrer mon mot de passe/i }).click();
+  await expect(maxPage).toHaveURL(/\/login\?password=updated$/);
+
+  await loginMaxAtAal2(maxPage, recoveredMaxPassword);
+
+  await expect(maxPage.getByRole("heading", { name: /^clients$/i })).toBeVisible();
+  await maxPage.getByRole("button", { name: /se déconnecter/i }).click();
+  await expect(maxPage).toHaveURL(/\/login(?:\?.*)?$/);
+  const signedOutCoachApi = await maxContext.request.get(
+    `${environment.appUrl}/api/v1/coach/clients`,
+  );
+  expect(signedOutCoachApi.status()).toBe(401);
+  await maxPage.goto(`${environment.appUrl}/coach`);
+  await expect(maxPage).toHaveURL(/\/login(?:\?.*)?$/);
+
+  await loginMaxAtAal2(maxPage, recoveredMaxPassword);
   await expect(maxPage.getByRole("heading", { name: /^clients$/i })).toBeVisible();
   await maxPage.getByRole("button", { name: /ajouter un client/i }).click();
   await maxPage.getByLabel(/prénom/i).fill("Client");
@@ -339,10 +376,13 @@ async function safeActivationDiagnostic(response: {
   };
 }
 
-async function loginMaxAtAal2(page: Page): Promise<void> {
+async function loginMaxAtAal2(
+  page: Page,
+  password = maxPassword,
+): Promise<void> {
   await page.goto(`${environment.appUrl}/login`);
   await page.getByLabel(/courriel|email/i).fill(max.email);
-  await page.getByLabel(/^mot de passe$/i).fill(maxPassword);
+  await page.getByLabel(/^mot de passe$/i).fill(password);
   await page.getByRole("button", { name: /se connecter|sign in|continuer/i }).click();
 
   const factorInput = page.getByRole("textbox", { name: /chiffre 1 sur 6/i });

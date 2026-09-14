@@ -411,6 +411,8 @@ globalThis.fetch = async () => {
     expect(gate).not.toContain("run_logged e2e");
     expect(gate).toContain("--config tests/e2e/playwright.config.ts");
     expect(gate).toContain("M1_ARTIFACT_SAFETY_TAINTED=1");
+    expect(gate).toContain("unset STAFF_PASSWORD_RECOVERY_SECRET");
+    expect(gate).toContain('${STAFF_PASSWORD_RECOVERY_SECRET:-}');
     expect(gate.indexOf("m1-log-safety.mjs")).toBeLessThan(
       gate.indexOf('mv -- "${private_log}" "${destination}"'),
     );
