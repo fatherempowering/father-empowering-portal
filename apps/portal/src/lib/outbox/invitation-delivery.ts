@@ -37,6 +37,15 @@ function deriveOpaqueToken(event: OutboxEvent, invitationId: string, secret: str
     .digest("base64url");
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 export const deliverClientInvitation: OutboxHandler = async (event) => {
   if (!['ClientInvitationCreated', 'ClientInvitationResent'].includes(event.event_type)) {
     throw new OutboxStepFailure("EVENT_VALIDATION_FAILED");
@@ -112,6 +121,18 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
   const text = french
     ? `Bonjour ${client.first_name},\n\nActive ton accès sécurisé : ${activationUrl.toString()}\n\nCe lien expire le ${invitation.expires_at}.`
     : `Hello ${client.first_name},\n\nActivate your secure access: ${activationUrl.toString()}\n\nThis link expires on ${invitation.expires_at}.`;
+  const safeActivationUrl = escapeHtml(activationUrl.toString());
+  const html = french
+    ? `<p>Bonjour ${escapeHtml(client.first_name)},</p>` +
+      `<p><a href="${safeActivationUrl}">Activer mon portail</a></p>` +
+      `<p>Si le bouton ne fonctionne pas, copie l’adresse complète suivante dans ton navigateur :</p>` +
+      `<p><a href="${safeActivationUrl}">${safeActivationUrl}</a></p>` +
+      `<p>Ce lien expire le ${escapeHtml(invitation.expires_at)}.</p>`
+    : `<p>Hello ${escapeHtml(client.first_name)},</p>` +
+      `<p><a href="${safeActivationUrl}">Activate my portal</a></p>` +
+      `<p>If the button does not work, copy the complete address below into your browser:</p>` +
+      `<p><a href="${safeActivationUrl}">${safeActivationUrl}</a></p>` +
+      `<p>This link expires on ${escapeHtml(invitation.expires_at)}.</p>`;
 
   if (environment.M1_EMAIL_TRANSPORT === "smtp") {
     const transport = nodemailer.createTransport({
@@ -126,6 +147,7 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
           to: invitation.email,
           subject,
           text,
+          html,
           headers: { "X-Father-Empowering-Event": event.id },
         });
       });
@@ -146,6 +168,7 @@ export const deliverClientInvitation: OutboxHandler = async (event) => {
           to: [invitation.email],
           subject,
           text,
+          html,
         }),
       });
       if (!response.ok) throw new Error("Invitation provider rejected the message");

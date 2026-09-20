@@ -117,8 +117,24 @@ describe("M1 invitation delivery", () => {
     await deliverClientInvitation(event);
 
     expect(mocks.sendMail).toHaveBeenCalledOnce();
+    const message = mocks.sendMail.mock.calls[0]?.[0] as {
+      html?: string;
+      text?: string;
+    };
+    const href = message.html?.match(/href="([^"]+)"/)?.[1]?.replaceAll("&amp;", "&");
+    expect(href).toBeTruthy();
+    const activationUrl = new URL(href!);
+    expect(activationUrl.origin).toBe("http://127.0.0.1:3000");
+    expect(activationUrl.pathname).toBe("/activate");
+    expect(activationUrl.search).toBe("");
+    expect(activationUrl.hash).toMatch(/^#token=[A-Za-z0-9_-]{32,}$/);
+    expect(message.html).toContain(">Activer mon portail</a>");
+    expect(message.text).toContain(activationUrl.toString());
     expect(mocks.invitationUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ status: "SENT", token_hash: expect.stringMatching(/^[0-9a-f]{64}$/) }),
+    );
+    expect(JSON.stringify(mocks.invitationUpdate.mock.calls)).not.toContain(
+      new URLSearchParams(activationUrl.hash.slice(1)).get("token"),
     );
   });
 

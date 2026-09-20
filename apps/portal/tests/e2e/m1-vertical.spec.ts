@@ -235,6 +235,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
 
   const clientContext = await browser.newContext();
   const clientPage = await clientContext.newPage();
+  await clientPage.setViewportSize({ width: 390, height: 844 });
   const activationNavigationRequests: string[] = [];
   const activationInspectionResponse = clientPage.waitForResponse((response) => {
     const url = new URL(response.url());
@@ -248,9 +249,14 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     if (request.isNavigationRequest()) activationNavigationRequests.push(request.url());
   });
   try {
-    await clientPage.goto(activation.url);
+    await clientPage.setContent(invitationMail.html);
+    const activationLink = clientPage.getByRole("link", {
+      name: /activer mon portail|activate my portal/i,
+    });
+    await expect(activationLink).toHaveAttribute("href", activation.url);
+    await activationLink.click();
   } catch {
-    throw new Error("Activation navigation failed before the bearer fragment was erased.");
+    throw new Error("Invitation email link failed before the bearer fragment was erased.");
   }
   await expect(clientPage.getByRole("heading", { name: /active ton portail/i })).toBeVisible();
   await expect(clientPage).toHaveURL(`${environment.appUrl}/activate`);
