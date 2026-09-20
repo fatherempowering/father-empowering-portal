@@ -4,8 +4,6 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   M1SsrSession,
   createM1AdminClient,
-  currentTotp,
-  enrollAndVerifyTotp,
   getM1TestEnvironment,
   seedPasswordlessStaffIdentity,
   seedStaffIdentity,
@@ -22,8 +20,8 @@ const environment = getM1TestEnvironment();
 const maxPassword = "M1-local-only-Max!123";
 const recoveredMaxPassword = "M1-local-only-Max-recovered!456";
 const clientEmail = `client.vertical.${randomUUID()}@example.test`;
+const usedCoachEmailIds = new Set<string>();
 let max: SeededStaff;
-let maxTotpSecret: string;
 
 test.describe.configure({ mode: "serial" });
 
@@ -33,19 +31,9 @@ test.beforeAll(async () => {
     password: maxPassword,
     role: "COACH",
   });
-
-  const enrollmentSession = new M1SsrSession(environment);
-  const signIn = await enrollmentSession.client.auth.signInWithPassword({
-    email: max.email,
-    password: maxPassword,
-  });
-  if (signIn.error) throw signIn.error;
-  maxTotpSecret = await enrollAndVerifyTotp(enrollmentSession);
-  const signOut = await enrollmentSession.client.auth.signOut();
-  if (signOut.error) throw signOut.error;
 });
 
-test("Admin sans mot de passe → récupération → enrollment MFA → reconnexion", async ({
+test("Admin sans mot de passe → récupération → code courriel → reconnexion", async ({
   browser,
 }) => {
   const email = `owner.vertical.${randomUUID()}@example.test`;
@@ -71,6 +59,7 @@ test("Admin sans mot de passe → récupération → enrollment MFA → reconnex
       }
     },
   );
+  usedCoachEmailIds.add(recoveryMail.id);
   await page.goto(extractPasswordRecoveryUrl(recoveryMail));
   await expect(page).toHaveURL(/\/reset-password$/);
   await page.getByLabel(/^nouveau mot de passe$/i).fill(password);
@@ -79,14 +68,7 @@ test("Admin sans mot de passe → récupération → enrollment MFA → reconnex
   await expect(page).toHaveURL(/\/login\?password=updated$/);
 
   await signInCoach(page, email, password);
-  await expect(page).toHaveURL(/\/mfa(?:\?.*)?$/);
-  await page.getByRole("button", { name: /configurer la vérification/i }).click();
-  const manualSecret = page.locator(".fe-mfa-enrollment details");
-  await expect(manualSecret).toBeVisible();
-  await manualSecret.locator("summary").click();
-  const totpSecret = (await manualSecret.locator("code").textContent())?.trim();
-  expect(totpSecret).toBeTruthy();
-  await verifyMfa(page, totpSecret!);
+  await verifyCoachEmailCode(page, email);
   await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
 
   await page.getByRole("button", { name: /se déconnecter/i }).click();
@@ -95,7 +77,7 @@ test("Admin sans mot de passe → récupération → enrollment MFA → reconnex
   await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
 
   await signInCoach(page, email, password);
-  await verifyMfa(page, totpSecret!);
+  await verifyCoachEmailCode(page, email);
   await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
   await context.close();
 });
@@ -137,9 +119,8 @@ test("Max → création → invitation → OTP → activation → accès isolé"
       }
     },
   );
+  usedCoachEmailIds.add(recoveryMail.id);
   await maxPage.goto(extractPasswordRecoveryUrl(recoveryMail));
-  await expect(maxPage).toHaveURL(/\/mfa\?next=(?:%2F|\/)reset-password$/i);
-  await verifyMfa(maxPage, maxTotpSecret);
   await expect(maxPage).toHaveURL(/\/reset-password$/);
   await maxPage.getByLabel(/^nouveau mot de passe$/i).fill(recoveredMaxPassword);
   await maxPage.getByLabel(/^confirmer le mot de passe$/i).fill(recoveredMaxPassword);
@@ -173,7 +154,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     expect(refresh.error).not.toBeNull();
   }
 
-  await loginMaxAtAal2(maxPage, recoveredMaxPassword);
+  await loginMaxWithEmailVerification(maxPage, recoveredMaxPassword);
 
   await expect(maxPage.getByRole("heading", { name: /^clients$/i })).toBeVisible();
   await maxPage.getByRole("button", { name: /se déconnecter/i }).click();
@@ -185,7 +166,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await maxPage.goto(`${environment.appUrl}/coach`);
   await expect(maxPage).toHaveURL(/\/login(?:\?.*)?$/);
 
-  await loginMaxAtAal2(maxPage, recoveredMaxPassword);
+  await loginMaxWithEmailVerification(maxPage, recoveredMaxPassword);
   await expect(maxPage.getByRole("heading", { name: /^clients$/i })).toBeVisible();
   await maxPage.getByRole("button", { name: /ajouter un client/i }).click();
   await maxPage.getByLabel(/prénom/i).fill("Client");
@@ -466,7 +447,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   expect(audits.data?.map((audit) => audit.command)).toEqual(
     expect.arrayContaining([
       "CoachSignedIn",
-      "CoachMfaVerified",
+      "CoachEmailVerified",
       "CreateInvitedClient",
       "AcceptClientInvitation",
       "ClientSignedIn",
@@ -566,12 +547,12 @@ async function safePasswordUpdateDiagnostic(response: {
   };
 }
 
-async function loginMaxAtAal2(
+async function loginMaxWithEmailVerification(
   page: Page,
   password = maxPassword,
 ): Promise<void> {
   await signInCoach(page, max.email, password);
-  await verifyMfa(page, maxTotpSecret);
+  await verifyCoachEmailCode(page, max.email);
   await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
 }
 
@@ -582,19 +563,33 @@ async function signInCoach(page: Page, email: string, password: string): Promise
   await page.getByRole("button", { name: /se connecter|sign in|continuer/i }).click();
 }
 
-async function verifyMfa(page: Page, totpSecret: string): Promise<void> {
+async function verifyCoachEmailCode(page: Page, email: string): Promise<void> {
+  await expect(page).toHaveURL(/\/verify-email(?:\?.*)?$/);
+  await expect(
+    page.getByText(/envoyons automatiquement un code à 6 chiffres|code reçu par courriel/i),
+  ).toBeVisible();
+  const mail = await waitForMail(
+    environment.mailpitUrl,
+    email,
+    (message) => {
+      try {
+        extractSixDigitOtp(message);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { excludeIds: usedCoachEmailIds },
+  );
+  usedCoachEmailIds.add(mail.id);
   const factorInput = page.getByRole("textbox", { name: /chiffre 1 sur 6/i });
   await expect(factorInput).toBeVisible();
-  const periodProgress = Date.now() % 30_000;
-  if (periodProgress > 27_000) {
-    await new Promise((resolve) => setTimeout(resolve, 30_250 - periodProgress));
-  }
   try {
-    await factorInput.fill(currentTotp(totpSecret));
+    await factorInput.fill(extractSixDigitOtp(mail));
   } catch {
-    throw new Error("Unable to enter the current MFA code.");
+    throw new Error("Unable to enter the captured Coach email code.");
   }
-  await page.getByRole("button", { name: /vérifier|verify|continuer/i }).click();
+  await page.getByRole("button", { name: /ouvrir mon espace coach/i }).click();
 }
 
 function assertSecretAbsent(serialized: string, secret: string, location: string): void {

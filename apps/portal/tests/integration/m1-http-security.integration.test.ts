@@ -6,17 +6,18 @@ import {
   M1SsrSession,
   authenticatedFetch,
   createM1AdminClient,
-  enrollAndVerifyTotp,
   getM1TestEnvironment,
   seedStaffIdentity,
   type SeededStaff,
 } from "../harness/m1-local-supabase";
+import { extractSixDigitOtp, waitForMail } from "../harness/mailpit";
 
 const environment = getM1TestEnvironment();
 const password = "M1-local-only-Max!123";
 const clientPassword = "M1-local-only-Client!123";
 let coach: SeededStaff;
 let session: M1SsrSession;
+let unverifiedCoachSession: M1SsrSession;
 let clientSessionA: M1SsrSession;
 let clientSessionB: M1SsrSession;
 let sessionClientEmail: string;
@@ -47,6 +48,50 @@ async function localMailCount(recipient: string): Promise<number> {
   return Array.isArray(body.messages) ? body.messages.length : 0;
 }
 
+async function verifyCoachEmailSession(
+  coachSession: M1SsrSession,
+  email: string,
+): Promise<string> {
+  const request = await authenticatedFetch(
+    environment,
+    coachSession,
+    "/api/v1/auth/coach-email-otp/request",
+    { method: "POST" },
+  );
+  expect(request.status).toBe(202);
+  expect(request.headers.get("cache-control")).toContain("no-store");
+
+  const mail = await waitForMail(
+    environment.mailpitUrl,
+    email,
+    (message) => {
+      try {
+        extractSixDigitOtp(message);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  );
+  const code = extractSixDigitOtp(mail);
+  const verification = await authenticatedFetch(
+    environment,
+    coachSession,
+    "/api/v1/auth/coach-email-otp/verify",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code }),
+    },
+  );
+  expect(verification.status).toBe(200);
+  expect(verification.headers.get("cache-control")).toContain("no-store");
+  expect(await verification.json()).toEqual({
+    data: { verified: true, redirectTo: "/coach" },
+  });
+  return code;
+}
+
 describe.sequential("M1 HTTP security and transaction integration", () => {
   beforeAll(async () => {
     coach = await seedStaffIdentity(environment, {
@@ -61,6 +106,13 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
     });
     if (signIn.error) throw signIn.error;
     authenticatedCoachUserId = signIn.data.user?.id ?? null;
+
+    unverifiedCoachSession = new M1SsrSession(environment);
+    const unverifiedSignIn = await unverifiedCoachSession.client.auth.signInWithPassword({
+      email: coach.email,
+      password,
+    });
+    if (unverifiedSignIn.error) throw unverifiedSignIn.error;
 
     const admin = createM1AdminClient(environment);
     sessionClientEmail = `client.session.${randomUUID()}@example.test`;
@@ -256,7 +308,7 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
     expect(invalidSecret.status).toBe(401);
   });
 
-  it("refuse un Coach aal1 même avec un membership valide", async () => {
+  it("refuse le mot de passe seul même avec un membership Coach valide", async () => {
     const read = await authenticatedFetch(
       environment,
       session,
@@ -282,18 +334,76 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
 
     expect(read.status).toBe(403);
     expect(mutation.status).toBe(403);
-    expect(JSON.stringify(await mutation.json())).toMatch(/MFA|FORBIDDEN/i);
+    expect(JSON.stringify(await mutation.json())).toMatch(
+      /COACH_EMAIL_VERIFICATION_REQUIRED|FORBIDDEN/i,
+    );
   });
 
-  it("crée le parcours invitation de manière atomique et idempotente à aal2", async () => {
-    await enrollAndVerifyTotp(session);
+  it("refuse une session email OTP qui ne contient aucune preuve de mot de passe", async () => {
+    const otpOnlyCoach = await seedStaffIdentity(environment, {
+      email: `otp-only.${randomUUID()}@example.test`,
+      password,
+      role: "COACH",
+    });
+    const otpOnlySession = new M1SsrSession(environment);
+    const otpRequest = await otpOnlySession.client.auth.signInWithOtp({
+      email: otpOnlyCoach.email,
+      options: { shouldCreateUser: false },
+    });
+    expect(otpRequest.error).toBeNull();
+    const otpMail = await waitForMail(
+      environment.mailpitUrl,
+      otpOnlyCoach.email,
+      (message) => {
+        try {
+          extractSixDigitOtp(message);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    );
+    const otpVerification = await otpOnlySession.client.auth.verifyOtp({
+      email: otpOnlyCoach.email,
+      token: extractSixDigitOtp(otpMail),
+      type: "email",
+    });
+    expect(otpVerification.error).toBeNull();
 
-    const aal2Boundary = await authenticatedFetch(
+    const forbidden = await authenticatedFetch(
+      environment,
+      otpOnlySession,
+      "/api/v1/coach/clients",
+    );
+    expect(forbidden.status).toBe(401);
+  });
+
+  it("crée le parcours invitation après le code courriel lié à la session", async () => {
+    const consumedCode = await verifyCoachEmailSession(session, coach.email);
+
+    const verifiedBoundary = await authenticatedFetch(
       environment,
       session,
       "/api/v1/coach/clients",
     );
-    expect(aal2Boundary.status).toBe(200);
+    expect(verifiedBoundary.status).toBe(200);
+    const otherPasswordSession = await authenticatedFetch(
+      environment,
+      unverifiedCoachSession,
+      "/api/v1/coach/clients",
+    );
+    expect(otherPasswordSession.status).toBe(403);
+    const replay = await authenticatedFetch(
+      environment,
+      session,
+      "/api/v1/auth/coach-email-otp/verify",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code: consumedCode }),
+      },
+    );
+    expect(replay.status).toBe(401);
 
     const clientMutationId = randomUUID();
     const clientEmail = `vertical.integration.${randomUUID()}@example.test`;
