@@ -149,6 +149,7 @@ select lives_ok(
   )$$,
   'the trusted server can attest an active staff session'
 );
+reset role;
 select ok(
   (
     select challenge.consumed_at is not null
@@ -161,6 +162,7 @@ create temporary table first_attestation_expiry as
 select expires_at
 from app_private.coach_session_attestations
 where session_id = '84000000-0000-4000-8000-000000000001';
+set local role service_role;
 select lives_ok(
   $$select public.open_coach_email_otp_challenge(
     '14000000-0000-4000-8000-000000000001',
@@ -175,6 +177,7 @@ select lives_ok(
   )$$,
   'repeating verification is idempotent for the same active session'
 );
+reset role;
 select is(
   (
     select attestation.expires_at
@@ -245,6 +248,7 @@ select throws_ok(
   'FE_COACH_SESSION_REVOKED',
   'a revoked session cannot be re-attested'
 );
+reset role;
 update auth.sessions
 set not_after = now() + interval '1 day'
 where id = '84000000-0000-4000-8000-000000000002';
@@ -272,6 +276,7 @@ select lives_ok(
   )$$,
   'the second independently verified session can be attested'
 );
+reset role;
 select ok(
   (
     select attestation.expires_at <= session.not_after
