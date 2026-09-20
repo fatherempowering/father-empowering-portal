@@ -5,8 +5,8 @@ import { CoachDashboard } from "../../src/features/coach/components/coach-dashbo
 import { ClientDashboard } from "../../src/features/client/dashboard/client-dashboard";
 import { ClientActivationCard } from "../../src/features/client/activation/client-activation-card";
 import { ClientLoginCard } from "../../src/features/client/auth/client-login-card";
+import { CoachEmailVerificationCard } from "../../src/features/coach/auth/coach-email-verification-card";
 import { AuthShell } from "../../src/components/fe/auth-shell";
-import { MfaPanel } from "../../src/app/mfa/panel";
 import { CodeInput } from "../../src/components/fe/code-input";
 import "../../src/app/globals.css";
 
@@ -90,6 +90,66 @@ window.fetch = async (url, init) => {
       },
     });
   }
+  if (
+    path.endsWith("/auth/coach-email-otp/request") &&
+    scenario === "coach-request-hang"
+  )
+    return await new Promise<Response>((_resolve, reject) => {
+      const abort = () => reject(new DOMException("Aborted", "AbortError"));
+      if (init?.signal?.aborted) abort();
+      else init?.signal?.addEventListener("abort", abort, { once: true });
+    });
+  if (
+    path.endsWith("/auth/coach-email-otp/request") &&
+    scenario === "coach-request-error"
+  )
+    return reply(
+      { error: { code: "TEMPORARILY_UNAVAILABLE", message: "Unavailable" } },
+      503,
+    );
+  if (
+    path.endsWith("/auth/coach-email-otp/request") &&
+    scenario === "coach-request-unauthorized"
+  )
+    return reply(
+      { error: { code: "UNAUTHENTICATED", message: "Authentication required" } },
+      401,
+    );
+  if (path.endsWith("/auth/coach-email-otp/request"))
+    return reply(
+      {
+        data: {
+          accepted: true,
+          emailHint: "m••••@gmail.com",
+          retryAfterSeconds: 1,
+        },
+      },
+      202,
+    );
+  if (
+    path.endsWith("/auth/coach-email-otp/verify") &&
+    scenario === "coach-verify-rate-limit"
+  )
+    return reply(
+      { error: { code: "RATE_LIMITED", message: "Too many attempts" } },
+      429,
+    );
+  if (path.endsWith("/auth/coach-email-otp/verify"))
+    return reply(
+      { error: { code: "UNAUTHENTICATED", message: "Invalid or expired code" } },
+      401,
+    );
+  if (
+    path.endsWith("/auth/coach-logout") &&
+    scenario === "coach-logout-hang"
+  )
+    return await new Promise<Response>((_resolve, reject) => {
+      const abort = () => reject(new DOMException("Aborted", "AbortError"));
+      if (init?.signal?.aborted) abort();
+      else init?.signal?.addEventListener("abort", abort, { once: true });
+    });
+  if (path.endsWith("/auth/coach-logout"))
+    return reply({ data: { signedOut: true, redirectTo: "/login" } });
   if (path.includes("/invitations/")) {
     const id = path.split("/").at(-3);
     records = records.map((record) =>
@@ -175,7 +235,7 @@ function Harness() {
             <option value="client">Client</option>
             <option value="login">Connexion Client</option>
             <option value="activation">Activation</option>
-            <option value="mfa">MFA</option>
+            <option value="verify-email">Vérification Coach</option>
             <option value="code">Saisie code</option>
           </select>
         </label>
@@ -191,6 +251,11 @@ function Harness() {
             <option value="empty">Vide</option>
             <option value="error">Erreur API</option>
             <option value="network">Réseau coupé</option>
+            <option value="coach-request-hang">Coach · envoi suspendu</option>
+            <option value="coach-request-error">Coach · échec d’envoi</option>
+            <option value="coach-request-unauthorized">Coach · session expirée</option>
+            <option value="coach-verify-rate-limit">Coach · trop d’essais</option>
+            <option value="coach-logout-hang">Coach · déconnexion suspendue</option>
             <option value="english">English Client</option>
           </select>
         </label>
@@ -205,11 +270,8 @@ function Harness() {
           <ClientLoginCard />
         ) : view === "activation" ? (
           <ClientActivationCard />
-        ) : view === "mfa" ? (
-          <AuthShell>
-            <h1 className="fe-title">Confirme ton identité.</h1>
-            <MfaPanel verifiedFactorId="test-factor" />
-          </AuthShell>
+        ) : view === "verify-email" ? (
+          <CoachEmailVerificationCard requestTimeoutMs={350} />
         ) : (
           <CodeExercise />
         )}

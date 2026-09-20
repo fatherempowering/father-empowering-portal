@@ -98,7 +98,7 @@ test("auth, Coach and Client fit small widths and mobile navigation can close by
   await page.goto("/");
   for (const width of [320, 390, 736, 1024]) {
     await page.setViewportSize({ width, height: 900 });
-    for (const screen of ["coach", "client", "login", "mfa", "code"]) {
+    for (const screen of ["coach", "client", "login", "verify-email", "code"]) {
       await page.getByLabel("Écran").selectOption(screen);
       await expect(page.locator("main")).toBeVisible();
       const overflow = await page.evaluate(
@@ -119,4 +119,133 @@ test("auth, Coach and Client fit small widths and mobile navigation can close by
   await expect(
     page.getByRole("button", { name: "Ouvrir le menu" }),
   ).toBeFocused();
+});
+
+test("Coach verification explains the emailed code and recovers from a wrong code", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("Écran").selectOption("verify-email");
+
+  await expect(
+    page.getByRole("heading", { name: "Entre le code reçu par courriel." }),
+  ).toBeVisible();
+  await expect(page.getByText(/Nous avons envoyé un code à 6 chiffres à/)).toBeVisible();
+  await expect(page.getByText("m••••@gmail.com", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Cette vérification protège l’accès aux dossiers de tes clients."),
+  ).toBeVisible();
+  await expect(page.getByText(/Google Authenticator|application d.authentification|code QR/i)).toHaveCount(0);
+
+  const firstDigit = page.getByRole("textbox", { name: "Chiffre 1 sur 6" });
+  await expect(firstDigit).toHaveAttribute("autocomplete", "one-time-code");
+  await expect(firstDigit).toHaveAttribute("inputmode", "numeric");
+  await firstDigit.fill("012345");
+  await page.getByRole("button", { name: "Ouvrir mon espace Coach" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Ce code est invalide ou expiré.",
+  );
+
+  const resend = page.getByRole("button", { name: /Renvoyer/ });
+  await expect(resend).toBeEnabled({ timeout: 2_500 });
+  await resend.click();
+  await expect(
+    page.getByRole("status").filter({
+      hasText: "Nouveau code envoyé à m••••@gmail.com.",
+    }),
+  ).toBeVisible();
+});
+
+test("Coach verification recovers when the automatic email request times out", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("État").selectOption("coach-request-hang");
+  await page.getByLabel("Écran").selectOption("verify-email");
+
+  await expect(
+    page.getByRole("button", { name: "Se connecter avec une autre adresse" }),
+  ).toBeEnabled();
+  await expect(page.getByRole("alert")).toContainText(
+    "Nous n’avons pas pu envoyer le code.",
+  );
+  await expect(page.getByRole("button", { name: "Renvoyer le code" })).toBeEnabled();
+  await expect(
+    page.getByRole("button", { name: "Se connecter avec une autre adresse" }),
+  ).toBeEnabled();
+});
+
+test("Coach verification exposes a recoverable state after an email provider failure", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("État").selectOption("coach-request-error");
+  await page.getByLabel("Écran").selectOption("verify-email");
+
+  await expect(page.getByRole("alert")).toContainText(
+    "Nous n’avons pas pu envoyer le code.",
+  );
+  await expect(page.getByRole("button", { name: "Renvoyer le code" })).toBeEnabled();
+});
+
+test("Coach verification explains when the password session has expired", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("État").selectOption("coach-request-unauthorized");
+  await page.getByLabel("Écran").selectOption("verify-email");
+
+  await expect(page.getByRole("alert")).toContainText(
+    "Ta connexion a expiré. Reconnecte-toi pour recevoir un nouveau code.",
+  );
+  await expect(
+    page.getByRole("button", { name: "Se connecter avec une autre adresse" }),
+  ).toBeEnabled();
+});
+
+test("Coach verification explains a verification rate limit", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("État").selectOption("coach-verify-rate-limit");
+  await page.getByLabel("Écran").selectOption("verify-email");
+
+  const firstDigit = page.getByRole("textbox", { name: "Chiffre 1 sur 6" });
+  await firstDigit.fill("012345");
+  await page.getByRole("button", { name: "Ouvrir mon espace Coach" }).click();
+
+  await expect(page.getByRole("alert")).toContainText(
+    "Trop de tentatives. Attends quelques minutes",
+  );
+  await expect(firstDigit).toBeFocused();
+});
+
+test("changing Coach account closes the local session before returning to login", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("Écran").selectOption("verify-email");
+  await expect(
+    page.getByRole("button", { name: "Se connecter avec une autre adresse" }),
+  ).toBeEnabled();
+
+  await page
+    .getByRole("button", { name: "Se connecter avec une autre adresse" })
+    .click();
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test("changing Coach account recovers when logout times out", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("État").selectOption("coach-logout-hang");
+  await page.getByLabel("Écran").selectOption("verify-email");
+  const changeAccount = page.getByRole("button", {
+    name: "Se connecter avec une autre adresse",
+  });
+  await expect(changeAccount).toBeEnabled();
+
+  await changeAccount.click();
+
+  await expect(page.getByRole("alert")).toContainText(
+    "Impossible de changer de compte. Réessaie.",
+  );
+  await expect(changeAccount).toBeEnabled();
 });

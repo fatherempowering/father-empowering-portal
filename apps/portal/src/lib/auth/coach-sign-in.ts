@@ -56,5 +56,5 @@ export async function signInCoachWithPassword(input: { email: string; password: 
     throw error;
   }
 
-  return { destination: actor.aal === "aal2" ? "/coach" : "/mfa" } as const;
+  return { destination: "/verify-email" } as const;
 }

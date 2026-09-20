@@ -30,6 +30,13 @@ values
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-4000-8000-000000000006', 'authenticated', 'authenticated', 'cross.coach@example.test', '', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-4000-8000-000000000007', 'authenticated', 'authenticated', 'client.c@example.test', '', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '');
 
+insert into auth.sessions (id, user_id, created_at, updated_at)
+values
+  ('81000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', now(), now()),
+  ('81000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000002', now(), now()),
+  ('81000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000003', now(), now()),
+  ('81000000-0000-4000-8000-000000000006', '10000000-0000-4000-8000-000000000006', now(), now());
+
 insert into public.organizations (id, name, created_by)
 values
   ('20000000-0000-4000-8000-000000000001', 'Father Empowering A', '10000000-0000-4000-8000-000000000001'),
@@ -52,6 +59,14 @@ values
   ('30000000-0000-4000-8000-000000000005', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000005', 'CLIENT', 'ACTIVE', now(), '10000000-0000-4000-8000-000000000005'),
   ('30000000-0000-4000-8000-000000000006', '20000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000006', 'COACH', 'ACTIVE', now(), '10000000-0000-4000-8000-000000000006'),
   ('30000000-0000-4000-8000-000000000007', '20000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000007', 'CLIENT', 'ACTIVE', now(), '10000000-0000-4000-8000-000000000007');
+
+insert into app_private.coach_session_attestations (
+  session_id, user_id, verified_at, expires_at
+)
+values
+  ('81000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000002', now(), now() + interval '180 days'),
+  ('81000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000003', now(), now() + interval '180 days'),
+  ('81000000-0000-4000-8000-000000000006', '10000000-0000-4000-8000-000000000006', now(), now() + interval '180 days');
 
 insert into public.clients (
   id,
@@ -144,15 +159,16 @@ select is(
   'Client A cannot read audit events'
 );
 
--- Coach data access is denied at aal1, including direct PostgREST-style reads.
+-- A password session without its email attestation is denied, regardless of
+-- the Supabase aal claim.
 reset role;
 set local role authenticated;
 set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000001';
-set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated","email":"max@example.test","aal":"aal1"}';
+set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated","email":"max@example.test","aal":"aal1","session_id":"81000000-0000-4000-8000-000000000001","amr":[{"method":"password","timestamp":1789930000}]}';
 select is(
   (select count(*) from public.clients),
   0::bigint,
-  'Max at aal1 cannot read assigned client data'
+  'Max without an email attestation cannot read assigned client data'
 );
 select throws_ok(
   $$select public.create_invited_client(
@@ -168,8 +184,8 @@ select throws_ok(
     null
   )$$,
   'P0001',
-  'FE_MFA_AAL2_REQUIRED',
-  'Coach mutations reject aal1'
+  'FE_COACH_EMAIL_VERIFICATION_REQUIRED',
+  'Coach mutations reject a password-only session'
 );
 select throws_ok(
   $$select public.revoke_client_invitation_for_client(
@@ -178,16 +194,33 @@ select throws_ok(
     '60000000-0000-4000-8000-000000000003'
   )$$,
   'P0001',
-  'FE_MFA_AAL2_REQUIRED',
-  'Coach revocation rejects aal1 before reading client state'
+  'FE_COACH_EMAIL_VERIFICATION_REQUIRED',
+  'Coach revocation rejects an unattested session before reading client state'
 );
 
--- Max at aal2 sees only the assigned Client A.
-set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated","email":"max@example.test","aal":"aal2"}';
+set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated","email":"max@example.test","aal":"aal2","session_id":"81000000-0000-4000-8000-000000000001","amr":[{"method":"password","timestamp":1789930000},{"method":"totp","timestamp":1789930060}]}';
+select is(
+  (select count(*) from public.clients),
+  0::bigint,
+  'aal2 alone does not replace the Coach email attestation'
+);
+
+reset role;
+insert into app_private.coach_session_attestations (
+  session_id, user_id, verified_at, expires_at
+) values (
+  '81000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  now(),
+  now() + interval '180 days'
+);
+set local role authenticated;
+set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000001';
+set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated","email":"max@example.test","aal":"aal1","session_id":"81000000-0000-4000-8000-000000000001","amr":[{"method":"password","timestamp":1789930000}]}';
 select results_eq(
   $$select id from public.clients order by id$$,
   $$values ('40000000-0000-4000-8000-000000000001'::uuid)$$,
-  'Max at aal2 reads assigned Client A only'
+  'email-attested Max reads assigned Client A only at the truthful aal1'
 );
 select is(
   (select count(*) from public.clients where id = '40000000-0000-4000-8000-000000000002'),
@@ -199,7 +232,7 @@ select is(
 reset role;
 set local role authenticated;
 set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000002';
-set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated","email":"other.coach@example.test","aal":"aal2"}';
+set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated","email":"other.coach@example.test","aal":"aal1","session_id":"81000000-0000-4000-8000-000000000002","amr":[{"method":"password","timestamp":1789930000}]}';
 select results_eq(
   $$select id from public.clients order by id$$,
   $$values ('40000000-0000-4000-8000-000000000002'::uuid)$$,
@@ -231,7 +264,7 @@ select throws_ok(
 reset role;
 set local role authenticated;
 set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000003';
-set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated","email":"admin@example.test","aal":"aal1"}';
+set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated","email":"admin@example.test","aal":"aal1","session_id":"81000000-0000-4000-8000-000000000003","amr":[{"method":"otp","timestamp":1789930000}]}';
 select is(
   (select count(*) from public.clients),
   0::bigint,
@@ -251,10 +284,10 @@ select throws_ok(
     '10000000-0000-4000-8000-000000000001'
   )$$,
   'P0001',
-  'FE_MFA_AAL2_REQUIRED',
-  'Admin mutations reject aal1'
+  'FE_COACH_EMAIL_VERIFICATION_REQUIRED',
+  'Admin mutations reject a session without password AMR'
 );
-set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated","email":"admin@example.test","aal":"aal2"}';
+set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated","email":"admin@example.test","aal":"aal1","session_id":"81000000-0000-4000-8000-000000000003","amr":[{"method":"password","timestamp":1789930000}]}';
 select results_eq(
   $$select id from public.clients order by id$$,
   $$values
@@ -272,7 +305,7 @@ select is(
 reset role;
 set local role authenticated;
 set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000006';
-set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000006","role":"authenticated","email":"cross.coach@example.test","aal":"aal2"}';
+set local "request.jwt.claims" = '{"sub":"10000000-0000-4000-8000-000000000006","role":"authenticated","email":"cross.coach@example.test","aal":"aal1","session_id":"81000000-0000-4000-8000-000000000006","amr":[{"method":"password","timestamp":1789930000}]}';
 select results_eq(
   $$select id from public.clients order by id$$,
   $$values ('40000000-0000-4000-8000-000000000003'::uuid)$$,

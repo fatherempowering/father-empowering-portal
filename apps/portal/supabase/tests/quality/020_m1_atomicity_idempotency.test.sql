@@ -26,6 +26,14 @@ values
   ('00000000-0000-0000-0000-000000000000', '11000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'rollback@example.test', '', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', '11000000-0000-4000-8000-000000000004', 'authenticated', 'authenticated', 'lifecycle@example.test', '', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '');
 
+insert into auth.sessions (id, user_id, created_at, updated_at)
+values (
+  '82000000-0000-4000-8000-000000000001',
+  '11000000-0000-4000-8000-000000000001',
+  now(),
+  now()
+);
+
 insert into public.organizations (id, name, created_by)
 values ('21000000-0000-4000-8000-000000000001', 'Father Empowering Atomic', '11000000-0000-4000-8000-000000000001');
 
@@ -48,9 +56,18 @@ values (
   '11000000-0000-4000-8000-000000000001'
 );
 
+insert into app_private.coach_session_attestations (
+  session_id, user_id, verified_at, expires_at
+) values (
+  '82000000-0000-4000-8000-000000000001',
+  '11000000-0000-4000-8000-000000000001',
+  now(),
+  now() + interval '180 days'
+);
+
 set local role authenticated;
 set local request.jwt.claim.sub = '11000000-0000-4000-8000-000000000001';
-set local "request.jwt.claims" = '{"sub":"11000000-0000-4000-8000-000000000001","role":"authenticated","email":"max.atomic@example.test","aal":"aal2"}';
+set local "request.jwt.claims" = '{"sub":"11000000-0000-4000-8000-000000000001","role":"authenticated","email":"max.atomic@example.test","aal":"aal1","session_id":"82000000-0000-4000-8000-000000000001","amr":[{"method":"password","timestamp":1789930000}]}';
 
 create temporary table m1_create_result as
 select public.create_invited_client(
@@ -250,7 +267,7 @@ select throws_ok(
 
 set local role authenticated;
 set local request.jwt.claim.sub = '11000000-0000-4000-8000-000000000001';
-set local "request.jwt.claims" = '{"sub":"11000000-0000-4000-8000-000000000001","role":"authenticated","email":"max.atomic@example.test","aal":"aal2"}';
+set local "request.jwt.claims" = '{"sub":"11000000-0000-4000-8000-000000000001","role":"authenticated","email":"max.atomic@example.test","aal":"aal1","session_id":"82000000-0000-4000-8000-000000000001","amr":[{"method":"password","timestamp":1789930000}]}';
 
 -- Revocation and resend remain retry-safe and a revoked invited client can be
 -- invited again without creating another client or assignment.
@@ -411,7 +428,7 @@ select lives_ok(
 
 set local role authenticated;
 set local request.jwt.claim.sub = '11000000-0000-4000-8000-000000000001';
-set local "request.jwt.claims" = '{"sub":"11000000-0000-4000-8000-000000000001","role":"authenticated","email":"max.atomic@example.test","aal":"aal2"}';
+set local "request.jwt.claims" = '{"sub":"11000000-0000-4000-8000-000000000001","role":"authenticated","email":"max.atomic@example.test","aal":"aal1","session_id":"82000000-0000-4000-8000-000000000001","amr":[{"method":"password","timestamp":1789930000}]}';
 select lives_ok(
   $$select public.resend_client_invitation(
     (select id from public.clients where email = 'lifecycle@example.test'),

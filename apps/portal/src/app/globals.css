@@ -150,6 +150,11 @@ a {
   gap: 1.5rem;
   margin-bottom: 1.875rem;
 }
+.fe-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
 .fe-section-title {
   font-size: 1rem;
   font-weight: 600;
@@ -1017,8 +1022,13 @@ a {
     gap: 1.125rem;
     margin-bottom: 1.375rem;
   }
-  .fe-page-heading > .fe-button {
+  .fe-page-heading > .fe-button,
+  .fe-page-actions,
+  .fe-page-actions > .fe-button {
     width: 100%;
+  }
+  .fe-page-actions {
+    flex-direction: column-reverse;
   }
   .fe-list-head {
     display: none;

@@ -10,6 +10,7 @@ import type {
   InvitationMutationResult,
 } from "../model";
 import { CreateClientDialog } from "./create-client-dialog";
+import { requestCoachLogout } from "../auth/request-coach-logout";
 import {
   invitationMutationKey,
   type InvitationMutationAction,
@@ -104,6 +105,8 @@ export function CoachDashboard() {
   const [revoking, setRevoking] = useState<CoachDashboardClient | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [dialogSession, setDialogSession] = useState(0);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const createMutation = useRef<{ fingerprint: string; id: string } | null>(
     null,
   );
@@ -236,6 +239,19 @@ export function CoachDashboard() {
   const invitedCount = clients.filter(
     (client) => client.status === "INVITED",
   ).length;
+
+  async function signOut() {
+    setSigningOut(true);
+    setSignOutError(null);
+    const responseReceived = await requestCoachLogout(() => {
+      setClients([]);
+      window.location.replace("/login");
+    });
+    if (responseReceived) return;
+    setSignOutError("Impossible de te déconnecter. Réessaie.");
+    setSigningOut(false);
+  }
+
   return (
     <AppShell space="coach">
       <header className="fe-page-heading">
@@ -246,19 +262,30 @@ export function CoachDashboard() {
             Gère les invitations et suis l’activation des portails.
           </p>
         </div>
-        <button
-          className="fe-button fe-button-primary"
-          type="button"
-          onClick={() => {
-            setError(null);
-            setDialogOpen(true);
-          }}
-          disabled={busyKey !== null}
-        >
-          <Icon name="plus" />
-          Ajouter un client
-        </button>
+        <div className="fe-page-actions">
+          <button
+            className="fe-button"
+            type="button"
+            onClick={() => void signOut()}
+            disabled={signingOut || busyKey !== null}
+          >
+            {signingOut ? "Déconnexion…" : "Se déconnecter"}
+          </button>
+          <button
+            className="fe-button fe-button-primary"
+            type="button"
+            onClick={() => {
+              setError(null);
+              setDialogOpen(true);
+            }}
+            disabled={signingOut || busyKey !== null}
+          >
+            <Icon name="plus" />
+            Ajouter un client
+          </button>
+        </div>
       </header>
+      {signOutError ? <Feedback>{signOutError}</Feedback> : null}
       {notice ? <Feedback tone="success">{notice}</Feedback> : null}
       {(loadError || error) && !dialogOpen && !revoking ? (
         <Feedback>

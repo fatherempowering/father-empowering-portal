@@ -4,6 +4,7 @@ import {
   M1ContractError,
   type M1Role,
   type ServerActor,
+  type VerifiedCoachActor,
   serverActorSchema,
 } from "@/lib/contracts/m1";
 import { assertActorRole, assertCoachAal2 } from "@/lib/auth/authorization";
@@ -73,4 +74,46 @@ export async function requireRole(...allowedRoles: M1Role[]): Promise<ServerActo
 
 export async function requireCoachAal2(): Promise<ServerActor> {
   return assertCoachAal2(await requireActor());
+}
+
+export async function requireCoachVerified(): Promise<VerifiedCoachActor> {
+  const actor = await requireRole("ADMIN", "COACH");
+  if (actor.role !== "ADMIN" && actor.role !== "COACH") {
+    throw new M1ContractError("FORBIDDEN", "Coach access required", 403);
+  }
+  if (actor.clientId !== null) {
+    throw new M1ContractError("FORBIDDEN", "Coach access required", 403);
+  }
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc("get_coach_email_verification_status");
+  const status = data as { verified?: unknown } | null;
+
+  if (error) {
+    if (error.message.includes("FE_COACH_PASSWORD_SESSION_REQUIRED")) {
+      throw new M1ContractError(
+        "UNAUTHENTICATED",
+        "Coach password session required",
+        401,
+      );
+    }
+    throw new M1ContractError(
+      "TEMPORARILY_UNAVAILABLE",
+      "Unable to verify the Coach session",
+      503,
+    );
+  }
+  if (status?.verified !== true) {
+    throw new M1ContractError(
+      "FORBIDDEN",
+      "Coach email verification is required",
+      403,
+    );
+  }
+
+  return {
+    ...actor,
+    role: actor.role,
+    clientId: actor.clientId,
+    coachVerified: true,
+  };
 }

@@ -11,6 +11,21 @@ select has_table('public', 'coach_client_assignments', 'M1 owns assignments');
 select has_table('public', 'client_invitations', 'M1 owns invitations');
 select has_table('public', 'audit_events', 'M1 owns audit events');
 select has_table('public', 'outbox_events', 'M1 owns the transactional outbox');
+select has_table(
+  'app_private',
+  'coach_session_attestations',
+  'Coach email assurance is stored outside the public API schema'
+);
+select has_table(
+  'app_private',
+  'coach_email_otp_rate_limits',
+  'Coach OTP throttling is private'
+);
+select has_table(
+  'app_private',
+  'coach_email_otp_challenges',
+  'Coach OTP request windows are private and session-bound'
+);
 
 select ok(
   (select relrowsecurity from pg_catalog.pg_class
@@ -262,6 +277,103 @@ select ok(
 select ok(
   not has_schema_privilege('anon', 'app_private', 'USAGE'),
   'anonymous has no access to app_private'
+);
+select ok(
+  not has_table_privilege(
+    'authenticated',
+    'app_private.coach_session_attestations',
+    'SELECT'
+  ),
+  'authenticated sessions cannot inspect Coach attestations'
+);
+select ok(
+  not has_table_privilege(
+    'authenticated',
+    'app_private.coach_session_attestations',
+    'INSERT'
+  ),
+  'authenticated sessions cannot forge Coach attestations'
+);
+select ok(
+  not has_table_privilege(
+    'authenticated',
+    'app_private.coach_email_otp_challenges',
+    'SELECT'
+  ),
+  'authenticated sessions cannot inspect Coach OTP request windows'
+);
+select ok(
+  not has_table_privilege(
+    'authenticated',
+    'app_private.coach_email_otp_challenges',
+    'INSERT'
+  ),
+  'authenticated sessions cannot forge Coach OTP request windows'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.get_coach_email_verification_status()',
+    'EXECUTE'
+  ),
+  'authenticated sessions can query their guarded Coach verification status'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.attest_coach_email_session(uuid,uuid)',
+    'EXECUTE'
+  ),
+  'authenticated sessions cannot self-attest'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.open_coach_email_otp_challenge(uuid,uuid)',
+    'EXECUTE'
+  ),
+  'authenticated sessions cannot forge an OTP delivery window'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.open_coach_email_otp_challenge(uuid,uuid)',
+    'EXECUTE'
+  ),
+  'only the trusted delivery service can open an OTP request window'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.attest_coach_email_session(uuid,uuid)',
+    'EXECUTE'
+  ),
+  'the trusted verification service can atomically attest a Coach session'
+);
+select ok(
+  (
+    select bool_and(
+      position(
+        'not app_private.has_verified_coach_session()'
+        in pg_catalog.pg_get_functiondef(candidate.function_id::oid)
+      ) > 0
+      and position(
+        'FE_COACH_EMAIL_VERIFICATION_REQUIRED'
+        in pg_catalog.pg_get_functiondef(candidate.function_id::oid)
+      ) > 0
+      and position(
+        'FE_MFA_AAL2_REQUIRED'
+        in pg_catalog.pg_get_functiondef(candidate.function_id::oid)
+      ) = 0
+    )
+    from unnest(array[
+      'public.create_invited_client(uuid,text,text,text,text,text,text,timestamp with time zone,uuid,uuid)'::regprocedure,
+      'public.resend_client_invitation(uuid,text,timestamp with time zone,uuid)'::regprocedure,
+      'public.revoke_client_invitation(uuid,text,uuid)'::regprocedure,
+      'public.revoke_client_invitation_for_client(uuid,text,uuid)'::regprocedure
+    ]) candidate(function_id)
+  ),
+  'every Coach business RPC requires the verified password-session contract'
 );
 
 select * from finish();

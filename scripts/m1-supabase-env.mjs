@@ -90,6 +90,7 @@ const values = {
   M1_EMAIL_TRANSPORT: "smtp",
   OUTBOX_WORKER_SECRET: "m1-local-worker-secret-not-for-production",
   INVITATION_TOKEN_SECRET: "m1-local-invitation-token-secret-32-characters-minimum",
+  STAFF_PASSWORD_RECOVERY_SECRET: "m1-local-staff-password-recovery-secret-32-characters-minimum",
   INVITATION_EMAIL_FROM: "Father Empowering <portal@example.test>",
 };
 

@@ -35,6 +35,11 @@ export const serverActorSchema = z.object({
   aal: z.enum(["aal1", "aal2"]),
 });
 export type ServerActor = z.infer<typeof serverActorSchema>;
+export type VerifiedCoachActor = Omit<ServerActor, "role" | "clientId"> & {
+  role: "ADMIN" | "COACH";
+  clientId: null;
+  coachVerified: true;
+};
 
 export const createClientInputSchema = z.object({
   idempotencyKey: uuidSchema,

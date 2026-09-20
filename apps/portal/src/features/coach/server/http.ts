@@ -47,9 +47,9 @@ function jsonError(error: unknown): NextResponse<ErrorBody> {
       { status: 403 },
     );
   }
-  if (code === "MFA_REQUIRED") {
+  if (code === "COACH_EMAIL_VERIFICATION_REQUIRED") {
     return NextResponse.json(
-      { error: { code, message: "La vérification MFA est requise." } },
+      { error: { code, message: "La vérification par courriel est requise." } },
       { status: 403 },
     );
   }
