@@ -1,11 +1,11 @@
 import type {
-  ActorContext,
   ClientSummary,
   CreateClientRequest,
   InvitationSummary,
+  VerifiedCoachActor,
 } from "@/lib/contracts/m1";
 
-export type CoachActor = ActorContext;
+export type CoachActor = VerifiedCoachActor;
 export type CoachClientSummary = ClientSummary;
 export type CoachInvitationSummary = InvitationSummary;
 export type CoachCreateClientRequest = CreateClientRequest & {

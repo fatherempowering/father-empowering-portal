@@ -14,8 +14,9 @@ const actor: CoachActor = {
   organizationId: "20000000-0000-4000-8000-000000000001",
   membershipId: "30000000-0000-4000-8000-000000000001",
   role: "COACH",
-  aal: "aal2",
+  aal: "aal1",
   clientId: null,
+  coachVerified: true,
 };
 
 const request: CoachCreateClientRequest = {
@@ -172,18 +173,23 @@ describe("CoachM1Service", () => {
     const service = new CoachM1Service(dependencies);
 
     await expect(
-      service.listClients({ ...actor, role: "CLIENT", clientId: client.id }),
+      service.listClients(
+        { ...actor, role: "CLIENT", clientId: client.id } as unknown as CoachActor,
+      ),
     ).rejects.toThrow("FORBIDDEN");
     expect(dependencies.creates).toBe(0);
   });
 
-  it("refuse un Coach sans assurance MFA AAL2", async () => {
+  it("refuse un Coach sans attestation de courriel liée à sa session", async () => {
     const dependencies = new FakeDependencies();
     const service = new CoachM1Service(dependencies);
 
-    await expect(service.createClient({ ...actor, aal: "aal1" }, request)).rejects.toThrow(
-      "MFA_REQUIRED",
-    );
+    await expect(
+      service.createClient(
+        { ...actor, coachVerified: false } as unknown as CoachActor,
+        request,
+      ),
+    ).rejects.toThrow("COACH_EMAIL_VERIFICATION_REQUIRED");
     expect(dependencies.creates).toBe(0);
   });
 });

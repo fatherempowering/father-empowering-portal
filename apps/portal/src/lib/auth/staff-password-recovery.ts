@@ -80,20 +80,9 @@ export async function exchangeStaffPasswordRecoveryCode(code: string): Promise<{
     throw new M1ContractError("FORBIDDEN", "Staff access required", 403);
   }
 
-  const { data: factors, error: factorError } =
-    await supabase.auth.mfa.listFactors();
-  if (factorError) {
-    await supabase.auth.signOut({ scope: "local" });
-    throw new M1ContractError(
-      "TEMPORARILY_UNAVAILABLE",
-      "Unable to verify staff recovery assurance",
-      503,
-    );
-  }
-
   return {
     ...identity,
-    requiresMfa: factors.totp.some((factor) => factor.status === "verified"),
+    requiresMfa: false,
   };
 }
 
@@ -156,31 +145,14 @@ export async function updateStaffPassword(
   await requireStaffPasswordRecoveryGrant(token);
   const password = staffPasswordSchema.parse(rawPassword);
   const supabase = await createServerSupabaseClient();
-  const [
-    { data: factors, error: factorError },
-    { data: assurance, error: assuranceError },
-  ] = await Promise.all([
-    supabase.auth.mfa.listFactors(),
-    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-  ]);
-  const assuranceLevel = z.enum(["aal1", "aal2"]).safeParse(
-    assurance?.currentLevel,
+  const { error: revokeError } = await supabase.rpc(
+    "revoke_all_coach_email_attestations",
   );
-  if (factorError || assuranceError || !assuranceLevel.success) {
+  if (revokeError) {
     throw new M1ContractError(
       "TEMPORARILY_UNAVAILABLE",
-      "Unable to verify recovery assurance",
+      "Unable to revoke existing Coach verifications",
       503,
-    );
-  }
-  if (
-    factors.totp.some((factor) => factor.status === "verified") &&
-    assuranceLevel.data !== "aal2"
-  ) {
-    throw new M1ContractError(
-      "FORBIDDEN",
-      "MFA assurance is required for password recovery",
-      403,
     );
   }
   const { error: updateError } = await supabase.auth.updateUser({ password });

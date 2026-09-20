@@ -7,12 +7,12 @@ import type {
 } from "../model";
 import type { CoachM1Dependencies } from "./ports";
 
-function assertCoachAal2(actor: CoachActor): void {
+function assertCoachVerified(actor: CoachActor): void {
   if (actor.role !== "ADMIN" && actor.role !== "COACH") {
     throw new Error("FORBIDDEN");
   }
-  if (actor.aal !== "aal2") {
-    throw new Error("MFA_REQUIRED");
+  if (actor.coachVerified !== true) {
+    throw new Error("COACH_EMAIL_VERIFICATION_REQUIRED");
   }
 }
 
@@ -20,7 +20,7 @@ export class CoachM1Service {
   constructor(private readonly dependencies: CoachM1Dependencies) {}
 
   async listClients(actor: CoachActor) {
-    assertCoachAal2(actor);
+    assertCoachVerified(actor);
     return this.dependencies.listAssignedClients(actor);
   }
 
@@ -28,7 +28,7 @@ export class CoachM1Service {
     actor: CoachActor,
     request: CoachCreateClientRequest,
   ): Promise<CreateClientResult> {
-    assertCoachAal2(actor);
+    assertCoachVerified(actor);
     const result = await this.dependencies.createInvitedClientAtomically({ actor, request });
     return { ...result, deliveryQueued: true };
   }
@@ -37,7 +37,7 @@ export class CoachM1Service {
     actor: CoachActor,
     request: InvitationMutationRequest,
   ): Promise<InvitationMutationResult> {
-    assertCoachAal2(actor);
+    assertCoachVerified(actor);
 
     const result = await this.dependencies.resendInvitationAtomically({
       actor,
@@ -51,7 +51,7 @@ export class CoachM1Service {
     actor: CoachActor,
     request: InvitationMutationRequest,
   ): Promise<InvitationMutationResult> {
-    assertCoachAal2(actor);
+    assertCoachVerified(actor);
 
     const result = await this.dependencies.revokeInvitationAtomically({
       actor,

@@ -2,7 +2,7 @@ import "server-only";
 
 import { randomBytes } from "node:crypto";
 
-import { requireCoachAal2, requireRole } from "@/lib/auth/actor";
+import { requireCoachVerified, requireRole } from "@/lib/auth/actor";
 import { hashInvitationToken } from "@/lib/auth/invitation-token";
 import {
   createClientInputSchema,
@@ -25,7 +25,7 @@ function placeholderTokenHash() {
 export async function listCoachClients(): Promise<
   Array<{ client: ClientSummary; invitation: InvitationSummary | null }>
 > {
-  await requireCoachAal2();
+  await requireCoachVerified();
   const supabase = await createServerSupabaseClient();
   const { data: clients, error: clientsError } = await supabase
     .from("clients")
@@ -105,7 +105,7 @@ export async function getCoachClientInvitationBundle(input: {
   clientId: string;
   invitationId: string;
 }): Promise<{ client: ClientSummary; invitation: InvitationSummary }> {
-  const actor = await requireCoachAal2();
+  const actor = await requireCoachVerified();
   const clientId = uuidSchema.parse(input.clientId);
   const invitationId = uuidSchema.parse(input.invitationId);
   const supabase = await createServerSupabaseClient();
@@ -215,14 +215,18 @@ function mapRpcError(error: { message: string } | null) {
   if (message.includes("FE_EMAIL_IDENTITY_CONFLICT")) {
     return new M1ContractError("DUPLICATE", "Email already belongs to an account", 409);
   }
-  if (message.includes("FE_FORBIDDEN") || message.includes("FE_MFA")) {
+  if (
+    message.includes("FE_FORBIDDEN") ||
+    message.includes("FE_MFA") ||
+    message.includes("FE_COACH_EMAIL_VERIFICATION_REQUIRED")
+  ) {
     return new M1ContractError("FORBIDDEN", "Operation is not permitted", 403);
   }
   return new M1ContractError("INVALID_STATE", "M1 operation could not be completed", 409);
 }
 
 export async function createInvitedClient(input: CreateClientInput) {
-  const actor = await requireCoachAal2();
+  const actor = await requireCoachVerified();
   const parsed = createClientInputSchema.parse(input);
   const supabase = await createServerSupabaseClient();
   const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
@@ -246,7 +250,7 @@ export async function resendClientInvitation(input: {
   clientId: string;
   idempotencyKey: string;
 }) {
-  await requireCoachAal2();
+  await requireCoachVerified();
   const clientId = uuidSchema.parse(input.clientId);
   const idempotencyKey = uuidSchema.parse(input.idempotencyKey);
   const supabase = await createServerSupabaseClient();
@@ -266,7 +270,7 @@ export async function revokeClientInvitation(input: {
   idempotencyKey: string;
   reason?: string;
 }): Promise<{ invitationId: string; status: "REVOKED" }> {
-  await requireCoachAal2();
+  await requireCoachVerified();
   const clientId = uuidSchema.parse(input.clientId);
   const idempotencyKey = uuidSchema.parse(input.idempotencyKey);
   const supabase = await createServerSupabaseClient();
