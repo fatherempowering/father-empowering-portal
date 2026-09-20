@@ -14,9 +14,9 @@ export default async function LoginPage({
   return (
     <AuthShell>
       <p className="fe-kicker">Espace Coach</p>
-      <h1 className="fe-title">Bienvenue, Max.</h1>
+      <h1 className="fe-title">Accède à ton espace Coach.</h1>
       <p className="fe-intro">
-        Connecte-toi pour retrouver tes clients et gérer leurs accès.
+        Entre ton courriel et ton mot de passe.
       </p>
       {password === "updated" ? (
         <Feedback tone="success">
@@ -24,6 +24,8 @@ export default async function LoginPage({
         </Feedback>
       ) : error === "recovery" ? (
         <Feedback>Le lien est invalide ou expiré. Demande un nouveau lien.</Feedback>
+      ) : error === "unavailable" ? (
+        <Feedback>La connexion est momentanément indisponible. Réessaie.</Feedback>
       ) : error ? (
         <Feedback>Le courriel ou le mot de passe est invalide.</Feedback>
       ) : null}
@@ -33,7 +35,9 @@ export default async function LoginPage({
           <input name="email" type="email" autoComplete="email" required />
         </label>
         <PasswordField />
-        <SubmitButton pendingLabel="Connexion…">Se connecter</SubmitButton>
+        <SubmitButton pendingLabel="Connexion et envoi du code…">
+          Se connecter
+        </SubmitButton>
       </form>
       <p className="fe-auth-secondary">
         <Link href="/forgot-password">Définir ou réinitialiser mon mot de passe</Link>
