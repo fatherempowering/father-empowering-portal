@@ -26,6 +26,46 @@ type VerifyResponse = Readonly<{
   redirectTo: "/coach";
 }>;
 
+const DEFAULT_REQUEST_TIMEOUT_MS = 10_000;
+
+export class CoachAuthRequestTimeoutError extends Error {
+  constructor() {
+    super("Coach authentication request timed out");
+    this.name = "CoachAuthRequestTimeoutError";
+  }
+}
+
+export async function fetchCoachAuthWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+  transport: typeof fetch = fetch,
+): Promise<Response> {
+  const controller = new AbortController();
+  const upstreamSignal = init.signal;
+  const abortFromUpstream = () => controller.abort(upstreamSignal?.reason);
+  if (upstreamSignal?.aborted) abortFromUpstream();
+  else upstreamSignal?.addEventListener("abort", abortFromUpstream, { once: true });
+
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_resolve, reject) => {
+    timeout = setTimeout(() => {
+      reject(new CoachAuthRequestTimeoutError());
+      controller.abort();
+    }, Math.max(1, timeoutMs));
+  });
+
+  try {
+    return await Promise.race([
+      transport(input, { ...init, signal: controller.signal }),
+      timeoutPromise,
+    ]);
+  } finally {
+    if (timeout !== undefined) clearTimeout(timeout);
+    upstreamSignal?.removeEventListener("abort", abortFromUpstream);
+  }
+}
+
 function safeSeconds(value: unknown): number {
   const parsed = typeof value === "string" ? Number(value) : value;
   return typeof parsed === "number" && Number.isFinite(parsed)
@@ -43,7 +83,11 @@ async function readEnvelope<T>(response: Response): Promise<{
   };
 }
 
-export function CoachEmailVerificationCard() {
+export function CoachEmailVerificationCard({
+  requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+}: {
+  requestTimeoutMs?: number;
+} = {}) {
   const [requestState, setRequestState] = useState<RequestState>("SENDING");
   const [emailHint, setEmailHint] = useState("");
   const [code, setCode] = useState("");
@@ -53,19 +97,28 @@ export function CoachEmailVerificationCard() {
   const [verifying, setVerifying] = useState(false);
   const [changingAccount, setChangingAccount] = useState(false);
   const automaticRequestStarted = useRef(false);
+  const requestAbortController = useRef<AbortController | null>(null);
   const verificationForm = useRef<HTMLFormElement>(null);
 
   const requestCode = useCallback(async (resent: boolean) => {
+    requestAbortController.current?.abort();
+    const requestController = new AbortController();
+    requestAbortController.current = requestController;
     setRequestState("SENDING");
     setDeliveryNotice(null);
     setError(null);
 
     try {
-      const response = await fetch("/api/v1/auth/coach-email-otp/request", {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        cache: "no-store",
-      });
+      const response = await fetchCoachAuthWithTimeout(
+        "/api/v1/auth/coach-email-otp/request",
+        {
+          method: "POST",
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+          signal: requestController.signal,
+        },
+        requestTimeoutMs,
+      );
       const payload = await readEnvelope<RequestResponse>(response);
       const retryAfter = safeSeconds(
         payload.data?.retryAfterSeconds ??
@@ -104,12 +157,17 @@ export function CoachEmailVerificationCard() {
       );
       setRequestState("SENT");
     } catch {
+      if (requestController.signal.aborted) return;
       setError(
         "Nous n’avons pas pu envoyer le code. Vérifie ta connexion Internet et réessaie.",
       );
       setRequestState(emailHint ? "SENT" : "ERROR");
+    } finally {
+      if (requestAbortController.current === requestController) {
+        requestAbortController.current = null;
+      }
     }
-  }, [emailHint]);
+  }, [emailHint, requestTimeoutMs]);
 
   useEffect(() => {
     if (automaticRequestStarted.current) return;
@@ -132,14 +190,18 @@ export function CoachEmailVerificationCard() {
     setVerifying(true);
     setError(null);
     try {
-      const response = await fetch("/api/v1/auth/coach-email-otp/verify", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
+      const response = await fetchCoachAuthWithTimeout(
+        "/api/v1/auth/coach-email-otp/verify",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code }),
         },
-        body: JSON.stringify({ code }),
-      });
+        requestTimeoutMs,
+      );
       const payload = await readEnvelope<VerifyResponse>(response);
 
       if (!response.ok || !payload.data?.verified) {
@@ -172,14 +234,20 @@ export function CoachEmailVerificationCard() {
   }
 
   async function changeAccount() {
-    if (changingAccount || verifying || requestState === "SENDING") return;
+    if (changingAccount || verifying) return;
+    requestAbortController.current?.abort();
     setChangingAccount(true);
     setError(null);
-    const signedOut = await requestCoachLogout(() => {
-      window.location.replace("/login");
-    });
+    const signedOut = await requestCoachLogout(
+      () => {
+        window.location.replace("/login");
+      },
+      (input, init) =>
+        fetchCoachAuthWithTimeout(input, init, requestTimeoutMs),
+    );
     if (signedOut) return;
     setError("Impossible de changer de compte. Réessaie.");
+    setRequestState(emailHint ? "SENT" : "ERROR");
     setChangingAccount(false);
   }
 
@@ -272,7 +340,7 @@ export function CoachEmailVerificationCard() {
           className="fe-text-button"
           type="button"
           onClick={() => void changeAccount()}
-          disabled={changingAccount || verifying || requestState === "SENDING"}
+          disabled={changingAccount || verifying}
         >
           {changingAccount ? "Changement de compte…" : "Se connecter avec une autre adresse"}
         </button>

@@ -90,6 +90,31 @@ window.fetch = async (url, init) => {
       },
     });
   }
+  if (
+    path.endsWith("/auth/coach-email-otp/request") &&
+    scenario === "coach-request-hang"
+  )
+    return await new Promise<Response>((_resolve, reject) => {
+      const abort = () => reject(new DOMException("Aborted", "AbortError"));
+      if (init?.signal?.aborted) abort();
+      else init?.signal?.addEventListener("abort", abort, { once: true });
+    });
+  if (
+    path.endsWith("/auth/coach-email-otp/request") &&
+    scenario === "coach-request-error"
+  )
+    return reply(
+      { error: { code: "TEMPORARILY_UNAVAILABLE", message: "Unavailable" } },
+      503,
+    );
+  if (
+    path.endsWith("/auth/coach-email-otp/request") &&
+    scenario === "coach-request-unauthorized"
+  )
+    return reply(
+      { error: { code: "UNAUTHENTICATED", message: "Authentication required" } },
+      401,
+    );
   if (path.endsWith("/auth/coach-email-otp/request"))
     return reply(
       {
@@ -101,11 +126,28 @@ window.fetch = async (url, init) => {
       },
       202,
     );
+  if (
+    path.endsWith("/auth/coach-email-otp/verify") &&
+    scenario === "coach-verify-rate-limit"
+  )
+    return reply(
+      { error: { code: "RATE_LIMITED", message: "Too many attempts" } },
+      429,
+    );
   if (path.endsWith("/auth/coach-email-otp/verify"))
     return reply(
       { error: { code: "UNAUTHENTICATED", message: "Invalid or expired code" } },
       401,
     );
+  if (
+    path.endsWith("/auth/coach-logout") &&
+    scenario === "coach-logout-hang"
+  )
+    return await new Promise<Response>((_resolve, reject) => {
+      const abort = () => reject(new DOMException("Aborted", "AbortError"));
+      if (init?.signal?.aborted) abort();
+      else init?.signal?.addEventListener("abort", abort, { once: true });
+    });
   if (path.endsWith("/auth/coach-logout"))
     return reply({ data: { signedOut: true, redirectTo: "/login" } });
   if (path.includes("/invitations/")) {
@@ -209,6 +251,11 @@ function Harness() {
             <option value="empty">Vide</option>
             <option value="error">Erreur API</option>
             <option value="network">Réseau coupé</option>
+            <option value="coach-request-hang">Coach · envoi suspendu</option>
+            <option value="coach-request-error">Coach · échec d’envoi</option>
+            <option value="coach-request-unauthorized">Coach · session expirée</option>
+            <option value="coach-verify-rate-limit">Coach · trop d’essais</option>
+            <option value="coach-logout-hang">Coach · déconnexion suspendue</option>
             <option value="english">English Client</option>
           </select>
         </label>
@@ -224,7 +271,7 @@ function Harness() {
         ) : view === "activation" ? (
           <ClientActivationCard />
         ) : view === "verify-email" ? (
-          <CoachEmailVerificationCard />
+          <CoachEmailVerificationCard requestTimeoutMs={350} />
         ) : (
           <CodeExercise />
         )}
