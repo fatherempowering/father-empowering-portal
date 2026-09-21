@@ -314,10 +314,11 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(clientPage.getByRole("heading", { name: "Ton portail." })).toBeVisible();
   await expect(clientPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   await expect(clientPage.getByText(/^accès actif$/i).first()).toBeVisible();
-  await expect(clientPage.getByRole("link", { name: "Accueil" })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
+  await expect(
+    clientPage
+      .getByRole("navigation", { name: "Navigation principale" })
+      .getByRole("link", { name: "Accueil", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
   await expect(
     clientPage.getByText(/Tu n’as rien à compléter ici/i),
   ).toBeVisible();
@@ -339,7 +340,10 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     "aria-current",
     "page",
   );
-  await clientPage.getByRole("link", { name: "Accueil" }).click();
+  await clientPage
+    .getByRole("navigation", { name: "Navigation principale" })
+    .getByRole("link", { name: "Accueil", exact: true })
+    .click();
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
 
   const ownProfile = await clientContext.request.get(`${environment.appUrl}/api/v1/client/me`);
