@@ -317,7 +317,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(
     clientPage
       .getByRole("navigation", { name: "Navigation principale" })
-      .getByRole("link", { name: "Accueil", exact: true }),
+      .locator('a[href="/client"]'),
   ).toHaveAttribute("aria-current", "page");
   await expect(
     clientPage.getByText(/Tu n’as rien à compléter ici/i),
@@ -342,7 +342,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   );
   await clientPage
     .getByRole("navigation", { name: "Navigation principale" })
-    .getByRole("link", { name: "Accueil", exact: true })
+    .locator('a[href="/client"]')
     .click();
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
 
