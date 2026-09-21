@@ -277,6 +277,23 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(clientPage.getByRole("heading", { name: /bienvenue, Client Vertical/i })).toBeVisible();
   await expect(clientPage.getByText(/^portail activé$/i).first()).toBeVisible();
+  await expect(clientPage.getByRole("link", { name: "Accueil" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await clientPage.getByRole("link", { name: "Voir aujourd’hui" }).click();
+  await expect(clientPage).toHaveURL(/\/client\/today(?:\?.*)?$/);
+  await expect(clientPage.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
+  await expect(
+    clientPage.getByRole("heading", { name: "Tu es à jour." }),
+  ).toBeVisible();
+  await expect(clientPage.getByText(/rien à faire pour le moment/i)).toBeVisible();
+  await expect(clientPage.getByRole("link", { name: "Aujourd’hui" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await clientPage.getByRole("link", { name: "Accueil" }).click();
+  await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
 
   const ownProfile = await clientContext.request.get(`${environment.appUrl}/api/v1/client/me`);
   expect(ownProfile.status()).toBe(200);

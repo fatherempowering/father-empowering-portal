@@ -40,6 +40,7 @@ let records = [
 }));
 let scenario = "normal";
 let message = "";
+let clientRequestAttempts = 0;
 function reply(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -49,6 +50,16 @@ function reply(body: unknown, status = 200) {
 window.fetch = async (url, init) => {
   const path = String(url);
   if (scenario === "network") throw new TypeError("Network unavailable");
+  if (
+    path.endsWith("/client/me") &&
+    scenario === "client-request-hang-once" &&
+    clientRequestAttempts++ === 0
+  )
+    return await new Promise<Response>((_resolve, reject) => {
+      const abort = () => reject(new DOMException("Aborted", "AbortError"));
+      if (init?.signal?.aborted) abort();
+      else init?.signal?.addEventListener("abort", abort, { once: true });
+    });
   await new Promise((resolve) => setTimeout(resolve, 200));
   if (scenario === "error")
     return reply(
@@ -233,6 +244,7 @@ function Harness() {
           >
             <option value="coach">Coach</option>
             <option value="client">Client</option>
+            <option value="client-today">Client · Aujourd’hui</option>
             <option value="login">Connexion Client</option>
             <option value="activation">Activation</option>
             <option value="verify-email">Vérification Coach</option>
@@ -244,6 +256,7 @@ function Harness() {
           <select
             onChange={(event) => {
               scenario = event.target.value;
+              clientRequestAttempts = 0;
               setKey(key + 1);
             }}
           >
@@ -251,6 +264,7 @@ function Harness() {
             <option value="empty">Vide</option>
             <option value="error">Erreur API</option>
             <option value="network">Réseau coupé</option>
+            <option value="client-request-hang-once">Client · chargement suspendu</option>
             <option value="coach-request-hang">Coach · envoi suspendu</option>
             <option value="coach-request-error">Coach · échec d’envoi</option>
             <option value="coach-request-unauthorized">Coach · session expirée</option>
@@ -265,7 +279,9 @@ function Harness() {
         {view === "coach" ? (
           <CoachDashboard />
         ) : view === "client" ? (
-          <ClientDashboard />
+          <ClientDashboard loadTimeoutMs={350} />
+        ) : view === "client-today" ? (
+          <ClientDashboard view="today" loadTimeoutMs={350} />
         ) : view === "login" ? (
           <ClientLoginCard />
         ) : view === "activation" ? (

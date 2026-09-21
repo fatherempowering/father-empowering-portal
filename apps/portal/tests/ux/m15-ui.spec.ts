@@ -92,13 +92,39 @@ test("empty and unavailable lists remain distinct", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("Client loading times out and retry recovers from a suspended request", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("État").selectOption("client-request-hang-once");
+  await page.getByLabel("Écran").selectOption("client");
+
+  await expect(page.getByRole("alert")).toContainText(
+    "Impossible de charger ton portail.",
+  );
+  const retry = page.getByRole("button", { name: "Réessayer" });
+  await expect(retry).toBeEnabled();
+  await retry.click();
+
+  await expect(
+    page.getByRole("heading", { name: "Bienvenue, Alex Martin." }),
+  ).toBeVisible();
+});
+
 test("auth, Coach and Client fit small widths and mobile navigation can close by keyboard", async ({
   page,
 }) => {
   await page.goto("/");
   for (const width of [320, 390, 736, 1024]) {
     await page.setViewportSize({ width, height: 900 });
-    for (const screen of ["coach", "client", "login", "verify-email", "code"]) {
+    for (const screen of [
+      "coach",
+      "client",
+      "client-today",
+      "login",
+      "verify-email",
+      "code",
+    ]) {
       await page.getByLabel("Écran").selectOption(screen);
       await expect(page.locator("main")).toBeVisible();
       const overflow = await page.evaluate(
@@ -119,6 +145,44 @@ test("auth, Coach and Client fit small widths and mobile navigation can close by
   await expect(
     page.getByRole("button", { name: "Ouvrir le menu" }),
   ).toBeFocused();
+});
+
+test("Client shell exposes Home, Today and one truthful next action", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("Écran").selectOption("client");
+
+  const menu = page.getByRole("button", { name: "Ouvrir le menu" });
+  if (await menu.isVisible()) await menu.click();
+  const navigation = page.getByRole("navigation", {
+    name: "Navigation principale",
+  });
+  await expect(navigation.getByRole("link", { name: "Accueil" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(navigation.getByRole("link", { name: "Aujourd’hui" })).toHaveAttribute(
+    "href",
+    "/client/today",
+  );
+  await expect(page.getByRole("link", { name: "Voir aujourd’hui" })).toHaveAttribute(
+    "href",
+    "/client/today",
+  );
+
+  await page.getByLabel("Écran").selectOption("client-today");
+  if (await menu.isVisible()) await menu.click();
+  await expect(page.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Tu es à jour." }),
+  ).toBeVisible();
+  await expect(page.getByText("À jour", { exact: true })).toBeVisible();
+  await expect(page.getByText(/rien à faire pour le moment/i)).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "Aujourd’hui" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
 });
 
 test("Coach verification explains the emailed code and recovers from a wrong code", async ({

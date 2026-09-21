@@ -10,18 +10,18 @@ export function AppShell({
   space,
   name,
   locale = "fr",
+  current = space === "coach" ? "clients" : "home",
 }: {
   children: ReactNode;
   space: "coach" | "client";
   name?: string;
   locale?: "fr" | "en";
+  current?: "clients" | "home" | "today";
 }) {
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const navId = useId();
   const french = locale === "fr";
-  const label =
-    space === "coach" ? "Clients" : french ? "Mon portail" : "My portal";
   const spaceLabel = space === "coach" ? "Espace Coach" : "The Legacy Protocol";
   const identity =
     name ??
@@ -30,6 +30,25 @@ export function AppShell({
       : french
         ? "Espace Client"
         : "Client portal");
+  const navigation =
+    space === "coach"
+      ? [{ href: "/coach", label: "Clients", icon: "users" as const, id: "clients" as const }]
+      : [
+          {
+            href: "/client",
+            label: french ? "Accueil" : "Home",
+            icon: "home" as const,
+            id: "home" as const,
+          },
+          {
+            href: "/client/today",
+            label: french ? "Aujourd’hui" : "Today",
+            icon: "today" as const,
+            id: "today" as const,
+          },
+        ];
+  const activeLabel =
+    navigation.find((item) => item.id === current)?.label ?? navigation[0].label;
   useEffect(() => {
     if (!open) return;
     document
@@ -52,15 +71,18 @@ export function AppShell({
         <Brand />
         <nav aria-label={french ? "Navigation principale" : "Main navigation"}>
           <p className="fe-side-label">{spaceLabel}</p>
-          <Link
-            className="fe-side-link"
-            href={space === "coach" ? "/coach" : "/client"}
-            aria-current="page"
-            onClick={() => setOpen(false)}
-          >
-            <Icon name="users" />
-            {label}
-          </Link>
+          {navigation.map((item) => (
+            <Link
+              className="fe-side-link"
+              href={item.href}
+              aria-current={item.id === current ? "page" : undefined}
+              onClick={() => setOpen(false)}
+              key={item.id}
+            >
+              <Icon name={item.icon} />
+              {item.label}
+            </Link>
+          ))}
         </nav>
         <div className="fe-side-bottom">
           <p className="fe-side-motto">Shape your legacy.</p>
@@ -80,7 +102,7 @@ export function AppShell({
           <div className="fe-breadcrumb">
             <span>{spaceLabel}</span>
             <span aria-hidden="true">/</span>
-            <strong>{label}</strong>
+            <strong>{activeLabel}</strong>
           </div>
           <div className="fe-mobile-brand">
             <Brand compact />

@@ -544,13 +544,21 @@ a {
   align-items: center;
   gap: 0.75rem;
   padding: 0.875rem 0.75rem;
-  border-left: 3px solid var(--fe-light-orange);
+  border-left: 3px solid transparent;
   border-radius: 0 0.375rem 0.375rem 0;
-  background: #31251d;
-  color: #fff;
+  color: #d5d3cf;
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
+}
+.fe-side-link:hover {
+  background: #292725;
+  color: #fff;
+}
+.fe-side-link[aria-current="page"] {
+  border-left-color: var(--fe-light-orange);
+  background: #31251d;
+  color: #fff;
 }
 .fe-side-link svg {
   color: #f49a54;
@@ -859,6 +867,60 @@ a {
   line-height: 1.7;
   max-width: 32rem;
 }
+.fe-home-action {
+  width: fit-content;
+  margin-top: 1.5rem;
+}
+.fe-today-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 0.6fr);
+  gap: 1.25rem;
+}
+.fe-today-card {
+  background: var(--fe-ink);
+  color: #fff;
+  border-top: 3px solid var(--fe-light-orange);
+  border-radius: var(--fe-radius);
+  padding: 1.875rem;
+  min-height: 22rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.fe-today-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: auto;
+}
+.fe-today-card-top .fe-kicker {
+  margin: 0;
+  color: #f49a54;
+}
+.fe-today-date {
+  color: #c9c7c2;
+  font-size: 0.875rem;
+  text-transform: capitalize;
+  margin-bottom: 0.75rem;
+}
+.fe-today-card h2 {
+  font-family: "FE Display", Impact, sans-serif;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  max-width: 42rem;
+}
+.fe-today-card > p:last-child {
+  color: #d5d3cf;
+  line-height: 1.7;
+  max-width: 38rem;
+  margin-top: 1rem;
+}
+.fe-today-grid .fe-client-signature {
+  grid-column: 1 / -1;
+}
 .fe-information {
   background: #fff;
   border: 1px solid var(--fe-line);
@@ -1065,11 +1127,24 @@ a {
     width: 100%;
   }
   .fe-welcome-card,
-  .fe-information {
+  .fe-information,
+  .fe-today-card {
     padding: 1.5rem 1.25rem;
   }
   .fe-welcome-card h2 {
     font-size: 2rem;
+  }
+  .fe-home-action {
+    width: 100%;
+  }
+  .fe-today-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fe-today-card {
+    min-height: 20rem;
+  }
+  .fe-today-grid .fe-client-signature {
+    grid-column: auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {
