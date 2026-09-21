@@ -83,13 +83,27 @@ export function ClientDashboard({
   }
 
   const french = dashboard?.locale !== "en-CA";
+  const copy = dashboard ? clientPortalCopy(dashboard) : null;
   return (
     <AppShell
       space="client"
       name={dashboard?.displayName}
       locale={french ? "fr" : "en"}
       current={view}
+      accountAction={
+        <button
+          className="fe-button"
+          type="button"
+          onClick={() => void signOut()}
+          disabled={signingOut}
+        >
+          {signingOut
+            ? (copy?.signingOut ?? "Déconnexion…")
+            : (copy?.signOut ?? "Se déconnecter")}
+        </button>
+      }
     >
+      {signOutError ? <Feedback>{signOutError}</Feedback> : null}
       {failed ? (
         <>
           <h1 className="fe-title">Portail temporairement indisponible</h1>
@@ -103,13 +117,7 @@ export function ClientDashboard({
       ) : !dashboard ? (
         <Loading>Chargement du portail…</Loading>
       ) : (
-        <ClientPortalView
-          dashboard={dashboard}
-          view={view}
-          signingOut={signingOut}
-          signOutError={signOutError}
-          onSignOut={() => void signOut()}
-        />
+        <ClientPortalView dashboard={dashboard} view={view} />
       )}
     </AppShell>
   );
@@ -118,39 +126,13 @@ export function ClientDashboard({
 function ClientPortalView({
   dashboard,
   view,
-  signingOut,
-  signOutError,
-  onSignOut,
 }: {
   dashboard: ClientDashboardData;
   view: "home" | "today";
-  signingOut: boolean;
-  signOutError: string | null;
-  onSignOut(): void;
 }) {
-  const copy = clientPortalCopy(dashboard);
   return (
     <>
-      <header className="fe-page-heading">
-        <div>
-          <p className="fe-kicker">The Legacy Protocol</p>
-          <h1 className="fe-title">
-            {view === "home" ? copy.welcome : copy.todayLabel}
-          </h1>
-          <p className="fe-intro">
-            {view === "home" ? copy.homeIntro : copy.todayIntro}
-          </p>
-        </div>
-        <button
-          className="fe-button"
-          type="button"
-          onClick={onSignOut}
-          disabled={signingOut}
-        >
-          {signingOut ? copy.signingOut : copy.signOut}
-        </button>
-      </header>
-      {signOutError ? <Feedback>{signOutError}</Feedback> : null}
+      <ClientContext dashboard={dashboard} view={view} />
       {view === "home" ? (
         <ClientHome dashboard={dashboard} />
       ) : (
@@ -161,24 +143,9 @@ function ClientPortalView({
 }
 
 function ClientHome({ dashboard }: { dashboard: ClientDashboardData }) {
-  const copy = clientPortalCopy(dashboard);
   return (
-    <div className="fe-welcome-grid">
-      <section className="fe-welcome-card" aria-labelledby="portal-ready">
-        <span
-          className="fe-badge fe-badge-active"
-          data-status={dashboard.status}
-        >
-          <Icon name="check" />
-          {copy.readyStatus}
-        </span>
-        <h2 id="portal-ready">{copy.readyTitle}</h2>
-        <p>{copy.readyDescription}</p>
-        <Link className="fe-button fe-button-primary fe-home-action" href="/client/today">
-          {copy.openToday}
-          <Icon name="arrow" />
-        </Link>
-      </section>
+    <div className="fe-client-home-grid">
+      <ClientProgramState dashboard={dashboard} showTodayLink />
       <ClientInformation dashboard={dashboard} />
       <p className="fe-client-signature">Shape your legacy.</p>
     </div>
@@ -186,24 +153,68 @@ function ClientHome({ dashboard }: { dashboard: ClientDashboardData }) {
 }
 
 function ClientToday({ dashboard }: { dashboard: ClientDashboardData }) {
-  const copy = clientPortalCopy(dashboard);
   return (
     <div className="fe-today-grid">
-      <section className="fe-today-card" aria-labelledby="client-next-action">
-        <div className="fe-today-card-top">
-          <p className="fe-kicker">{copy.nextActionLabel}</p>
-          <span className="fe-badge fe-badge-active">
-            <Icon name="check" />
-            {copy.nextActionStatus}
-          </span>
-        </div>
-        <p className="fe-today-date">{formatClientToday(dashboard)}</p>
-        <h2 id="client-next-action">{copy.nextActionTitle}</h2>
-        <p>{copy.nextActionDescription}</p>
-      </section>
+      <ClientProgramState
+        dashboard={dashboard}
+        date={formatClientToday(dashboard)}
+      />
       <ClientInformation dashboard={dashboard} />
       <p className="fe-client-signature">Shape your legacy.</p>
     </div>
+  );
+}
+
+function ClientContext({
+  dashboard,
+  view,
+}: {
+  dashboard: ClientDashboardData;
+  view: "home" | "today";
+}) {
+  const copy = clientPortalCopy(dashboard);
+  return (
+    <header className="fe-client-context">
+      <p className="fe-client-context-brand">Father Empowering</p>
+      <p className="fe-client-context-protocol">The Legacy Protocol</p>
+      <h1>{view === "home" ? copy.welcome : copy.todayLabel}</h1>
+      <p>{view === "home" ? copy.homeIntro : copy.todayIntro}</p>
+    </header>
+  );
+}
+
+function ClientProgramState({
+  dashboard,
+  date,
+  showTodayLink = false,
+}: {
+  dashboard: ClientDashboardData;
+  date?: string;
+  showTodayLink?: boolean;
+}) {
+  const copy = clientPortalCopy(dashboard);
+  return (
+    <section
+      className="fe-client-program-state"
+      aria-labelledby="client-program-state"
+    >
+      <div className="fe-client-program-state-top">
+        <p className="fe-kicker">{copy.nextActionLabel}</p>
+        <span className="fe-badge fe-badge-active">
+          <Icon name="check" />
+          {copy.nextActionStatus}
+        </span>
+      </div>
+      {date ? <p className="fe-today-date">{date}</p> : null}
+      <h2 id="client-program-state">{copy.nextActionTitle}</h2>
+      <p>{copy.nextActionDescription}</p>
+      {showTodayLink ? (
+        <Link className="fe-button fe-home-action" href="/client/today">
+          {copy.openToday}
+          <Icon name="arrow" />
+        </Link>
+      ) : null}
+    </section>
   );
 }
 
@@ -211,7 +222,15 @@ function ClientInformation({ dashboard }: { dashboard: ClientDashboardData }) {
   const copy = clientPortalCopy(dashboard);
   return (
     <section className="fe-information" aria-labelledby="client-information">
+      <span
+        className="fe-badge fe-badge-active"
+        data-status={dashboard.status}
+      >
+        <Icon name="check" />
+        {copy.readyStatus}
+      </span>
       <h2 id="client-information">{copy.informationTitle}</h2>
+      <p className="fe-information-intro">{copy.readyDescription}</p>
       <dl>
         <div className="fe-info-row">
           <dt>{copy.nameLabel}</dt>

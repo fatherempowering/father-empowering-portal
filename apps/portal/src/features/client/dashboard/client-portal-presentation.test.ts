@@ -22,12 +22,14 @@ describe("client portal presentation", () => {
     const copy = clientPortalCopy(client());
 
     expect(copy.openToday).toBe("Voir aujourd’hui");
-    expect(copy.nextActionLabel).toBe("Prochaine action");
-    expect(copy.nextActionStatus).toBe("À jour");
-    expect(copy.nextActionTitle).toBe("Tu es à jour.");
-    expect(copy.nextActionDescription).toContain("Rien à faire pour le moment");
+    expect(copy.nextActionLabel).toBe("Programme");
+    expect(copy.nextActionStatus).toBe("Accès actif");
+    expect(copy.nextActionTitle).toBe("Ton accès est actif.");
+    expect(copy.nextActionDescription).toContain(
+      "ne contient pas encore ton programme",
+    );
     expect(JSON.stringify(copy)).not.toMatch(
-      /séance prête|entraînement du jour|prochaine étape apparaîtra/i,
+      /à jour|rien à faire|séance prête|entraînement du jour|prochaine étape apparaîtra/i,
     );
   });
 

@@ -33,6 +33,42 @@ test.beforeAll(async () => {
   });
 });
 
+test("landing publique officielle → accès Coach et Client en EN/FR", async ({
+  page,
+}) => {
+  await page.goto(environment.appUrl);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("h1 > span")).toHaveText([
+    "Same",
+    "standards.",
+    "Different",
+    "day.",
+  ]);
+  await expect(page.getByRole("link", { name: "Coach login" })).toHaveAttribute(
+    "href",
+    "/login",
+  );
+  await expect(page.getByRole("link", { name: "Client login" })).toHaveAttribute(
+    "href",
+    "/client-login",
+  );
+
+  await page.goto(`${environment.appUrl}/?lang=fr`);
+  await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+  await expect(page.locator("h1 > span")).toHaveText([
+    "Mêmes",
+    "standards.",
+    "Nouveau",
+    "jour.",
+  ]);
+  await expect(
+    page.getByRole("link", { name: "Connexion coach" }),
+  ).toHaveAttribute("href", "/login");
+  await expect(
+    page.getByRole("link", { name: "Connexion client" }),
+  ).toHaveAttribute("href", "/client-login");
+});
+
 test("Admin sans mot de passe → récupération → code courriel → reconnexion", async ({
   browser,
 }) => {
@@ -285,9 +321,13 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(clientPage).toHaveURL(/\/client\/today(?:\?.*)?$/);
   await expect(clientPage.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
   await expect(
-    clientPage.getByRole("heading", { name: "Tu es à jour." }),
+    clientPage.getByRole("heading", { name: "Ton accès est actif." }),
   ).toBeVisible();
-  await expect(clientPage.getByText(/rien à faire pour le moment/i)).toBeVisible();
+  await expect(clientPage.getByText(/^accès actif$/i)).toBeVisible();
+  await expect(
+    clientPage.getByText(/ne contient pas encore ton programme/i),
+  ).toBeVisible();
+  await expect(clientPage.getByText(/à jour|rien à faire/i)).toHaveCount(0);
   await expect(clientPage.getByRole("link", { name: "Aujourd’hui" })).toHaveAttribute(
     "aria-current",
     "page",

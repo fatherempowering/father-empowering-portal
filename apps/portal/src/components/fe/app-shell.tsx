@@ -11,12 +11,14 @@ export function AppShell({
   name,
   locale = "fr",
   current = space === "coach" ? "clients" : "home",
+  accountAction,
 }: {
   children: ReactNode;
   space: "coach" | "client";
   name?: string;
   locale?: "fr" | "en";
   current?: "clients" | "home" | "today";
+  accountAction?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -86,6 +88,11 @@ export function AppShell({
         </nav>
         <div className="fe-side-bottom">
           <p className="fe-side-motto">Shape your legacy.</p>
+          {accountAction ? (
+            <p className="fe-side-account-label">
+              {french ? "Compte" : "Account"}
+            </p>
+          ) : null}
           <div className="fe-identity">
             <span className="fe-avatar" aria-hidden="true">
               FE
@@ -95,6 +102,9 @@ export function AppShell({
               <span>Father Empowering</span>
             </div>
           </div>
+          {accountAction ? (
+            <div className="fe-side-account-action">{accountAction}</div>
+          ) : null}
         </div>
       </aside>
       <div className="fe-workspace">

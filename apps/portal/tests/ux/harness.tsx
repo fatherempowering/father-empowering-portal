@@ -8,6 +8,7 @@ import { ClientLoginCard } from "../../src/features/client/auth/client-login-car
 import { CoachEmailVerificationCard } from "../../src/features/coach/auth/coach-email-verification-card";
 import { AuthShell } from "../../src/components/fe/auth-shell";
 import { CodeInput } from "../../src/components/fe/code-input";
+import { LandingPage } from "../../src/components/fe/landing/landing-page";
 import "../../src/app/globals.css";
 
 const now = Date.now();
@@ -218,8 +219,12 @@ function CodeExercise() {
   );
 }
 function Harness() {
-  const [view, setView] = useState("coach");
+  const initialView = new URLSearchParams(window.location.search).get("screen");
+  const [view, setView] = useState(initialView ?? "coach");
   const [key, setKey] = useState(0);
+  if (view === "landing-en" || view === "landing-fr") {
+    return <LandingPage locale={view === "landing-fr" ? "fr" : "en"} />;
+  }
   return (
     <>
       <header
@@ -243,6 +248,8 @@ function Harness() {
             }}
           >
             <option value="coach">Coach</option>
+            <option value="landing-en">Landing · English</option>
+            <option value="landing-fr">Landing · Français</option>
             <option value="client">Client</option>
             <option value="client-today">Client · Aujourd’hui</option>
             <option value="login">Connexion Client</option>

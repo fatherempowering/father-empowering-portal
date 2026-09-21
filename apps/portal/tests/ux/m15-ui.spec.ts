@@ -1,5 +1,98 @@
 import { expect, test } from "@playwright/test";
 
+for (const landing of [
+  {
+    screen: "landing-en",
+    lang: "en",
+    headline: ["Same", "standards.", "Different", "day."],
+    coach: "Coach login",
+    client: "Client login",
+  },
+  {
+    screen: "landing-fr",
+    lang: "fr",
+    headline: ["Mêmes", "standards.", "Nouveau", "jour."],
+    coach: "Connexion coach",
+    client: "Connexion client",
+  },
+] as const) {
+  test(`approved ${landing.lang.toUpperCase()} landing preserves assets, links and responsive crops`, async ({
+    page,
+  }) => {
+    for (const viewport of [
+      { width: 1536, height: 1024, asset: "hero-desktop.webp" },
+      { width: 390, height: 844, asset: "hero-mobile.webp" },
+      { width: 320, height: 820, asset: "hero-mobile.webp" },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(`/?screen=${landing.screen}`);
+
+      await expect(page.locator("h1 > span")).toHaveText(landing.headline);
+      await expect(page.getByRole("link", { name: landing.coach })).toHaveAttribute(
+        "href",
+        "/login",
+      );
+      await expect(page.getByRole("link", { name: landing.client })).toHaveAttribute(
+        "href",
+        "/client-login",
+      );
+      await expect(page.locator('img[alt="Father Empowering"]')).toHaveAttribute(
+        "src",
+        "/brand/fe-logo-splash.png",
+      );
+      await expect(page.locator("picture img")).toHaveJSProperty(
+        "complete",
+        true,
+      );
+      expect(
+        await page.locator("picture img").evaluate(
+          (image, asset) =>
+            (image as HTMLImageElement).currentSrc.endsWith(asset),
+          viewport.asset,
+        ),
+      ).toBe(true);
+      expect(await page.locator("html").getAttribute("lang")).toBe(landing.lang);
+      expect(
+        await page.evaluate(
+          () =>
+            document.documentElement.scrollWidth <=
+            document.documentElement.clientWidth,
+        ),
+        `${landing.lang} landing at ${viewport.width}px`,
+      ).toBe(true);
+    }
+  });
+}
+
+test("landing keeps focus visible and reflows at 200% on 320px", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 820 });
+  await page.goto("/?screen=landing-fr");
+  await page.locator("html").evaluate((element) => {
+    element.style.fontSize = "200%";
+  });
+
+  expect(
+    await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+  const skip = page.getByRole("link", { name: "Aller aux options de connexion" });
+  await skip.focus();
+  await expect(skip).toBeFocused();
+  expect(await skip.evaluate((element) => getComputedStyle(element).transform)).toBe(
+    "none",
+  );
+  const client = page.getByRole("link", { name: "Connexion client" });
+  await client.focus();
+  expect(await client.evaluate((element) => getComputedStyle(element).outlineWidth)).toBe(
+    "3px",
+  );
+});
+
 test("code preserves zeros, paste, repeated digits and correction without accepting incomplete codes", async ({
   page,
 }) => {
@@ -102,6 +195,14 @@ test("Client loading times out and retry recovers from a suspended request", asy
   await expect(page.getByRole("alert")).toContainText(
     "Impossible de charger ton portail.",
   );
+  const menu = page.getByRole("button", { name: "Ouvrir le menu" });
+  if (await menu.isVisible()) await menu.click();
+  await expect(page.getByText("Compte", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Se déconnecter" }),
+  ).toBeEnabled();
+  const closeMenu = page.getByRole("button", { name: "Fermer le menu" });
+  if (await closeMenu.isVisible()) await closeMenu.click();
   const retry = page.getByRole("button", { name: "Réessayer" });
   await expect(retry).toBeEnabled();
   await retry.click();
@@ -170,15 +271,24 @@ test("Client shell exposes Home, Today and one truthful next action", async ({
     "href",
     "/client/today",
   );
+  await expect(page.getByText("Compte", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Se déconnecter" }),
+  ).toBeEnabled();
 
   await page.getByLabel("Écran").selectOption("client-today");
   if (await menu.isVisible()) await menu.click();
   await expect(page.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Tu es à jour." }),
+    page.getByRole("heading", { name: "Ton accès est actif." }),
   ).toBeVisible();
-  await expect(page.getByText("À jour", { exact: true })).toBeVisible();
-  await expect(page.getByText(/rien à faire pour le moment/i)).toBeVisible();
+  await expect(page.getByText("Accès actif", { exact: true })).toBeVisible();
+  await expect(page.getByText(/ne contient pas encore ton programme/i)).toBeVisible();
+  await expect(page.getByText(/à jour|rien à faire/i)).toHaveCount(0);
+  await expect(page.getByText("Compte", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Se déconnecter" }),
+  ).toBeEnabled();
   await expect(navigation.getByRole("link", { name: "Aujourd’hui" })).toHaveAttribute(
     "aria-current",
     "page",
