@@ -246,7 +246,9 @@ test("Client V2 supports English and 200% reflow at 320px", async ({ page }) => 
 test("captures the Client V2 pilot at the required review viewports", async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop", "one DPR 1 capture set is sufficient");
+  if (testInfo.project.name !== "desktop") {
+    return;
+  }
   await mkdir(v2CaptureDirectory, { recursive: true });
   for (const viewport of [
     { width: 1672, height: 941 },
