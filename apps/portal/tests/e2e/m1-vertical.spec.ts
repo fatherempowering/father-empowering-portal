@@ -314,6 +314,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(clientPage.getByRole("heading", { name: "Ton portail." })).toBeVisible();
   await expect(clientPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   await expect(clientPage.getByText(/^accès actif$/i).first()).toBeVisible();
+  await clientPage.getByRole("button", { name: "Menu", exact: true }).click();
   await expect(
     clientPage.locator('a[href="/client"][aria-current="page"]'),
   ).toBeVisible();
@@ -334,6 +335,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     clientPage.getByText(/ne contient pas encore ton programme/i),
   ).toBeVisible();
   await expect(clientPage.getByText(/à jour|rien à faire/i)).toHaveCount(0);
+  await clientPage.getByRole("button", { name: /ouvrir le menu/i }).click();
   await expect(clientPage.getByRole("link", { name: "Aujourd’hui" })).toHaveAttribute(
     "aria-current",
     "page",
