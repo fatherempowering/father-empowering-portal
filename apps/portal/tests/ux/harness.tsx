@@ -39,7 +39,8 @@ let records = [
     acceptedAt: null,
   },
 }));
-let scenario = "normal";
+const harnessParameters = new URLSearchParams(window.location.search);
+let scenario = harnessParameters.get("state") ?? "normal";
 let message = "";
 let clientRequestAttempts = 0;
 function reply(body: unknown, status = 200) {
@@ -219,11 +220,14 @@ function CodeExercise() {
   );
 }
 function Harness() {
-  const initialView = new URLSearchParams(window.location.search).get("screen");
+  const initialView = harnessParameters.get("screen");
   const [view, setView] = useState(initialView ?? "coach");
   const [key, setKey] = useState(0);
   if (view === "landing-en" || view === "landing-fr") {
     return <LandingPage locale={view === "landing-fr" ? "fr" : "en"} />;
+  }
+  if (view === "client-v2") {
+    return <ClientDashboard loadTimeoutMs={5_000} />;
   }
   return (
     <>
@@ -251,6 +255,7 @@ function Harness() {
             <option value="landing-en">Landing · English</option>
             <option value="landing-fr">Landing · Français</option>
             <option value="client">Client</option>
+            <option value="client-v2">Client · Pilote V2</option>
             <option value="client-today">Client · Aujourd’hui</option>
             <option value="login">Connexion Client</option>
             <option value="activation">Activation</option>

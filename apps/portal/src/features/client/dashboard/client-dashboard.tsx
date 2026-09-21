@@ -7,6 +7,7 @@ import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { Icon } from "@/components/fe/icon";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
+import { ClientHomePilot } from "./client-home-pilot";
 import {
   clientPortalCopy,
   formatClientToday,
@@ -84,6 +85,18 @@ export function ClientDashboard({
 
   const french = dashboard?.locale !== "en-CA";
   const copy = dashboard ? clientPortalCopy(dashboard) : null;
+  if (view === "home") {
+    return (
+      <ClientHomePilot
+        dashboard={dashboard}
+        failed={failed}
+        signingOut={signingOut}
+        signOutError={signOutError}
+        onRetry={retry}
+        onSignOut={() => void signOut()}
+      />
+    );
+  }
   return (
     <AppShell
       space="client"

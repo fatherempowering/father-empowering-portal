@@ -311,13 +311,20 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await clientPage.getByRole("button", { name: /activer mon portail/i }).click();
 
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
-  await expect(clientPage.getByRole("heading", { name: /bienvenue, Client Vertical/i })).toBeVisible();
-  await expect(clientPage.getByText(/^portail activé$/i).first()).toBeVisible();
+  await expect(clientPage.getByRole("heading", { name: "Ton portail." })).toBeVisible();
+  await expect(clientPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
+  await expect(clientPage.getByText(/^accès actif$/i).first()).toBeVisible();
   await expect(clientPage.getByRole("link", { name: "Accueil" })).toHaveAttribute(
     "aria-current",
     "page",
   );
-  await clientPage.getByRole("link", { name: "Voir aujourd’hui" }).click();
+  await expect(
+    clientPage.getByText(/Tu n’as rien à compléter ici/i),
+  ).toBeVisible();
+  await expect(
+    clientPage.getByRole("link", { name: "Voir aujourd’hui" }),
+  ).toHaveCount(0);
+  await clientPage.getByRole("link", { name: "Aujourd’hui" }).click();
   await expect(clientPage).toHaveURL(/\/client\/today(?:\?.*)?$/);
   await expect(clientPage.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
   await expect(
@@ -365,12 +372,20 @@ test("Max → création → invitation → OTP → activation → accès isolé"
 
   await continuedPage.goto(`${environment.appUrl}/client`);
   await expect(
-    continuedPage.getByRole("heading", { name: /bienvenue, Client Vertical/i }),
+    continuedPage.getByRole("heading", { name: "Ton portail." }),
   ).toBeVisible();
+  await expect(continuedPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   await continuedPage.goto(`${environment.appUrl}/client-login`);
   await expect(continuedPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(
-    continuedPage.getByRole("heading", { name: /bienvenue, Client Vertical/i }),
+    continuedPage.getByRole("heading", { name: "Ton portail." }),
+  ).toBeVisible();
+  expect(continuedOtpRequests).toHaveLength(0);
+
+  await continuedPage.goto(`${environment.appUrl}/client/today`);
+  await expect(continuedPage).toHaveURL(/\/client\/today(?:\?.*)?$/);
+  await expect(
+    continuedPage.getByRole("heading", { name: "Aujourd’hui" }),
   ).toBeVisible();
   expect(continuedOtpRequests).toHaveLength(0);
 
@@ -379,7 +394,19 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(continuedPage.getByLabel(/^courriel$/i)).toBeVisible();
   const signedOutProfile = await clientContext.request.get(`${environment.appUrl}/api/v1/client/me`);
   expect(signedOutProfile.status()).toBe(401);
+  expect(await signedOutProfile.text()).not.toMatch(
+    /Client Vertical|client\.vertical|max\.vertical/i,
+  );
+  const clientSignedOutCoachApi = await clientContext.request.get(
+    `${environment.appUrl}/api/v1/coach/clients`,
+  );
+  expect([401, 403]).toContain(clientSignedOutCoachApi.status());
+  expect(await clientSignedOutCoachApi.text()).not.toMatch(
+    /Client Vertical|client\.vertical|max\.vertical/i,
+  );
   await continuedPage.goto(`${environment.appUrl}/client`);
+  await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
+  await continuedPage.goto(`${environment.appUrl}/client/today`);
   await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
 
   const returningContext = await browser.newContext();
@@ -412,8 +439,9 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await returningPage.getByRole("button", { name: /ouvrir mon portail/i }).click();
   await expect(returningPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(
-    returningPage.getByRole("heading", { name: /bienvenue, Client Vertical/i }),
+    returningPage.getByRole("heading", { name: "Ton portail." }),
   ).toBeVisible();
+  await expect(returningPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   const authUsers = await admin.auth.admin.listUsers({ page: 1, perPage: 1_000 });
   expect(authUsers.error).toBeNull();
   expect(authUsers.data.users.filter((user) => user.email === clientEmail)).toHaveLength(1);
