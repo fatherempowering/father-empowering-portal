@@ -115,13 +115,11 @@ test("Client V2 pilot preserves the dark FE composition without invented program
     await expect(page.getByRole("heading", { name: "Ton portail." })).toBeVisible();
     await expect(page.getByText("Bienvenue, Alex Martin.")).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Ton accès est confirmé." }),
+      page.getByRole("heading", { name: "Ton point de départ : le bilan initial" }),
     ).toBeVisible();
     await expect(
-      page.getByText(
-        "Aucune action de programme n’est disponible dans ce portail pour le moment. Tu n’as rien à compléter ici.",
-      ),
-    ).toBeVisible();
+      page.getByRole("link", { name: "Compléter mon bilan initial" }),
+    ).toHaveAttribute("href", "/client/week-zero");
     await expect(page.getByRole("link", { name: "Voir aujourd’hui" })).toHaveCount(0);
     await expect(page.getByText(/87,4 kg|7 h 28|3 \/ 4|score|séance du jour/i)).toHaveCount(0);
     expect(await pilot.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe(
@@ -221,10 +219,13 @@ test("Client V2 supports English and 200% reflow at 320px", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Your portal." })).toBeVisible();
   await expect(page.getByText("Welcome, Alex Martin.")).toBeVisible();
   await expect(
-    page.getByText(
-      "No program action is available in this portal right now. You have nothing to complete here.",
-    ),
+    page.getByRole("heading", {
+      name: "Your starting point: the initial assessment",
+    }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Complete my initial assessment" }),
+  ).toHaveAttribute("href", "/client/week-zero");
   await page.locator("html").evaluate((element) => {
     element.style.fontSize = "200%";
   });
@@ -241,6 +242,112 @@ test("Client V2 supports English and 200% reflow at 320px", async ({ page }) => 
   expect(await menu.evaluate((element) => getComputedStyle(element).outlineWidth)).toBe(
     "3px",
   );
+});
+
+test("Week Zero resumes a saved draft and reflows at Client mobile widths", async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 820 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/?screen=client-week-zero&state=assessment-draft");
+    await expect(
+      page.getByRole("heading", { name: "Ton bilan initial" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
+    ).toBeVisible();
+    await expect(page.getByLabel(/Poids au réveil \(lb\)/i)).toHaveValue(
+      "207.5",
+    );
+    await expect(
+      page.getByLabel(/Tour de taille au nombril \(po\)/i),
+    ).toHaveValue("39.5");
+    await expect(page.getByText(/Week Zero terminé/i)).toHaveCount(0);
+    expect(
+      await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
+      ),
+      `Week Zero draft at ${viewport.width}px`,
+    ).toBe(true);
+    await page.reload();
+    await expect(page.getByLabel(/Poids au réveil \(lb\)/i)).toHaveValue(
+      "207.5",
+    );
+  }
+});
+
+test("Week Zero retains entries and the command across a transient save failure", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-week-zero&state=assessment-save-error-once");
+  const weight = page.getByLabel(/Poids au réveil \(lb\)/i);
+  await weight.fill("214.5");
+  await page
+    .getByRole("button", { name: /Enregistrer mon brouillon/i })
+    .click();
+  await expect(
+    page.getByText(/La confirmation n’a pas été reçue/i),
+  ).toBeVisible();
+  await expect(weight).toHaveValue("214.5");
+  await page
+    .getByRole("button", { name: /Enregistrer mon brouillon/i })
+    .click();
+  await expect(
+    page.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
+  ).toBeVisible();
+  await expect(weight).toHaveValue("214.5");
+});
+
+test("Week Zero keeps local entries on 409 until explicit reload", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-week-zero&state=assessment-conflict");
+  const weight = page.getByLabel(/Poids au réveil \(lb\)/i);
+  await weight.fill("214.5");
+  await page
+    .getByRole("button", { name: /Enregistrer mon brouillon/i })
+    .click();
+  await expect(
+    page.getByText(/Une version plus récente existe/i),
+  ).toBeVisible();
+  await expect(weight).toHaveValue("214.5");
+  page.once("dialog", (dialog) => dialog.accept());
+  await page
+    .getByRole("button", { name: /Recharger la version enregistrée/i })
+    .click();
+  await expect(weight).toHaveValue("199");
+});
+
+test("Week Zero blocks incomplete submission and keeps submitted answers read-only", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-week-zero");
+  await page
+    .getByRole("button", { name: /4\. Vérifier et transmettre/i })
+    .click();
+  await expect(
+    page.getByText(/À compléter avant de transmettre/i),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Transmettre mon bilan au Coach/i }),
+  ).toBeDisabled();
+  await expect(page.getByText(/photos, charges et cardio/i)).toBeVisible();
+
+  await page.goto("/?screen=client-week-zero&state=assessment-submitted");
+  await expect(
+    page.getByText(/Bilan initial transmis au Coach/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/réponses transmises sont conservées en lecture seule/i),
+  ).toBeVisible();
+  await expect(page.locator("form")).toHaveCount(0);
+  await expect(page.getByText(/Photos, calibration des charges et cardio/i)).toBeVisible();
+  await expect(page.getByText(/Week Zero terminé/i)).toHaveCount(0);
 });
 
 test("captures the Client V2 pilot at the required review viewports", async ({
@@ -461,9 +568,11 @@ test("Client pilot exposes only factual M1 content and keeps Today outside the d
   );
   await expect(page.getByRole("link", { name: "Voir aujourd’hui" })).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "Ton accès est confirmé." }),
+    page.getByRole("heading", { name: "Ton point de départ : le bilan initial" }),
   ).toBeVisible();
-  await expect(page.getByText(/Tu n’as rien à compléter ici/)).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Compléter mon bilan initial" }),
+  ).toHaveAttribute("href", "/client/week-zero");
   await expect(page.getByText("Compte", { exact: true }).first()).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Se déconnecter" }),
@@ -475,11 +584,13 @@ test("Client pilot exposes only factual M1 content and keeps Today outside the d
   const todayMenu = page.getByRole("button", { name: "Ouvrir le menu" });
   if (await todayMenu.isVisible()) await todayMenu.click();
   await expect(page.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Ton accès est actif." }),
-  ).toBeVisible();
   await expect(page.getByText("Accès actif", { exact: true })).toBeVisible();
-  await expect(page.getByText(/ne contient pas encore ton programme/i)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Ton point de départ : le bilan initial" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Compléter mon bilan initial" }),
+  ).toHaveAttribute("href", "/client/week-zero");
   await expect(page.getByText(/à jour|rien à faire/i)).toHaveCount(0);
   await expect(page.getByText("Compte", { exact: true })).toBeVisible();
   await expect(

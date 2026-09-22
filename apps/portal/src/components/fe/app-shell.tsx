@@ -17,7 +17,7 @@ export function AppShell({
   space: "coach" | "client";
   name?: string;
   locale?: "fr" | "en";
-  current?: "clients" | "home" | "today";
+  current?: "clients" | "home" | "today" | "week-zero";
   accountAction?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -47,6 +47,12 @@ export function AppShell({
             label: french ? "Aujourd’hui" : "Today",
             icon: "today" as const,
             id: "today" as const,
+          },
+          {
+            href: "/client/week-zero",
+            label: french ? "Week Zero · Bilan initial" : "Week Zero · Initial assessment",
+            icon: "check" as const,
+            id: "week-zero" as const,
           },
         ];
   const activeLabel =

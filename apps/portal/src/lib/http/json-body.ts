@@ -3,12 +3,22 @@ import { M1ContractError } from "@/lib/contracts/m1";
 const MAX_M1_JSON_BYTES = 4_096;
 
 export async function readM1JsonObject(request: Request): Promise<Record<string, unknown>> {
+  return readJsonObjectWithLimit(request, MAX_M1_JSON_BYTES);
+}
+
+export async function readJsonObjectWithLimit(
+  request: Request,
+  maximumBytes: number,
+): Promise<Record<string, unknown>> {
+  if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 1) {
+    throw new M1ContractError("VALIDATION_FAILED", "Invalid request body limit", 400);
+  }
   const declaredLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_M1_JSON_BYTES) {
+  if (Number.isFinite(declaredLength) && declaredLength > maximumBytes) {
     throw new M1ContractError("VALIDATION_FAILED", "Request body is too large", 400);
   }
 
-  const raw = await readBoundedUtf8Body(request);
+  const raw = await readBoundedUtf8Body(request, maximumBytes);
 
   let value: unknown;
   try {
@@ -22,7 +32,7 @@ export async function readM1JsonObject(request: Request): Promise<Record<string,
   return value as Record<string, unknown>;
 }
 
-async function readBoundedUtf8Body(request: Request): Promise<string> {
+async function readBoundedUtf8Body(request: Request, maximumBytes: number): Promise<string> {
   if (!request.body) return "";
 
   let reader: ReadableStreamDefaultReader<Uint8Array>;
@@ -40,7 +50,7 @@ async function readBoundedUtf8Body(request: Request): Promise<string> {
       if (done) break;
       if (!value) continue;
       totalBytes += value.byteLength;
-      if (totalBytes > MAX_M1_JSON_BYTES) {
+      if (totalBytes > maximumBytes) {
         await reader.cancel("M1 request body limit exceeded").catch(() => undefined);
         throw new M1ContractError("VALIDATION_FAILED", "Request body is too large", 400);
       }

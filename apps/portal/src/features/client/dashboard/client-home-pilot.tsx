@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { Icon } from "@/components/fe/icon";
+import { InitialAssessmentAction } from "@/features/client/week-zero/initial-assessment-action";
 import {
   clientPortalCopy,
   formatClientToday,
@@ -138,6 +139,10 @@ export function ClientHomePilot({
             <Icon name="today" />
             {labels.today}
           </Link>
+          <Link className={styles.navigationLink} href="/client/week-zero" onClick={() => setMenuOpen(false)}>
+            <Icon name="check" />
+            {french ? "Week Zero · Bilan initial" : "Week Zero · Initial assessment"}
+          </Link>
         </nav>
         <div className={styles.sidebarBottom}>
           <p className={styles.motto}>Shape your legacy.</p>
@@ -244,7 +249,7 @@ function PilotReady({ dashboard }: { dashboard: ClientDashboard }) {
         <section
           className={styles.primaryPanel}
           data-pilot-primary=""
-          aria-labelledby="pilot-content-title"
+          aria-label={locale === "fr" ? "Ta prochaine étape" : "Your next step"}
         >
           <div className={styles.panelHeader}>
             <p>{labels.contentState}</p>
@@ -254,8 +259,7 @@ function PilotReady({ dashboard }: { dashboard: ClientDashboard }) {
             </span>
           </div>
           <div className={styles.primaryCopy}>
-            <h2 id="pilot-content-title">{labels.accessConfirmed}</h2>
-            <p>{labels.noProgramAction}</p>
+            <InitialAssessmentAction french={locale === "fr"} actionClassName={styles.primaryAction} />
           </div>
         </section>
 
