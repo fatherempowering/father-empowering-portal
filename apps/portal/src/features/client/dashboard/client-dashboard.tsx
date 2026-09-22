@@ -1,14 +1,29 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-import { requestClientLogout } from "@/features/client/auth/request-client-logout";
-import type { ClientDashboard as ClientDashboardData } from "./contracts";
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { Icon } from "@/components/fe/icon";
+import { requestClientLogout } from "@/features/client/auth/request-client-logout";
+import { ClientHomePilot } from "./client-home-pilot";
+import { InitialAssessmentAction } from "@/features/client/week-zero/initial-assessment-action";
+import {
+  clientPortalCopy,
+  formatClientToday,
+} from "./client-portal-presentation";
+import type { ClientDashboard as ClientDashboardData } from "./contracts";
 
-export function ClientDashboard() {
+const CLIENT_DASHBOARD_TIMEOUT_MS = 8_000;
+
+export function ClientDashboard({
+  view = "home",
+  loadTimeoutMs = CLIENT_DASHBOARD_TIMEOUT_MS,
+}: {
+  view?: "home" | "today";
+  loadTimeoutMs?: number;
+}) {
   const [dashboard, setDashboard] = useState<ClientDashboardData | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -21,6 +36,8 @@ export function ClientDashboard() {
 
   useEffect(() => {
     const controller = new AbortController();
+    let mounted = true;
+    const timeout = window.setTimeout(() => controller.abort(), loadTimeoutMs);
     async function load() {
       try {
         const response = await fetch("/api/v1/client/me", {
@@ -37,12 +54,18 @@ export function ClientDashboard() {
         };
         setDashboard(payload.client);
       } catch {
-        if (!controller.signal.aborted) setFailed(true);
+        if (mounted) setFailed(true);
+      } finally {
+        window.clearTimeout(timeout);
       }
     }
     void load();
-    return () => controller.abort();
-  }, [attempt]);
+    return () => {
+      mounted = false;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [attempt, loadTimeoutMs]);
 
   async function signOut() {
     setSigningOut(true);
@@ -54,20 +77,47 @@ export function ClientDashboard() {
     if (responseReceived) return;
 
     setSignOutError(
-      dashboard?.locale === "en-CA"
-        ? "Unable to sign out. Please try again."
+      dashboard
+        ? clientPortalCopy(dashboard).signOutError
         : "Impossible de te déconnecter. Réessaie.",
     );
     setSigningOut(false);
   }
 
   const french = dashboard?.locale !== "en-CA";
+  const copy = dashboard ? clientPortalCopy(dashboard) : null;
+  if (view === "home") {
+    return (
+      <ClientHomePilot
+        dashboard={dashboard}
+        failed={failed}
+        signingOut={signingOut}
+        signOutError={signOutError}
+        onRetry={retry}
+        onSignOut={() => void signOut()}
+      />
+    );
+  }
   return (
     <AppShell
       space="client"
       name={dashboard?.displayName}
       locale={french ? "fr" : "en"}
+      current={view}
+      accountAction={
+        <button
+          className="fe-button"
+          type="button"
+          onClick={() => void signOut()}
+          disabled={signingOut}
+        >
+          {signingOut
+            ? (copy?.signingOut ?? "Déconnexion…")
+            : (copy?.signOut ?? "Se déconnecter")}
+        </button>
+      }
     >
+      {signOutError ? <Feedback>{signOutError}</Feedback> : null}
       {failed ? (
         <>
           <h1 className="fe-title">Portail temporairement indisponible</h1>
@@ -81,89 +131,133 @@ export function ClientDashboard() {
       ) : !dashboard ? (
         <Loading>Chargement du portail…</Loading>
       ) : (
-        <>
-          <header className="fe-page-heading">
-            <div>
-              <p className="fe-kicker">The Legacy Protocol</p>
-              <h1 className="fe-title">
-                {french
-                  ? `Bienvenue, ${dashboard.displayName}.`
-                  : `Welcome, ${dashboard.displayName}.`}
-              </h1>
-              <p className="fe-intro">
-                {french
-                  ? "Ton espace Father Empowering."
-                  : "Your Father Empowering space."}
-              </p>
-            </div>
-            <button
-              className="fe-button"
-              type="button"
-              onClick={() => void signOut()}
-              disabled={signingOut}
-            >
-              {signingOut
-                ? french
-                  ? "Déconnexion…"
-                  : "Signing out…"
-                : french
-                  ? "Se déconnecter"
-                  : "Sign out"}
-            </button>
-          </header>
-          {signOutError ? <Feedback>{signOutError}</Feedback> : null}
-          <div className="fe-welcome-grid">
-            <section className="fe-welcome-card" aria-labelledby="portal-ready">
-              <span
-                className="fe-badge fe-badge-active"
-                data-status={dashboard.status}
-              >
-                <Icon name="check" />
-                {french ? "Portail activé" : "Portal activated"}
-              </span>
-              <h2 id="portal-ready">
-                {french ? "Ton point de départ." : "Your starting point."}
-              </h2>
-              <p>
-                {french
-                  ? "Ton accès au Legacy Protocol est confirmé."
-                  : "Your access to the Legacy Protocol is confirmed."}
-                <br />
-                {french
-                  ? "Pour la suite, suis les indications de Coach Max."
-                  : "Follow Coach Max’s guidance for your next steps."}
-              </p>
-            </section>
-            <section
-              className="fe-information"
-              aria-labelledby="client-information"
-            >
-              <h2 id="client-information">
-                {french ? "Tes informations" : "Your information"}
-              </h2>
-              <dl>
-                <div className="fe-info-row">
-                  <dt>{french ? "Nom" : "Name"}</dt>
-                  <dd>{dashboard.displayName}</dd>
-                </div>
-                <div className="fe-info-row">
-                  <dt>{french ? "Langue du portail" : "Portal language"}</dt>
-                  <dd>{french ? "Français" : "English"}</dd>
-                </div>
-                <div className="fe-info-row">
-                  <dt>{french ? "Fuseau horaire" : "Time zone"}</dt>
-                  <dd>
-                    {dashboard.timezone
-                      .replaceAll("_", " ")
-                      .replaceAll("/", " / ")}
-                  </dd>
-                </div>
-              </dl>
-            </section>
-            <p className="fe-client-signature">Shape your legacy.</p>
-          </div>
-        </>
+        <ClientPortalView dashboard={dashboard} view={view} />
       )}
     </AppShell>
+  );
+}
+
+function ClientPortalView({
+  dashboard,
+  view,
+}: {
+  dashboard: ClientDashboardData;
+  view: "home" | "today";
+}) {
+  return (
+    <>
+      <ClientContext dashboard={dashboard} view={view} />
+      {view === "home" ? (
+        <ClientHome dashboard={dashboard} />
+      ) : (
+        <ClientToday dashboard={dashboard} />
+      )}
+    </>
+  );
+}
+
+function ClientHome({ dashboard }: { dashboard: ClientDashboardData }) {
+  return (
+    <div className="fe-client-home-grid">
+      <ClientProgramState dashboard={dashboard} showTodayLink />
+      <ClientInformation dashboard={dashboard} />
+      <p className="fe-client-signature">Shape your legacy.</p>
+    </div>
+  );
+}
+
+function ClientToday({ dashboard }: { dashboard: ClientDashboardData }) {
+  return (
+    <div className="fe-today-grid">
+      <ClientProgramState
+        dashboard={dashboard}
+        date={formatClientToday(dashboard)}
+      />
+      <ClientInformation dashboard={dashboard} />
+      <p className="fe-client-signature">Shape your legacy.</p>
+    </div>
+  );
+}
+
+function ClientContext({
+  dashboard,
+  view,
+}: {
+  dashboard: ClientDashboardData;
+  view: "home" | "today";
+}) {
+  const copy = clientPortalCopy(dashboard);
+  return (
+    <header className="fe-client-context">
+      <p className="fe-client-context-brand">Father Empowering</p>
+      <p className="fe-client-context-protocol">The Legacy Protocol</p>
+      <h1>{view === "home" ? copy.welcome : copy.todayLabel}</h1>
+      <p>{view === "home" ? copy.homeIntro : copy.todayIntro}</p>
+    </header>
+  );
+}
+
+function ClientProgramState({
+  dashboard,
+  date,
+  showTodayLink = false,
+}: {
+  dashboard: ClientDashboardData;
+  date?: string;
+  showTodayLink?: boolean;
+}) {
+  const copy = clientPortalCopy(dashboard);
+  return (
+    <section
+      className="fe-client-program-state"
+      aria-labelledby="client-program-state"
+    >
+      <div className="fe-client-program-state-top">
+        <p className="fe-kicker">{dashboard.locale === "en-CA" ? "Next step" : "Prochaine étape"}</p>
+        <span className="fe-badge fe-badge-active">
+          <Icon name="check" />
+          {copy.nextActionStatus}
+        </span>
+      </div>
+      {date ? <p className="fe-today-date">{date}</p> : null}
+      <div id="client-program-state"><InitialAssessmentAction french={dashboard.locale !== "en-CA"} /></div>
+      {showTodayLink ? (
+        <Link className="fe-button fe-home-action" href="/client/today">
+          {copy.openToday}
+          <Icon name="arrow" />
+        </Link>
+      ) : null}
+    </section>
+  );
+}
+
+function ClientInformation({ dashboard }: { dashboard: ClientDashboardData }) {
+  const copy = clientPortalCopy(dashboard);
+  return (
+    <section className="fe-information" aria-labelledby="client-information">
+      <span
+        className="fe-badge fe-badge-active"
+        data-status={dashboard.status}
+      >
+        <Icon name="check" />
+        {copy.readyStatus}
+      </span>
+      <h2 id="client-information">{copy.informationTitle}</h2>
+      <p className="fe-information-intro">{copy.readyDescription}</p>
+      <dl>
+        <div className="fe-info-row">
+          <dt>{copy.nameLabel}</dt>
+          <dd>{dashboard.displayName}</dd>
+        </div>
+        <div className="fe-info-row">
+          <dt>{copy.languageLabel}</dt>
+          <dd>{copy.languageValue}</dd>
+        </div>
+        <div className="fe-info-row">
+          <dt>{copy.timezoneLabel}</dt>
+          <dd>{dashboard.timezone.replaceAll("_", " ").replaceAll("/", " / ")}</dd>
+        </div>
+      </dl>
+    </section>
   );
 }

@@ -6,8 +6,11 @@ import { ClientDashboard } from "../../src/features/client/dashboard/client-dash
 import { ClientActivationCard } from "../../src/features/client/activation/client-activation-card";
 import { ClientLoginCard } from "../../src/features/client/auth/client-login-card";
 import { CoachEmailVerificationCard } from "../../src/features/coach/auth/coach-email-verification-card";
+import { ClientWeekZero } from "../../src/features/client/week-zero/client-week-zero";
+import { EMPTY_INITIAL_ASSESSMENT_RESPONSES } from "../../src/lib/contracts/week-zero";
 import { AuthShell } from "../../src/components/fe/auth-shell";
 import { CodeInput } from "../../src/components/fe/code-input";
+import { LandingPage } from "../../src/components/fe/landing/landing-page";
 import "../../src/app/globals.css";
 
 const now = Date.now();
@@ -38,8 +41,54 @@ let records = [
     acceptedAt: null,
   },
 }));
-let scenario = "normal";
+const harnessParameters = new URLSearchParams(window.location.search);
+let scenario = harnessParameters.get("state") ?? "normal";
 let message = "";
+let clientRequestAttempts = 0;
+let failedSaveMutationId: string | null = null;
+let assessmentConflictOccurred = false;
+
+const assessmentResponses = () =>
+  structuredClone(EMPTY_INITIAL_ASSESSMENT_RESPONSES);
+
+function assessmentSnapshot(
+  status: "NOT_STARTED" | "DRAFT" | "SUBMITTED" = "NOT_STARTED",
+) {
+  const responses = assessmentResponses();
+  if (status !== "NOT_STARTED") {
+    responses.measurements.bodyWeightLb = status === "DRAFT" ? 207.5 : 198.5;
+    responses.measurements.waistIn = status === "DRAFT" ? 39.5 : 37.75;
+    responses.measurements.other = "Mesure persistée dans le brouillon.";
+  }
+  if (status === "SUBMITTED") {
+    responses.mobility = {
+      painSquat: "NO",
+      painHinge: "NO",
+      painPush: "NO",
+      painPull: "NO",
+      painCardio: "NO",
+      limitedMovement: "N.A.",
+      comfortableMovement: "Marche",
+      tightArea: "N.A.",
+    };
+    responses.availability = {
+      days: ["MONDAY", "WEDNESDAY"],
+      bestTime: "Matin",
+      sessionDurationMinutes: 40,
+      sessionsPerWeek: 3,
+      constraints: null,
+    };
+  }
+  return {
+    kind: "INITIAL_ASSESSMENT",
+    schemaVersion: 1,
+    status,
+    version: status === "NOT_STARTED" ? 0 : status === "DRAFT" ? 2 : 3,
+    responses,
+    updatedAt: status === "NOT_STARTED" ? null : new Date(now).toISOString(),
+    submittedAt: status === "SUBMITTED" ? new Date(now).toISOString() : null,
+  };
+}
 function reply(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -49,6 +98,16 @@ function reply(body: unknown, status = 200) {
 window.fetch = async (url, init) => {
   const path = String(url);
   if (scenario === "network") throw new TypeError("Network unavailable");
+  if (
+    path.endsWith("/client/me") &&
+    scenario === "client-request-hang-once" &&
+    clientRequestAttempts++ === 0
+  )
+    return await new Promise<Response>((_resolve, reject) => {
+      const abort = () => reject(new DOMException("Aborted", "AbortError"));
+      if (init?.signal?.aborted) abort();
+      else init?.signal?.addEventListener("abort", abort, { once: true });
+    });
   await new Promise((resolve) => setTimeout(resolve, 200));
   if (scenario === "error")
     return reply(
@@ -70,6 +129,67 @@ window.fetch = async (url, init) => {
         timezone: "Asia/Tokyo",
       },
     });
+  if (path.endsWith("/client/week-zero/submit") && init?.method === "POST") {
+    const submitted = assessmentSnapshot("SUBMITTED");
+    return reply({ data: { assessment: submitted } });
+  }
+  if (path.endsWith("/client/week-zero") && init?.method === "PUT") {
+    const command = JSON.parse(String(init.body)) as {
+      clientMutationId: string;
+      expectedVersion: number;
+      responses: typeof EMPTY_INITIAL_ASSESSMENT_RESPONSES;
+    };
+    if (scenario === "assessment-save-error-once" && failedSaveMutationId === null) {
+      failedSaveMutationId = command.clientMutationId;
+      return reply(
+        { error: { code: "TEMPORARILY_UNAVAILABLE", message: "Unavailable" } },
+        503,
+      );
+    }
+    if (
+      scenario === "assessment-save-error-once" &&
+      failedSaveMutationId !== command.clientMutationId
+    ) {
+      return reply(
+        { error: { code: "DUPLICATE", message: "Command changed during retry" } },
+        409,
+      );
+    }
+    if (scenario === "assessment-conflict") {
+      assessmentConflictOccurred = true;
+      return reply(
+        { error: { code: "VERSION_CONFLICT", message: "Version conflict" } },
+        409,
+      );
+    }
+    return reply({
+      data: {
+        assessment: {
+          kind: "INITIAL_ASSESSMENT",
+          schemaVersion: 1,
+          status: "DRAFT",
+          version: command.expectedVersion + 1,
+          responses: command.responses,
+          updatedAt: new Date(now).toISOString(),
+          submittedAt: null,
+        },
+      },
+    });
+  }
+  if (path.endsWith("/client/week-zero")) {
+    if (scenario === "assessment-draft") {
+      return reply({ data: { assessment: assessmentSnapshot("DRAFT") } });
+    }
+    if (scenario === "assessment-submitted") {
+      return reply({ data: { assessment: assessmentSnapshot("SUBMITTED") } });
+    }
+    if (scenario === "assessment-conflict" && assessmentConflictOccurred) {
+      const saved = assessmentSnapshot("DRAFT");
+      saved.responses.measurements.bodyWeightLb = 199;
+      return reply({ data: { assessment: saved } });
+    }
+    return reply({ data: { assessment: assessmentSnapshot() } });
+  }
   if (path.endsWith("/coach/clients") && !init?.method)
     return reply({ data: { clients: scenario === "empty" ? [] : records } });
   if (path.endsWith("/coach/clients") && init?.method === "POST") {
@@ -207,8 +327,18 @@ function CodeExercise() {
   );
 }
 function Harness() {
-  const [view, setView] = useState("coach");
+  const initialView = harnessParameters.get("screen");
+  const [view, setView] = useState(initialView ?? "coach");
   const [key, setKey] = useState(0);
+  if (view === "landing-en" || view === "landing-fr") {
+    return <LandingPage locale={view === "landing-fr" ? "fr" : "en"} />;
+  }
+  if (view === "client-v2") {
+    return <ClientDashboard loadTimeoutMs={5_000} />;
+  }
+  if (view === "client-week-zero") {
+    return <ClientWeekZero />;
+  }
   return (
     <>
       <header
@@ -232,7 +362,12 @@ function Harness() {
             }}
           >
             <option value="coach">Coach</option>
+            <option value="landing-en">Landing · English</option>
+            <option value="landing-fr">Landing · Français</option>
             <option value="client">Client</option>
+            <option value="client-v2">Client · Pilote V2</option>
+            <option value="client-today">Client · Aujourd’hui</option>
+            <option value="client-week-zero">Client · Week Zero</option>
             <option value="login">Connexion Client</option>
             <option value="activation">Activation</option>
             <option value="verify-email">Vérification Coach</option>
@@ -244,6 +379,9 @@ function Harness() {
           <select
             onChange={(event) => {
               scenario = event.target.value;
+              clientRequestAttempts = 0;
+              failedSaveMutationId = null;
+              assessmentConflictOccurred = false;
               setKey(key + 1);
             }}
           >
@@ -251,6 +389,7 @@ function Harness() {
             <option value="empty">Vide</option>
             <option value="error">Erreur API</option>
             <option value="network">Réseau coupé</option>
+            <option value="client-request-hang-once">Client · chargement suspendu</option>
             <option value="coach-request-hang">Coach · envoi suspendu</option>
             <option value="coach-request-error">Coach · échec d’envoi</option>
             <option value="coach-request-unauthorized">Coach · session expirée</option>
@@ -265,7 +404,9 @@ function Harness() {
         {view === "coach" ? (
           <CoachDashboard />
         ) : view === "client" ? (
-          <ClientDashboard />
+          <ClientDashboard loadTimeoutMs={350} />
+        ) : view === "client-today" ? (
+          <ClientDashboard view="today" loadTimeoutMs={350} />
         ) : view === "login" ? (
           <ClientLoginCard />
         ) : view === "activation" ? (
