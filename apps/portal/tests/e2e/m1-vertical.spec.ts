@@ -319,21 +319,28 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     clientPage.locator('a[href="/client"][aria-current="page"]'),
   ).toBeVisible();
   await expect(
-    clientPage.getByText(/Tu n’as rien à compléter ici/i),
+    clientPage.getByRole("heading", {
+      name: "Ton point de départ : le bilan initial",
+    }),
   ).toBeVisible();
+  await expect(
+    clientPage.getByRole("link", { name: "Compléter mon bilan initial" }),
+  ).toHaveAttribute("href", "/client/week-zero");
   await expect(
     clientPage.getByRole("link", { name: "Voir aujourd’hui" }),
   ).toHaveCount(0);
   await clientPage.getByRole("link", { name: "Aujourd’hui" }).click();
   await expect(clientPage).toHaveURL(/\/client\/today(?:\?.*)?$/);
   await expect(clientPage.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
-  await expect(
-    clientPage.getByRole("heading", { name: "Ton accès est actif." }),
-  ).toBeVisible();
   await expect(clientPage.getByText(/^accès actif$/i)).toBeVisible();
   await expect(
-    clientPage.getByText(/ne contient pas encore ton programme/i),
+    clientPage.getByRole("heading", {
+      name: "Ton point de départ : le bilan initial",
+    }),
   ).toBeVisible();
+  await expect(
+    clientPage.getByRole("link", { name: "Compléter mon bilan initial" }),
+  ).toHaveAttribute("href", "/client/week-zero");
   await expect(clientPage.getByText(/à jour|rien à faire/i)).toHaveCount(0);
   await clientPage.getByRole("button", { name: /ouvrir le menu/i }).click();
   await expect(clientPage.getByRole("link", { name: "Aujourd’hui" })).toHaveAttribute(

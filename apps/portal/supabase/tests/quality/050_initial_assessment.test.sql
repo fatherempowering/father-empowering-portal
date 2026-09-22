@@ -217,5 +217,18 @@ select ok(
   'the audit event contains no assessment payload or identity data'
 );
 
+update public.organization_memberships
+set status = 'SUSPENDED'
+where user_id = '15000000-0000-4000-8000-000000000001';
+set local role authenticated;
+set local request.jwt.claim.sub = '15000000-0000-4000-8000-000000000001';
+set local "request.jwt.claims" = '{"sub":"15000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+select is(
+  (select count(*) from public.week_zero_assessments),
+  0::bigint,
+  'a suspended Client membership cannot read a previously submitted assessment directly'
+);
+reset role;
+
 select * from finish();
 rollback;
