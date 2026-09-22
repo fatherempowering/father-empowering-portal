@@ -213,7 +213,7 @@ function ClientProgramState({
       aria-labelledby="client-program-state"
     >
       <div className="fe-client-program-state-top">
-        <p className="fe-kicker">{copy.nextActionLabel}</p>
+        <p className="fe-kicker">{dashboard.locale === "en-CA" ? "Next step" : "Prochaine étape"}</p>
         <span className="fe-badge fe-badge-active">
           <Icon name="check" />
           {copy.nextActionStatus}

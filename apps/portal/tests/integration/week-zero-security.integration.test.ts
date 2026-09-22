@@ -349,6 +349,41 @@ describe.sequential("Week Zero persistence and isolation gate", () => {
     );
     await expectErrorCode(anonymousCoach, 401, "UNAUTHENTICATED");
 
+    const anonymousSave = await fetch(
+      `${environment.appUrl}/api/v1/client/week-zero`,
+      {
+        method: "PUT",
+        headers: {
+          origin: environment.appUrl,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          expectedVersion: 0,
+          clientMutationId: randomUUID(),
+          responses: partialResponses,
+        }),
+        redirect: "manual",
+      },
+    );
+    await expectErrorCode(anonymousSave, 401, "UNAUTHENTICATED");
+
+    const anonymousSubmit = await fetch(
+      `${environment.appUrl}/api/v1/client/week-zero/submit`,
+      {
+        method: "POST",
+        headers: {
+          origin: environment.appUrl,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          expectedVersion: 1,
+          clientMutationId: randomUUID(),
+        }),
+        redirect: "manual",
+      },
+    );
+    await expectErrorCode(anonymousSubmit, 401, "UNAUTHENTICATED");
+
     const coachAtClientBoundary = await authenticatedFetch(
       environment,
       assignedCoachSession,
@@ -395,6 +430,24 @@ describe.sequential("Week Zero persistence and isolation gate", () => {
       },
     );
     await expectErrorCode(crossOrigin, 403, "FORBIDDEN");
+
+    const crossOriginSubmit = await fetch(
+      `${environment.appUrl}/api/v1/client/week-zero/submit`,
+      {
+        method: "POST",
+        headers: {
+          cookie: clientASession.cookieHeader(),
+          origin: "https://attacker.example",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          expectedVersion: 1,
+          clientMutationId: randomUUID(),
+        }),
+        redirect: "manual",
+      },
+    );
+    await expectErrorCode(crossOriginSubmit, 403, "FORBIDDEN");
 
     const oversized = await authenticatedFetch(
       environment,
