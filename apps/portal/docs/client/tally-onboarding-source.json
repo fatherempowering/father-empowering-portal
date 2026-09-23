@@ -1,0 +1,562 @@
+{
+  "source": "https://tally.so/r/44zdvk",
+  "name": "FE | Week Zero | Legacy Protocol Intake",
+  "sections": [
+    {
+      "title": "Personal Information",
+      "intro": "Welcome to Week Zero.  This intake allows Max to build your personalized Legacy Protocol.  Be honest. Be accurate. Do not try to impress.  The goal is not perfection. The goal is precision.",
+      "questions": [
+        {
+          "sourceId": "300b2e20-3f19-4c83-8fa7-8c3fbc47bca7",
+          "title": "Full Name",
+          "type": "INPUT_TEXT",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "b0b4af26-f613-4a5c-bd2a-e57ad0e6af26",
+          "title": "Email",
+          "type": "INPUT_EMAIL",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "f61884a5-b966-4e46-bf6b-506cb7562615",
+          "title": "Phone Number",
+          "type": "INPUT_PHONE_NUMBER",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "c1bd7a6e-2aad-40ea-b09e-b874258a91ab",
+          "title": "Age",
+          "type": "INPUT_TEXT",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "8e6b6b84-05ba-431c-975c-3498fdee5154",
+          "title": "Height",
+          "type": "INPUT_TEXT",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "d9b4fda3-0df9-4fef-b887-6cb4465c5c14",
+          "title": "Current Bodyweight",
+          "type": "INPUT_TEXT",
+          "required": true,
+          "options": []
+        }
+      ]
+    },
+    {
+      "title": "Objectives & Vision",
+      "intro": "Take a few minutes to answer honestly. These answers help shape the direction of your Legacy Protocol and establish the standard for the next 100 days.",
+      "questions": [
+        {
+          "sourceId": "9ee23f41-ff58-43f2-a935-1b8f55f59684",
+          "title": "Why are you starting now?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "d0f39c7b-3180-4bc0-a625-1e46445bfa62",
+          "title": "What do you want to achieve in the next 100 days?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "d54f6e07-91df-4a7a-b581-febd0785a59b",
+          "title": "What are you no longer willing to tolerate?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "f4715c3c-8446-4d19-b45a-7178f68fb368",
+          "title": "If this program is successful, what changes in your life?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "4ac36aae-c522-4153-8d57-0290248252f5",
+          "title": "What kind of father and man do you want to become?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "1468f1f6-942c-4b99-92c1-71af6533e057",
+          "title": "On a scale from 1-10, how committed are you to this transformation?",
+          "type": "LINEAR_SCALE",
+          "required": true,
+          "options": [],
+          "min": 0,
+          "max": 10
+        },
+        {
+          "sourceId": "9ffaea74-6d50-4105-b52c-cf73915de07e",
+          "title": "Why did you choose that number?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        }
+      ]
+    },
+    {
+      "title": "Training History & Equipment",
+      "intro": "The goal of this section is to understand your training background, available equipment, and schedule so Max can build a realistic and effective program.",
+      "questions": [
+        {
+          "sourceId": "b1d8908e-ffc9-4642-b9a6-2db39ea6b384",
+          "title": "How many years have you been training consistently?",
+          "type": "INPUT_NUMBER",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "681c37d8-c720-4691-ab28-cdd92f38686b",
+          "title": "How many days per week are you currently training?",
+          "type": "INPUT_NUMBER",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "1021ca32-a742-49cc-9e28-71f39e487d5e",
+          "title": "What type of training are you currently doing?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "adeea88a-da25-4778-ba0c-22443e7f2862",
+          "title": "What has worked well for you in the past?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "57f416f2-f84a-450e-970c-b4385ece99df",
+          "title": "What has NOT worked well for you in the past?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "7eb7a5e2-a19f-450d-8cff-6ee7effaddc4",
+          "title": "Where will you train most often?",
+          "type": "CHECKBOX",
+          "required": true,
+          "options": [
+            "Commercial Gym",
+            "Home Gym",
+            "Both"
+          ]
+        },
+        {
+          "sourceId": "573d631d-c701-4f16-a7c6-adbc5c7fa9a9",
+          "title": "Describe the equipment you have available.",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": [],
+          "placeholder": "Examples:* Full commercial gym* Rack, barbell, dumbbells* Resistance bands only"
+        },
+        {
+          "sourceId": "a8f6631e-0006-42e7-8e76-b62248f72c2b",
+          "title": "How many days per week can you realistically train?",
+          "type": "INPUT_NUMBER",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "5147df57-fff3-4ace-aa57-c47fba4c6f87",
+          "title": "What days are usually available for training?",
+          "type": "CHECKBOX",
+          "required": true,
+          "options": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ]
+        },
+        {
+          "sourceId": "45b37b5f-fa07-49e2-b40e-85a25a1ae363",
+          "title": "Typical work schedule",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": [],
+          "placeholder": "Example:Construction 6am-3pmOffice 8am-5pmShift work"
+        },
+        {
+          "sourceId": "581f21d8-1395-4186-9963-23aad5327e83",
+          "title": "What time of day do you prefer to train?",
+          "type": "MULTIPLE_CHOICE_OPTION",
+          "required": true,
+          "options": [
+            "Early Morning",
+            "Morning",
+            "Lunch",
+            "Afternoon",
+            "Evening",
+            "No Preference"
+          ]
+        },
+        {
+          "sourceId": "ec1c800a-81b9-4afd-8208-e581943a5e05",
+          "title": "Do you currently do cardio?",
+          "type": "MULTIPLE_CHOICE_OPTION",
+          "required": true,
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "sourceId": "09bd4bb3-750e-4d35-96c1-700bc0b0b409",
+          "title": "If yes, what type and how often?",
+          "type": "TEXTAREA",
+          "required": false,
+          "options": []
+        },
+        {
+          "sourceId": "563def06-0835-421e-ad45-2202a940a3fb",
+          "title": "Have you ever worked with a coach before?",
+          "type": "MULTIPLE_CHOICE_OPTION",
+          "required": true,
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "sourceId": "b2e3c759-039b-4ee6-82aa-469356412ed4",
+          "title": "If yes, what did you like and dislike about the experience?",
+          "type": "TEXTAREA",
+          "required": false,
+          "options": []
+        }
+      ]
+    },
+    {
+      "title": "Injuries, Limitations & Recovery",
+      "intro": "This section helps Max build a program that works with your body, not against it. Be honest. The goal is progress, not proving how tough you are.",
+      "questions": [
+        {
+          "sourceId": "269e3bfc-3b3b-437f-bf0c-cea1b6077371",
+          "title": "Do you currently have any injuries, pain, or physical limitations?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "85d886a0-161e-4072-9df2-52825b093113",
+          "title": "Have you had any significant injuries or surgeries in the past?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "82463866-0195-4f06-ae00-a56776cbf411",
+          "title": "Are there any exercises you should avoid?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "a4ab024e-e51f-410c-beaa-115e778f4daf",
+          "title": "Are there any exercises you enjoy or feel confident performing?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "f80032ce-4ca0-4eee-b4c6-b02e9ad0f18d",
+          "title": "How would you rate your current mobility?",
+          "type": "MULTIPLE_CHOICE_OPTION",
+          "required": true,
+          "options": [
+            "Very Poor",
+            "Poor",
+            "Average",
+            "Good",
+            "Excellent"
+          ]
+        },
+        {
+          "sourceId": "89526dcd-076a-46e8-a281-02c23bbaf9a4",
+          "title": "How would you rate your current recovery between workouts?",
+          "type": "MULTIPLE_CHOICE_OPTION",
+          "required": true,
+          "options": [
+            "Very Poor",
+            "Poor",
+            "Average",
+            "Good",
+            "Excelent",
+            "Don't Know"
+          ]
+        },
+        {
+          "sourceId": "38d319a4-307d-4946-aa35-83fd5de1ee28",
+          "title": "Average hours of sleep per night",
+          "type": "INPUT_NUMBER",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "93cdc528-886b-4609-b379-09bb1c6b459d",
+          "title": "How would you rate your sleep quality?",
+          "type": "LINEAR_SCALE",
+          "required": true,
+          "options": [],
+          "min": 0,
+          "max": 10
+        },
+        {
+          "sourceId": "7277af82-6213-4033-b8a3-9321ebbe1a11",
+          "title": "How would you rate your daily stress level?",
+          "type": "LINEAR_SCALE",
+          "required": true,
+          "options": [],
+          "min": 0,
+          "max": 10
+        },
+        {
+          "sourceId": "1f077c95-3d88-4cdc-a570-f4be57e6c80f",
+          "title": "What currently creates the most stress in your life?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "af97313e-5622-421a-91a0-b1e6dc43693c",
+          "title": "Do you currently take any medications?",
+          "type": "TEXTAREA",
+          "required": false,
+          "options": []
+        },
+        {
+          "sourceId": "8e188053-404b-48e7-96e4-0b7f46db35ff",
+          "title": "Do you currently take any supplements?",
+          "type": "TEXTAREA",
+          "required": false,
+          "options": []
+        },
+        {
+          "sourceId": "7e65448a-e191-4187-b83d-fa2d8c2b259d",
+          "title": "Is there anything about your health that Max should know before building your protocol?",
+          "type": "TEXTAREA",
+          "required": false,
+          "options": []
+        }
+      ]
+    },
+    {
+      "title": "Nutrition Assessment",
+      "intro": "There is no perfect diet. The goal of this section is to understand your current habits so Max can build a nutrition strategy that fits your life. Be honest. Accuracy beats perfection.",
+      "questions": [
+        {
+          "sourceId": "ad858df2-4127-4ea4-bda5-4e6d71611c7a",
+          "title": "Describe a typical breakfast.",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "04460ef6-b359-4fd4-a95a-8d9b9806e0c2",
+          "title": "Describe a typical lunch.",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "80730324-736c-4068-a52c-6bfff2f06d7a",
+          "title": "Describe a typical dinner.",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "0a296666-eba6-486e-bf38-cb276133cb32",
+          "title": "Typical snacks throughout the day.",
+          "type": "TEXTAREA",
+          "required": false,
+          "options": []
+        },
+        {
+          "sourceId": "6ffdfed7-a840-4aae-a104-acbfdbf2cf14",
+          "title": "How many meals do you usually eat per day?",
+          "type": "INPUT_NUMBER",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "5a150c87-5adc-46a2-9428-0a1cab42b377",
+          "title": "Estimated daily water intake.",
+          "type": "INPUT_TEXT",
+          "required": true,
+          "options": [],
+          "placeholder": "Example:2L3L"
+        },
+        {
+          "sourceId": "db329455-a848-40d1-80a0-51fb40fe6799",
+          "title": "How often do you consume alcohol?",
+          "type": "MULTIPLE_CHOICE_OPTION",
+          "required": true,
+          "options": [
+            "Never",
+            "Rarely",
+            "1-2 times per week",
+            "3-4 times per week",
+            "5+ times per week"
+          ]
+        },
+        {
+          "sourceId": "8d588bc7-ba51-4b42-b61d-c7ea2d9aa040",
+          "title": "How often do you eat restaurant or takeout meals?",
+          "type": "MULTIPLE_CHOICE_OPTION",
+          "required": true,
+          "options": [
+            "Rarely",
+            "1-2 times per week",
+            "3-4 times per week",
+            "5+times per week"
+          ]
+        },
+        {
+          "sourceId": "3af7f187-6e92-4cb6-b785-be74a870469a",
+          "title": "What is your biggest nutrition struggle?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "39899c98-9d2f-4809-9916-44e4d6cf598b",
+          "title": "What time of day do you struggle the most with nutrition?",
+          "type": "CHECKBOX",
+          "required": true,
+          "options": [
+            "Morning",
+            "Mid-Morning",
+            "Afternooon",
+            "Evening",
+            "Late Night",
+            "Weekends"
+          ]
+        },
+        {
+          "sourceId": "e4e6ea7f-10e9-4d5a-8390-2d882569fdd3",
+          "title": "Have you ever tracked calories or macros?",
+          "type": "MULTIPLE_CHOICE_OPTION",
+          "required": true,
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "sourceId": "6b83e175-124b-4340-898d-705f4a437a4c",
+          "title": "If yes, what worked and what did not work?",
+          "type": "TEXTAREA",
+          "required": false,
+          "options": []
+        },
+        {
+          "sourceId": "68d47dd2-fc97-4ff0-ba90-29be0f4b783e",
+          "title": "Do you have any food allergies, intolerances, or digestive issues?",
+          "type": "TEXTAREA",
+          "required": false,
+          "options": []
+        },
+        {
+          "sourceId": "64ea29cc-5514-44f2-9540-295bc70c1f00",
+          "title": "Are there foods you absolutely refuse to eat?",
+          "type": "TEXTAREA",
+          "required": false,
+          "options": []
+        },
+        {
+          "sourceId": "d9580d1d-ba6b-406a-9bae-77b174a36205",
+          "title": "What would success with nutrition look like for you?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "4bb1c9df-0aec-422b-bb87-21b6875f232e",
+          "title": "If you could fix one thing about your nutrition immediately, what would it be?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        }
+      ]
+    },
+    {
+      "title": "Final Notes & Commitment",
+      "intro": "You are almost done. Take a moment before answering. The Legacy Protocol works when honesty, consistency, and execution replace perfection.",
+      "questions": [
+        {
+          "sourceId": "1ae6f1e0-7435-4c9b-9751-9a5b805f0e00",
+          "title": "What do you believe will be your biggest obstacle during the next 100 days?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "43e15eaf-4997-44dd-be04-f2f7562a19ba",
+          "title": "What usually causes you to fall off track?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "2ebac3b0-83b3-4d12-bf97-dd068c2ed2f4",
+          "title": "What support do you need most from Max?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        },
+        {
+          "sourceId": "7ae65a07-86f6-4947-823a-f427e6ca9dc3",
+          "title": "Is there anything else Max should know before building your personalized protocol?",
+          "type": "TEXTAREA",
+          "required": false,
+          "options": []
+        },
+        {
+          "sourceId": "7a4adeb3-e79b-4178-a635-f413d5e37dd2",
+          "title": "I commit to the protocol.",
+          "type": "MULTIPLE_CHOICE_OPTION",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        },
+        {
+          "sourceId": "329b4851-a3c6-4c17-be19-bd2ce16c938a",
+          "title": "On a scale from 1-10, how confident are you that you can successfully complete the next 100 days?",
+          "type": "LINEAR_SCALE",
+          "required": true,
+          "options": [],
+          "min": 0,
+          "max": 10
+        },
+        {
+          "sourceId": "9f45b1e5-baac-4d68-8cbe-8d78de5f10ba",
+          "title": "Why?",
+          "type": "TEXTAREA",
+          "required": true,
+          "options": []
+        }
+      ]
+    }
+  ]
+}

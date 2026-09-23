@@ -2,6 +2,11 @@ import { createHash, randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 
 import {
+  ONBOARDING_SECTIONS,
+  type OnboardingQuestion,
+} from "@/lib/contracts/onboarding-definition";
+
+import {
   M1SsrSession,
   createM1AdminClient,
   getM1TestEnvironment,
@@ -20,6 +25,8 @@ const environment = getM1TestEnvironment();
 const maxPassword = "M1-local-only-Max!123";
 const recoveredMaxPassword = "M1-local-only-Max-recovered!456";
 const clientEmail = `client.vertical.${randomUUID()}@example.test`;
+const privateHealthSentinel = "ONBOARDING_PRIVATE_HEALTH_DO_NOT_LOG";
+const privateNutritionSentinel = "ONBOARDING_PRIVATE_NUTRITION_DO_NOT_LOG";
 const usedCoachEmailIds = new Set<string>();
 let max: SeededStaff;
 
@@ -320,11 +327,14 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   ).toBeVisible();
   await expect(
     clientPage.getByRole("heading", {
-      name: "Ton point de départ : le bilan initial",
+      name: "Commençons par mieux te connaître",
     }),
   ).toBeVisible();
   await expect(
-    clientPage.getByRole("link", { name: "Compléter mon bilan initial" }),
+    clientPage.getByRole("link", { name: "Compléter mon questionnaire d’accueil" }),
+  ).toHaveAttribute("href", "/client/onboarding");
+  await expect(
+    clientPage.getByRole("link", { name: "Accéder à mon bilan initial" }),
   ).toHaveAttribute("href", "/client/week-zero");
   await expect(
     clientPage.getByRole("link", { name: "Voir aujourd’hui" }),
@@ -335,12 +345,12 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(clientPage.getByText(/^accès actif$/i)).toBeVisible();
   await expect(
     clientPage.getByRole("heading", {
-      name: "Ton point de départ : le bilan initial",
+      name: "Commençons par mieux te connaître",
     }),
   ).toBeVisible();
   await expect(
-    clientPage.getByRole("link", { name: "Compléter mon bilan initial" }),
-  ).toHaveAttribute("href", "/client/week-zero");
+    clientPage.getByRole("link", { name: "Compléter mon questionnaire d’accueil" }),
+  ).toHaveAttribute("href", "/client/onboarding");
   await expect(clientPage.getByText(/à jour|rien à faire/i)).toHaveCount(0);
   await clientPage.getByRole("button", { name: /ouvrir le menu/i }).click();
   await expect(clientPage.getByRole("link", { name: "Aujourd’hui" })).toHaveAttribute(
@@ -350,45 +360,54 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await clientPage.locator('a[href="/client"]').click();
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
 
-  await clientPage.goto(`${environment.appUrl}/client/week-zero`);
-  await expect(clientPage).toHaveURL(/\/client\/week-zero(?:\?.*)?$/);
-  await expect(
-    clientPage.getByRole("heading", { name: "Ton bilan initial" }),
-  ).toBeVisible();
-  await expect(
-    clientPage.getByText(/photos, calibration des charges et cardio/i),
-  ).toHaveCount(0);
-  await expect(clientPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
-  await clientPage.getByLabel(/Poids au réveil \(lb\)/i).fill("214.5");
-  await clientPage
-    .getByLabel(/Tour de taille au nombril \(po\)/i)
-    .fill("41.25");
-  await clientPage
-    .getByLabel(/Autres précisions \(facultatif\)/i)
-    .fill("Poids et tour de taille pris au réveil.");
-  await clientPage
-    .getByRole("button", { name: /Enregistrer mon brouillon/i })
-    .click();
-  await expect(
-    clientPage.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
-  ).toBeVisible();
-
   const clientId = storedInvitation.data?.client_id;
   if (!clientId) throw new Error("The activated Client has no persisted identifier.");
+
+  await clientPage
+    .getByRole("link", { name: "Compléter mon questionnaire d’accueil" })
+    .click();
+  await expect(clientPage).toHaveURL(/\/client\/onboarding(?:\?.*)?$/);
+  await expect(
+    clientPage.getByRole("heading", { name: "Ton questionnaire d’accueil" }),
+  ).toBeVisible();
+  await clientPage.getByLabel(/Numéro de téléphone/i).fill("+1 514 555 0199");
+
+  let backWasProtected = false;
+  clientPage.once("dialog", async (dialog) => {
+    backWasProtected = dialog.type() === "beforeunload";
+    await dialog.dismiss();
+  });
+  await clientPage.evaluate(() => window.history.back());
+  await expect.poll(() => backWasProtected).toBe(true);
+  await expect(clientPage).toHaveURL(/\/client\/onboarding(?:\?.*)?$/);
+  await expect(clientPage.getByLabel(/Numéro de téléphone/i)).toHaveValue(
+    "+1 514 555 0199",
+  );
+
+  await fillOnboardingSection(clientPage, 0);
+  await clientPage.getByRole("button", { name: /^Continuer$/i }).click();
+  await expect(
+    clientPage.getByRole("heading", { name: ONBOARDING_SECTIONS[1]!.title.fr }),
+  ).toBeVisible();
+  await expect(clientPage.getByText(/Sauvegarde confirmée/i)).toBeVisible();
+
   await maxPage.goto(
     `${environment.appUrl}/coach/clients/${encodeURIComponent(clientId)}`,
   );
   await expect(maxPage.getByTestId("coach-client-detail")).toBeVisible();
-  await expect(maxPage.getByTestId("initial-assessment-status")).toHaveText(
+  await expect(maxPage.getByTestId("coach-onboarding-status")).toHaveText(
     /Non transmis/i,
   );
-  await expect(maxPage.getByText(/Aucun bilan initial transmis/i)).toBeVisible();
-  await expect(maxPage.getByText(/pris au réveil/i)).toHaveCount(0);
+  await expect(
+    maxPage.getByText(/Aucun questionnaire d’accueil transmis/i),
+  ).toBeVisible();
+  await expect(maxPage.getByText(privateHealthSentinel)).toHaveCount(0);
+  await expect(maxPage.getByText(privateNutritionSentinel)).toHaveCount(0);
 
   const ownProfile = await clientContext.request.get(`${environment.appUrl}/api/v1/client/me`);
   expect(ownProfile.status()).toBe(200);
   const ownProfileBody = await ownProfile.json();
-  expect(ownProfileBody.client.clientId).toBe(storedInvitation.data?.client_id);
+  expect(ownProfileBody.client.clientId).toBe(clientId);
   expect(JSON.stringify(ownProfileBody)).not.toContain(max.userId);
 
   const forbiddenCoachApi = await clientContext.request.get(
@@ -413,10 +432,109 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     }
   });
 
+  await continuedPage.goto(`${environment.appUrl}/client/onboarding`);
+  await expect(
+    continuedPage.getByRole("heading", { name: "Ton questionnaire d’accueil" }),
+  ).toBeVisible();
+  await expect(continuedPage.getByLabel(/Numéro de téléphone/i)).toHaveValue(
+    "+1 514 555 0199",
+  );
+  expect(continuedOtpRequests).toHaveLength(0);
+
+  for (let sectionIndex = 0; sectionIndex < ONBOARDING_SECTIONS.length; sectionIndex += 1) {
+    if (sectionIndex > 0) {
+      await continuedPage
+        .getByRole("button", {
+          name: new RegExp(`^${sectionIndex + 1}\\. ${escapeRegExp(ONBOARDING_SECTIONS[sectionIndex]!.title.fr)}$`, "i"),
+        })
+        .click();
+    }
+    await fillOnboardingSection(continuedPage, sectionIndex);
+    await continuedPage.getByRole("button", { name: /^Continuer$/i }).click();
+  }
+  await expect(
+    continuedPage.getByText(/54 réponses obligatoires sur 54 complétées et valides/i),
+  ).toBeVisible();
+  expect(await browserStorageContainsPrivateOnboarding(continuedPage)).toBe(false);
+  await continuedPage
+    .getByRole("button", { name: /Transmettre mon questionnaire/i })
+    .click();
+  await expect(
+    continuedPage.getByText(/Questionnaire transmis au Coach/i).first(),
+  ).toBeVisible();
+  await expect(
+    continuedPage.getByText(/conservé en lecture seule/i),
+  ).toBeVisible();
+  expect(await browserStorageContainsPrivateOnboarding(continuedPage)).toBe(false);
+
+  const persistedOnboarding = await clientContext.request.get(
+    `${environment.appUrl}/api/v1/client/onboarding`,
+  );
+  expect(persistedOnboarding.status()).toBe(200);
+  expect(persistedOnboarding.headers()["cache-control"]).toContain("no-store");
+  const persistedOnboardingBody = await persistedOnboarding.json();
+  expect(persistedOnboardingBody).toMatchObject({
+    data: {
+      intake: {
+        status: "SUBMITTED",
+        responses: {
+          healthNotes: privateHealthSentinel,
+          nutritionPriority: privateNutritionSentinel,
+        },
+      },
+    },
+  });
+
+  await maxPage.reload();
+  await expect(maxPage.getByTestId("coach-onboarding-status")).toHaveText(
+    /Questionnaire d’accueil transmis/i,
+  );
+  await expect(maxPage.getByTestId("onboarding-section-health")).toContainText(
+    privateHealthSentinel,
+  );
+  await expect(maxPage.getByTestId("onboarding-section-nutrition")).toContainText(
+    privateNutritionSentinel,
+  );
+
+  const assessmentBeforeOnboarding = await clientContext.request.get(
+    `${environment.appUrl}/api/v1/client/week-zero`,
+  );
+  expect(await assessmentBeforeOnboarding.json()).toMatchObject({
+    data: { assessment: { status: "NOT_STARTED", version: 0 } },
+  });
+
   await continuedPage.goto(`${environment.appUrl}/client/week-zero`);
+  await expect(continuedPage).toHaveURL(/\/client\/week-zero(?:\?.*)?$/);
   await expect(
     continuedPage.getByRole("heading", { name: "Ton bilan initial" }),
   ).toBeVisible();
+  await expect(
+    continuedPage.getByText(/photos, calibration des charges et cardio/i),
+  ).toHaveCount(0);
+  await expect(continuedPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
+  await continuedPage.getByLabel(/Poids au réveil \(lb\)/i).fill("214.5");
+  await continuedPage
+    .getByLabel(/Tour de taille au nombril \(po\)/i)
+    .fill("41.25");
+  await continuedPage
+    .getByLabel(/Autres précisions \(facultatif\)/i)
+    .fill("Poids et tour de taille pris au réveil.");
+  await continuedPage
+    .getByRole("button", { name: /Enregistrer mon brouillon/i })
+    .click();
+  await expect(
+    continuedPage.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
+  ).toBeVisible();
+
+  await maxPage.goto(
+    `${environment.appUrl}/coach/clients/${encodeURIComponent(clientId)}`,
+  );
+  await expect(maxPage.getByTestId("coach-client-detail")).toBeVisible();
+  await expect(maxPage.getByTestId("initial-assessment-status")).toHaveText(
+    /Non transmis/i,
+  );
+  await expect(maxPage.getByText(/Aucun bilan initial transmis/i)).toBeVisible();
+  await expect(maxPage.getByText(/pris au réveil/i)).toHaveCount(0);
   await expect(continuedPage.getByLabel(/Poids au réveil \(lb\)/i)).toHaveValue(
     "214.5",
   );
@@ -575,7 +693,9 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   ).toBeVisible();
   expect(continuedOtpRequests).toHaveLength(0);
 
-  await continuedPage.goto(`${environment.appUrl}/client/today`);
+  await continuedPage.goto(`${environment.appUrl}/client/onboarding`);
+  await expect(continuedPage.getByText(privateHealthSentinel)).toBeVisible();
+  await continuedPage.locator('a[href="/client/today"]').click();
   await expect(continuedPage).toHaveURL(/\/client\/today(?:\?.*)?$/);
   await expect(
     continuedPage.getByRole("heading", { name: "Aujourd’hui" }),
@@ -585,6 +705,10 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await continuedPage.getByRole("button", { name: /se déconnecter/i }).click();
   await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
   await expect(continuedPage.getByLabel(/^courriel$/i)).toBeVisible();
+  await continuedPage.goBack({ waitUntil: "domcontentloaded" }).catch(() => null);
+  await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
+  await expect(continuedPage.getByText(privateHealthSentinel)).toHaveCount(0);
+  await expect(continuedPage.getByText(privateNutritionSentinel)).toHaveCount(0);
   const signedOutProfile = await clientContext.request.get(`${environment.appUrl}/api/v1/client/me`);
   expect(signedOutProfile.status()).toBe(401);
   expect(await signedOutProfile.text()).not.toMatch(
@@ -603,6 +727,16 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
   await continuedPage.goto(`${environment.appUrl}/client/week-zero`);
   await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
+  await continuedPage.goto(`${environment.appUrl}/client/onboarding`);
+  await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
+  const signedOutOnboarding = await clientContext.request.get(
+    `${environment.appUrl}/api/v1/client/onboarding`,
+  );
+  expect(signedOutOnboarding.status()).toBe(401);
+  expect(signedOutOnboarding.headers()["cache-control"]).toContain("no-store");
+  const signedOutOnboardingBody = await signedOutOnboarding.text();
+  expect(signedOutOnboardingBody).not.toContain(privateHealthSentinel);
+  expect(signedOutOnboardingBody).not.toContain(privateNutritionSentinel);
   const signedOutAssessment = await clientContext.request.get(
     `${environment.appUrl}/api/v1/client/week-zero`,
   );
@@ -694,7 +828,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   const persistedState = await Promise.all([
     admin
       .from("clients")
-      .select("id, auth_user_id, status")
+      .select("id, auth_user_id, email, status")
       .eq("id", storedInvitation.data?.client_id)
       .single(),
     admin
@@ -716,6 +850,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   ]);
   for (const result of persistedState) expect(result.error).toBeNull();
   expect(persistedState[0].data?.status).toBe("ACTIVE");
+  expect(persistedState[0].data?.email).toBe(clientEmail);
   expect(persistedState[1].data).toMatchObject({
     coach_user_id: max.userId,
     status: "ACTIVE",
@@ -746,6 +881,55 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await clientContext.close();
   await maxContext.close();
 });
+
+async function fillOnboardingSection(page: Page, sectionIndex: number): Promise<void> {
+  const section = ONBOARDING_SECTIONS[sectionIndex];
+  if (!section) throw new Error(`Unknown onboarding section ${sectionIndex}`);
+  await expect(page.getByRole("heading", { name: section.title.fr })).toBeVisible();
+
+  for (const question of section.questions) {
+    const field = page.locator(`[data-question="${question.key}"]`);
+    if (question.type === "multi") {
+      await field.locator('input[type="checkbox"]').first().check();
+      continue;
+    }
+    const answer = onboardingBrowserAnswer(question);
+    if (question.type === "single" || question.type === "scale") {
+      await field.locator("select").selectOption(String(answer));
+    } else if (question.type === "textarea") {
+      await field.locator("textarea").fill(String(answer));
+    } else {
+      await field.locator("input").fill(String(answer));
+    }
+  }
+}
+
+function onboardingBrowserAnswer(question: OnboardingQuestion): string | number {
+  if (question.key === "fullName") return "Client Vertical questionnaire";
+  if (question.key === "email") return "questionnaire-only@example.test";
+  if (question.key === "phoneNumber") return "+1 514 555 0199";
+  if (question.key === "healthNotes") return privateHealthSentinel;
+  if (question.key === "nutritionPriority") return privateNutritionSentinel;
+  if (question.type === "single") return question.options?.[0]?.value ?? "";
+  if (question.type === "scale" || question.type === "number") {
+    return question.min ?? 1;
+  }
+  return `Réponse synthétique ${question.key}`;
+}
+
+async function browserStorageContainsPrivateOnboarding(page: Page): Promise<boolean> {
+  return page.evaluate(([health, nutrition]) => {
+    const values = [
+      ...Object.entries(localStorage).flat(),
+      ...Object.entries(sessionStorage).flat(),
+    ];
+    return values.some((value) => value.includes(health) || value.includes(nutrition));
+  }, [privateHealthSentinel, privateNutritionSentinel] as const);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 async function safeActivationDiagnostic(response: {
   json(): Promise<unknown>;

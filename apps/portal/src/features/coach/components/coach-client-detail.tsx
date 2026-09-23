@@ -7,6 +7,7 @@ import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { Icon } from "@/components/fe/icon";
 import { requestCoachLogout } from "@/features/coach/auth/request-coach-logout";
+import { CoachOnboardingDetail } from "./coach-onboarding-detail";
 import {
   parseCoachClientApiEnvelope,
   type CoachClientApiEnvelope,
@@ -179,6 +180,7 @@ function ClientAssessment({ value }: { value: CoachClientWeekZero }) {
           <p className={styles.identity}>{client.email}</p>
         </div>
       </header>
+      <CoachOnboardingDetail clientId={client.id} />
       <section
         className={styles.assessment}
         aria-labelledby="initial-assessment-title"

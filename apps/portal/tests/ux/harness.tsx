@@ -6,8 +6,14 @@ import { ClientDashboard } from "../../src/features/client/dashboard/client-dash
 import { ClientActivationCard } from "../../src/features/client/activation/client-activation-card";
 import { ClientLoginCard } from "../../src/features/client/auth/client-login-card";
 import { CoachEmailVerificationCard } from "../../src/features/coach/auth/coach-email-verification-card";
+import { ClientOnboarding } from "../../src/features/client/onboarding/client-onboarding";
 import { ClientWeekZero } from "../../src/features/client/week-zero/client-week-zero";
 import { EMPTY_INITIAL_ASSESSMENT_RESPONSES } from "../../src/lib/contracts/week-zero";
+import { ONBOARDING_QUESTIONS } from "../../src/lib/contracts/onboarding-definition";
+import {
+  EMPTY_ONBOARDING_RESPONSES,
+  type OnboardingResponses,
+} from "../../src/lib/contracts/onboarding";
 import { AuthShell } from "../../src/components/fe/auth-shell";
 import { CodeInput } from "../../src/components/fe/code-input";
 import { LandingPage } from "../../src/components/fe/landing/landing-page";
@@ -47,6 +53,8 @@ let message = "";
 let clientRequestAttempts = 0;
 let failedSaveMutationId: string | null = null;
 let assessmentConflictOccurred = false;
+let failedOnboardingMutationId: string | null = null;
+let onboardingConflictOccurred = false;
 
 const assessmentResponses = () =>
   structuredClone(EMPTY_INITIAL_ASSESSMENT_RESPONSES);
@@ -89,6 +97,55 @@ function assessmentSnapshot(
     submittedAt: status === "SUBMITTED" ? new Date(now).toISOString() : null,
   };
 }
+
+function completeOnboardingResponses() {
+  const responses = structuredClone(
+    EMPTY_ONBOARDING_RESPONSES,
+  ) as OnboardingResponses;
+  for (const question of ONBOARDING_QUESTIONS) {
+    if (!question.required) continue;
+    if (question.type === "multi") {
+      responses[question.key] = [question.options?.[0]?.value ?? "OTHER"];
+    } else if (question.type === "single") {
+      responses[question.key] = question.options?.[0]?.value ?? "OTHER";
+    } else if (question.type === "number" || question.type === "scale") {
+      responses[question.key] = question.min ?? 1;
+    } else if (question.type === "email") {
+      responses[question.key] = "alex@example.test";
+    } else if (question.type === "tel") {
+      responses[question.key] = "+1 514 555 0100";
+    } else {
+      responses[question.key] = `Réponse ${question.key}`;
+    }
+  }
+  responses.fullName = "Alex Martin";
+  responses.whyNow = "Retrouver mon énergie pour ma famille.";
+  return responses;
+}
+
+function onboardingSnapshot(
+  status: "NOT_STARTED" | "DRAFT" | "SUBMITTED" = "SUBMITTED",
+  responseOverride?: OnboardingResponses,
+) {
+  const responses = responseOverride
+    ?? (status === "SUBMITTED"
+      ? completeOnboardingResponses()
+      : structuredClone(EMPTY_ONBOARDING_RESPONSES) as OnboardingResponses);
+  if (status === "DRAFT" && !responseOverride) {
+    responses.fullName = "Alex Brouillon";
+    responses.email = "alex@example.test";
+  }
+  return {
+    kind: "ONBOARDING_INTAKE",
+    schemaVersion: 1,
+    status,
+    version: status === "NOT_STARTED" ? 0 : status === "DRAFT" ? 2 : 3,
+    responses,
+    updatedAt: status === "NOT_STARTED" ? null : new Date(now).toISOString(),
+    submittedAt: status === "SUBMITTED" ? new Date(now).toISOString() : null,
+  };
+}
+
 function reply(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -129,6 +186,77 @@ window.fetch = async (url, init) => {
         timezone: "Asia/Tokyo",
       },
     });
+  if (path.endsWith("/client/onboarding/submit") && init?.method === "POST") {
+    return reply({ data: { intake: onboardingSnapshot("SUBMITTED") } });
+  }
+  if (path.endsWith("/client/onboarding") && init?.method === "PUT") {
+    const command = JSON.parse(String(init.body)) as {
+      clientMutationId: string;
+      expectedVersion: number;
+      responses: OnboardingResponses;
+    };
+    if (
+      scenario === "onboarding-save-error-once"
+      && failedOnboardingMutationId === null
+    ) {
+      failedOnboardingMutationId = command.clientMutationId;
+      return reply(
+        { error: { code: "TEMPORARILY_UNAVAILABLE", message: "Unavailable" } },
+        503,
+      );
+    }
+    if (
+      scenario === "onboarding-save-error-once"
+      && failedOnboardingMutationId !== command.clientMutationId
+    ) {
+      return reply(
+        { error: { code: "DUPLICATE", message: "Command changed during retry" } },
+        409,
+      );
+    }
+    if (scenario === "onboarding-conflict") {
+      onboardingConflictOccurred = true;
+      return reply(
+        { error: { code: "VERSION_CONFLICT", message: "Version conflict" } },
+        409,
+      );
+    }
+    return reply({
+      data: {
+        intake: {
+          ...onboardingSnapshot("DRAFT", command.responses),
+          version: command.expectedVersion + 1,
+        },
+      },
+    });
+  }
+  if (path.endsWith("/client/onboarding")) {
+    if (scenario === "onboarding-action-error") {
+      return reply(
+        { error: { code: "TEMPORARILY_UNAVAILABLE", message: "Unavailable" } },
+        503,
+      );
+    }
+    if (scenario === "onboarding-draft") {
+      return reply({ data: { intake: onboardingSnapshot("DRAFT") } });
+    }
+    if (scenario === "onboarding-conflict" && onboardingConflictOccurred) {
+      const saved = structuredClone(
+        EMPTY_ONBOARDING_RESPONSES,
+      ) as OnboardingResponses;
+      saved.fullName = "Alex Version enregistrée";
+      saved.email = "alex@example.test";
+      return reply({ data: { intake: onboardingSnapshot("DRAFT", saved) } });
+    }
+    if (
+      scenario === "onboarding-not-started"
+      || scenario === "onboarding-save-error-once"
+      || scenario === "onboarding-conflict"
+    ) {
+      return reply({ data: { intake: onboardingSnapshot("NOT_STARTED") } });
+    }
+    return reply({ data: { intake: onboardingSnapshot("SUBMITTED") } });
+  }
   if (path.endsWith("/client/week-zero/submit") && init?.method === "POST") {
     const submitted = assessmentSnapshot("SUBMITTED");
     return reply({ data: { assessment: submitted } });
@@ -339,6 +467,9 @@ function Harness() {
   if (view === "client-week-zero") {
     return <ClientWeekZero />;
   }
+  if (view === "client-onboarding") {
+    return <ClientOnboarding />;
+  }
   return (
     <>
       <header
@@ -367,6 +498,7 @@ function Harness() {
             <option value="client">Client</option>
             <option value="client-v2">Client · Pilote V2</option>
             <option value="client-today">Client · Aujourd’hui</option>
+            <option value="client-onboarding">Client · Questionnaire d’accueil</option>
             <option value="client-week-zero">Client · Week Zero</option>
             <option value="login">Connexion Client</option>
             <option value="activation">Activation</option>
@@ -382,6 +514,8 @@ function Harness() {
               clientRequestAttempts = 0;
               failedSaveMutationId = null;
               assessmentConflictOccurred = false;
+              failedOnboardingMutationId = null;
+              onboardingConflictOccurred = false;
               setKey(key + 1);
             }}
           >

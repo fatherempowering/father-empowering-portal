@@ -74,11 +74,15 @@ describe.sequential("M1 CI hardening", () => {
     const safeLog = join(fixture, "safe.log");
     const unsafeLog = join(fixture, "unsafe.log");
     const spacedOtpLog = join(fixture, "spaced-otp.log");
+    const privateOnboardingLog = join(fixture, "private-onboarding.log");
+    const privateNutritionLog = join(fixture, "private-nutrition.log");
     const exactSecretLog = join(fixture, "exact-secret.log");
     const exactSecret = "synthetic-worker-secret-that-must-stay-private";
     writeFileSync(safeLog, "PASS: isolated browser journey completed\n");
     writeFileSync(unsafeLog, "browser assertion received OTP 654321\n");
     writeFileSync(spacedOtpLog, "browser assertion received 654 321\n");
+    writeFileSync(privateOnboardingLog, "value=ONBOARDING_PRIVATE_HEALTH_DO_NOT_LOG\n");
+    writeFileSync(privateNutritionLog, "value=ONBOARDING_PRIVATE_NUTRITION_DO_NOT_LOG\n");
     writeFileSync(exactSecretLog, `authorization=${exactSecret}\n`);
 
     const safe = spawnSync(process.execPath, [logScanner, safeLog], { encoding: "utf8" });
@@ -92,6 +96,12 @@ describe.sequential("M1 CI hardening", () => {
     const spaced = spawnSync(process.execPath, [logScanner, spacedOtpLog], {
       encoding: "utf8",
     });
+    const privateOnboarding = spawnSync(process.execPath, [logScanner, privateOnboardingLog], {
+      encoding: "utf8",
+    });
+    const privateNutrition = spawnSync(process.execPath, [logScanner, privateNutritionLog], {
+      encoding: "utf8",
+    });
     const unreadable = spawnSync(process.execPath, [logScanner, join(fixture, "missing")], {
       encoding: "utf8",
     });
@@ -102,6 +112,14 @@ describe.sequential("M1 CI hardening", () => {
     expect(`${unsafe.stdout}${unsafe.stderr}`).not.toContain("654321");
     expect(spaced.status).toBe(1);
     expect(`${spaced.stdout}${spaced.stderr}`).not.toContain("654 321");
+    expect(privateOnboarding.status).toBe(1);
+    expect(`${privateOnboarding.stdout}${privateOnboarding.stderr}`).not.toContain(
+      "ONBOARDING_PRIVATE_HEALTH_DO_NOT_LOG",
+    );
+    expect(privateNutrition.status).toBe(1);
+    expect(`${privateNutrition.stdout}${privateNutrition.stderr}`).not.toContain(
+      "ONBOARDING_PRIVATE_NUTRITION_DO_NOT_LOG",
+    );
     expect(exact.status).toBe(1);
     expect(`${exact.stdout}${exact.stderr}`).not.toContain(exactSecret);
     expect(unreadable.status).toBe(2);

@@ -107,6 +107,58 @@
   white-space: pre-wrap;
 }
 
+.onboardingSections {
+  display: grid;
+}
+
+.onboardingSection {
+  min-width: 0;
+  padding: 1.5rem;
+  border-top: 1px solid var(--fe-line);
+}
+
+.onboardingSection h3 {
+  font-size: 1.125rem;
+}
+
+.onboardingSectionIntro {
+  max-width: 52rem;
+  margin-top: 0.4rem;
+  color: var(--fe-muted);
+  line-height: 1.6;
+}
+
+.onboardingValues {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+  margin: 1.25rem 0 0;
+}
+
+.onboardingValue {
+  min-width: 0;
+  padding: 0.9rem 0;
+  border-top: 1px solid #ebe9e3;
+}
+
+.onboardingValueWide {
+  grid-column: 1 / -1;
+}
+
+.onboardingValue dt {
+  color: var(--fe-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.onboardingValue dd {
+  margin: 0.35rem 0 0;
+  font-weight: 600;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 64rem) {
   .sections {
     grid-template-columns: minmax(0, 1fr);
@@ -130,7 +182,12 @@
 
   .assessmentHeader,
   .empty,
-  .section {
+  .section,
+  .onboardingSection {
     padding: 1.25rem 1rem;
+  }
+
+  .onboardingValues {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

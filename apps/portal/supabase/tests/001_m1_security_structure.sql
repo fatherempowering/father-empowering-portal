@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(34);
+select plan(44);
 
 select has_table('public', 'organizations', 'organizations exists');
 select has_table('public', 'profiles', 'profiles exists');
@@ -11,6 +11,7 @@ select has_table('public', 'coach_client_assignments', 'coach_client_assignments
 select has_table('public', 'client_invitations', 'client_invitations exists');
 select has_table('public', 'audit_events', 'audit_events exists');
 select has_table('public', 'outbox_events', 'outbox_events exists');
+select has_table('public', 'client_onboarding_intakes', 'client_onboarding_intakes exists');
 
 select ok(relrowsecurity and relforcerowsecurity, 'organizations has forced RLS')
 from pg_catalog.pg_class where oid = 'public.organizations'::regclass;
@@ -28,6 +29,8 @@ select ok(relrowsecurity and relforcerowsecurity, 'audit_events has forced RLS')
 from pg_catalog.pg_class where oid = 'public.audit_events'::regclass;
 select ok(relrowsecurity and relforcerowsecurity, 'outbox_events has forced RLS')
 from pg_catalog.pg_class where oid = 'public.outbox_events'::regclass;
+select ok(relrowsecurity and relforcerowsecurity, 'client_onboarding_intakes has forced RLS')
+from pg_catalog.pg_class where oid = 'public.client_onboarding_intakes'::regclass;
 
 select has_function(
   'public', 'create_invited_client',
@@ -47,6 +50,14 @@ select has_function(
 select has_function(
   'public', 'revoke_client_invitation_for_client', array['uuid', 'text', 'uuid'],
   'revoke_client_invitation_for_client exists'
+);
+select has_function(
+  'public', 'save_own_onboarding_intake', array['jsonb', 'bigint', 'uuid'],
+  'save_own_onboarding_intake exists'
+);
+select has_function(
+  'public', 'submit_own_onboarding_intake', array['bigint', 'uuid'],
+  'submit_own_onboarding_intake exists'
 );
 
 select ok(
@@ -74,6 +85,16 @@ select ok(
   'revoke_client_invitation_for_client is security definer with fixed search_path'
 ) from pg_catalog.pg_proc procedure where procedure.oid =
   'public.revoke_client_invitation_for_client(uuid,text,uuid)'::regprocedure;
+select ok(
+  procedure.prosecdef and array_to_string(procedure.proconfig, ',') like '%search_path=%',
+  'save_own_onboarding_intake is security definer with fixed search_path'
+) from pg_catalog.pg_proc procedure where procedure.oid =
+  'public.save_own_onboarding_intake(jsonb,bigint,uuid)'::regprocedure;
+select ok(
+  procedure.prosecdef and array_to_string(procedure.proconfig, ',') like '%search_path=%',
+  'submit_own_onboarding_intake is security definer with fixed search_path'
+) from pg_catalog.pg_proc procedure where procedure.oid =
+  'public.submit_own_onboarding_intake(bigint,uuid)'::regprocedure;
 
 select ok(
   not has_function_privilege('anon', 'public.create_invited_client(uuid,text,text,text,text,text,text,timestamptz,uuid,uuid)', 'EXECUTE'),
@@ -103,6 +124,22 @@ select ok(
   not has_function_privilege('anon', 'public.revoke_client_invitation_for_client(uuid,text,uuid)', 'EXECUTE'),
   'anon cannot revoke an invitation by client id'
 );
+select ok(
+  not has_function_privilege('anon', 'public.save_own_onboarding_intake(jsonb,bigint,uuid)', 'EXECUTE'),
+  'anon cannot save an onboarding intake'
+);
+select ok(
+  not has_function_privilege('anon', 'public.submit_own_onboarding_intake(bigint,uuid)', 'EXECUTE'),
+  'anon cannot submit an onboarding intake'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.save_own_onboarding_intake(jsonb,bigint,uuid)', 'EXECUTE'),
+  'authenticated Clients can invoke the guarded onboarding save RPC'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.submit_own_onboarding_intake(bigint,uuid)', 'EXECUTE'),
+  'authenticated Clients can invoke the guarded onboarding submit RPC'
+);
 
 select is(
   (
@@ -123,6 +160,7 @@ select is(
   array[
     'audit_events.audit_select_admin:PERMISSIVE:SELECT:authenticated',
     'client_invitations.invitations_select_coach_or_admin:PERMISSIVE:SELECT:authenticated',
+    'client_onboarding_intakes.client_onboarding_intakes_select_authorized:PERMISSIVE:SELECT:authenticated',
     'clients.clients_select_authorized:PERMISSIVE:SELECT:authenticated',
     'coach_client_assignments.assignments_select_authorized:PERMISSIVE:SELECT:authenticated',
     'organization_memberships.memberships_select_self_or_admin:PERMISSIVE:SELECT:authenticated',
