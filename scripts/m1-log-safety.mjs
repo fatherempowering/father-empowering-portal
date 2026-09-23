@@ -18,6 +18,7 @@ const unsafePatterns = [
   /(?:^|[^A-Z2-7])[A-Z2-7]{24,}(?:$|[^A-Z2-7])/,
   /\bsb-[A-Za-z0-9_-]+-auth-token\b/i,
   /\bM1-local-only-[^\s"']+/,
+  /\bONBOARDING_PRIVATE_(?:HEALTH|NUTRITION)_DO_NOT_LOG\b/,
 ];
 
 const exactSecrets = [
