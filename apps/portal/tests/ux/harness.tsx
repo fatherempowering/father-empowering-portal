@@ -8,6 +8,7 @@ import { ClientLoginCard } from "../../src/features/client/auth/client-login-car
 import { CoachEmailVerificationCard } from "../../src/features/coach/auth/coach-email-verification-card";
 import { ClientOnboarding } from "../../src/features/client/onboarding/client-onboarding";
 import { ClientWeekZero } from "../../src/features/client/week-zero/client-week-zero";
+import { PersonalPortalSetup } from "../../src/features/coach/personal-portal/personal-portal-setup";
 import { EMPTY_INITIAL_ASSESSMENT_RESPONSES } from "../../src/lib/contracts/week-zero";
 import { ONBOARDING_QUESTIONS } from "../../src/lib/contracts/onboarding-definition";
 import {
@@ -15,8 +16,10 @@ import {
   type OnboardingResponses,
 } from "../../src/lib/contracts/onboarding";
 import { AuthShell } from "../../src/components/fe/auth-shell";
+import { AppShell } from "../../src/components/fe/app-shell";
 import { CodeInput } from "../../src/components/fe/code-input";
 import { LandingPage } from "../../src/components/fe/landing/landing-page";
+import { PortalAccessProvider } from "../../src/components/fe/portal-access-context";
 import "../../src/app/globals.css";
 
 const now = Date.now();
@@ -55,6 +58,9 @@ let failedSaveMutationId: string | null = null;
 let assessmentConflictOccurred = false;
 let failedOnboardingMutationId: string | null = null;
 let onboardingConflictOccurred = false;
+let failedPersonalPortalMutationId: string | null = null;
+const personalPortalRequests: unknown[] = [];
+Object.assign(window, { __personalPortalRequests: personalPortalRequests });
 
 const assessmentResponses = () =>
   structuredClone(EMPTY_INITIAL_ASSESSMENT_RESPONSES);
@@ -186,6 +192,74 @@ window.fetch = async (url, init) => {
         timezone: "Asia/Tokyo",
       },
     });
+  if (path.endsWith("/coach/personal-client") && init?.method === "POST") {
+    if (scenario === "personal-network") {
+      throw new TypeError("Network unavailable");
+    }
+    let command: Record<string, unknown>;
+    try {
+      command = JSON.parse(String(init.body)) as Record<string, unknown>;
+    } catch {
+      return reply({ error: { code: "INVALID_REQUEST" } }, 400);
+    }
+    personalPortalRequests.push(command);
+    const expectedKeys = [
+      "firstName",
+      "idempotencyKey",
+      "lastName",
+      "locale",
+      "timeZone",
+    ];
+    const strictBody =
+      JSON.stringify(Object.keys(command).sort()) === JSON.stringify(expectedKeys)
+      && typeof command.firstName === "string"
+      && command.firstName.length > 0
+      && typeof command.lastName === "string"
+      && command.lastName.length > 0
+      && (command.locale === "fr-CA" || command.locale === "en-CA")
+      && typeof command.timeZone === "string"
+      && command.timeZone.length > 0
+      && typeof command.idempotencyKey === "string"
+      && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        command.idempotencyKey,
+      );
+    if (!strictBody) {
+      return reply({ error: { code: "INVALID_REQUEST" } }, 400);
+    }
+    if (
+      scenario === "personal-success"
+      && (
+        command.firstName !== "Maxime"
+        || command.lastName !== "Coach"
+        || command.locale !== "en-CA"
+        || command.timeZone !== "Asia/Tokyo"
+      )
+    ) {
+      return reply({ error: { code: "UNEXPECTED_INTENT" } }, 400);
+    }
+    if (scenario === "personal-error") {
+      return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
+    }
+    if (
+      scenario === "personal-retry"
+      && failedPersonalPortalMutationId === null
+    ) {
+      failedPersonalPortalMutationId = command.idempotencyKey as string;
+      return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
+    }
+    if (
+      scenario === "personal-retry"
+      && failedPersonalPortalMutationId !== command.idempotencyKey
+    ) {
+      return reply({ error: { code: "IDEMPOTENCY_KEY_CHANGED" } }, 409);
+    }
+    return reply({
+      data: {
+        clientId: "71000000-0000-4000-8000-000000000001",
+        redirectTo: "/client",
+      },
+    }, 201);
+  }
   if (path.endsWith("/client/onboarding/submit") && init?.method === "POST") {
     return reply({ data: { intake: onboardingSnapshot("SUBMITTED") } });
   }
@@ -464,11 +538,26 @@ function Harness() {
   if (view === "client-v2") {
     return <ClientDashboard loadTimeoutMs={5_000} />;
   }
+  if (view === "client-v2-staff") {
+    return <PortalAccessProvider isStaff>
+      <ClientDashboard loadTimeoutMs={5_000} />
+    </PortalAccessProvider>;
+  }
+  if (view === "client-today-staff") {
+    return <PortalAccessProvider isStaff>
+      <ClientDashboard view="today" loadTimeoutMs={5_000} />
+    </PortalAccessProvider>;
+  }
   if (view === "client-week-zero") {
     return <ClientWeekZero />;
   }
   if (view === "client-onboarding") {
     return <ClientOnboarding />;
+  }
+  if (view === "personal-portal-setup") {
+    return <AppShell space="coach" current="personal">
+      <PersonalPortalSetup requestTimeoutMs={350} />
+    </AppShell>;
   }
   return (
     <>
@@ -497,9 +586,12 @@ function Harness() {
             <option value="landing-fr">Landing · Français</option>
             <option value="client">Client</option>
             <option value="client-v2">Client · Pilote V2</option>
+            <option value="client-v2-staff">Client · Pilote V2 · Staff</option>
             <option value="client-today">Client · Aujourd’hui</option>
+            <option value="client-today-staff">Client · Aujourd’hui · Staff</option>
             <option value="client-onboarding">Client · Questionnaire d’accueil</option>
             <option value="client-week-zero">Client · Week Zero</option>
+            <option value="personal-portal-setup">Coach · Portail personnel</option>
             <option value="login">Connexion Client</option>
             <option value="activation">Activation</option>
             <option value="verify-email">Vérification Coach</option>
@@ -516,6 +608,8 @@ function Harness() {
               assessmentConflictOccurred = false;
               failedOnboardingMutationId = null;
               onboardingConflictOccurred = false;
+              failedPersonalPortalMutationId = null;
+              personalPortalRequests.length = 0;
               setKey(key + 1);
             }}
           >

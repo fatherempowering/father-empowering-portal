@@ -1,6 +1,7 @@
 import "server-only";
 
-import { requireCoachVerified, requireRole } from "@/lib/auth/actor";
+import { requireCoachVerified } from "@/lib/auth/actor";
+import { requireOwnClientAccess } from "@/lib/auth/own-client-access";
 import { M1ContractError, uuidSchema } from "@/lib/contracts/m1";
 import {
   EMPTY_INITIAL_ASSESSMENT_RESPONSES,
@@ -82,17 +83,14 @@ function mapAssessmentRpcError(error: { message: string } | null): M1ContractErr
 }
 
 export async function getOwnInitialAssessment(): Promise<InitialAssessmentSnapshot> {
-  const actor = await requireRole("CLIENT");
-  if (!actor.clientId) {
-    throw new M1ContractError("FORBIDDEN", "Client identity is not linked", 403);
-  }
+  const actor = await requireOwnClientAccess();
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("week_zero_assessments")
     .select("kind, schema_version, status, responses, row_version, updated_at, submitted_at")
     .eq("organization_id", actor.organizationId)
-    .eq("client_id", actor.clientId)
+    .eq("client_id", actor.ownClientId)
     .maybeSingle();
 
   if (error) throw mapAssessmentRpcError(error);
@@ -102,7 +100,7 @@ export async function getOwnInitialAssessment(): Promise<InitialAssessmentSnapsh
 export async function saveOwnInitialAssessment(
   input: SaveInitialAssessmentRequest,
 ): Promise<InitialAssessmentSnapshot> {
-  await requireRole("CLIENT");
+  await requireOwnClientAccess();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc("save_own_initial_assessment", {
     p_responses: input.responses,
@@ -116,7 +114,7 @@ export async function saveOwnInitialAssessment(
 export async function submitOwnInitialAssessment(
   input: SubmitInitialAssessmentRequest,
 ): Promise<InitialAssessmentSnapshot> {
-  await requireRole("CLIENT");
+  await requireOwnClientAccess();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc("submit_own_initial_assessment", {
     p_expected_version: input.expectedVersion,

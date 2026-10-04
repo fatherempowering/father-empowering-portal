@@ -3,6 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
 
 describe("Client logout browser boundary", () => {
+  it.each(["/login", "/client-login", "https://attacker.example", "/coach"])("only follows allowlisted logout destinations: %s", async (destination) => {
+    const leavePortal = vi.fn();
+    await requestClientLogout(leavePortal, vi.fn().mockResolvedValue(Response.json({ data: { redirectTo: destination } })));
+    expect(leavePortal).toHaveBeenCalledWith(destination === "/login" ? "/login" : "/client-login");
+  });
   it("leaves the private portal after any HTTP response, including a failure response", async () => {
     const leavePortal = vi.fn();
     const transport = vi.fn().mockResolvedValue(

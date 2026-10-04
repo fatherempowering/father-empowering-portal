@@ -13,7 +13,7 @@ describe("Client logout route", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.stubEnv("NEXT_PUBLIC_APP_URL", appUrl);
-    auth.signOutClientSession.mockResolvedValue(undefined);
+    auth.signOutClientSession.mockResolvedValue("/client-login");
   });
 
   afterEach(() => {
@@ -62,5 +62,14 @@ describe("Client logout route", () => {
         message: "Service temporarily unavailable.",
       },
     });
+  });
+
+  it("returns the Coach login destination after a staff personal-portal logout", async () => {
+    auth.signOutClientSession.mockResolvedValue("/login");
+    const response = await logoutClient(new Request(logoutUrl, {
+      method: "POST", headers: { origin: appUrl },
+    }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ data: { signedOut: true, redirectTo: "/login" } });
   });
 });

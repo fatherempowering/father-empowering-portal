@@ -2,7 +2,7 @@ export type ClientActor = Readonly<{
   userId: string;
   organizationId: string;
   clientId: string;
-  role: "CLIENT";
+  role: "CLIENT" | "COACH" | "ADMIN";
 }>;
 
 export type ClientDashboard = Readonly<{
