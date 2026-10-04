@@ -383,7 +383,7 @@ describe.sequential("Client onboarding persistence, privacy and isolation gate",
     expect(ONBOARDING_QUESTIONS.filter((question) => question.required)).toHaveLength(54);
   });
 
-  it("refuse les lectures et mutations sans session ou avec le mauvais rôle", async () => {
+  it("refuse l’anonyme, le Client côté Coach et le Staff vérifié sans profil personnel", async () => {
     const anonymousClient = await fetch(`${environment.appUrl}/api/v1/client/onboarding`);
     await expectErrorCode(anonymousClient, 401, "UNAUTHENTICATED");
     const anonymousCoach = await fetch(new URL(coachPath(clientA.clientId), environment.appUrl));
@@ -406,7 +406,7 @@ describe.sequential("Client onboarding persistence, privacy and isolation gate",
       assignedCoachSession,
       "/api/v1/client/onboarding",
     );
-    await expectErrorCode(coachAtClientBoundary, 403, "FORBIDDEN");
+    await expectErrorCode(coachAtClientBoundary, 404, "NOT_FOUND");
     const clientAtCoachBoundary = await authenticatedFetch(
       environment,
       clientASession,
