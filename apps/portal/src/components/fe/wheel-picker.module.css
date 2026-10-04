@@ -1,0 +1,10 @@
+.picker { min-width: 0; flex: 1; }
+.label { display: block; text-align: center; font-weight: 650; margin-bottom: 8px; }
+.frame { position: relative; border: 1px solid #8a8a84; border-radius: 12px; background: #fff; overflow: hidden; }
+.highlight { position: absolute; pointer-events: none; top: 44px; inset-inline: 0; height: 44px; background: #f6e9dc; border-block: 1px solid #c68d59; }
+.viewport { position: relative; height: 132px; overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: y mandatory; scrollbar-width: none; padding-block: 44px; box-sizing: border-box; touch-action: pan-y; }
+.viewport::-webkit-scrollbar { display: none; }
+.viewport:focus-visible { outline: 3px solid #934000; outline-offset: -3px; border-radius: 10px; }
+.viewport[aria-disabled="true"] { pointer-events: none; opacity: .6; }
+.option { height: 44px; display: flex; align-items: center; justify-content: center; scroll-snap-align: center; color: #60605b; font-size: 18px; cursor: pointer; user-select: none; }
+.selected { color: #20160e; font-weight: 750; font-size: 22px; }

@@ -68,7 +68,7 @@ export function AppShell({
           },
           {
             href: "/client/week-zero",
-            label: french ? "Week Zero · Bilan initial" : "Week Zero · Initial assessment",
+            label: french ? "Semaine zéro" : "Week Zero",
             icon: "check" as const,
             id: "week-zero" as const,
           },
