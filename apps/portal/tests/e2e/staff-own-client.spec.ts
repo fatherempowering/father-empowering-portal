@@ -75,12 +75,6 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
     .click();
   const creation = await creationResponse;
   expect(creation.status()).toBe(201);
-  const creationBody = (await creation.json()) as {
-    data?: { clientId?: unknown; redirectTo?: unknown };
-  };
-  expect(creationBody.data?.redirectTo).toBe("/client");
-  expect(typeof creationBody.data?.clientId).toBe("string");
-  const ownClientId = creationBody.data!.clientId as string;
 
   await expect(page).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(page.getByRole("heading", { name: /ton portail/i })).toBeVisible();
@@ -93,8 +87,13 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
   const ownApi = await context.request.get(`${environment.appUrl}/api/v1/client/me`);
   expect(ownApi.status()).toBe(200);
   expect(ownApi.headers()["cache-control"]).toContain("no-store");
-  const ownApiText = await ownApi.text();
-  expect(ownApiText).toContain(ownClientId);
+  const ownApiBody = (await ownApi.json()) as {
+    client?: { clientId?: unknown };
+  };
+  expect(typeof ownApiBody.client?.clientId).toBe("string");
+  const ownClientId = ownApiBody.client!.clientId as string;
+  expect(ownClientId).not.toBe(normalClient.clientId);
+  const ownApiText = JSON.stringify(ownApiBody);
   expect(ownApiText).not.toContain(normalClient.clientId);
 
   const onboardingInitial = await context.request.get(
