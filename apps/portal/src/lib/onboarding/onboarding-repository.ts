@@ -1,6 +1,7 @@
 import "server-only";
 
-import { requireCoachVerified, requireRole } from "@/lib/auth/actor";
+import { requireCoachVerified } from "@/lib/auth/actor";
+import { requireOwnClientAccess } from "@/lib/auth/own-client-access";
 import { M1ContractError, uuidSchema } from "@/lib/contracts/m1";
 import {
   EMPTY_ONBOARDING_RESPONSES,
@@ -73,17 +74,14 @@ function mapOnboardingRpcError(error: { message: string } | null): M1ContractErr
 }
 
 export async function getOwnOnboardingIntake(): Promise<OnboardingSnapshot> {
-  const actor = await requireRole("CLIENT");
-  if (!actor.clientId) {
-    throw new M1ContractError("FORBIDDEN", "Client identity is not linked", 403);
-  }
+  const actor = await requireOwnClientAccess();
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("client_onboarding_intakes")
     .select("kind, schema_version, status, responses, row_version, updated_at, submitted_at")
     .eq("organization_id", actor.organizationId)
-    .eq("client_id", actor.clientId)
+    .eq("client_id", actor.ownClientId)
     .maybeSingle();
   if (error) throw mapOnboardingRpcError(error);
   if (data) return snapshotFromRow(data as IntakeRow);
@@ -92,7 +90,7 @@ export async function getOwnOnboardingIntake(): Promise<OnboardingSnapshot> {
     .from("clients")
     .select("email, first_name, last_name")
     .eq("organization_id", actor.organizationId)
-    .eq("id", actor.clientId)
+    .eq("id", actor.ownClientId)
     .eq("auth_user_id", actor.userId)
     .eq("status", "ACTIVE")
     .maybeSingle();
@@ -116,7 +114,7 @@ export async function getOwnOnboardingIntake(): Promise<OnboardingSnapshot> {
 export async function saveOwnOnboardingIntake(
   input: SaveOnboardingRequest,
 ): Promise<OnboardingSnapshot> {
-  await requireRole("CLIENT");
+  await requireOwnClientAccess();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc("save_own_onboarding_intake", {
     p_responses: input.responses,
@@ -130,7 +128,7 @@ export async function saveOwnOnboardingIntake(
 export async function submitOwnOnboardingIntake(
   input: SubmitOnboardingRequest,
 ): Promise<OnboardingSnapshot> {
-  await requireRole("CLIENT");
+  await requireOwnClientAccess();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc("submit_own_onboarding_intake", {
     p_expected_version: input.expectedVersion,

@@ -70,9 +70,9 @@ export function ClientDashboard({
   async function signOut() {
     setSigningOut(true);
     setSignOutError(null);
-    const responseReceived = await requestClientLogout(() => {
+    const responseReceived = await requestClientLogout((destination) => {
       setDashboard(null);
-      window.location.replace("/client-login");
+      window.location.replace(destination);
     });
     if (responseReceived) return;
 

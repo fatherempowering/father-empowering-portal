@@ -9,7 +9,7 @@ import type {
 } from "@/features/client/activation/contracts";
 import { ClientActivationError } from "@/features/client/activation/errors";
 import type { ClientDashboardDependencies } from "@/features/client/dashboard/contracts";
-import { requireRole } from "@/lib/auth/actor";
+import { requireOwnClientAccess } from "@/lib/auth/own-client-access";
 import { hashInvitationToken } from "@/lib/auth/invitation-token";
 import { acceptClientInvitationResultSchema, M1ContractError } from "@/lib/contracts/m1";
 import { getPublicEnvironment } from "@/lib/env";
@@ -192,13 +192,12 @@ export function createClientM1Dependencies(): {
   const dashboard: ClientDashboardDependencies = {
     session: {
       async requireClientActor() {
-        const actor = await requireRole("CLIENT");
-        if (!actor.clientId) throw new M1ContractError("FORBIDDEN", "Client link required", 403);
+        const actor = await requireOwnClientAccess();
         return {
           userId: actor.userId,
           organizationId: actor.organizationId,
-          clientId: actor.clientId,
-          role: "CLIENT",
+          clientId: actor.ownClientId,
+          role: actor.role,
         };
       },
     },

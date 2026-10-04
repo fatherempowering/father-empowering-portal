@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   redirect: vi.fn(),
   registerClientShell: vi.fn(() => null),
   requireVerified: vi.fn(),
+  personal: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -21,6 +22,7 @@ vi.mock("@/lib/auth/actor", () => ({
   getServerActor: mocks.actor,
   requireCoachVerified: mocks.requireVerified,
 }));
+vi.mock("@/lib/auth/own-client-access", () => ({ getStaffPersonalProfile: mocks.personal }));
 vi.mock("@/features/coach/components/coach-dashboard", () => ({
   CoachDashboard: mocks.dashboard,
 }));
@@ -34,6 +36,8 @@ vi.mock("@/features/client/pwa/register-client-shell", () => ({
 import CoachPage from "@/app/(coach)/coach/page";
 import CoachClientPage from "@/app/(coach)/coach/clients/[clientId]/page";
 import ClientLayout from "@/app/(client)/layout";
+import PersonalPortalPage from "@/app/(coach)/coach/personal/page";
+import { PortalAccessProvider } from "@/components/fe/portal-access-context";
 import { M1ContractError } from "@/lib/contracts/m1";
 
 const coach = {
@@ -143,21 +147,22 @@ describe("Client layout staff routing", () => {
     vi.stubGlobal("React", React);
     mocks.actor.mockResolvedValue(coach);
     mocks.requireVerified.mockResolvedValue({ ...coach, coachVerified: true });
+    mocks.personal.mockResolvedValue({ actor: coach, profile: null });
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it("routes a verified Coach back to the Coach portal", async () => {
+  it("routes a verified Coach without a personal profile to explicit setup", async () => {
     await expect(
       ClientLayout({ children: React.createElement("p", null, "Client") }),
     ).rejects.toThrow("NEXT_REDIRECT");
-    expect(mocks.redirect).toHaveBeenCalledWith("/coach");
+    expect(mocks.redirect).toHaveBeenCalledWith("/coach/personal");
   });
 
   it("routes an unverified Coach to email verification, never legacy MFA", async () => {
-    mocks.requireVerified.mockRejectedValue(
+    mocks.personal.mockRejectedValue(
       new M1ContractError(
         "FORBIDDEN",
         "Coach email verification is required",
@@ -180,6 +185,76 @@ describe("Client layout staff routing", () => {
 
     expect(React.isValidElement(layout)).toBe(true);
     expect(mocks.requireVerified).not.toHaveBeenCalled();
+    expect(mocks.personal).not.toHaveBeenCalled();
+    expect(layout.type).toBe(PortalAccessProvider);
+    expect(layout.props.isStaff).toBe(false);
     expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("renders staff personal access without changing the actor role", async () => {
+    mocks.personal.mockResolvedValue({ actor: coach, profile: { id: client.clientId, status: "ACTIVE" } });
+    const layout = await ClientLayout({ children: React.createElement("p", null, "Client") });
+    expect(layout.type).toBe(PortalAccessProvider);
+    expect(layout.props.isStaff).toBe(true);
+    expect(mocks.personal).toHaveBeenCalledOnce();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it.each(["SUSPENDED", "ARCHIVED"])("does not render a %s personal profile", async (status) => {
+    mocks.personal.mockResolvedValue({ actor: coach, profile: { id: client.clientId, status } });
+    await expect(ClientLayout({ children: null })).rejects.toThrow("NEXT_REDIRECT");
+    expect(mocks.redirect).toHaveBeenCalledWith("/coach/personal");
+  });
+
+  it("requires login again when staff credentials are invalid", async () => {
+    mocks.personal.mockRejectedValue(new M1ContractError("UNAUTHENTICATED", "Invalid session", 401));
+    await expect(ClientLayout({ children: null })).rejects.toThrow("NEXT_REDIRECT");
+    expect(mocks.redirect).toHaveBeenCalledWith("/login");
+  });
+
+  it("keeps profile lookup failures closed", async () => {
+    mocks.personal.mockRejectedValue(new M1ContractError("TEMPORARILY_UNAVAILABLE", "Unavailable", 503));
+    await expect(ClientLayout({ children: null })).rejects.toMatchObject({ status: 503 });
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+});
+
+describe("Staff personal entry is read-only and guarded", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.stubGlobal("React", React);
+    mocks.actor.mockResolvedValue(coach);
+    mocks.personal.mockResolvedValue({ actor: coach, profile: null });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("renders explicit setup instead of creating anything on GET", async () => {
+    const page = await PersonalPortalPage();
+    expect(page.props.current).toBe("personal");
+    expect(page.props.children.type.name).toBe("PersonalPortalSetup");
+    expect(mocks.personal).toHaveBeenCalledOnce();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+  it("reuses an active own profile", async () => {
+    mocks.personal.mockResolvedValue({ actor: coach, profile: { id: client.clientId, status: "ACTIVE" } });
+    await expect(PersonalPortalPage()).rejects.toThrow("NEXT_REDIRECT");
+    expect(mocks.redirect).toHaveBeenCalledWith("/client");
+  });
+  it("does not offer recreation for a suspended own profile", async () => {
+    mocks.personal.mockResolvedValue({ actor: coach, profile: { id: client.clientId, status: "SUSPENDED" } });
+    const page = await PersonalPortalPage();
+    expect(page.props.children.type).toBe(React.Fragment);
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+  it.each([[null, "/login"], [client, "/client"]])("rejects a non-staff entry before personal lookup", async (actor, destination) => {
+    mocks.actor.mockResolvedValue(actor);
+    await expect(PersonalPortalPage()).rejects.toThrow("NEXT_REDIRECT");
+    expect(mocks.redirect).toHaveBeenCalledWith(destination);
+    expect(mocks.personal).not.toHaveBeenCalled();
+  });
+  it("requires the existing Coach verification", async () => {
+    mocks.personal.mockRejectedValue(new M1ContractError("FORBIDDEN", "Verification required", 403));
+    await expect(PersonalPortalPage()).rejects.toThrow("NEXT_REDIRECT");
+    expect(mocks.redirect).toHaveBeenCalledWith("/verify-email");
   });
 });
