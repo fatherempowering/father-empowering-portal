@@ -61,6 +61,8 @@ let onboardingConflictOccurred = false;
 let failedPersonalPortalMutationId: string | null = null;
 const personalPortalRequests: unknown[] = [];
 Object.assign(window, { __personalPortalRequests: personalPortalRequests });
+const onboardingRequests: unknown[] = [];
+Object.assign(window, { __onboardingRequests: onboardingRequests });
 
 const assessmentResponses = () =>
   structuredClone(EMPTY_INITIAL_ASSESSMENT_RESPONSES);
@@ -188,7 +190,7 @@ window.fetch = async (url, init) => {
         clientId: "client-0",
         displayName: "Alex Martin",
         status: "ACTIVE",
-        locale: scenario === "english" ? "en-CA" : "fr-CA",
+        locale: scenario === "english" || harnessParameters.get("language") === "en" ? "en-CA" : "fr-CA",
         timezone: "Asia/Tokyo",
       },
     });
@@ -264,6 +266,7 @@ window.fetch = async (url, init) => {
     return reply({ data: { intake: onboardingSnapshot("SUBMITTED") } });
   }
   if (path.endsWith("/client/onboarding") && init?.method === "PUT") {
+    onboardingRequests.push(JSON.parse(String(init.body)));
     const command = JSON.parse(String(init.body)) as {
       clientMutationId: string;
       expectedVersion: number;
@@ -305,6 +308,15 @@ window.fetch = async (url, init) => {
     });
   }
   if (path.endsWith("/client/onboarding")) {
+    if (scenario === "onboarding-measurement-draft") {
+      return reply({ data: { intake: onboardingSnapshot("DRAFT", { ...EMPTY_ONBOARDING_RESPONSES, height: "5 ft 10 in", currentBodyweight: "185.5 lb" }) } });
+    }
+    if (scenario === "onboarding-legacy-measurements") {
+      return reply({ data: { intake: onboardingSnapshot("DRAFT", { ...EMPTY_ONBOARDING_RESPONSES, height: "Ancienne taille sans unité", currentBodyweight: "Ancien poids sans unité" }) } });
+    }
+    if (scenario === "onboarding-complete-draft") {
+      return reply({ data: { intake: onboardingSnapshot("DRAFT", completeOnboardingResponses()) } });
+    }
     if (scenario === "onboarding-action-error") {
       return reply(
         { error: { code: "TEMPORARILY_UNAVAILABLE", message: "Unavailable" } },

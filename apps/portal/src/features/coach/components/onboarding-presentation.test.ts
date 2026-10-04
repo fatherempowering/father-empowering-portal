@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ONBOARDING_QUESTIONS } from "@/lib/contracts/onboarding-definition";
+import { NO_EQUIPMENT_ANSWER } from "@/lib/onboarding/answer-display";
 import {
   displayOnboardingAnswer,
   onboardingPresentationSections,
@@ -66,5 +67,10 @@ describe("Coach onboarding presentation", () => {
     expect(displayOnboardingAnswer(question("cardioDetails"), null, "fr")).toBe(
       "Non renseigné",
     );
+  });
+  it("localizes the new unit-bearing measurements and no-equipment answer without rewriting responses", () => {
+    expect(displayOnboardingAnswer(question("height"), "5 ft 10 in", "fr")).toBe("5 pi 10 po");
+    expect(displayOnboardingAnswer(question("currentBodyweight"), "84.5 kg", "fr")).toBe("84,5 kg");
+    expect(displayOnboardingAnswer(question("availableEquipment"), NO_EQUIPMENT_ANSWER, "en")).toBe("Not applicable — no equipment at home.");
   });
 });

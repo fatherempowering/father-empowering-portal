@@ -173,7 +173,7 @@ export function ClientWeekZero() {
     <div className={styles.page}>
       <header className={styles.intro}>
         <p className="fe-kicker">Week Zero</p>
-        <h1 className="fe-title">{t("Ton bilan initial", "Your initial assessment")}</h1>
+        <h1 className="fe-title">{t("Ta semaine zéro", "Your Week Zero")}</h1>
         <p>{t("Partage ton point de départ avec ton Coach : mesures, mobilité et disponibilités. Tu peux enregistrer, revenir plus tard, puis transmettre ton bilan.", "Share your starting point with your Coach: measurements, mobility and availability. Save your progress, return later, then submit your assessment.")}</p>
       </header>
       {error && <Feedback>{error}</Feedback>}
@@ -183,7 +183,7 @@ export function ClientWeekZero() {
       }}>{t("Recharger la version enregistrée", "Reload saved version")}</button>}
       {failed ? <><Feedback>{t("Impossible de charger ton bilan. Aucune donnée n’a été remplacée.", "Unable to load your assessment. No data was replaced.")}</Feedback><button className="fe-button" onClick={() => setAttempt((n) => n+1)}>{t("Réessayer", "Try again")}</button></> : !assessment || !responses ? <Loading>{t("Chargement du bilan…", "Loading assessment…")}</Loading> : <>
         <p className={styles.status} role="status" aria-live="polite">
-          {busy ? t("Enregistrement en cours…", "Saving…") : submitted ? t("Bilan initial transmis au Coach", "Initial assessment submitted to your Coach") : dirty ? t("Modifications non enregistrées", "Unsaved changes") : assessment.status === "DRAFT" ? t("Brouillon enregistré — pas encore transmis au Coach", "Draft saved — not yet submitted to your Coach") : t("Bilan initial non commencé", "Initial assessment not started")}
+          {busy ? t("Enregistrement en cours…", "Saving…") : submitted ? t("Semaine zéro transmise au Coach", "Week Zero submitted to your Coach") : dirty ? t("Modifications non enregistrées", "Unsaved changes") : assessment.status === "DRAFT" ? t("Brouillon enregistré — pas encore transmis au Coach", "Draft saved — not yet submitted to your Coach") : t("Semaine zéro non commencée", "Week Zero not started")}
           {savedNotice && !submitted ? t(". Sauvegarde confirmée.", ". Save confirmed.") : ""}
         </p>
         {submitted ? <>
@@ -193,7 +193,7 @@ export function ClientWeekZero() {
           <Link className="fe-button" href="/client">{t("Retour à mon portail", "Back to my portal")}</Link>
         </> : <>
           <p className={styles.notice}>{t("Enregistrer conserve tes réponses dans ton espace privé. Seul « Transmettre mon bilan au Coach » rend ce bilan visible dans ton dossier Coach.", "Saving keeps your answers in your private portal. Only “Submit my assessment to my Coach” makes it visible in your Coach’s client file.")}</p>
-          <nav aria-label={t("Étapes du bilan initial", "Assessment steps")}><ol className={styles.steps}>{titles.map((title,index) => <li key={title}><button className={`fe-button ${step===index ? "fe-button-primary" : ""}`} type="button" aria-current={step===index ? "step" : undefined} disabled={busy} onClick={() => goToStep(index)}>{index+1}. {title}</button></li>)}</ol></nav>
+          <nav aria-label={t("Étapes de la semaine zéro", "Week Zero steps")}><ol className={styles.steps}>{titles.map((title,index) => <li key={title}><button className={`fe-button ${step===index ? "fe-button-primary" : ""}`} type="button" aria-current={step===index ? "step" : undefined} disabled={busy} onClick={() => goToStep(index)}>{index+1}. {title}</button></li>)}</ol></nav>
           <form onSubmit={(event) => { event.preventDefault(); void persist(false); }}>
             <fieldset className={styles.panel} disabled={busy || conflict}>
               <legend className="fe-sr-only">{titles[step]}</legend>
@@ -216,7 +216,7 @@ export function ClientWeekZero() {
                 </div></>}
               {step === 3 && <>
                 <AssessmentReview responses={responses} french={french}/>
-                {missing.length > 0 ? <Feedback>{t("À compléter avant de transmettre : ", "Complete before submitting: ")}{missing.join("; ")}</Feedback> : <Feedback tone="info">{t("Les champs requis du bilan initial sont remplis. Vérifie tes réponses puis confirme leur transmission à ton Coach.", "The required assessment fields are filled. Review your answers, then confirm submission to your Coach.")}</Feedback>}
+                {missing.length > 0 ? <Feedback>{t("À compléter avant de transmettre : ", "Complete before submitting: ")}{missing.join("; ")}</Feedback> : <Feedback tone="info">{t("Les champs requis de la semaine zéro sont remplis. Vérifie tes réponses puis confirme leur transmission à ton Coach.", "The required Week Zero fields are filled. Review your answers, then confirm submission to your Coach.")}</Feedback>}
                 <p className={styles.notice}>{t("Ce bilan ne remplace pas les autres étapes Week Zero : photos, charges et cardio seront intégrés ensuite. Ton Coach recevra uniquement les réponses affichées ci-dessus.", "This assessment does not replace the other Week Zero steps: photos, loads and cardio will be integrated later. Your Coach receives only the answers shown above.")}</p>
                 <button className="fe-button fe-button-primary fe-button-wide" type="button" disabled={busy || conflict || missing.length>0} onClick={() => void persist(true)}>{t("Transmettre mon bilan au Coach", "Submit my assessment to my Coach")}</button>
               </>}
@@ -227,7 +227,6 @@ export function ClientWeekZero() {
               {step<3 && <button className="fe-button fe-button-primary" type="button" disabled={busy} onClick={() => goToStep(step+1)}>{t("Continuer", "Continue")}</button>}
             </div>
           </form>
-          <p>{t("Pour partager tes objectifs, tes habitudes et ton parcours personnel : ", "To share your goals, habits and personal background: ")}<a href="/client/onboarding">{t("Ouvrir mon questionnaire d’accueil", "Open my welcome questionnaire")}</a>. {t("Il est distinct de ce bilan de mesures et de mobilité, et se remplit maintenant directement dans ton portail.", "It is separate from this measurements and mobility assessment, and is now completed directly in your portal.")}</p>
         </>}
       </>}
     </div>

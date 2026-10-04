@@ -147,7 +147,7 @@ export function ClientHomePilot({
           </a>
           <Link className={styles.navigationLink} href="/client/week-zero" onClick={() => setMenuOpen(false)}>
             <Icon name="check" />
-            {french ? "Week Zero · Bilan initial" : "Week Zero · Initial assessment"}
+            {french ? "Semaine zéro" : "Week Zero"}
           </Link>
           {isStaff ? (
             <a className={styles.navigationLink} href="/coach" onClick={() => setMenuOpen(false)}>

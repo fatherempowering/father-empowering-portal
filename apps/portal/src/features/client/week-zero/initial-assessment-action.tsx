@@ -46,12 +46,12 @@ export function InitialAssessmentAction({ french, actionClassName = "fe-button f
   if (!status) return <p role="status">{t("Chargement de ta prochaine étape…", "Loading your next step…")}</p>;
   const sent = status === "SUBMITTED";
   return <div data-initial-assessment-status={status}>
-    <h2>{sent ? t("Bilan initial transmis", "Initial assessment submitted") : t("Ton point de départ : le bilan initial", "Your starting point: the initial assessment")}</h2>
+    <h2>{sent ? t("Semaine zéro transmise", "Week Zero submitted") : t("Ta semaine zéro", "Your Week Zero")}</h2>
     <p>{sent
       ? t("Ton Coach peut consulter tes réponses dans ton dossier. Tu n’as rien à renvoyer. Ton programme n’est pas encore disponible ici.", "Your Coach can read your answers in your file. There is nothing to resend. Your program is not available here yet.")
       : t("Renseigne tes mesures, ta mobilité et tes disponibilités pour aider ton Coach à préparer la suite. Enregistre un brouillon, puis transmets-le quand tu es prêt.", "Share your measurements, mobility and availability to help your Coach plan the next steps. Save a draft, then submit it when you are ready.")}</p>
     <Link className={actionClassName} href="/client/week-zero">{sent
-      ? t("Consulter mon bilan transmis", "View my submitted assessment")
-      : status === "DRAFT" ? t("Reprendre mon bilan initial", "Continue my initial assessment") : t("Compléter mon bilan initial", "Complete my initial assessment")}</Link>
+      ? t("Consulter ma semaine zéro", "View my Week Zero")
+      : status === "DRAFT" ? t("Reprendre ma semaine zéro", "Continue my Week Zero") : t("Commencer ma semaine zéro", "Start my Week Zero")}</Link>
   </div>;
 }

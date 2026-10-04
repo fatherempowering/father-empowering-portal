@@ -90,8 +90,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "required": true,
         "maxLength": 120,
         "helper": {
-          "fr": "Précise l’unité, par exemple 180 cm ou 5 pi 10 po.",
-          "en": "Include the unit, for example 180 cm or 5 ft 10 in."
+          "fr": "Choisis ta taille en pieds et pouces ou en centimètres.",
+          "en": "Choose your height in feet and inches or centimetres."
         }
       },
       {
@@ -105,8 +105,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "required": true,
         "maxLength": 120,
         "helper": {
-          "fr": "Précise l’unité, par exemple 185 lb ou 84 kg. Cette réponse ne remplace pas les mesures du bilan initial.",
-          "en": "Include the unit, for example 185 lb or 84 kg. This answer does not replace your initial assessment measurements."
+          "fr": "Choisis ton poids en livres ou en kilogrammes.",
+          "en": "Choose your weight in pounds or kilograms."
         }
       }
     ]
@@ -170,8 +170,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "fatherVision",
         "sourceId": "4ac36aae-c522-4153-8d57-0290248252f5",
         "label": {
-          "fr": "Quel père et quel homme veux-tu devenir ?",
-          "en": "What kind of father and man do you want to become?"
+          "fr": "Quel homme veux-tu devenir et quel père, si applicable ?",
+          "en": "What kind of man do you want to become, and what kind of father, if applicable?"
         },
         "type": "textarea",
         "required": true,

@@ -179,7 +179,7 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
   await page.goto(`${environment.appUrl}/client/onboarding`);
   await expect(page.getByRole("heading", { name: /questionnaire d’accueil/i })).toBeVisible();
   await page.goto(`${environment.appUrl}/client/week-zero`);
-  await expect(page.getByRole("heading", { name: /bilan initial/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /semaine zéro/i })).toBeVisible();
   expect(coachOtpRequests).toBe(otpRequestsAfterLogin);
 
   await page.getByRole("button", { name: /se déconnecter/i }).click();
