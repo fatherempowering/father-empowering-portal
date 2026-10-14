@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { getM1TestEnvironment, seedStaffIdentity } from "../harness/m1-local-supabase";
-import { extractSixDigitOtp, waitForMail } from "../harness/mailpit";
+import { extractActivation, extractSixDigitOtp, waitForMail } from "../harness/mailpit";
 const environment=getM1TestEnvironment();
-test("verified Coach builds and reloads a private program draft",async({page})=>{
+test("Coach builds, publishes and preserves an immutable plan visible to the OTP Client",async({page,browser})=>{
   const password="Draft-local-test-only!123";
   const coach=await seedStaffIdentity(environment,{email:`program.e2e.${randomUUID()}@example.test`,password,role:"COACH"});
   await page.goto(`${environment.appUrl}/coach/programs`);await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
@@ -11,6 +11,16 @@ test("verified Coach builds and reloads a private program draft",async({page})=>
   await page.getByRole("button",{name:/se connecter|sign in|continuer/i}).click();await expect(page).toHaveURL(/\/verify-email(?:\?.*)?$/);
   const mail=await waitForMail(environment.mailpitUrl,coach.email,(m)=>{try{extractSixDigitOtp(m);return true;}catch{return false;}});
   await page.getByRole("textbox",{name:/chiffre 1 sur 6/i}).fill(extractSixDigitOtp(mail));await page.getByRole("button",{name:/ouvrir mon espace coach/i}).click();await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
+  const clientEmail=`program.client.${randomUUID()}@example.test`;
+  await page.getByRole("button",{name:/ajouter un client/i}).click();await page.getByLabel(/prénom/i).fill("Client");await page.getByLabel(/^nom$/i).fill("Programme");await page.getByLabel(/courriel du client/i).fill(clientEmail);await page.getByRole("button",{name:/créer et inviter/i}).click();
+  const invitation=await waitForMail(environment.mailpitUrl,clientEmail,m=>/\/activate#token=/.test(`${m.text}\n${m.html}`));
+  const context=await browser.newContext();let clientPage=await context.newPage();
+  try { await clientPage.goto(extractActivation(environment.appUrl,invitation).url); } catch { throw new Error("Unable to open local activation link"); }
+  await clientPage.getByRole("button",{name:/envoyer mon code/i}).click();
+  const clientMail=await waitForMail(environment.mailpitUrl,clientEmail,m=>{try{extractSixDigitOtp(m);return true;}catch{return false;}});
+  try { await clientPage.getByRole("textbox",{name:/chiffre 1 sur 6/i}).fill(extractSixDigitOtp(clientMail)); } catch { throw new Error("Unable to enter local OTP"); }
+  await clientPage.getByRole("button",{name:/activer mon portail/i}).click();await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
+  await expect(clientPage.getByText(/Ton programme est en préparation/)).toBeVisible();
   await page.getByRole("link",{name:"Exercices",exact:true}).click();await page.getByLabel("Nom de l’exercice (anglais)").fill("Dumbbell Press");
   await page.getByRole("button",{name:"Enregistrer l’exercice",exact:true}).click();await expect(page.getByText("Exercice enregistré dans la bibliothèque.", {exact:true})).toBeVisible();
   await page.getByRole("link",{name:"Programmes",exact:true}).click();
@@ -25,6 +35,20 @@ test("verified Coach builds and reloads a private program draft",async({page})=>
   await page.getByRole("button",{name:"Enregistrer le brouillon",exact:true}).click();await expect(page.getByText("Brouillon enregistré · version 2.")).toBeVisible();
   await page.reload();await page.getByRole("button",{name:"Ouvrir Phase force",exact:true}).click();await expect(page.getByLabel("Charge cible",{exact:true})).toHaveValue("40 lb");
   await page.getByRole("button",{name:"Semaine 2",exact:true}).click();await expect(page.getByLabel("Charge cible",{exact:true})).toHaveValue("45 lb");
+  await page.getByRole("combobox",{name:"Client destinataire",exact:true}).selectOption({label:"Client Programme"});
+  await expect(page.getByText("Ce client n’a pas encore de programme publié.")).toBeVisible();
+  page.on("dialog",dialog=>dialog.accept());
+  await page.getByRole("button",{name:"Publier pour ce client",exact:true}).click();
+  await expect(page.getByText("Programme publié. Le client peut maintenant le consulter dans son portail.")).toBeVisible();
+  await clientPage.reload();await clientPage.getByRole("link",{name:"Voir mon programme",exact:true}).click();
+  await expect(clientPage.getByRole("heading",{name:"Phase force",exact:true})).toBeVisible();
+  await expect(clientPage.locator("p").filter({hasText:"Série 1"})).toContainText("40 lb");
+  await page.getByLabel("Charge cible",{exact:true}).fill("50 lb");await page.getByRole("button",{name:"Enregistrer le brouillon",exact:true}).click();await expect(page.getByText("Brouillon enregistré · version 3.")).toBeVisible();
+  await clientPage.reload();await clientPage.getByRole("button",{name:"Semaine 2",exact:true}).click();await expect(clientPage.locator("p").filter({hasText:"Série 1"})).toContainText("45 lb");
+  await clientPage.close();clientPage=await context.newPage();let otpRequests=0;clientPage.on("request",r=>{if(r.url().includes("/client-otp/request"))otpRequests++;});
+  await clientPage.goto(`${environment.appUrl}/client/program`);await expect(clientPage.getByRole("heading",{name:"Phase force",exact:true})).toBeVisible();expect(otpRequests).toBe(0);
+  await clientPage.getByRole("button",{name:"Se déconnecter",exact:true}).click();await expect(clientPage).toHaveURL(/\/client-login$/);
+  await clientPage.goto(`${environment.appUrl}/client/program`);await expect(clientPage).toHaveURL(/\/client-login$/);await context.close();
   await page.getByRole("button",{name:"Se déconnecter",exact:true}).click();await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
   await page.goto(`${environment.appUrl}/coach/programs`);await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
 });

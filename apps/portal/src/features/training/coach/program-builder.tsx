@@ -7,6 +7,7 @@ import { TRAINING_UNITS, exerciseListSchema, type ExerciseList, type ExerciseSna
 import { programListSchema, programSnapshotSchema, saveProgramRequestSchema, type DraftExercise, type DraftSession, type ProgramEditor, type ProgramList, type ProgramSnapshot, type SaveProgramRequest } from "@/lib/contracts/training-drafts";
 import { addLibraryExercise, compactUniformSets, draftWarnings, duplicateWeek, moveItem, newBlock, newProgram, newSession } from "@/lib/training/program-editor";
 import styles from "./program-builder.module.css";
+import { ProgramPublish } from "./program-publish";
 
 type Text = { fr: string; en: string };
 function TextPair({ label, value, change }: { label: string; value: Text; change: (value: Text) => void }) {
@@ -60,9 +61,10 @@ export function ProgramBuilder() {
   const [weekIndex, setWeekIndex] = useState(0); const [sessionIndex, setSessionIndex] = useState(0);
   const [dirty, setDirty] = useState(false); const [saving, setSaving] = useState(false); const [opening, setOpening] = useState(false);
   const [uncertain, setUncertain] = useState(false); const [conflict, setConflict] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null); const [success, setSuccess] = useState<string | null>(null);
   const pending = useRef<SaveProgramRequest | null>(null); const busy = useRef(false);
-  const locked = saving || opening || uncertain || conflict;
+  const locked = saving || opening || uncertain || conflict || publishing;
   const week = document.weeks[weekIndex]; const session = week.sessions[sessionIndex];
   const warnings = draftWarnings(document);
 
@@ -79,10 +81,10 @@ export function ProgramBuilder() {
     })(); return () => { active = false; controller.abort(); clearTimeout(timeout); };
   }, [page, reload]);
   useEffect(() => {
-    if (!dirty && !uncertain) return;
+    if (!dirty && !uncertain && !publishing) return;
     const protect = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", protect); return () => window.removeEventListener("beforeunload", protect);
-  }, [dirty, uncertain]);
+  }, [dirty, uncertain, publishing]);
 
   function change(edit: (copy: ProgramEditor) => void) {
     if (locked) return;
@@ -137,13 +139,13 @@ export function ProgramBuilder() {
     change((copy) => { copy.weeks.splice(weekIndex,1); copy.weeks.forEach((w,i) => { w.number=i+1; }); }); setWeekIndex(0); setSessionIndex(0);
   }
 
-  return <AppShell space="coach" current="programs" documentNavigation accountAction={<button type="button" className="fe-button" disabled={saving || opening || uncertain} onClick={() => void logout()}>Se déconnecter</button>}>
+  return <AppShell space="coach" current="programs" documentNavigation accountAction={<button type="button" className="fe-button" disabled={saving || opening || uncertain || publishing} onClick={() => void logout()}>Se déconnecter</button>}>
     <div className={styles.page}>
-      <header className={styles.heading}><div><p className="fe-kicker">ENTRAÎNEMENT · BROUILLONS</p><h1 className="fe-title">Tes programmes.</h1><p>Construis ton plan à ton rythme. Rien n’est envoyé au client à cette étape.</p></div><button type="button" className="fe-button" disabled={saving || opening || uncertain} onClick={() => void open(null)}>Nouveau programme</button></header>
+      <header className={styles.heading}><div><p className="fe-kicker">ENTRAÎNEMENT · BROUILLONS</p><h1 className="fe-title">Tes programmes.</h1><p>Construis ton plan à ton rythme. Rien n’est transmis sans publication.</p></div><button type="button" className="fe-button" disabled={saving || opening || uncertain || publishing} onClick={() => void open(null)}>Nouveau programme</button></header>
       <div className={styles.columns}>
         <aside className={styles.panel} aria-label="Brouillons enregistrés"><h2>Mes brouillons</h2>
           {listError ? <Feedback>Impossible de charger les brouillons. Aucun programme n’a été supprimé.</Feedback> : !list ? <Loading>Chargement…</Loading> : <>
-            {!list.items.length ? <p>Aucun brouillon enregistré.</p> : <ul className={styles.list}>{list.items.map((item) => <li key={item.id}><strong>{item.title.fr || item.title.en}</strong><p>{item.weekCount} semaine(s) · version {item.version}</p><button className="fe-button" type="button" disabled={saving || opening || uncertain} onClick={() => void open(item.id)}>Ouvrir {item.title.fr || item.title.en}</button></li>)}</ul>}
+            {!list.items.length ? <p>Aucun brouillon enregistré.</p> : <ul className={styles.list}>{list.items.map((item) => <li key={item.id}><strong>{item.title.fr || item.title.en}</strong><p>{item.weekCount} semaine(s) · version {item.version}</p><button className="fe-button" type="button" disabled={saving || opening || uncertain || publishing} onClick={() => void open(item.id)}>Ouvrir {item.title.fr || item.title.en}</button></li>)}</ul>}
             <div className={styles.actions}><button className="fe-button" type="button" disabled={!page} onClick={() => setPage(page-1)}>Précédents</button><span>Page {page+1}</span><button className="fe-button" type="button" disabled={(page+1)*20>=list.total} onClick={() => setPage(page+1)}>Suivants</button></div>
           </>}
           <button className="fe-button" type="button" onClick={() => setReload(reload+1)}>Recharger les brouillons</button>
@@ -179,7 +181,7 @@ export function ProgramBuilder() {
             </div>
             {session?.blocks.map((block,b) => <section className={styles.block} key={block.id} aria-label={`Bloc ${b+1}`}>
               <h3>Bloc {b+1}</h3><TextPair label="Nom du bloc" value={block.label} change={(value) => editSession((s) => { s.blocks[b].label=value; })} />
-              <div className={styles.grid}><label>Mode du bloc<select value={block.mode} onChange={(e) => editSession((s) => { s.blocks[b].mode=e.target.value as typeof block.mode; })}><option value="standard">Standard</option><option value="superset">Superset — deux exercices</option><option value="finisher">Finisher — deux exercices ou plus</option></select></label><label>Repos après le tour (secondes)<input type="number" min={0} max={3600} value={block.restSeconds} onChange={(e) => editSession((s) => { s.blocks[b].restSeconds=e.target.valueAsNumber; })} /></label></div>
+              <div className={styles.grid}><label>Mode du bloc<select value={block.mode} onChange={(e) => editSession((s) => { s.blocks[b].mode=e.target.value as typeof block.mode; })}><option value="standard">Standard</option><option value="superset">Superset — deux exercices</option><option value="finisher">Finisher — deux exercices ou plus</option></select></label><label>Repos après le tour (secondes)<input type="number" min={0} max={3600} value={Number.isFinite(block.restSeconds) ? block.restSeconds : ""} onChange={(e) => editSession((s) => { s.blocks[b].restSeconds=e.target.valueAsNumber; })} /></label></div>
               {block.mode!=="standard" ? <p className={styles.note}>Les exercices du tour doivent avoir le même nombre de séries. Un groupe incomplet reste enregistrable en brouillon.</p> : null}
               <div className={styles.actions}>{([-1,1] as const).map((direction) => <button className="fe-button" type="button" key={direction} disabled={b+direction<0 || b+direction>=session.blocks.length} onClick={() => editSession((s) => { s.blocks=moveItem(s.blocks,b,direction); })}>{direction===-1 ? "Monter le bloc" : "Descendre le bloc"}</button>)}<button className="fe-button" type="button" onClick={() => { if(window.confirm("Retirer ce bloc et ses exercices ?")) editSession((s) => { s.blocks.splice(b,1); }); }}>Retirer le bloc</button></div>
               {block.exercises.map((exercise,e) => {
@@ -188,7 +190,7 @@ export function ProgramBuilder() {
                 const { sets: _sets, prescribedSets: _details, ...common }=p; void _sets; void _details;
                 return <article className={styles.exercise} key={exercise.id} aria-label={`Exercice ${e+1}`}>
                   <h4>{exercise.name}</h4><TextPair label="Consigne de l’exercice" value={exercise.cue} change={(value) => update((x) => { x.cue=value; })} />
-                  <label>Nombre de séries<input type="number" min={1} max={20} value={p.sets} onChange={(event) => { const count=event.target.valueAsNumber; if(p.prescribedSets && count<p.sets && !window.confirm("Réduire le nombre de séries retire les prescriptions des dernières séries. Continuer ?")) return; update((x) => { x.prescription.sets=count; if(x.prescription.prescribedSets && Number.isInteger(count) && count>=1 && count<=20) x.prescription.prescribedSets=Array.from({length:count},(_,i)=> x.prescription.prescribedSets?.[i] ?? {...common}); }); }} /></label>
+                  <label>Nombre de séries<input type="number" min={1} max={20} value={Number.isFinite(p.sets) ? p.sets : ""} onChange={(event) => { const count=event.target.valueAsNumber; if(p.prescribedSets && count<p.sets && !window.confirm("Réduire le nombre de séries retire les prescriptions des dernières séries. Continuer ?")) return; update((x) => { x.prescription.sets=count; if(x.prescription.prescribedSets && Number.isInteger(count) && count>=1 && count<=20) x.prescription.prescribedSets=Array.from({length:count},(_,i)=> x.prescription.prescribedSets?.[i] ?? {...common}); }); }} /></label>
                   <PrescriptionFields value={common} change={(value) => update((x) => { x.prescription={...x.prescription,...value}; })} />
                   <label className={styles.check}><input type="checkbox" checked={Boolean(p.prescribedSets)} disabled={!Number.isInteger(p.sets) || p.sets<1 || p.sets>20} onChange={(event) => { if(!event.target.checked && !window.confirm("Utiliser la prescription commune pour toutes les séries ?")) return; update((x) => { if(event.target.checked) x.prescription.prescribedSets=Array.from({length:p.sets},()=>({...common})); else delete x.prescription.prescribedSets; }); }} />Prescriptions différentes selon la série</label>
                   {p.prescribedSets?.map((set,i) => <div key={i}><h5>Série {i+1}</h5><PrescriptionFields prefix={`Série ${i+1} · `} value={set} change={(value) => update((x) => { x.prescription.prescribedSets![i]=value; })} /></div>)}
@@ -203,9 +205,10 @@ export function ProgramBuilder() {
             {error ? <Feedback>{error}</Feedback> : null}{success ? <Feedback tone="success">{success}</Feedback> : null}
             <p>{dirty ? "Modifications non enregistrées." : selected ? `Brouillon enregistré · version ${selected.version}.` : "Ce nouveau brouillon n’est pas encore enregistré."}</p>
             {warnings.length ? <details><summary>{warnings.length} élément(s) à compléter — sauvegarde autorisée</summary><ul className={styles.warning}>{warnings.map((warning,i) => <li key={i}>{warning}</li>)}</ul></details> : null}
-            <button className="fe-button fe-button-primary" type="button" disabled={saving || opening || conflict} onClick={() => void save()}>{saving ? "Enregistrement…" : uncertain ? "Réessayer le même enregistrement" : "Enregistrer le brouillon"}</button>
-            <p className={styles.note}>Brouillon privé Coach/Admin. Aucune attribution ou publication Client à cette étape.</p>
+            <button className="fe-button fe-button-primary" type="button" disabled={saving || opening || conflict || publishing} onClick={() => void save()}>{saving ? "Enregistrement…" : uncertain ? "Réessayer le même enregistrement" : "Enregistrer le brouillon"}</button>
+            <p className={styles.note}>Brouillon privé Coach/Admin. Seule une publication explicite rend le plan visible au Client.</p>
           </div>
+          {selected ? <div className={styles.panel}><ProgramPublish key={selected.id} snapshot={selected} disabled={dirty || locked} lock={(value) => { setPublishing(value); busy.current=value; }} /></div> : null}
         </section>
       </div>
     </div>
