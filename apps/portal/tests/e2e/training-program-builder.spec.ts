@@ -45,7 +45,7 @@ test("Coach builds, publishes and preserves an immutable plan visible to the OTP
   await expect(clientPage.getByRole("heading",{name:"Phase force",exact:true})).toBeVisible();
   await expect(clientPage.locator("p").filter({hasText:"Série 1"})).toContainText("40 lb");
   await page.getByLabel("Charge cible",{exact:true}).fill("50 lb");await page.getByRole("button",{name:"Enregistrer le brouillon",exact:true}).click();await expect(page.getByText("Brouillon enregistré · version 3.")).toBeVisible();
-  await clientPage.reload();await clientPage.getByRole("button",{name:"Semaine 2",exact:true}).click();await expect(clientPage.locator("p").filter({hasText:"Série 1"})).toContainText("45 lb");
+  await clientPage.reload();await clientPage.getByRole("combobox",{name:"Semaine",exact:true}).selectOption("1");await expect(clientPage.locator("p").filter({hasText:"Série 1"})).toContainText("45 lb");
   await clientPage.close();clientPage=await context.newPage();let otpRequests=0;clientPage.on("request",r=>{if(r.url().includes("/client-otp/request"))otpRequests++;});
   await clientPage.goto(`${environment.appUrl}/client/program`);await expect(clientPage.getByRole("heading",{name:"Phase force",exact:true})).toBeVisible();expect(otpRequests).toBe(0);
   await clientPage.getByRole("link",{name:"Ouvrir la séance",exact:true}).first().click();
