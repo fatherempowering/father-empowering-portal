@@ -105,14 +105,14 @@ test("Client V2 pilot preserves the dark FE composition without invented program
   page,
 }) => {
   for (const viewport of [
-    { width: 1672, height: 941, asset: "hero-desktop.webp" },
-    { width: 390, height: 844, asset: "hero-mobile.webp" },
-    { width: 320, height: 820, asset: "hero-mobile.webp" },
+    { width: 1672, height: 941, asset: "portal-hero.webp" },
+    { width: 390, height: 844, asset: "portal-hero-mobile.webp" },
+    { width: 320, height: 820, asset: "portal-hero-mobile.webp" },
   ]) {
     await page.setViewportSize(viewport);
     await page.goto("/?screen=client-v2");
     const pilot = page.locator("[data-client-v2-pilot]");
-    await expect(page.getByRole("heading", { name: "Ton portail." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
     await expect(page.getByText("Bienvenue, Alex Martin.")).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Ta semaine zéro" }),
@@ -129,7 +129,7 @@ test("Client V2 pilot preserves the dark FE composition without invented program
     const hero = page.locator("[data-pilot-hero]");
     const heroHeight = (await hero.boundingBox())?.height ?? 0;
     expect(heroHeight).toBeGreaterThanOrEqual(180);
-    expect(heroHeight).toBeLessThanOrEqual(240);
+    expect(heroHeight).toBeLessThanOrEqual(viewport.width > 1024 ? 340 : 260);
     expect(
       await hero.locator("picture img").evaluate(
         (image, asset) => (image as HTMLImageElement).currentSrc.endsWith(asset),
@@ -170,7 +170,7 @@ test("Client V2 mobile menu traps focus, closes with Escape and returns focus", 
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?screen=client-v2");
-  await expect(page.getByRole("heading", { name: "Ton portail." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
 
   const trigger = page.getByRole("button", { name: "Menu" });
   await trigger.click();
@@ -216,7 +216,7 @@ test("Client V2 loading and failure keep the branded shell and real recovery", a
 test("Client V2 supports English and 200% reflow at 320px", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 820 });
   await page.goto("/?screen=client-v2&state=english");
-  await expect(page.getByRole("heading", { name: "Your portal." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your starting point." })).toBeVisible();
   await expect(page.getByText("Welcome, Alex Martin.")).toBeVisible();
   await expect(
     page.getByRole("heading", {
@@ -248,11 +248,11 @@ test("personal portal navigation is staff-only across Coach and Client shells", 
   page,
 }) => {
   await page.goto("/?screen=client-v2");
-  await expect(page.getByRole("heading", { name: "Ton portail." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Espace Coach" })).toHaveCount(0);
 
   await page.goto("/?screen=client-v2-staff");
-  await expect(page.getByRole("heading", { name: "Ton portail." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
   const pilotMenu = page.getByRole("button", { name: "Menu" });
   if (await pilotMenu.isVisible()) await pilotMenu.click();
   const pilotCoachLink = page.getByRole("link", { name: "Espace Coach" });
@@ -561,7 +561,7 @@ test("Client onboarding resumes its server draft after a document reload", async
 }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-draft");
   await expect(
-    page.getByRole("heading", { name: "Ton questionnaire d’accueil" }),
+    page.getByRole("heading", { name: "Faisons connaissance." }),
   ).toBeVisible();
   await expect(
     page.getByText("Brouillon privé enregistré", { exact: true }),
@@ -645,7 +645,7 @@ test("Client onboarding excludes invalid formats from progress and lists them be
 test("Submitted Client onboarding is read-only and returns to the portal without another assessment", async ({
   page,
 }) => {
-  await page.goto("/?screen=client-onboarding&state=onboarding-submitted");
+  await page.goto("/?screen=client-onboarding&state=onboarding-submitted&view=responses");
   await expect(
     page.getByText("Questionnaire transmis au Coach", { exact: true }),
   ).toBeVisible();
@@ -969,7 +969,7 @@ test("Client loading times out and retry recovers from a suspended request", asy
   await retry.click();
 
   await expect(
-    page.getByRole("heading", { name: "Ton portail." }),
+    page.getByRole("heading", { name: "Ton point de départ." }),
   ).toBeVisible();
   await expect(page.getByText("Bienvenue, Alex Martin.")).toBeVisible();
 });
@@ -1029,6 +1029,8 @@ test("Client pilot exposes only factual M1 content and keeps Today outside the d
     "href",
     "/client/today",
   );
+  const closeMenuForContent = page.getByRole("button", { name: "Fermer le menu" });
+  if (await closeMenuForContent.isVisible()) await closeMenuForContent.click();
   await expect(page.getByRole("link", { name: "Voir aujourd’hui" })).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "Ta semaine zéro" }),
@@ -1036,6 +1038,7 @@ test("Client pilot exposes only factual M1 content and keeps Today outside the d
   await expect(
     page.getByRole("link", { name: "Commencer ma semaine zéro" }),
   ).toHaveAttribute("href", "/client/week-zero");
+  if (await menu.isVisible()) await menu.click();
   await expect(page.getByText("Compte", { exact: true }).first()).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Se déconnecter" }),

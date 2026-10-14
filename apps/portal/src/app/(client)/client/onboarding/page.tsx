@@ -1,5 +1,8 @@
 import { ClientOnboarding } from "@/features/client/onboarding/client-onboarding";
 
-export default function OnboardingPage() {
-  return <ClientOnboarding />;
+export default async function OnboardingPage({ searchParams }: {
+  searchParams: Promise<{ view?: string | string[] }>;
+}) {
+  const { view } = await searchParams;
+  return <ClientOnboarding reviewSubmittedResponses={view === "responses"} />;
 }
