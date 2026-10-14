@@ -617,8 +617,14 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
       const history = await clientSessionB.client.from("training_program_publications").select("id");
       expect(history.error).toBeNull(); expect(history.data).toHaveLength(2);
       stage = "DIRECT_MUTATION_DENIED";
-      const tamper = await clientSessionB.client.from("training_program_publications").update({ revision: 99 });
+      // Target an actual publication: a filterless UPDATE can be rejected by
+      // PostgREST's request safety check before database permission is tested.
+      const tamper = await clientSessionB.client.from("training_program_publications").update({ revision: 99 }).eq("id", published.id);
+      stage = "DIRECT_MUTATION_DENIED code=" + (["42501","21000","P0001"].includes(tamper.error?.code ?? "") ? tamper.error!.code : "UNEXPECTED");
       expect(tamper.error?.code).toBe("42501");
+      const afterDenied = await authenticatedFetch(environment, clientSessionB, "/api/v1/client/program");
+      status("AFTER_DENIED_READ", afterDenied, 200);
+      stage = "DENIED_WRITE_UNCHANGED"; expect((await afterDenied.json()).data.program.revision).toBe(2);
     } catch {
       // Only closed stage labels and HTTP integers leave this block. In particular,
       // assertion diffs must not print identifiers, timestamps or session material.
