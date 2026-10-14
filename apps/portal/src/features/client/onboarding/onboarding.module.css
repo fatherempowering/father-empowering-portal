@@ -1,52 +1,107 @@
-.page { max-width: 880px; margin-inline: auto; min-width: 0; }
-.intro { margin-bottom: 24px; }
-.intro p { max-width: 74ch; }
-.status { min-height: 28px; margin-block: 16px; }
-.notice { padding: 16px; border-left: 3px solid #b95000; background: #f5eee5; color: #29231f; overflow-wrap: anywhere; }
-.steps { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; margin-block: 20px; }
-.steps li { max-width: 100%; }
-.steps button { min-height: 44px; white-space: normal; text-align: left; }
-.progress { padding: 16px; border: 1px solid #87b59c; border-radius: 10px; background: #edf7f0; color: #194b2e; margin-bottom: 24px; }
-.progressHeading { display: flex; justify-content: space-between; gap: 12px; }
-.progress progress { display: block; appearance: none; width: 100%; height: 12px; margin-block: 12px; border: 0; border-radius: 8px; overflow: hidden; background: #cee4d6; }
-.progress progress::-webkit-progress-bar { background: #cee4d6; border-radius: 8px; }
-.progress progress::-webkit-progress-value { background: #23834b; border-radius: 8px; }
-.progress progress::-moz-progress-bar { background: #23834b; border-radius: 8px; }
-.progress p { margin-block: 6px 0; font-size: 14px; }
-.measurement, .equipment { border: 0; padding: 0; min-width: 0; }
-.unitSwitch { display: flex; gap: 8px; margin-bottom: 16px; }
-.unitSwitch button { flex: 1; min-width: 0; min-height: 44px; padding: 8px; border: 1px solid #8a8a84; border-radius: 8px; background: white; color: #26221e; font: inherit; cursor: pointer; }
-.unitSwitch button[aria-pressed="true"] { border: 2px solid #a34708; color: #783305; background: #fff3e9; font-weight: 700; }
-.wheels { display: flex; gap: 12px; max-width: 420px; }
-.measurementValue { font-weight: 650; margin-block: 12px 4px; overflow-wrap: anywhere; }
-.noneEquipment { display: flex; gap: 12px; align-items: center; min-height: 48px; margin-block: 12px; cursor: pointer; }
-.noneEquipment input { width: 22px; height: 22px; flex-shrink: 0; accent-color: #a34708; }
-.equipment legend { font-weight: 650; line-height: 1.5; }
-.panel { margin-block: 16px; padding: 24px; border: 1px solid var(--fe-border, #d2d0ca); border-radius: 10px; background: var(--fe-surface, #fff); min-width: 0; }
-.panel h2 { margin: 0 0 12px; scroll-margin-top: 90px; }
-.questions { display: grid; gap: 28px; margin-top: 24px; }
-.field { display: grid; gap: 8px; min-width: 0; }
+.page { min-width: 0; padding: 0 1.5rem 2rem; }
+.intro { margin: 0 -1.5rem 1.25rem; padding: 1.5rem 2rem; background: #121b21; border-bottom: 1px solid #46515b; }
+.page[data-submitted="true"] .intro { background: linear-gradient(90deg,#101416 10%,rgba(16,20,22,.9) 42%,rgba(16,20,22,.35)),url("/brand/client/portal-hero.webp") center 30% / cover; min-height: 11rem; }
+.back { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; text-decoration: none; }
+.back svg { transform: rotate(180deg); width: 1rem; }
+.intro h1 { margin-block: .5rem; }
+.intro > p { color: #ced3d7; }
+.layout { display: grid; grid-template-columns: 11.5rem minmax(0,1fr); gap: 1rem; align-items: start; }
+.sectionRail { min-width: 0; background: #152027; border: 1px solid #46515b; border-radius: .5rem; }
+.sectionCount { font: 400 1rem "FE Display",sans-serif; letter-spacing: .2em; padding: 1rem; }
+.steps { display: grid; list-style: none; padding: 0; margin: 0; gap: .25rem; }
+.steps li { min-width: 0; }
+.steps button, .steps a { display: flex; align-items: center; width: 100%; min-height: 3rem; padding: .75rem; text-align: left; text-decoration: none; font: inherit; font-size: .9375rem; color: #fff; background: transparent; border: 0; border-left: 3px solid transparent; cursor: pointer; line-height: 1.4; }
+.steps button:hover, .steps a:hover { background: #283640; }
+.steps .activeStep { background: #54331e; border-left-color: #ff7a1a; }
+.sectionPicker { display: none; }
+.progress { padding: 1rem; border-top: 1px solid #46515b; margin-top: .75rem; color: #ced3d7; }
+.progressHeading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; font-size: .875rem; }
+.progressHeading > span { color: #60e88a; font-weight: 750; }
+.progress progress { display: block; appearance: none; width: 100%; height: .625rem; margin-block: .5rem; border: 0; border-radius: .5rem; overflow: hidden; background: #2b3c46; }
+.progress progress::-webkit-progress-bar { background: #2b3c46; border-radius: .5rem; }
+.progress progress::-webkit-progress-value { background: #60e88a; border-radius: .5rem; }
+.progress progress::-moz-progress-bar { background: #60e88a; border-radius: .5rem; }
+.progress p { font-size: .875rem; margin-top: .5rem; }
+.content { min-width: 0; }
+.status { color: #b5f0c9; min-height: 1.75rem; margin-bottom: .5rem; font-size: .875rem; }
+.notice { padding: .875rem 1rem; border-left: 3px solid #ff7a1a; background: #1a2229; color: #ced3d7; font-size: .875rem; overflow-wrap: anywhere; }
+.panel { margin: 1rem 0; padding: 1.5rem; border: 1px solid #46515b; border-radius: .5rem; background: #1a2229; min-width: 0; }
+.panel h2 { margin: 0 0 .5rem; font-size: 2rem; scroll-margin-top: 1rem; }
+.panel > p { color: #ced3d7; }
+.sectionHelp { color: #ced3d7; font-size: .875rem; }
+.sectionHelp summary { min-height: 2.75rem; cursor: pointer; padding-block: .625rem; }
+.sectionHelp p { margin-top: .5rem; }
+.questions { display: grid; gap: 1.75rem; margin-top: 1.5rem; }
+.field { display: grid; gap: .5rem; min-width: 0; }
 .field > label, .choices legend { font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
-.field :is(input,select,textarea) { width: 100%; min-width: 0; min-height: 48px; padding: 12px; border: 1px solid #777; border-radius: 6px; font: inherit; font-size: 16px; color: #191919; background: #fff; }
-.field textarea { min-height: 116px; resize: vertical; }
-.field small, .choices small { display: block; color: #555; line-height: 1.5; }
+.field :is(input,select,textarea), .sectionPicker select { width: 100%; min-width: 0; min-height: 3rem; padding: .75rem; border: 1px solid #788894; border-radius: .5rem; font: inherit; font-size: 1rem; color: #fff; background: #121a20; }
+.field textarea { min-height: 7.25rem; resize: vertical; }
+.field small, .choices small { display: block; color: #ced3d7; font-size: .875rem; line-height: 1.5; }
 .choices { border: 0; padding: 0; min-width: 0; }
-.choices > div { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.choices label { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 8px 12px; border: 1px solid #888; border-radius: 6px; }
-.choices input { width: 20px; height: 20px; flex-shrink: 0; }
-.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 22px; }
-.review details { border: 1px solid var(--fe-border, #d2d0ca); border-radius: 8px; margin-block: 16px; padding: 16px; }
-.review summary { font-weight: 700; min-height: 44px; cursor: pointer; overflow-wrap: anywhere; }
-.review dl { margin: 8px 0 0; }
-.review dl > div { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; padding-block: 12px; border-top: 1px solid #ddd; }
-.review dt { font-weight: 600; overflow-wrap: anywhere; }
+.choices > div { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .625rem; }
+.choices label { display: flex; align-items: center; gap: .625rem; min-height: 3rem; padding: .5rem .75rem; border: 1px solid #788894; border-radius: .5rem; }
+.choices input { width: 1.25rem; height: 1.25rem; flex-shrink: 0; accent-color: #ff7a1a; }
+.measurement, .equipment { border: 0; padding: 0; min-width: 0; }
+.unitSwitch { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.unitSwitch button { flex: 1; min-width: 0; min-height: 3rem; padding: .5rem; border: 1px solid #788894; border-radius: .5rem; background: #121a20; color: #fff; font: inherit; cursor: pointer; }
+.unitSwitch button[aria-pressed="true"] { border: 2px solid #ff7a1a; color: #101416; background: #ff7a1a; font-weight: 750; }
+.wheels { display: flex; gap: .75rem; max-width: 26.25rem; }
+.measurementValue { font-weight: 650; margin-block: .75rem .25rem; overflow-wrap: anywhere; }
+.noneEquipment { display: flex; gap: .75rem; align-items: center; min-height: 3rem; margin-block: .75rem; cursor: pointer; }
+.noneEquipment input { width: 1.375rem; height: 1.375rem; flex-shrink: 0; accent-color: #ff7a1a; }
+.equipment legend { font-weight: 650; line-height: 1.5; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1.25rem; padding-bottom: env(safe-area-inset-bottom); }
+.review { min-width: 0; }
+.review details { border: 1px solid #46515b; border-radius: .5rem; background: #1a2229; margin-block: 1rem; padding: 1.25rem; scroll-margin-top: 1rem; }
+.review summary { font: 400 1.5rem/1.3 "FE Display",sans-serif; letter-spacing: .03em; min-height: 2.75rem; cursor: pointer; overflow-wrap: anywhere; }
+.review dl { margin: .5rem 0 0; }
+.review dl > div { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.2fr); gap: 1rem; padding-block: .875rem; border-top: 1px solid #46515b; }
+.review dt { color: #ced3d7; overflow-wrap: anywhere; }
 .review dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.questionLink { color: #82400b; background: none; border: 0; text-decoration: underline; text-align: left; font: inherit; padding: 8px 0; min-height: 44px; cursor: pointer; }
-.page :is(input,select,textarea,button,a,summary):focus-visible { outline: 3px solid #b95000; outline-offset: 3px; }
-@media (max-width: 42rem) {
-  .panel { padding: 16px; }
-  .actions { flex-direction: column; align-items: stretch; }
-  .actions > * { width: 100%; white-space: normal; }
-  .review details { padding: 12px; }
-  .review dl > div { grid-template-columns: 1fr; gap: 6px; }
+.related { display: grid; gap: 1rem; margin-block: 1rem; align-content: start; min-width: 0; }
+.related > section { padding: 1.25rem; border: 1px solid #46515b; border-radius: .5rem; background: #1a2229; }
+.related h2 { font: 400 1.75rem "FE Display", sans-serif; }
+.related p { color: #ced3d7; margin-block: .75rem; }
+.related a { width: 100%; }
+.questionLink { color: #ffad70; background: none; border: 0; text-decoration: underline; text-align: left; font: inherit; padding: .5rem 0; min-height: 2.75rem; cursor: pointer; }
+.page :is(input,select,textarea,button,a,summary):focus-visible { outline: 3px solid #ff7a1a; outline-offset: 3px; }
+@media (min-width: 90rem) {
+  .submittedGrid { display: grid; grid-template-columns: minmax(0,1fr) 15rem; gap: 1rem; }
+}
+@media (max-width: 63.99rem) {
+  .page { padding-inline: 1rem; }
+  .intro { margin-inline: -1rem; padding: .75rem 1rem; }
+  .intro h1 { font-size: 2rem; }
+  .intro > p { font-size: .875rem; }
+  .layout { display: block; }
+  .sectionRail { border: 0; background: transparent; margin-bottom: .75rem; }
+  .sectionCount { display: none; }
+  .steps { display: flex; overflow-x: auto; gap: .5rem; padding: .25rem 0 .5rem; scroll-snap-type: x proximity; }
+  .steps > li { flex: 0 0 11rem; scroll-snap-align: start; }
+  .steps button, .steps a { height: 100%; min-height: 3rem; border: 1px solid #788894; border-radius: .5rem; padding: .5rem .75rem; font-size: .875rem; }
+  .steps .activeStep { background: #ff7a1a; color: #101416; font-weight: 750; border-color: #ff7a1a; }
+  .sectionRail nav { position: relative; padding-right: 3.25rem; }
+  .sectionPicker { display: block; position: absolute; right: 0; top: .25rem; width: 2.75rem; height: 3.5rem; font-size: 0; }
+  .sectionPicker::before { content: "⋯"; position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; font-size: 1.5rem; }
+  .sectionPicker select { width: 100%; height: 100%; min-height: 2.75rem; padding: 0; font-size: 1rem; appearance: none; color: transparent; background: transparent; }
+  .sectionPicker option { color: #fff; background: #121a20; }
+  .progress { border: 0; margin-top: .5rem; padding: 0; }
+  .progress p { font-size: .875rem; line-height: 1.4; }
+  .progressEncouragement { display: none; }
+  .progress:has(progress[value="54"]) .progressEncouragement { display: block; }
+  .panel { margin-block: .75rem; padding: 1rem; }
+  .panel h2 { font-size: 1.5rem; }
+  .panel > p { font-size: .875rem; }
+  .questions { gap: 1.5rem; margin-top: 1rem; }
+  .notice { padding: .625rem .75rem; line-height: 1.4; }
+  .actions { gap: .5rem; }
+  .actions > * { flex: 1 1 9rem; white-space: normal; }
+  .review details { padding: 1rem; }
+  .review dl > div { grid-template-columns: 1fr; gap: .375rem; }
+}
+@media (max-width: 22rem) {
+  .page { padding-inline: .75rem; }
+  .intro { margin-inline: -.75rem; padding-inline: .75rem; }
+  .panel { padding: .75rem; }
+  .steps > li { flex-basis: 10rem; }
 }

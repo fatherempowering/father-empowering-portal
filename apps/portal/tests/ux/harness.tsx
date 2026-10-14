@@ -195,6 +195,7 @@ if (harnessParameters.get("screen") === "program-builder") {
 }
 window.fetch = async (url, init) => {
   const path = String(url);
+  if (path === "/api/v1/auth/client-logout" && scenario === "client-logout-network-error") throw new TypeError("Synthetic network failure");
   if (path.startsWith("/api/v1/coach/programs/recipients")) return reply({data:{clients:[{id:recipientId,name:"Client Test"}],total:1,page:0}});
   if (path === "/api/v1/coach/programs/publish") {
     const input = JSON.parse(String(init?.body)) as PublishProgramRequest; publicationRequests.push(input);
@@ -487,7 +488,7 @@ window.fetch = async (url, init) => {
     if (scenario === "assessment-draft") {
       return reply({ data: { assessment: assessmentSnapshot("DRAFT") } });
     }
-    if (scenario === "assessment-submitted") {
+    if (scenario === "assessment-submitted" || scenario === "program-published") {
       return reply({ data: { assessment: assessmentSnapshot("SUBMITTED") } });
     }
     if (scenario === "assessment-conflict" && assessmentConflictOccurred) {
