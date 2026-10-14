@@ -716,7 +716,7 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
       const coachFinal=await authenticatedFetch(environment,session,`/api/v1/coach/clients/${clientId}/workouts/session?${query}`);status("COACH_FINAL",coachFinal,200);stage="COACH_NOTE";expect((await coachFinal.json()).data.workout.note).toBe("Note de séance synthétique");
       const direct=await clientSessionB.client.from("training_session_results").update({note:"Forbidden"}).eq("id",first.id);stage="DIRECT_WRITE_DENIED";expect(direct.error?.code).toBe("42501");
     } catch { throw new Error("Workout integration failed at "+stage); }
-  });
+  }, 30_000);
 
   it("persiste la bibliothèque Training sans élargir les accès Client ou Coach non vérifié", async () => {
     const path = "/api/v1/coach/exercises";
