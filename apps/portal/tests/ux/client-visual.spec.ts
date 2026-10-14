@@ -110,3 +110,18 @@ test("failed logout feedback remains visible outside the dismissed mobile menu",
     await expect(page.locator("[inert]")).toHaveCount(0);
   }
 });
+
+test("late questionnaire loading cannot erase a failed logout message", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?screen=client-onboarding&state=onboarding-load-logout-error");
+  await expect(page.getByText("Chargement du questionnaire…", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Se déconnecter", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Déconnexion impossible");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.evaluate(() => (window as unknown as { __releaseOnboardingLoad: () => void }).__releaseOnboardingLoad());
+  await expect(page.locator("#onboarding-fullName")).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("Déconnexion impossible");
+  await expect(page.locator("[inert]")).toHaveCount(0);
+  await expect(page).toHaveURL(/screen=client-onboarding/);
+});

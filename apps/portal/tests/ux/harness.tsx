@@ -195,7 +195,12 @@ if (harnessParameters.get("screen") === "program-builder") {
 }
 window.fetch = async (url, init) => {
   const path = String(url);
-  if (path === "/api/v1/auth/client-logout" && scenario === "client-logout-network-error") throw new TypeError("Synthetic network failure");
+  if (path === "/api/v1/auth/client-logout" && ["client-logout-network-error", "onboarding-load-logout-error"].includes(scenario)) throw new TypeError("Synthetic network failure");
+  if (path === "/api/v1/client/onboarding" && scenario === "onboarding-load-logout-error") {
+    return new Promise<Response>((resolve) => Object.assign(window, {
+      __releaseOnboardingLoad: () => resolve(reply({ data: { intake: onboardingSnapshot("NOT_STARTED") } })),
+    }));
+  }
   if (path.startsWith("/api/v1/coach/programs/recipients")) return reply({data:{clients:[{id:recipientId,name:"Client Test"}],total:1,page:0}});
   if (path === "/api/v1/coach/programs/publish") {
     const input = JSON.parse(String(init?.body)) as PublishProgramRequest; publicationRequests.push(input);

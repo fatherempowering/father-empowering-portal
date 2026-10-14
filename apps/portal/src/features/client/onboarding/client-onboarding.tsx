@@ -39,6 +39,7 @@ export function ClientOnboarding() {
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
@@ -155,9 +156,9 @@ export function ClientOnboarding() {
   async function signOut() {
     if (inFlight.current) return;
     if (dirty && !window.confirm(t("Tes dernières réponses ne sont pas enregistrées. Te déconnecter ?", "Your latest answers have not been saved. Sign out?"))) return;
-    inFlight.current = true; setBusy(true);
+    inFlight.current = true; setBusy(true); setSignOutError(null);
     const ok = await requestClientLogout((destination) => { leavingIntentionally.current = true; window.location.replace(destination); });
-    if (!ok) { setError(t("Déconnexion impossible. Réessaie.", "Unable to sign out. Try again.")); inFlight.current = false; setBusy(false); }
+    if (!ok) { setSignOutError(t("Déconnexion impossible. Réessaie.", "Unable to sign out. Try again.")); inFlight.current = false; setBusy(false); }
   }
 
   return <ClientVisualShell current="onboarding" name={client?.displayName} french={french} documentNavigation
@@ -171,6 +172,7 @@ export function ClientOnboarding() {
           : t("Vérifier et transmettre", "Review and submit")}</p>
       </header>
       {error && <Feedback>{error}</Feedback>}
+      {signOutError && <Feedback>{signOutError}</Feedback>}
       {sessionExpired && <a className="fe-button" href="/client-login">{t("Me reconnecter", "Sign in again")}</a>}
       {conflict && <button className="fe-button" onClick={() => {
         if (window.confirm(t("Recharger remplacera les saisies affichées par la version enregistrée. Continuer ?", "Reloading replaces the entries on screen with the saved version. Continue?"))) setAttempt((n) => n+1);
