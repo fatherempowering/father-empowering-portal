@@ -336,13 +336,13 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(
     clientPage.getByRole("link", { name: "Compléter mon questionnaire d’accueil" }),
   ).toHaveAttribute("href", "/client/onboarding");
+  await expect(
+    clientPage.getByRole("link", { name: "Voir aujourd’hui" }),
+  ).toHaveCount(0);
   await clientPage.getByRole("button", { name: "Menu", exact: true }).click();
   await expect(
     clientPage.getByRole("link", { name: "Semaine zéro", exact: true }),
   ).toHaveAttribute("href", "/client/week-zero");
-  await expect(
-    clientPage.getByRole("link", { name: "Voir aujourd’hui" }),
-  ).toHaveCount(0);
   await clientPage.getByRole("link", { name: "Aujourd’hui" }).click();
   await expect(clientPage).toHaveURL(/\/client\/today(?:\?.*)?$/);
   await expect(clientPage.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
