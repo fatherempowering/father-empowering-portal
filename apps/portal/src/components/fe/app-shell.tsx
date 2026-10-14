@@ -13,13 +13,16 @@ export function AppShell({
   locale = "fr",
   current = space === "coach" ? "clients" : "home",
   accountAction,
+  documentNavigation = false,
 }: {
   children: ReactNode;
   space: "coach" | "client";
   name?: string;
   locale?: "fr" | "en";
-  current?: "clients" | "personal" | "home" | "today" | "onboarding" | "week-zero";
+  current?: "clients" | "exercises" | "personal" | "home" | "today" | "onboarding" | "week-zero";
   accountAction?: ReactNode;
+  /** Forms may use full navigation so their beforeunload protection also covers sidebar links. */
+  documentNavigation?: boolean;
 }) {
   const { isStaff } = usePortalAccess();
   const [open, setOpen] = useState(false);
@@ -38,6 +41,7 @@ export function AppShell({
     space === "coach"
       ? [
           { href: "/coach", label: "Clients", icon: "users" as const, id: "clients" as const },
+          { href: "/coach/exercises", label: "Exercices", icon: "today" as const, id: "exercises" as const, document: true },
           {
             href: "/coach/personal",
             label: "Mon portail personnel",
@@ -111,7 +115,7 @@ export function AppShell({
           {navigation.map((item) => {
             // Document entries let long forms protect browser navigation with
             // beforeunload and make the Coach/Client boundary explicit.
-            const NavLink = "document" in item && item.document ? "a" : Link;
+            const NavLink = documentNavigation || ("document" in item && item.document) ? "a" : Link;
             return <NavLink
               className="fe-side-link"
               href={item.href}
