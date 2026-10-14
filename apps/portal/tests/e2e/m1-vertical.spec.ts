@@ -318,21 +318,25 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await clientPage.getByRole("button", { name: /activer mon portail/i }).click();
 
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
-  await expect(clientPage.getByRole("heading", { name: "Ton portail." })).toBeVisible();
+  await expect(clientPage.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
   await expect(clientPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   await expect(clientPage.getByText(/^accès actif$/i).first()).toBeVisible();
   await clientPage.getByRole("button", { name: "Menu", exact: true }).click();
   await expect(
     clientPage.locator('a[href="/client"][aria-current="page"]'),
   ).toBeVisible();
+  await expect(clientPage.locator("[inert]")).toHaveCount(1);
+  await clientPage.getByRole("button", { name: "Fermer le menu", exact: true }).click();
+  await expect(clientPage.locator("[inert]")).toHaveCount(0);
   await expect(
     clientPage.getByRole("heading", {
-      name: "Commençons par mieux te connaître",
+      name: "Faisons connaissance.",
     }),
   ).toBeVisible();
   await expect(
     clientPage.getByRole("link", { name: "Compléter mon questionnaire d’accueil" }),
   ).toHaveAttribute("href", "/client/onboarding");
+  await clientPage.getByRole("button", { name: "Menu", exact: true }).click();
   await expect(
     clientPage.getByRole("link", { name: "Semaine zéro", exact: true }),
   ).toHaveAttribute("href", "/client/week-zero");
@@ -368,7 +372,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     .click();
   await expect(clientPage).toHaveURL(/\/client\/onboarding(?:\?.*)?$/);
   await expect(
-    clientPage.getByRole("heading", { name: "Ton questionnaire d’accueil" }),
+    clientPage.getByRole("heading", { name: "Faisons connaissance." }),
   ).toBeVisible();
   await clientPage.getByLabel(/Numéro de téléphone/i).fill("+1 514 555 0199");
 
@@ -434,7 +438,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
 
   await continuedPage.goto(`${environment.appUrl}/client/onboarding`);
   await expect(
-    continuedPage.getByRole("heading", { name: "Ton questionnaire d’accueil" }),
+    continuedPage.getByRole("heading", { name: "Faisons connaissance." }),
   ).toBeVisible();
   await expect(continuedPage.getByLabel(/Numéro de téléphone/i)).toHaveValue(
     "+1 514 555 0199",
@@ -680,7 +684,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
 
   await continuedPage.goto(`${environment.appUrl}/client`);
   await expect(
-    continuedPage.getByRole("heading", { name: "Ton portail." }),
+    continuedPage.getByRole("heading", { name: "Ton point de départ." }),
   ).toBeVisible();
   await expect(continuedPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   await expect(
@@ -689,7 +693,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await continuedPage.goto(`${environment.appUrl}/client-login`);
   await expect(continuedPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(
-    continuedPage.getByRole("heading", { name: "Ton portail." }),
+    continuedPage.getByRole("heading", { name: "Ton point de départ." }),
   ).toBeVisible();
   expect(continuedOtpRequests).toHaveLength(0);
 
@@ -775,7 +779,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await returningPage.getByRole("button", { name: /ouvrir mon portail/i }).click();
   await expect(returningPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(
-    returningPage.getByRole("heading", { name: "Ton portail." }),
+    returningPage.getByRole("heading", { name: "Ton point de départ." }),
   ).toBeVisible();
   await expect(returningPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   const authUsers = await admin.auth.admin.listUsers({ page: 1, perPage: 1_000 });
