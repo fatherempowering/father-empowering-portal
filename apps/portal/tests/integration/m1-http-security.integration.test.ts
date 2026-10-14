@@ -553,29 +553,77 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
   });
 
   it("publishes an immutable program to the assigned Client through real HTTP", async () => {
-    const own=await authenticatedFetch(environment,clientSessionB,"/api/v1/client/me");expect(own.status).toBe(200);
-    const clientId=(await own.json()).client.clientId;
-    const admin=createM1AdminClient(environment);
-    const assignment=await admin.from("coach_client_assignments").insert({organization_id:coach.organizationId,client_id:clientId,coach_user_id:coach.userId,status:"ACTIVE",created_by:coach.userId});expect(assignment.error).toBeNull();
-    const doc=newProgram();const rest=newSession();rest.type="complete-rest";doc.weeks[0].sessions.push(rest);
-    const saved=await authenticatedFetch(environment,session,"/api/v1/coach/programs",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id:null,expectedVersion:0,clientMutationId:randomUUID(),document:doc})});expect(saved.status).toBe(200);
-    const draft=(await saved.json()).data.program;
-    const command={clientId,programId:draft.id,draftVersion:1,expectedPublicationId:null,clientMutationId:randomUUID()};
-    const publish=(actor:M1SsrSession,body:unknown=command)=>authenticatedFetch(environment,actor,"/api/v1/coach/programs/publish",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
-    expect((await publish(unverifiedCoachSession)).status).toBe(403);expect((await publish(clientSessionB)).status).toBe(403);
-    expect((await fetch(`${environment.appUrl}/api/v1/client/program`)).status).toBe(401);
-    const recipients=await authenticatedFetch(environment,session,"/api/v1/coach/programs/recipients");expect(recipients.status).toBe(200);expect((await recipients.json()).data.clients.some((c:{id:string})=>c.id===clientId)).toBe(true);
-    const response=await publish(session);expect(response.status).toBe(200);const published=(await response.json()).data.program;
-    const repeat=await publish(session);expect(repeat.status).toBe(200);expect((await repeat.json()).data.program).toEqual(published);
-    const read=await authenticatedFetch(environment,clientSessionB,`/api/v1/client/program?clientId=${randomUUID()}`);expect(read.status).toBe(200);expect(read.headers.get("cache-control")).toContain("no-store");expect((await read.json()).data.program).toEqual(published);
-    doc.title.fr="Private edit";
-    const edited=await authenticatedFetch(environment,session,"/api/v1/coach/programs",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id:draft.id,expectedVersion:1,clientMutationId:randomUUID(),document:doc})});expect(edited.status).toBe(200);
-    const preserved=await authenticatedFetch(environment,clientSessionB,"/api/v1/client/program");expect((await preserved.json()).data.program.document.title.fr).not.toBe("Private edit");
-    expect((await publish(session,{...command,draftVersion:2,clientMutationId:randomUUID()})).status).toBe(409);
-    const replaced=await publish(session,{...command,draftVersion:2,expectedPublicationId:published.id,clientMutationId:randomUUID()});expect(replaced.status).toBe(200);expect((await replaced.json()).data.program.revision).toBe(2);
-    const latest=await authenticatedFetch(environment,clientSessionB,"/api/v1/client/program");expect((await latest.json()).data.program.document.title.fr).toBe("Private edit");
-    const history=await clientSessionB.client.from("training_program_publications").select("id");expect(history.error).toBeNull();expect(history.data).toHaveLength(2);
-    const tamper=await clientSessionB.client.from("training_program_publications").update({revision:99});expect(tamper.error?.code).toBe("42501");
+    let stage = "START";
+    const status = (label: string, response: Response, expected: number) => {
+      stage = label + " HTTP expected=" + expected + " received=" + response.status;
+      expect(response.status).toBe(expected);
+    };
+    try {
+      stage = "CLIENT_IDENTITY";
+      const own = await authenticatedFetch(environment, clientSessionB, "/api/v1/client/me");
+      status("CLIENT_IDENTITY", own, 200);
+      const clientId = (await own.json()).client.clientId;
+      const admin = createM1AdminClient(environment);
+      stage = "FIXTURE_ASSIGNMENT";
+      const assignment = await admin.from("coach_client_assignments").insert({
+        organization_id: coach.organizationId, client_id: clientId,
+        coach_user_id: coach.userId, status: "ACTIVE", created_by: coach.userId,
+      });
+      expect(assignment.error).toBeNull();
+      const doc = newProgram(); const rest = newSession(); rest.type = "complete-rest"; doc.weeks[0].sessions.push(rest);
+      stage = "SAVE_DRAFT";
+      const saved = await authenticatedFetch(environment, session, "/api/v1/coach/programs", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: null, expectedVersion: 0, clientMutationId: randomUUID(), document: doc }),
+      });
+      status("SAVE_DRAFT", saved, 200);
+      const draft = (await saved.json()).data.program;
+      const command = { clientId, programId: draft.id, draftVersion: 1, expectedPublicationId: null, clientMutationId: randomUUID() };
+      const publish = (actor: M1SsrSession, body: unknown = command) => authenticatedFetch(environment, actor, "/api/v1/coach/programs/publish", {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
+      });
+      status("UNVERIFIED_DENIED", await publish(unverifiedCoachSession), 403);
+      status("CLIENT_WRITE_DENIED", await publish(clientSessionB), 403);
+      status("ANONYMOUS_DENIED", await fetch(`${environment.appUrl}/api/v1/client/program`), 401);
+      const recipients = await authenticatedFetch(environment, session, "/api/v1/coach/programs/recipients");
+      status("RECIPIENTS", recipients, 200);
+      stage = "RECIPIENT_PRESENT";
+      expect((await recipients.json()).data.clients.some((c: { id: string }) => c.id === clientId)).toBe(true);
+      const response = await publish(session); status("PUBLISH", response, 200);
+      const published = (await response.json()).data.program;
+      const repeat = await publish(session); status("REPLAY", repeat, 200);
+      stage = "REPLAY_SNAPSHOT_MATCH"; expect((await repeat.json()).data.program).toEqual(published);
+      const read = await authenticatedFetch(environment, clientSessionB, `/api/v1/client/program?clientId=${randomUUID()}`);
+      status("CLIENT_READ", read, 200);
+      stage = "CLIENT_CACHE"; expect(read.headers.get("cache-control")).toContain("no-store");
+      stage = "CLIENT_SNAPSHOT_MATCH"; expect((await read.json()).data.program).toEqual(published);
+      doc.title.fr = "Private edit";
+      const edited = await authenticatedFetch(environment, session, "/api/v1/coach/programs", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: draft.id, expectedVersion: 1, clientMutationId: randomUUID(), document: doc }),
+      });
+      status("EDIT_DRAFT", edited, 200);
+      const preserved = await authenticatedFetch(environment, clientSessionB, "/api/v1/client/program");
+      status("PRESERVED_READ", preserved, 200);
+      stage = "SNAPSHOT_IMMUTABLE"; expect((await preserved.json()).data.program.document.title.fr).not.toBe("Private edit");
+      status("STALE_PUBLICATION_DENIED", await publish(session, { ...command, draftVersion: 2, clientMutationId: randomUUID() }), 409);
+      const replaced = await publish(session, { ...command, draftVersion: 2, expectedPublicationId: published.id, clientMutationId: randomUUID() });
+      status("REPLACE_PUBLICATION", replaced, 200);
+      stage = "SECOND_REVISION"; expect((await replaced.json()).data.program.revision).toBe(2);
+      const latest = await authenticatedFetch(environment, clientSessionB, "/api/v1/client/program");
+      status("LATEST_READ", latest, 200);
+      stage = "LATEST_CONTENT"; expect((await latest.json()).data.program.document.title.fr).toBe("Private edit");
+      stage = "HISTORY";
+      const history = await clientSessionB.client.from("training_program_publications").select("id");
+      expect(history.error).toBeNull(); expect(history.data).toHaveLength(2);
+      stage = "DIRECT_MUTATION_DENIED";
+      const tamper = await clientSessionB.client.from("training_program_publications").update({ revision: 99 });
+      expect(tamper.error?.code).toBe("42501");
+    } catch {
+      // Only closed stage labels and HTTP integers leave this block. In particular,
+      // assertion diffs must not print identifiers, timestamps or session material.
+      throw new Error("Training publication integration failed at " + stage);
+    }
   });
 
   it("persiste la bibliothèque Training sans élargir les accès Client ou Coach non vérifié", async () => {

@@ -30,4 +30,11 @@ describe("publication repository", () => {
     expect(publicationError({message:"FE_INVALID_TRAINING_PUBLICATION"}).status).toBe(400);
     expect(publicationError({message:"private FE_NOT_FOUND"}).status).toBe(503);
   });
+  it("distinguishes empty history from lost publication access", async() => {
+    mocks.auth.mockResolvedValue({}); mocks.rpc.mockResolvedValueOnce({data:{program:null},error:null});
+    expect(await readCoachPublication(id)).toBeNull();
+    expect(mocks.rpc).toHaveBeenCalledWith("get_training_publication_for_coach",{p_client_id:id});
+    mocks.rpc.mockResolvedValueOnce({error:{message:"FE_NOT_FOUND"}});
+    await expect(readCoachPublication(id)).rejects.toMatchObject({status:404});
+  });
 });

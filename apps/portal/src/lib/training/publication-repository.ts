@@ -2,7 +2,7 @@ import "server-only";
 import { requireCoachVerified } from "@/lib/auth/actor";
 import { requireOwnClientAccess } from "@/lib/auth/own-client-access";
 import { M1ContractError, uuidSchema } from "@/lib/contracts/m1";
-import { publicationClientsSchema, publicationSchema, publishProgramRequestSchema, type PublishProgramRequest } from "@/lib/contracts/training-publication";
+import { publicationClientsSchema, publicationSchema, publicationResponseSchema, publishProgramRequestSchema, type PublishProgramRequest } from "@/lib/contracts/training-publication";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { programRepositoryError } from "./program-repository";
 
@@ -29,16 +29,14 @@ async function readCurrent(organizationId: string, clientId: string) {
     draftVersion: data.draft_version, revision: data.revision, document: data.document, publishedAt: data.published_at }) : null;
 }
 export async function readCoachPublication(clientId: string) {
-  const actor = await requireCoachVerified();
+  await requireCoachVerified();
   const id = uuidSchema.parse(clientId);
   const supabase = await createServerSupabaseClient();
-  // Check dossier visibility first; publication RLS additionally enforces an
-  // ACTIVE assignment. No snapshot may leak through broader dossier access.
-  const { data: client, error } = await supabase.from("clients").select("id")
-    .eq("id", id).eq("organization_id", actor.organizationId).eq("status", "ACTIVE").maybeSingle();
+  // Distinguish a genuinely empty publication history from lost authorization.
+  // Broader dossier access alone is not sufficient (e.g. a paused assignment).
+  const { data, error } = await supabase.rpc("get_training_publication_for_coach", { p_client_id: id });
   if (error) throw publicationError(error);
-  if (!client) throw new M1ContractError("NOT_FOUND", "Client not found", 404);
-  return readCurrent(actor.organizationId, id);
+  return publicationResponseSchema.parse(data).program;
 }
 export async function readOwnPublication() {
   const actor = await requireOwnClientAccess();

@@ -45,6 +45,7 @@ insert into results values('draft',public.save_training_program_draft(null,jsonb
 select throws_ok('select pg_temp.publish()','P0001','FE_INVALID_TRAINING_PUBLICATION','incomplete draft denied by RPC');
 select lives_ok('select public.save_training_program_draft(pg_temp.draft_id(),pg_temp.document(),1,gen_random_uuid())','complete draft version saved');
 select is((public.list_training_recipients()->>'total')::integer,3,'only eligible recipients listed');
+select is(public.get_training_publication_for_coach('59100000-0000-4000-8000-000000000005'),' {"program":null}'::jsonb,'authorized empty publication history is explicit');
 select pg_temp.become(1,'otp');
 select throws_ok('select pg_temp.publish(2)','P0001','FE_FORBIDDEN','OTP-only staff cannot publish');
 select throws_ok('select public.list_training_recipients()','P0001','FE_FORBIDDEN','OTP-only staff cannot enumerate recipients');
@@ -61,6 +62,7 @@ insert into results values('published',pg_temp.publish(2));
 select is(pg_temp.publish(2),(select snapshot from results where label='published'),'retry returns identical publication');
 select throws_ok('select pg_temp.publish(3)','P0001','FE_IDEMPOTENCY_CONFLICT','key reuse with different payload denied');
 select is((select count(*) from public.training_program_publications),1::bigint,'owner sees publication');
+select is(public.get_training_publication_for_coach('59100000-0000-4000-8000-000000000005')->'program',(select snapshot from results where label='published'),'Coach read RPC returns exact current publication');
 select throws_ok('update public.training_program_publications set revision=10','42501',null,'authenticated cannot mutate publication');
 select pg_temp.become(5,'otp');
 select is((select count(*) from public.training_program_publications),1::bigint,'recipient sees own publication');
@@ -91,6 +93,7 @@ update public.coach_client_assignments set status='PAUSED' where client_id='5910
 set local role authenticated;
 select pg_temp.become(1);
 select throws_ok('select pg_temp.publish(2)','P0001','FE_NOT_FOUND','paused assignment blocks receipt replay too');
+select throws_ok($$select public.get_training_publication_for_coach('59100000-0000-4000-8000-000000000005')$$,'P0001','FE_NOT_FOUND','lost publication authorization is not a false empty history');
 select is((public.list_training_recipients()->>'total')::integer,2,'paused assignment removed from picker');
 select pg_temp.become(5,'otp');
 select is((select count(*) from public.training_program_publications),2::bigint,'Client retains their published history while coaching paused');

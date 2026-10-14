@@ -149,4 +149,17 @@ begin
 end $$;
 revoke all on function public.list_training_recipients(integer) from public,anon,authenticated;
 grant execute on function public.list_training_recipients(integer) to authenticated;
+create function public.get_training_publication_for_coach(p_client_id uuid) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare m public.organization_memberships%rowtype; publication public.training_program_publications%rowtype;
+begin
+  if not app_private.has_verified_coach_session() or (select count(*) from public.organization_memberships where user_id=auth.uid() and status='ACTIVE')<>1 then raise exception using errcode='P0001',message='FE_FORBIDDEN'; end if;
+  select * into m from public.organization_memberships where user_id=auth.uid() and status='ACTIVE' and role in ('COACH','ADMIN');
+  if not found then raise exception using errcode='P0001',message='FE_FORBIDDEN'; end if;
+  if not app_private.can_publish_training(m.organization_id,p_client_id) then raise exception using errcode='P0001',message='FE_NOT_FOUND'; end if;
+  select * into publication from public.training_program_publications where organization_id=m.organization_id and client_id=p_client_id order by revision desc limit 1;
+  return jsonb_build_object('program',case when publication.id is null then null else app_private.training_publication_snapshot(publication) end);
+end $$;
+revoke all on function public.get_training_publication_for_coach(uuid) from public,anon,authenticated;
+grant execute on function public.get_training_publication_for_coach(uuid) to authenticated;
 commit;
