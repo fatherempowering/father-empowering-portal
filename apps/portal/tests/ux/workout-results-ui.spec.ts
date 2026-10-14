@@ -91,6 +91,25 @@ test("Client starts explicitly, records real sets and extras, saves, then confir
   ]);
 });
 
+test("real browser back cancellation preserves unsaved workout values", async ({ page }) => {
+  await page.goto("/?screen=client-program&state=program-published");
+  await page.goto(workoutUrl("workout-new"));
+  await page.getByRole("button", { name: "Commencer la séance", exact: true }).click();
+  const first = workoutSet(page, 1);
+  await first.getByRole("combobox", { name: "Statut de la série", exact: true }).selectOption("DONE");
+  await first.getByRole("spinbutton", { name: /^Répétitions/ }).fill("8");
+  await first.getByRole("spinbutton", { name: /^Charge \(lb\)/ }).fill("40");
+  const unchangedUrl = page.url();
+  const prompt = page.waitForEvent("dialog", { timeout: 10_000 });
+  await page.evaluate(() => history.back());
+  const dialog = await prompt;
+  expect(dialog.type()).toBe("beforeunload");
+  await dialog.dismiss();
+  await expect(page).toHaveURL(unchangedUrl);
+  await expect(first.getByRole("spinbutton", { name: /^Charge \(lb\)/ })).toHaveValue("40");
+  await expect(page.getByText("Résultats non enregistrés", { exact: true })).toBeVisible();
+});
+
 test("lost response locks entries and retries the identical command and idempotency key", async ({ page }) => {
   await page.goto(workoutUrl("workout-response-lost"));
   await page.getByLabel(/Contexte utile pour ton suivi/).fill("Saisie à confirmer.");

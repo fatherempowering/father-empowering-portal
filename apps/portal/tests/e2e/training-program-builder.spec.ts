@@ -56,10 +56,13 @@ test("Coach builds, publishes and preserves an immutable plan visible to the OTP
   await firstSet.getByLabel("Répétitions · Dumbbell Press · série 1",{exact:true}).fill("8");
   await firstSet.getByLabel("Charge (lb) · Dumbbell Press · série 1",{exact:true}).fill("40");
   await firstSet.getByLabel("RIR · Dumbbell Press · série 1",{exact:true}).fill("2");
-  let unsavedPrompt=false;
-  clientPage.once("dialog",async dialog=>{unsavedPrompt=dialog.type()==="beforeunload";await dialog.dismiss();});
-  await clientPage.goBack().catch(()=>null);
-  expect(unsavedPrompt).toBe(true);
+  const unchangedWorkoutUrl=clientPage.url();
+  const unsavedPrompt=clientPage.waitForEvent("dialog",{timeout:10_000});
+  // A cancelled navigation never completes; wait for its actual browser prompt,
+  // not goBack()'s navigation promise.
+  await clientPage.evaluate(()=>history.back());
+  const leaveDialog=await unsavedPrompt;expect(leaveDialog.type()).toBe("beforeunload");await leaveDialog.dismiss();
+  await expect(clientPage).toHaveURL(unchangedWorkoutUrl);
   await expect(firstSet.getByLabel("Charge (lb) · Dumbbell Press · série 1",{exact:true})).toHaveValue("40");
   await clientPage.getByRole("button",{name:"Enregistrer les résultats",exact:true}).click();
   await expect(clientPage.getByText("Résultats enregistrés.",{exact:true})).toBeVisible();
