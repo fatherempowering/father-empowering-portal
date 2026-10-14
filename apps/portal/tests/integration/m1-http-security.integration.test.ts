@@ -659,7 +659,7 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
       const empty=await get();status("EMPTY",empty,200);stage="EMPTY_WORKOUT";expect((await empty.json()).data.workout).toBeNull();
       const command={...selector,expectedVersion:0,clientMutationId:randomUUID(),status:"IN_PROGRESS",sets:[],note:""};
       const write=(body:unknown)=>jsonPost(clientSessionB,"/api/v1/client/workouts",body);
-      status("ORIGIN",await authenticatedFetch(environment,clientSessionB,"/api/v1/client/workouts",{method:"POST",headers:{"content-type":"application/json",origin:"https://untrusted.example"},body:JSON.stringify(command)}),403);
+      status("ORIGIN",await fetch(`${environment.appUrl}/api/v1/client/workouts`,{method:"POST",headers:{"content-type":"application/json",cookie:clientSessionB.cookieHeader(),origin:"https://untrusted.example"},body:JSON.stringify(command),redirect:"manual"}),403);
       status("INJECTED_IDENTITY",await write({...command,clientId}),400);
       const started=await write(command);status("START_WORKOUT",started,200);const first=(await started.json()).data.workout;
       const replay=await write(command);status("REPLAY",replay,200);stage="REPLAY_EQUAL";expect((await replay.json()).data.workout).toEqual(first);
