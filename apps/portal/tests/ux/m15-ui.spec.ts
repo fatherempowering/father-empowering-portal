@@ -645,7 +645,7 @@ test("Client onboarding excludes invalid formats from progress and lists them be
 test("Submitted Client onboarding is read-only and returns to the portal without another assessment", async ({
   page,
 }) => {
-  await page.goto("/?screen=client-onboarding&state=onboarding-submitted");
+  await page.goto("/?screen=client-onboarding&state=onboarding-submitted&view=responses");
   await expect(
     page.getByText("Questionnaire transmis au Coach", { exact: true }),
   ).toBeVisible();

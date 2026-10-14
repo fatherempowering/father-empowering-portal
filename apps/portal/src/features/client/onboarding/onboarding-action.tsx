@@ -51,7 +51,6 @@ export function OnboardingAction({ french, actionClassName = "fe-button fe-butto
   if (!status) return <p role="status">{t("Chargement de ta prochaine étape…", "Loading your next step…")}</p>;
   if (status === "SUBMITTED") return <div data-onboarding-status={status}>
     <InitialAssessmentAction french={french} actionClassName={actionClassName} hideProgramAvailability={visualCheckpoint} />
-    <p><a href="/client/onboarding">{t("Consulter mon questionnaire d’accueil transmis", "View my submitted welcome questionnaire")}</a></p>
   </div>;
   return <div data-onboarding-status={status}>
     <h2>{visualCheckpoint ? t("Faisons connaissance.", "Let’s get to know you.") : t("Commençons par mieux te connaître", "Let’s get to know you")}</h2>

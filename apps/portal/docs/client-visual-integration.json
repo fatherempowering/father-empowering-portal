@@ -20,7 +20,10 @@
     "DATA-01": "No extra Week Zero summary query or fictitious values. Keep a link to the existing Client Week Zero.",
     "LEGACY-01": "No additional migration or claim of Legacy feature parity.",
     "PREF-01": "Existing locale and unit data preserved; no preference reset/storage. Existing local fonts/logo reused byte-identically.",
-    "SAVE-01": "Existing save/Continue/submit, idempotency, conflicts, read-only and unsaved-navigation guards retained. Document links from long questionnaire preserve navigation warnings."
+    "SAVE-01": "Existing save/Continue/submit, idempotency, conflicts, read-only and unsaved-navigation guards retained. Document links from long questionnaire preserve navigation warnings.",
+    "FOLLOWUP-01": "Max requested confirmation without repeated answers after submission. Review before sending is preserved; intentional read-only consultation remains in landmarks/navigation via ?view=responses. A successful submission always advances to confirmation, including a draft entered through landmarks.",
+    "FOLLOWUP-02": "Reserve separate French/English Week Zero video slots using the existing Client locale. Assets are not supplied: localized pending messages only, no fake player, no external media requests, no cross-language video fallback. Return Home follows the video slot. No video management or upload system added.",
+    "FOLLOWUP-03": "Make Ta prochaine étape more prominent and remove the submitted-questionnaire shortcut from that panel. Existing Week Zero message remains unchanged pending Max's replacement text."
   },
   "deviations": [
     "Desktop/mobile questionnaire references show different states; both states remain supported at all sizes.",

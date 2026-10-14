@@ -23,6 +23,13 @@
 .progress progress::-moz-progress-bar { background: #60e88a; border-radius: .5rem; }
 .progress p { font-size: .875rem; margin-top: .5rem; }
 .content { min-width: 0; }
+.completion { max-width: 52rem; margin-inline: auto; }
+.completion > p:not(.status) { color: #ced3d7; }
+.videoIntroduction { margin-top: 1.5rem; }
+.videoIntroduction h2 { font: 400 clamp(1.75rem, 3vw, 2.25rem)/1.15 "FE Display", sans-serif; margin-bottom: 1rem; }
+.videoPlaceholder { aspect-ratio: 16 / 9; min-height: 10rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; padding: 1.5rem; text-align: center; border: 1px dashed #788894; border-radius: .5rem; background: #1a2229; }
+.videoPlaceholder strong { color: #ff963f; font-size: 1.125rem; }
+.videoPlaceholder p { color: #ced3d7; }
 .status { color: #b5f0c9; min-height: 1.75rem; margin-bottom: .5rem; font-size: .875rem; }
 .notice { padding: .875rem 1rem; border-left: 3px solid #ff7a1a; background: #1a2229; color: #ced3d7; font-size: .875rem; overflow-wrap: anywhere; }
 .panel { margin: 1rem 0; padding: 1.5rem; border: 1px solid #46515b; border-radius: .5rem; background: #1a2229; min-width: 0; }

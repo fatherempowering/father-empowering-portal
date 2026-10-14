@@ -1,6 +1,78 @@
 import { expect, test } from "@playwright/test";
 
 for (const language of ["fr", "en"] as const) {
+  test(`submitted questionnaire shows the ${language} video slot, not another summary`, async ({ page }, info) => {
+    for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }, { width: 320, height: 820 }]) {
+      await page.setViewportSize(viewport);
+      await page.goto(`/?screen=client-onboarding&state=onboarding-submitted&language=${language}`);
+      const completion = page.locator("[data-onboarding-completion]");
+      await expect(completion).toBeVisible();
+      await expect(page.locator("form, details, video, iframe")).toHaveCount(0);
+      await expect(page.getByRole("navigation", { name: /Sections du questionnaire|Questionnaire sections/ })).toHaveCount(0);
+      const video = completion.locator("[data-video-language]");
+      await expect(video).toHaveAttribute("data-video-language", language);
+      await expect(video).toContainText(language === "fr" ? "La vidéo en français sera disponible ici." : "The English video will be available here.");
+      const home = page.getByRole("link", { name: language === "fr" ? "Retour à la page d’accueil" : "Back to home", exact: true });
+      await expect(home).toHaveAttribute("href", "/client");
+      const area = (await video.boundingBox())!;
+      expect((await home.boundingBox())!.y).toBeGreaterThanOrEqual(area.y + area.height);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+      await page.screenshot({ path: info.outputPath(`questionnaire-completed-${language}-${viewport.width}.png`) });
+      await page.reload();
+      await expect(completion).toBeVisible();
+      await expect(page.locator("details")).toHaveCount(0);
+    }
+  });
+
+  test(`review before submission is preserved, but not repeated after sending in ${language}`, async ({ page }) => {
+    // Even entering a draft from landmarks must advance after a real success.
+    await page.goto(`/?screen=client-onboarding&state=onboarding-complete-draft&language=${language}&view=responses`);
+    await page.getByRole("button", { name: language === "fr" ? "Vérifier et transmettre" : "Review and submit", exact: true }).click();
+    await expect(page.locator("details")).toHaveCount(6);
+    const send = page.getByRole("button", { name: language === "fr" ? "Transmettre mon questionnaire" : "Submit my questionnaire", exact: true });
+    await expect(send).toBeEnabled();
+    await send.click();
+    await expect(page.locator("[data-onboarding-completion]")).toBeVisible();
+    await expect(page.locator("h1")).toBeFocused();
+    expect(new URL(page.url()).searchParams.has("view")).toBe(false);
+    await expect(page.locator("details, form")).toHaveCount(0);
+    await expect(page.locator("[data-video-language]")).toHaveAttribute("data-video-language", language);
+  });
+}
+
+test("a failed submission keeps the review and never displays successful completion", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-submit-error");
+  await page.getByRole("button", { name: "Vérifier et transmettre", exact: true }).click();
+  await page.getByRole("button", { name: "Transmettre mon questionnaire", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("La confirmation n’a pas été reçue");
+  await expect(page.locator("[data-onboarding-completion]")).toHaveCount(0);
+  await expect(page.locator("details")).toHaveCount(6);
+  await expect(page.getByRole("button", { name: "Transmettre mon questionnaire", exact: true })).toBeEnabled();
+});
+
+test("the next-step panel is prominent and questionnaire consultation stays in landmarks", async ({ page }) => {
+  await page.goto("/?screen=client-v2&state=onboarding-submitted");
+  const panel = page.locator("[data-pilot-primary]");
+  const label = panel.getByText("Ta prochaine étape", { exact: true });
+  await expect(label).toBeVisible();
+  expect(await label.evaluate((element) => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(26);
+  await expect(panel.getByRole("heading", { name: "Ta semaine zéro", exact: true })).toBeVisible();
+  await expect(panel.locator('a[href*="/client/onboarding"]')).toHaveCount(0);
+  const landmarks = page.getByRole("region", { name: "Tes repères" });
+  await expect(landmarks.getByRole("link", { name: /Questionnaire d’accueil/ })).toHaveAttribute("href", "/client/onboarding?view=responses");
+});
+
+test("questionnaire consultation is explicit from the unchanged Client screens too", async ({ page }) => {
+  for (const screen of ["client-today-staff", "client-week-zero", "client-program"]) {
+    await page.goto("/?screen=" + screen);
+    const menu = page.getByRole("button", { name: "Ouvrir le menu", exact: true });
+    if (await menu.isVisible()) await menu.click();
+    const questionnaire = page.getByRole("link", { name: "Questionnaire d’accueil", exact: true });
+    await expect(questionnaire).toHaveAttribute("href", "/client/onboarding?view=responses");
+  }
+});
+
+for (const language of ["fr", "en"] as const) {
   test(`Client visual checkpoint: real actions and first input above the fold in ${language}`, async ({ page }, info) => {
     for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }, { width: 320, height: 820 }]) {
       await page.setViewportSize(viewport);
@@ -35,12 +107,12 @@ for (const language of ["fr", "en"] as const) {
         await page.getByRole("combobox", { name: language === "fr" ? "Aller à une section" : "Go to a section" }).selectOption("1");
         await expect(page.getByRole("heading", { name: language === "fr" ? "Objectifs et vision" : "Objectives & Vision", exact: true })).toBeFocused();
       }
-      await page.goto(`/?screen=client-onboarding&state=onboarding-submitted&language=${language}`);
+      await page.goto(`/?screen=client-onboarding&state=onboarding-submitted&language=${language}&view=responses`);
       await expect(page.locator("form")).toHaveCount(0);
       await expect(page.locator("details")).toHaveCount(6);
       await expect(page.locator("h1")).toHaveText("Alex Martin");
       const currentLink = page.locator('[data-pilot-sidebar] a[aria-current="page"]');
-      await expect(currentLink).toHaveAttribute("href", "/client/onboarding");
+      await expect(currentLink).toHaveAttribute("href", "/client/onboarding?view=responses");
       await expect(page.getByText(/Dossier ouvert|Coach Max/)).toHaveCount(0);
       await page.screenshot({ path: info.outputPath(`questionnaire-readonly-${language}-${viewport.width}.png`) });
     }

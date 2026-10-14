@@ -7,6 +7,7 @@ import { Feedback, Loading } from "@/components/fe/feedback";
 import { WheelPicker } from "@/components/fe/wheel-picker";
 import { MeasurementPicker } from "./measurement-picker";
 import { EquipmentField } from "./equipment-field";
+import { OnboardingCompletion } from "./onboarding-completion";
 import { displayOnboardingText } from "@/lib/onboarding/answer-display";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
 import type { ClientDashboard } from "@/features/client/dashboard/contracts";
@@ -29,7 +30,7 @@ async function requestIntake(body?: unknown, submit = false): Promise<Onboarding
   return onboardingSnapshotSchema.parse((await response.json()).data?.intake);
 }
 
-export function ClientOnboarding() {
+export function ClientOnboarding({ reviewSubmittedResponses = false }: { reviewSubmittedResponses?: boolean }) {
   const [client, setClient] = useState<ClientDashboard | null>(null);
   const [intake, setIntake] = useState<OnboardingSnapshot | null>(null);
   const [responses, setResponses] = useState<OnboardingResponses | null>(null);
@@ -43,7 +44,9 @@ export function ClientOnboarding() {
   const [conflict, setConflict] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
+  const [submittedNow, setSubmittedNow] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
+  const completionHeading = useRef<HTMLHeadingElement>(null);
   const form = useRef<HTMLFormElement>(null);
   const inFlight = useRef(false);
   const leavingIntentionally = useRef(false);
@@ -53,6 +56,9 @@ export function ClientOnboarding() {
   const t = (fr: string, en: string) => french ? fr : en;
   const copy = (text: OnboardingCopy) => french ? text.fr : text.en;
   const submitted = intake?.status === "SUBMITTED";
+  // The review is intentional from landmarks; successful submission always
+  // advances to the confirmation, even when the draft was opened from there.
+  const showCompletion = submitted && (!reviewSubmittedResponses || submittedNow);
   const dirty = responses !== null && intake !== null && JSON.stringify(responses) !== JSON.stringify(intake.responses);
   const required = ONBOARDING_QUESTIONS.filter((q) => q.required);
   const validation = responses ? completeOnboardingResponsesSchema.safeParse(responses) : null;
@@ -61,6 +67,10 @@ export function ClientOnboarding() {
   const validRequiredCount = required.filter((q) => responses && hasAnswer(responses[q.key]) && !invalidKeys.has(q.key)).length;
   const progress = Math.floor(validRequiredCount / required.length * 100);
   const currentSection = ONBOARDING_SECTIONS[step];
+
+  useEffect(() => {
+    if (submittedNow && showCompletion) completionHeading.current?.focus();
+  }, [submittedNow, showCompletion]);
 
   useEffect(() => {
     let active = true;
@@ -136,6 +146,12 @@ export function ClientOnboarding() {
         const payload = { expectedVersion: current.version };
         current = await requestIntake({ ...payload, clientMutationId: commandKey(submitCommand, payload) }, true);
         setIntake(current); setResponses(current.responses); submitCommand.current = null;
+        setSubmittedNow(true);
+        // Reloading after submission must not re-open the review entered from
+        // landmarks. Preserve Next's history state and unrelated URL fields.
+        const destination = new URL(window.location.href);
+        destination.searchParams.delete("view");
+        window.history.replaceState(window.history.state, "", destination.toString());
       }
       setSavedNotice(true);
       if (nextStep !== undefined) goToStep(nextStep);
@@ -165,9 +181,9 @@ export function ClientOnboarding() {
     accountAction={<button className="fe-button" disabled={busy} onClick={() => void signOut()}>{t("Se déconnecter", "Sign out")}</button>}>
     <div className={styles.page} data-onboarding-visual="" data-submitted={submitted}>
       <header className={styles.intro}>
-        <a className={styles.back} href="/client"><Icon name="arrow" />{t("Accueil", "Home")}</a>
-        <h1 className="fe-title">{submitted ? client?.displayName : t("Faisons connaissance.", "Let’s get to know you.")}</h1>
-        <p>{submitted ? t("Ton questionnaire d’accueil · Lecture seule", "Your welcome questionnaire · Read only")
+        {!showCompletion && <a className={styles.back} href="/client"><Icon name="arrow" />{t("Accueil", "Home")}</a>}
+        <h1 className="fe-title" ref={completionHeading} tabIndex={showCompletion ? -1 : undefined}>{showCompletion ? t("Questionnaire transmis.", "Questionnaire submitted.") : submitted ? client?.displayName : t("Faisons connaissance.", "Let’s get to know you.")}</h1>
+        <p>{showCompletion ? t("Tes réponses sont bien arrivées. Place à la suite.", "Your answers have been received. On to the next step.") : submitted ? t("Ton questionnaire d’accueil · Lecture seule", "Your welcome questionnaire · Read only")
           : currentSection ? t(`Section ${step+1} sur 6 · ${copy(currentSection.title)}`, `Section ${step+1} of 6 · ${copy(currentSection.title)}`)
           : t("Vérifier et transmettre", "Review and submit")}</p>
       </header>
@@ -177,7 +193,7 @@ export function ClientOnboarding() {
       {conflict && <button className="fe-button" onClick={() => {
         if (window.confirm(t("Recharger remplacera les saisies affichées par la version enregistrée. Continuer ?", "Reloading replaces the entries on screen with the saved version. Continue?"))) setAttempt((n) => n+1);
       }}>{t("Recharger la version enregistrée", "Reload the saved version")}</button>}
-      {loading ? <Loading>{t("Chargement du questionnaire…", "Loading questionnaire…")}</Loading> : failed ? <><Feedback>{t("Le questionnaire ne peut pas être chargé. Aucune réponse n’a été remplacée.", "The questionnaire could not be loaded. No answers have been replaced.")}</Feedback><button className="fe-button" onClick={() => setAttempt((n) => n+1)}>{t("Réessayer", "Try again")}</button></> : !intake || !responses ? <Loading>{t("Chargement du questionnaire…", "Loading questionnaire…")}</Loading> : <div className={styles.layout}>
+      {loading ? <Loading>{t("Chargement du questionnaire…", "Loading questionnaire…")}</Loading> : failed ? <><Feedback>{t("Le questionnaire ne peut pas être chargé. Aucune réponse n’a été remplacée.", "The questionnaire could not be loaded. No answers have been replaced.")}</Feedback><button className="fe-button" onClick={() => setAttempt((n) => n+1)}>{t("Réessayer", "Try again")}</button></> : !intake || !responses ? <Loading>{t("Chargement du questionnaire…", "Loading questionnaire…")}</Loading> : showCompletion ? <OnboardingCompletion french={french} /> : <div className={styles.layout}>
         <aside className={styles.sectionRail}>
           <nav aria-label={t("Sections du questionnaire", "Questionnaire sections")}>
             <p className={styles.sectionCount}>{t("6 sections", "6 sections")}</p>

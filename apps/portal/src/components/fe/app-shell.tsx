@@ -65,7 +65,7 @@ export function AppShell({
             id: "today" as const,
           },
           {
-            href: "/client/onboarding",
+            href: "/client/onboarding?view=responses",
             label: french ? "Questionnaire d’accueil" : "Welcome questionnaire",
             icon: "check" as const,
             id: "onboarding" as const,

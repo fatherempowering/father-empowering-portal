@@ -362,6 +362,7 @@ window.fetch = async (url, init) => {
     }, 201);
   }
   if (path.endsWith("/client/onboarding/submit") && init?.method === "POST") {
+    if (scenario === "onboarding-submit-error") return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
     return reply({ data: { intake: onboardingSnapshot("SUBMITTED") } });
   }
   if (path.endsWith("/client/onboarding") && init?.method === "PUT") {
@@ -413,7 +414,7 @@ window.fetch = async (url, init) => {
     if (scenario === "onboarding-legacy-measurements") {
       return reply({ data: { intake: onboardingSnapshot("DRAFT", { ...EMPTY_ONBOARDING_RESPONSES, height: "Ancienne taille sans unité", currentBodyweight: "Ancien poids sans unité" }) } });
     }
-    if (scenario === "onboarding-complete-draft") {
+    if (scenario === "onboarding-complete-draft" || scenario === "onboarding-submit-error") {
       return reply({ data: { intake: onboardingSnapshot("DRAFT", completeOnboardingResponses()) } });
     }
     if (scenario === "onboarding-action-error") {
@@ -666,7 +667,7 @@ function Harness() {
     return <ClientWeekZero />;
   }
   if (view === "client-onboarding") {
-    return <ClientOnboarding />;
+    return <ClientOnboarding reviewSubmittedResponses={harnessParameters.get("view") === "responses"} />;
   }
   if (view === "personal-portal-setup") {
     return <AppShell space="coach" current="personal">

@@ -75,7 +75,7 @@
 .contentGrid { display: grid; grid-template-columns: minmax(0,1.8fr) minmax(14rem,1fr); gap: 1rem; padding: 1.25rem; align-items: start; }
 .tasks { display: grid; gap: 1rem; min-width: 0; }
 .primaryPanel, .programPanel, .accountDetails { padding: 1.5rem; border: 1px solid #46515b; border-radius: .5rem; background: #1a2229; min-width: 0; }
-.panelEyebrow { color: #ff963f; font: 400 1rem "FE Display", sans-serif; letter-spacing: .22em; text-transform: uppercase; margin-bottom: .5rem; }
+.panelEyebrow { color: #ff963f; font: 400 clamp(1.625rem,2.2vw,2rem)/1.15 "FE Display", sans-serif; letter-spacing: .1em; text-transform: uppercase; margin-bottom: .875rem; padding-bottom: .75rem; border-bottom: 2px solid #ff7a1a; }
 .primaryCopy h2 { font: 400 clamp(2rem,3.4vw,3rem)/1.05 "FE Display", sans-serif; margin-bottom: .75rem; }
 .primaryCopy p { color: #ced3d7; line-height: 1.5; margin: .75rem 0; }
 .primaryCopy :global(.fe-button) { width: 100%; margin-block: .5rem; }

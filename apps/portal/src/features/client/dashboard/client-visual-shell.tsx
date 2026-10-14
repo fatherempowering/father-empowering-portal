@@ -28,7 +28,7 @@ export function ClientVisualShell({ children, name, french, current, accountActi
   const links = [
     { id: "home", href: "/client", label: french ? "Accueil" : "Home", icon: "home" as const },
     { id: "today", href: "/client/today", label: french ? "Aujourd’hui" : "Today", icon: "today" as const },
-    { id: "onboarding", href: "/client/onboarding", label: french ? "Questionnaire d’accueil" : "Welcome questionnaire", icon: "check" as const },
+    { id: "onboarding", href: "/client/onboarding?view=responses", label: french ? "Questionnaire d’accueil" : "Welcome questionnaire", icon: "check" as const },
     { id: "week-zero", href: "/client/week-zero", label: french ? "Semaine zéro" : "Week Zero", icon: "check" as const },
     { id: "program", href: "/client/program", label: french ? "Mon programme" : "My program", icon: "today" as const },
   ];

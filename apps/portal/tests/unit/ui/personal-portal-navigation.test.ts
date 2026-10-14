@@ -26,6 +26,7 @@ describe("Coach personal portal navigation", () => {
     );
 
     expect(markup).not.toContain('href="/coach"');
+    expect(markup).toContain('href="/client/onboarding?view=responses"');
   });
 
   it("shows the document return to Coach only for a staff Client session", () => {

@@ -45,7 +45,7 @@ export function ClientHomePilot({ dashboard, failed, signingOut, signOutError, o
       </section> : !dashboard ? <div className={styles.loadingStatus} role="status">{t("Chargement de ton portail…", "Loading your portal…")}</div> : <div className={styles.contentGrid}>
         <div className={styles.tasks}>
           <section className={styles.primaryPanel} data-pilot-primary="" aria-label={t("Ta prochaine étape", "Your next step")}>
-            <p className={styles.panelEyebrow}>{t("Ta prochaine action", "Your next step")}</p>
+            <p className={styles.panelEyebrow}>{t("Ta prochaine étape", "Your next step")}</p>
             <div className={styles.primaryCopy}>
               <OnboardingAction french={french} actionClassName="fe-button fe-button-primary" visualCheckpoint />
             </div>
@@ -53,7 +53,7 @@ export function ClientHomePilot({ dashboard, failed, signingOut, signOutError, o
           <section aria-labelledby="client-landmarks">
             <h2 id="client-landmarks" className={styles.landmarksTitle}>{t("Tes repères", "Your landmarks")}</h2>
             <div className={styles.landmarks}>
-              <a href="/client/onboarding"><span className={styles.landmarkNumber}>01</span><div><strong>{t("Questionnaire d’accueil", "Welcome questionnaire")}</strong><small>{t("Six sections, à ton rythme.", "Six sections, at your own pace.")}</small></div><Icon name="arrow" /></a>
+              <a href="/client/onboarding?view=responses"><span className={styles.landmarkNumber}>01</span><div><strong>{t("Questionnaire d’accueil", "Welcome questionnaire")}</strong><small>{t("Six sections, à ton rythme.", "Six sections, at your own pace.")}</small></div><Icon name="arrow" /></a>
               <a href="/client/week-zero"><span className={styles.landmarkNumber}>02</span><div><strong>{t("Semaine zéro", "Week Zero")}</strong><small>{t("Mesures · Mobilité · Disponibilités", "Measurements · Mobility · Availability")}</small></div><Icon name="arrow" /></a>
             </div>
           </section>

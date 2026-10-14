@@ -20,9 +20,9 @@ describe("isolated Client visual shell", () => {
   });
   it("keeps all existing Client routes including the newly published program", () => {
     const html = shell();
-    for (const route of ["/client", "/client/today", "/client/onboarding", "/client/week-zero", "/client/program"]) expect(html).toContain(`href="${route}"`);
+    for (const route of ["/client", "/client/today", "/client/onboarding?view=responses", "/client/week-zero", "/client/program"]) expect(html).toContain(`href="${route}"`);
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
-    expect(html).toMatch(/href="\/client\/onboarding" aria-current="page"/);
+    expect(html).toContain('href="/client/onboarding?view=responses" aria-current="page"');
   });
   it("preserves the staff-only document return to Coach without granting roles", () => {
     expect(shell()).not.toContain('href="/coach"');
