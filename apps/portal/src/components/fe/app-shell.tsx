@@ -18,7 +18,7 @@ export function AppShell({
   space: "coach" | "client";
   name?: string;
   locale?: "fr" | "en";
-  current?: "clients" | "personal" | "home" | "today" | "onboarding" | "week-zero";
+  current?: "clients" | "exercises" | "personal" | "home" | "today" | "onboarding" | "week-zero";
   accountAction?: ReactNode;
 }) {
   const { isStaff } = usePortalAccess();
@@ -38,6 +38,7 @@ export function AppShell({
     space === "coach"
       ? [
           { href: "/coach", label: "Clients", icon: "users" as const, id: "clients" as const },
+          { href: "/coach/exercises", label: "Exercices", icon: "today" as const, id: "exercises" as const, document: true },
           {
             href: "/coach/personal",
             label: "Mon portail personnel",
