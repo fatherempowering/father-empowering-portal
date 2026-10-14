@@ -21,7 +21,7 @@ if (
 
 export default defineConfig({
   testDir: ".",
-  testMatch: ["m1-vertical.spec.ts", "staff-own-client.spec.ts", "training-library.spec.ts"],
+  testMatch: ["m1-vertical.spec.ts", "staff-own-client.spec.ts", "training-library.spec.ts", "training-program-builder.spec.ts"],
   fullyParallel: false,
   workers: 1,
   retries: 0,
