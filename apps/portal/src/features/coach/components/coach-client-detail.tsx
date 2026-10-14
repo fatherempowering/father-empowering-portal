@@ -180,6 +180,9 @@ function ClientAssessment({ value }: { value: CoachClientWeekZero }) {
           <p className={styles.identity}>{client.email}</p>
         </div>
       </header>
+      <Link className="fe-button fe-button-primary" href={`/coach/clients/${encodeURIComponent(client.id)}/workouts`}>
+        Voir les entraînements et résultats
+      </Link>
       <CoachOnboardingDetail clientId={client.id} />
       <section
         className={styles.assessment}
