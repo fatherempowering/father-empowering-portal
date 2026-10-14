@@ -19,7 +19,7 @@ export function AppShell({
   space: "coach" | "client";
   name?: string;
   locale?: "fr" | "en";
-  current?: "clients" | "exercises" | "personal" | "home" | "today" | "onboarding" | "week-zero";
+  current?: "clients" | "exercises" | "programs" | "personal" | "home" | "today" | "onboarding" | "week-zero";
   accountAction?: ReactNode;
   /** Forms may use full navigation so their beforeunload protection also covers sidebar links. */
   documentNavigation?: boolean;
@@ -42,6 +42,7 @@ export function AppShell({
       ? [
           { href: "/coach", label: "Clients", icon: "users" as const, id: "clients" as const },
           { href: "/coach/exercises", label: "Exercices", icon: "today" as const, id: "exercises" as const, document: true },
+          { href: "/coach/programs", label: "Programmes", icon: "today" as const, id: "programs" as const, document: true },
           {
             href: "/coach/personal",
             label: "Mon portail personnel",
