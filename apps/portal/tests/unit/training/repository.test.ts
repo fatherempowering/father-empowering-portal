@@ -32,4 +32,26 @@ describe("Exercise repository authorization", () => {
     expect(trainingRepositoryError({ message: "secret FE_NOT_FOUND other" }).status).toBe(503);
     expect(trainingRepositoryError({ message: "private detail" }).message).not.toContain("private detail");
   });
+  it("scopes and paginates reads to the verified organization with escaped search and ownership", async () => {
+    const actorId = "18000000-0000-4000-8000-000000000001";
+    const orgId = "28000000-0000-4000-8000-000000000001";
+    const result = { error: null, count: 51, data: [{
+      id: "48000000-0000-4000-8000-000000000001", name: "Press", equipment: "", cue_fr: "", cue_en: "",
+      default_unit: "lb", archived: false, row_version: 2,
+      created_by: "18000000-0000-4000-8000-000000000002", updated_at: "2026-10-13T12:00:00Z",
+    }] };
+    const query = Object.assign(Promise.resolve(result), {
+      select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(),
+      range: vi.fn().mockReturnThis(), ilike: vi.fn().mockReturnThis(),
+    });
+    client.from.mockReturnValue(query);
+    auth.requireCoachVerified.mockResolvedValue({ userId: actorId, organizationId: orgId, role: "COACH" });
+    const list = await listTrainingExercises({ query: "Press_100%", page: 1, archived: "false" });
+    expect(query.eq).toHaveBeenCalledWith("organization_id", orgId);
+    expect(query.eq).toHaveBeenCalledWith("archived", false);
+    expect(query.range).toHaveBeenCalledWith(50, 99);
+    expect(query.ilike).toHaveBeenCalledWith("name", "%Press\\_100\\%%");
+    expect(list.items[0].canEdit).toBe(false);
+    expect(list.total).toBe(51);
+  });
 });

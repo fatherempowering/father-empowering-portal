@@ -80,11 +80,8 @@ export const trainingPrescriptionSchema = setPrescriptionSchema.extend({
   if (value.prescribedSets.length !== value.sets) {
     context.addIssue({ code: "custom", message: "One prescription is required per set" });
   }
-  const base = {
-    reps: value.reps, targetRir: value.targetRir, restSeconds: value.restSeconds,
-    tempo: value.tempo, loadTarget: value.loadTarget, unit: value.unit,
-  };
-  if (value.prescribedSets.every((set) => JSON.stringify(set) === JSON.stringify(base))) {
+  const firstSet = JSON.stringify(value.prescribedSets[0]);
+  if (value.prescribedSets.every((set) => JSON.stringify(set) === firstSet)) {
     context.addIssue({ code: "custom", message: "Identical sets use the common prescription" });
   }
 });

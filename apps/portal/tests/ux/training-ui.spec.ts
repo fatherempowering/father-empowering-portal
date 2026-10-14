@@ -1,5 +1,20 @@
 import { expect, test } from "@playwright/test";
 
+test("sidebar navigation cannot silently discard an unsaved exercise", async ({ page }, testInfo) => {
+  await page.goto("/?screen=exercise-library");
+  await page.getByLabel("Nom de l’exercice (anglais)").fill("Unsaved Exercise");
+  if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Ouvrir le menu" }).click();
+  let protectedNavigation = false;
+  page.on("dialog", async (dialog) => {
+    protectedNavigation = dialog.type() === "beforeunload";
+    await dialog.dismiss();
+  });
+  await page.getByRole("link", { name: "Clients", exact: true }).click();
+  await expect(page).toHaveURL(/screen=exercise-library/);
+  expect(protectedNavigation).toBe(true);
+  await expect(page.getByLabel("Nom de l’exercice (anglais)")).toHaveValue("Unsaved Exercise");
+});
+
 test("Coach creates, edits, searches and archives a reusable exercise", async ({ page }) => {
   await page.goto("/?screen=exercise-library");
   await expect(page.getByRole("heading", { name: "Tes exercices." })).toBeVisible();

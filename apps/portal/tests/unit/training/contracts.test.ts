@@ -61,6 +61,7 @@ describe("Training foundation contracts", () => {
   it("only uses per-set detail when the sets actually differ", () => {
     expect(trainingPrescriptionSchema.safeParse({ ...base, sets: 2 }).success).toBe(true);
     expect(trainingPrescriptionSchema.safeParse({ ...base, sets: 2, prescribedSets: [base, base] }).success).toBe(false);
+    expect(trainingPrescriptionSchema.safeParse({ ...base, sets: 2, prescribedSets: [{ ...base, reps: "12" }, { ...base, reps: "12" }] }).success).toBe(false);
     expect(trainingPrescriptionSchema.safeParse({ ...base, sets: 2, prescribedSets: [{ ...base, reps: "12" }] }).success).toBe(false);
     expect(trainingPrescriptionSchema.safeParse({ ...base, sets: 2, prescribedSets: [base, { ...base, reps: "12" }] }).success).toBe(true);
   });

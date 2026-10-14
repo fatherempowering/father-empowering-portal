@@ -130,7 +130,7 @@ export function ExerciseLibrary() {
     if (!received) { setError("La déconnexion a échoué. Réessaie."); setSigningOut(false); }
   }
 
-  return <AppShell space="coach" current="exercises" accountAction={
+  return <AppShell space="coach" current="exercises" documentNavigation accountAction={
     <button type="button" className="fe-button" disabled={saving || uncertain || signingOut} onClick={() => void logout()}>{signingOut ? "Déconnexion…" : "Se déconnecter"}</button>
   }>
     <div className={styles.page}>
