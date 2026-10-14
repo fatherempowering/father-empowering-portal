@@ -189,6 +189,7 @@ const workoutPublicationId = "19200000-0000-4000-8000-000000000001";
 const previousWorkoutPublicationId = "19200000-0000-4000-8000-000000000002";
 const workoutProgramId = "19200000-0000-4000-8000-000000000003";
 const workoutSessionId = "19200000-0000-4000-8000-000000000004";
+const uppercaseWorkoutSessionId = "19200000-0000-4000-8000-00000000ABCD";
 const workoutExerciseId = "19200000-0000-4000-8000-000000000005";
 const publicationRequests: PublishProgramRequest[] = [];
 const publicationReceipts = new Map<string, ProgramPublication>();
@@ -206,17 +207,21 @@ Object.assign(window, {
 });
 
 function workoutKey(publicationId: string, weekNumber: number, sessionId: string) {
-  return `${publicationId}:${weekNumber}:${sessionId}`;
+  return `${publicationId}:${weekNumber}:${sessionId.toLowerCase()}`;
 }
 
-function makePublication(id = workoutPublicationId, revision = 2) {
+function makePublication(
+  id = workoutPublicationId,
+  revision = 2,
+  sessionIdentifier = workoutSessionId,
+) {
   const document = newProgram();
   document.title = revision === 1
     ? { fr: "Phase fondation", en: "Foundation phase" }
     : { fr: "Phase force", en: "Strength phase" };
   document.weeks[0].objective = { fr: "Construire la force", en: "Build strength" };
   const session = newSession();
-  session.id = workoutSessionId;
+  session.id = sessionIdentifier;
   session.title = { fr: "Séance A", en: "Session A" };
   session.warmup = { fr: "Échauffement progressif.", en: "Progressive warm-up." };
   const block = newBlock();
@@ -263,7 +268,7 @@ function makeWorkout(
       : "19300000-0000-4000-8000-000000000001",
     publicationId: source.id,
     weekNumber: 1,
-    sessionId: session.id,
+    sessionId: session.id.toLowerCase(),
     version: status === "COMPLETED" ? 3 : 2,
     status,
     sets: [
@@ -328,9 +333,15 @@ const needsWorkoutPublication = scenario === "program-published"
   || workoutScreen === "client-workout"
   || workoutScreen === "coach-workouts";
 if (needsWorkoutPublication) {
-  publication = makePublication();
+  publication = makePublication(
+    workoutPublicationId,
+    2,
+    scenario.startsWith("workout-uppercase-session")
+      ? uppercaseWorkoutSessionId
+      : workoutSessionId,
+  );
   workoutPublications.set(publication.id, publication);
-  if (["workout-in-progress", "workout-response-lost", "workout-conflict", "workout-dirty", "coach-workout-pending"].includes(scenario)) {
+  if (["workout-in-progress", "workout-response-lost", "workout-conflict", "workout-dirty", "workout-uppercase-session", "coach-workout-pending"].includes(scenario)) {
     const record = makeWorkout(publication, "IN_PROGRESS");
     workoutRecords.set(workoutKey(record.publicationId, record.weekNumber, record.sessionId), record);
   }
@@ -383,7 +394,7 @@ window.fetch = async (url, init) => {
       const selectedPublication = workoutPublications.get(input.publicationId);
       const selectedSession = selectedPublication?.document.weeks
         .find((week) => week.number === input.weekNumber)?.sessions
-        .find((session) => session.id === input.sessionId);
+        .find((session) => session.id.toLowerCase() === input.sessionId.toLowerCase());
       if (!selectedPublication || !selectedSession) return reply({ error: { code: "NOT_FOUND" } }, 404);
       const previous = workoutRecords.get(workoutKey(input.publicationId, input.weekNumber, input.sessionId));
       const exercises = selectedSession.blocks.flatMap((block) => block.exercises);
@@ -391,7 +402,7 @@ window.fetch = async (url, init) => {
         id: previous?.id ?? "19300000-0000-4000-8000-000000000001",
         publicationId: input.publicationId,
         weekNumber: input.weekNumber,
-        sessionId: input.sessionId,
+        sessionId: input.sessionId.toLowerCase(),
         version: input.expectedVersion + 1,
         status: input.status,
         sets: input.sets.map((set) => {

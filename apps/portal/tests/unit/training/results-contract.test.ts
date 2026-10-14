@@ -148,6 +148,7 @@ describe("training result contracts", () => {
   it("keeps a historical workout tied to the matching immutable publication", () => {
     const workout = { ...snapshot() } as Record<string, unknown>;
     delete workout.session;
+    const publishedSession = { ...session, id: session.id.toUpperCase() };
     const publication = {
       id: ids.publication,
       clientId: ids.client,
@@ -158,12 +159,12 @@ describe("training result contracts", () => {
         schemaVersion: 1,
         phaseId: ids.phase,
         title: { fr: "Force", en: "Strength" },
-        weeks: [{ number: 1, objective: { fr: "", en: "" }, sessions: [session] }],
+        weeks: [{ number: 1, objective: { fr: "", en: "" }, sessions: [publishedSession] }],
       },
       publishedAt: "2026-10-14T11:00:00.000Z",
     };
     const response = workoutSessionResponseSchema.parse({ workout, publication });
-    expect(response.workout?.session.id).toBe(ids.session);
+    expect(response.workout?.session.id).toBe(ids.session.toUpperCase());
     expect(workoutSessionResponseSchema.safeParse({
       workout: { ...workout, publicationId: ids.program }, publication,
     }).success).toBe(false);

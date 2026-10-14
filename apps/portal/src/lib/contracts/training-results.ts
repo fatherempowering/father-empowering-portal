@@ -120,7 +120,7 @@ export const workoutSessionWireSchema = z.object({
   if (!response.workout) return;
   const session = response.publication.document.weeks
     .find((week) => week.number === response.workout?.weekNumber)?.sessions
-    .find((candidate) => candidate.id === response.workout?.sessionId);
+    .find((candidate) => sameUuid(candidate.id, response.workout!.sessionId));
   if (response.workout.publicationId !== response.publication.id || !session ||
       response.workout.publicationRevision !== response.publication.revision ||
       JSON.stringify(response.workout.programTitle) !== JSON.stringify(response.publication.document.title)) {
@@ -132,11 +132,14 @@ type WorkoutSessionResponseValue = {
   workout: WorkoutSnapshot | null;
   publication: z.infer<typeof publicationSchema>;
 };
+function sameUuid(left: string, right: string) {
+  return left.toLowerCase() === right.toLowerCase();
+}
 export const workoutSessionResponseSchema = workoutSessionWireSchema.transform((response): WorkoutSessionResponseValue => {
   if (!response.workout) return { workout: null, publication: response.publication };
   const session = response.publication.document.weeks
     .find((week) => week.number === response.workout?.weekNumber)!.sessions
-    .find((candidate) => candidate.id === response.workout?.sessionId)!;
+    .find((candidate) => sameUuid(candidate.id, response.workout!.sessionId))!;
   return { ...response, workout: { ...response.workout, session } };
 });
 export type WorkoutSessionResponse = z.infer<typeof workoutSessionResponseSchema>;

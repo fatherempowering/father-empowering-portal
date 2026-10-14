@@ -167,7 +167,7 @@ export function ClientProgram() {
         (item) =>
           item.publicationId === program?.id &&
           item.weekNumber === week?.number &&
-          item.sessionId === session?.id,
+          item.sessionId.toLowerCase() === session?.id.toLowerCase(),
       ) ?? null,
     [history, program?.id, session?.id, week?.number],
   );

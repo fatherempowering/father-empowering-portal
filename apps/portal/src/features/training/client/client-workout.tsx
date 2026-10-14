@@ -131,7 +131,7 @@ export function ClientWorkout() {
           (item) => item.number === selector!.weekNumber,
         );
         const selectedSession = selectedWeek?.sessions.find(
-          (item) => item.id === selector!.sessionId,
+          (item) => item.id.toLowerCase() === selector!.sessionId.toLowerCase(),
         );
         if (!selectedSession) throw new WorkoutRequestError(404);
 
@@ -395,7 +395,7 @@ export function ClientWorkout() {
       if (
         saved.publicationId !== outgoing.publicationId ||
         saved.weekNumber !== outgoing.weekNumber ||
-        saved.sessionId !== outgoing.sessionId
+        saved.sessionId.toLowerCase() !== outgoing.sessionId.toLowerCase()
       ) {
         throw new WorkoutRequestError("NETWORK");
       }

@@ -5,14 +5,15 @@ import type { SaveWorkoutRequest } from "../../src/lib/contracts/training-result
 const publicationId = "19200000-0000-4000-8000-000000000001";
 const previousPublicationId = "19200000-0000-4000-8000-000000000002";
 const sessionId = "19200000-0000-4000-8000-000000000004";
+const uppercaseSessionId = "19200000-0000-4000-8000-00000000ABCD";
 
-function workoutUrl(state: string) {
+function workoutUrl(state: string, selectedSessionId = sessionId) {
   const query = new URLSearchParams({
     screen: "client-workout",
     state,
     publicationId,
     weekNumber: "1",
-    sessionId,
+    sessionId: selectedSessionId,
   });
   return `/?${query.toString()}`;
 }
@@ -155,6 +156,29 @@ test("a load with exactly six decimal places remains valid", async ({ page }) =>
   );
   expect(requests).toHaveLength(1);
   expect(requests[0].sets[0].load).toBe(1.000001);
+});
+
+test("mixed-case session UUIDs match history, start and saved workout responses", async ({ page }) => {
+  await page.goto("/?screen=client-program&state=workout-uppercase-session");
+  const resume = page.getByRole("link", { name: "Reprendre la séance", exact: true });
+  await expect(resume).toHaveAttribute(
+    "href",
+    `/client/workout?publicationId=${publicationId}&weekNumber=1&sessionId=${uppercaseSessionId}`,
+  );
+
+  await page.goto(workoutUrl("workout-uppercase-session-new", uppercaseSessionId));
+  await page.getByRole("button", { name: "Commencer la séance", exact: true }).click();
+  await expect(page.getByText("Séance commencée. Tu peux maintenant saisir tes résultats.")).toBeVisible();
+  const note = page.getByLabel(/Contexte utile pour ton suivi/);
+  await note.fill("UUID de séance mixte confirmé.");
+  await page.getByRole("button", { name: "Enregistrer les résultats", exact: true }).click();
+  await expect(page.getByText("Résultats enregistrés.", { exact: true })).toBeVisible();
+
+  await page.goto(workoutUrl("workout-uppercase-session", uppercaseSessionId));
+  await expect(page.getByText("En cours", { exact: true })).toBeVisible();
+  await expect(
+    workoutSet(page, 1).getByRole("spinbutton", { name: /^Charge \(lb\)/ }),
+  ).toHaveValue("40");
 });
 
 test("dirty results survive visibility events and block sidebar or back navigation", async ({ page }) => {
