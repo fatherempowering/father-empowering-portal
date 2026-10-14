@@ -1,0 +1,60 @@
+{
+  "scope": "Training vertical loop: Coach publication, Client session results, Coach history",
+  "baseSha": "bdbe57293f2a0960abf719d3d2b2d587c2f6c599",
+  "branch": "codex/training-session-results",
+  "preserved": [
+    "PR30 visual checkpoint unchanged",
+    "Existing Auth and role guards",
+    "Existing RLS policies",
+    "Legacy",
+    "Production"
+  ],
+  "interfaces": {
+    "write": "POST /api/v1/client/workouts; authenticated identity is resolved server-side",
+    "readSession": "GET /api/v1/client/workouts/session?publicationId=&weekNumber=&sessionId=",
+    "readOwnHistory": "GET /api/v1/client/workouts?page=",
+    "readCoachHistory": "GET /api/v1/coach/clients/:id/workouts?page=; compact summaries only",
+    "readCoachSession": "GET /api/v1/coach/clients/:id/workouts/session?publicationId=&weekNumber=&sessionId=; current assignment rechecked"
+  },
+  "invariants": [
+    "A workout belongs to an immutable publication/week/session",
+    "One result per scheduled session and publication",
+    "Partial explicit online saves; version checks and idempotent retries",
+    "Completed result is immutable; no rewrite when Coach publishes a new plan",
+    "New sessions may start on the current publication only; started older sessions may finish",
+    "Client can only write own results; verified assigned Coach/Admin reads, not edits Client measurements",
+    "All prescribed sets must be DONE or SKIPPED before completion; skips require a note",
+    "Server derives prescribed/EXTRA status and unit; EXTRA sets limited to twenty per exercise",
+    "No target is silently copied into actual performance",
+    "History retains all previous publications; paginated twenty sessions",
+    "Session GET sends publication once and hydrates the exact prescription in the UI",
+    "No private browser persistence; network failures do not imply success",
+    "Coach history refreshes on visibility/focus and explicit refresh"
+  ],
+  "limits": {
+    "setsPerWorkout": 24000,
+    "requestBytes": 4194304,
+    "measurementDecimalPlaces": 6,
+    "noteCharacters": 2000
+  },
+  "notIncluded": [
+    "New artistic direction or visual generalization",
+    "Calendar date assignment or automatic week advancement",
+    "Offline",
+    "Rest timers or full Legacy guided execution engine",
+    "Private exercise media uploads",
+    "Analytics or automatic progression",
+    "Program or result migrations from Legacy",
+    "Merge or Production deployment"
+  ],
+  "verification": [
+    "Unit contract/HTTP/repository/page guards",
+    "SQL/RPC authorization, RLS, publication locks, validation, immutable closure, idempotent audit",
+    "Real local HTTP partial/save/reload/republish/close/history",
+    "Full browser Coach to OTP Client session results and back to Coach",
+    "Desktop/mobile UI errors and retry",
+    "Full unchanged M1 security gate",
+    "Independent Agent4 review",
+    "Isolated staging real synthetic program/session walkthrough"
+  ]
+}
