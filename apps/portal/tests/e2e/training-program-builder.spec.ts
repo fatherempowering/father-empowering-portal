@@ -52,7 +52,7 @@ test("Coach builds, publishes and preserves an immutable plan visible to the OTP
   await clientPage.getByRole("button",{name:"Commencer la séance",exact:true}).click();
   await expect(clientPage.getByText("Séance commencée. Tu peux maintenant saisir tes résultats.")).toBeVisible();
   const firstSet=clientPage.getByRole("region",{name:"Dumbbell Press · série 1",exact:true});
-  await firstSet.getByLabel("Statut de la série",{exact:true}).selectOption("DONE");
+  await firstSet.getByRole("combobox",{name:"Statut de la série",exact:true}).selectOption("DONE");
   await firstSet.getByLabel("Répétitions · Dumbbell Press · série 1",{exact:true}).fill("8");
   await firstSet.getByLabel("Charge (lb) · Dumbbell Press · série 1",{exact:true}).fill("40");
   await firstSet.getByLabel("RIR · Dumbbell Press · série 1",{exact:true}).fill("2");
@@ -85,13 +85,13 @@ test("Coach builds, publishes and preserves an immutable plan visible to the OTP
   await clientPage.reload();await expect(clientPage.getByLabel("Charge (lb) · Dumbbell Press · série 1",{exact:true})).toHaveValue("40");
   for(const number of [2,3]){
     const set=clientPage.getByRole("region",{name:`Dumbbell Press · série ${number}`,exact:true});
-    await set.getByLabel("Statut de la série",{exact:true}).selectOption("DONE");
+    await set.getByRole("combobox",{name:"Statut de la série",exact:true}).selectOption("DONE");
     await set.getByLabel(`Répétitions · Dumbbell Press · série ${number}`,{exact:true}).fill("8");
     await set.getByLabel(`Charge (lb) · Dumbbell Press · série ${number}`,{exact:true}).fill("38");
   }
   await clientPage.getByRole("button",{name:"Ajouter une série extra",exact:true}).click();
   const extra=clientPage.getByRole("region",{name:"Dumbbell Press · série 4",exact:true});
-  await extra.getByLabel("Statut de la série",{exact:true}).selectOption("DONE");
+  await extra.getByRole("combobox",{name:"Statut de la série",exact:true}).selectOption("DONE");
   await extra.getByLabel("Répétitions · Dumbbell Press · série 4",{exact:true}).fill("6");
   await extra.getByLabel("Charge (lb) · Dumbbell Press · série 4",{exact:true}).fill("36");
   await clientPage.getByLabel("Contexte utile pour ton suivi (obligatoire si une série est ignorée)",{exact:true}).fill("Résultat synthétique E2E après republication.");

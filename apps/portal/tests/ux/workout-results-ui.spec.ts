@@ -19,7 +19,7 @@ function workoutUrl(state: string, selectedSessionId = sessionId) {
 }
 
 function workoutSet(page: Page, setNumber: number) {
-  return page.locator(`[aria-label="Dumbbell Press · série ${setNumber}"]`);
+  return page.getByRole("region", { name: `Dumbbell Press · série ${setNumber}`, exact: true });
 }
 
 test("program uses explicit week and session selectors before opening the authoritative workout", async ({ page }) => {
@@ -46,7 +46,7 @@ test("Client starts explicitly, records real sets and extras, saves, then confir
   await expect(page.getByText("Séance commencée. Tu peux maintenant saisir tes résultats.")).toBeVisible();
 
   const first = workoutSet(page, 1);
-  await first.getByLabel("Statut de la série").selectOption("DONE");
+  await first.getByRole("combobox", { name: "Statut de la série", exact: true }).selectOption("DONE");
   await expect(first.getByRole("spinbutton", { name: /^Répétitions/ })).toHaveValue("");
   await expect(first.getByRole("spinbutton", { name: /^Charge \(lb\)/ })).toHaveValue("");
   await first.getByRole("spinbutton", { name: /^Répétitions/ }).fill("8");
@@ -54,11 +54,11 @@ test("Client starts explicitly, records real sets and extras, saves, then confir
   await first.getByRole("spinbutton", { name: /^RIR/ }).fill("2");
 
   const second = workoutSet(page, 2);
-  await second.getByLabel("Statut de la série").selectOption("SKIPPED");
+  await second.getByRole("combobox", { name: "Statut de la série", exact: true }).selectOption("SKIPPED");
   await page.getByRole("button", { name: "Ajouter une série extra", exact: true }).click();
   const extra = workoutSet(page, 3);
   await expect(extra.getByText("Extra", { exact: true })).toBeVisible();
-  await extra.getByLabel("Statut de la série").selectOption("DONE");
+  await extra.getByRole("combobox", { name: "Statut de la série", exact: true }).selectOption("DONE");
   await extra.getByRole("spinbutton", { name: /^Répétitions/ }).fill("6");
   await extra.getByRole("spinbutton", { name: /^Charge \(lb\)/ }).fill("35");
 
