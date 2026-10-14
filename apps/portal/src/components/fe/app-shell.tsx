@@ -19,7 +19,7 @@ export function AppShell({
   space: "coach" | "client";
   name?: string;
   locale?: "fr" | "en";
-  current?: "clients" | "exercises" | "programs" | "personal" | "home" | "today" | "onboarding" | "week-zero";
+  current?: "clients" | "exercises" | "programs" | "program" | "personal" | "home" | "today" | "onboarding" | "week-zero";
   accountAction?: ReactNode;
   /** Forms may use full navigation so their beforeunload protection also covers sidebar links. */
   documentNavigation?: boolean;
@@ -71,6 +71,7 @@ export function AppShell({
             id: "onboarding" as const,
             document: true,
           },
+          { href: "/client/program", label: french ? "Mon programme" : "My program", icon: "today" as const, id: "program" as const },
           {
             href: "/client/week-zero",
             label: french ? "Semaine zéro" : "Week Zero",

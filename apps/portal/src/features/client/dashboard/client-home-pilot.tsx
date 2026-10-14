@@ -13,6 +13,7 @@ import {
 import { Icon } from "@/components/fe/icon";
 import { usePortalAccess } from "@/components/fe/portal-access-context";
 import { OnboardingAction } from "@/features/client/onboarding/onboarding-action";
+import { ClientProgramAction } from "@/features/training/client/client-program";
 import {
   clientPortalCopy,
   formatClientToday,
@@ -141,6 +142,7 @@ export function ClientHomePilot({
             <Icon name="today" />
             {labels.today}
           </Link>
+          <Link className={styles.navigationLink} href="/client/program" onClick={() => setMenuOpen(false)}><Icon name="today" />{french ? "Mon programme" : "My program"}</Link>
           <a className={styles.navigationLink} href="/client/onboarding" onClick={() => setMenuOpen(false)}>
             <Icon name="check" />
             {french ? "Questionnaire d’accueil" : "Welcome questionnaire"}
@@ -250,7 +252,7 @@ function PilotReady({ dashboard }: { dashboard: ClientDashboard }) {
         </li>
         <li>
           <span className={styles.factIcon}><Icon name="today" /></span>
-          <div><small>{labels.program}</small><strong>{labels.notAvailableHere}</strong></div>
+          <div><small>{labels.program}</small><Link href="/client/program">{locale === "fr" ? "Consulter mon programme" : "Review my program"}</Link></div>
         </li>
         <li>
           <span className={styles.factIcon}><Icon name="clock" /></span>
@@ -272,6 +274,7 @@ function PilotReady({ dashboard }: { dashboard: ClientDashboard }) {
           </div>
           <div className={styles.primaryCopy}>
             <OnboardingAction french={locale === "fr"} actionClassName={styles.primaryAction} />
+            <ClientProgramAction french={locale === "fr"} />
           </div>
         </section>
 
