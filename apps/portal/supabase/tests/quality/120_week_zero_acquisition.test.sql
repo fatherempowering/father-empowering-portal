@@ -338,7 +338,12 @@ select is(
   3::bigint,
   'authenticated cannot update stored photos'
 );
-delete from storage.objects where bucket_id='week-zero-photos';
+select throws_ok(
+  $$delete from storage.objects where bucket_id='week-zero-photos'$$,
+  '42501',
+  'Direct deletion from storage tables is not allowed. Use the Storage API instead.',
+  'Storage rejects direct photo deletion without disabling its protection'
+);
 select is(
   (select count(*) from storage.objects where bucket_id='week-zero-photos'),
   3::bigint,
