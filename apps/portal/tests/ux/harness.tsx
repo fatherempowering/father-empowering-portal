@@ -24,6 +24,8 @@ import {
   type WorkoutWireSnapshot,
 } from "../../src/lib/contracts/training-results";
 import { EMPTY_INITIAL_ASSESSMENT_RESPONSES } from "../../src/lib/contracts/week-zero";
+import { createAcquisitionFixture } from "./week-zero-fixture";
+import { CoachWeekZeroAcquisition } from "../../src/features/coach/components/coach-week-zero-acquisition";
 import { ONBOARDING_QUESTIONS } from "../../src/lib/contracts/onboarding-definition";
 import {
   EMPTY_ONBOARDING_RESPONSES,
@@ -359,8 +361,11 @@ if (needsWorkoutPublication) {
 if (harnessParameters.get("screen") === "program-builder") {
   exerciseRecords.push({ id: "19000000-0000-4000-8000-000000000010", name: "Dumbbell Press", equipment: "Dumbbells", cue: { fr: "Contrôle", en: "Control" }, defaultUnit: "lb", archived: false, version: 1, createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString(), canEdit: true });
 }
+let acquisitionFixture = createAcquisitionFixture();
 window.fetch = async (url, init) => {
   const path = String(url);
+  const acquisitionResponse = await acquisitionFixture(path, init, scenario);
+  if (acquisitionResponse) return acquisitionResponse;
   const parsedPath = new URL(path, window.location.origin);
   if (path === "/api/v1/auth/client-logout" && ["client-logout-network-error", "onboarding-load-logout-error"].includes(scenario)) throw new TypeError("Synthetic network failure");
   if (path === "/api/v1/client/onboarding" && scenario === "onboarding-load-logout-error") {
@@ -748,7 +753,7 @@ window.fetch = async (url, init) => {
     if (scenario === "assessment-draft") {
       return reply({ data: { assessment: assessmentSnapshot("DRAFT") } });
     }
-    if (scenario === "assessment-submitted" || scenario === "program-published") {
+    if (scenario === "assessment-submitted" || scenario === "legacy-assessment-submitted" || scenario === "program-published") {
       return reply({ data: { assessment: assessmentSnapshot("SUBMITTED") } });
     }
     if (scenario === "assessment-conflict" && assessmentConflictOccurred) {
@@ -922,6 +927,9 @@ function Harness() {
   if (view === "client-week-zero") {
     return <ClientWeekZero />;
   }
+  if (view === "coach-week-zero") {
+    return <AppShell space="coach" current="clients"><CoachWeekZeroAcquisition clientId={recipientId} timezone="America/Montreal" /></AppShell>;
+  }
   if (view === "client-onboarding") {
     return <ClientOnboarding reviewSubmittedResponses={harnessParameters.get("view") === "responses"} />;
   }
@@ -980,6 +988,7 @@ function Harness() {
               clientRequestAttempts = 0;
               failedSaveMutationId = null;
               assessmentConflictOccurred = false;
+              acquisitionFixture = createAcquisitionFixture();
               failedOnboardingMutationId = null;
               onboardingConflictOccurred = false;
               failedPersonalPortalMutationId = null;

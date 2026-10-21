@@ -54,7 +54,7 @@ export function ClientHomePilot({ dashboard, failed, signingOut, signOutError, o
             <h2 id="client-landmarks" className={styles.landmarksTitle}>{t("Tes repères", "Your landmarks")}</h2>
             <div className={styles.landmarks}>
               <a href="/client/onboarding?view=responses"><span className={styles.landmarkNumber}>01</span><div><strong>{t("Questionnaire d’accueil", "Welcome questionnaire")}</strong><small>{t("Six sections, à ton rythme.", "Six sections, at your own pace.")}</small></div><Icon name="arrow" /></a>
-              <a href="/client/week-zero"><span className={styles.landmarkNumber}>02</span><div><strong>{t("Semaine zéro", "Week Zero")}</strong><small>{t("Mesures · Mobilité · Disponibilités", "Measurements · Mobility · Availability")}</small></div><Icon name="arrow" /></a>
+              <a href="/client/week-zero"><span className={styles.landmarkNumber}>02</span><div><strong>{t("Semaine zéro", "Week Zero")}</strong><small>{t("Photos · Calibration · Cardio · Mobilité", "Photos · Calibration · Cardio · Mobility")}</small></div><Icon name="arrow" /></a>
             </div>
           </section>
           <div className={styles.programPanel}><ClientProgramAction french={french} /></div>

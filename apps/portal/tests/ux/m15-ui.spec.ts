@@ -722,6 +722,9 @@ test("Week Zero resumes a saved draft and reflows at Client mobile widths", asyn
     await expect(
       page.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
     ).toBeVisible();
+    const steps = page.getByRole("button", { name: /Voir les étapes/i });
+    if (await steps.isVisible()) await steps.click();
+    await page.getByRole("button", { name: /3\. Mesures/i }).click();
     await expect(page.getByLabel(/Poids au réveil \(lb\)/i)).toHaveValue(
       "207.5",
     );
@@ -738,6 +741,12 @@ test("Week Zero resumes a saved draft and reflows at Client mobile widths", asyn
       `Week Zero draft at ${viewport.width}px`,
     ).toBe(true);
     await page.reload();
+    await expect(
+      page.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
+    ).toBeVisible();
+    const reloadedSteps = page.getByRole("button", { name: /Voir les étapes/i });
+    if (await reloadedSteps.isVisible()) await reloadedSteps.click();
+    await page.getByRole("button", { name: /3\. Mesures/i }).click();
     await expect(page.getByLabel(/Poids au réveil \(lb\)/i)).toHaveValue(
       "207.5",
     );
@@ -748,6 +757,10 @@ test("Week Zero retains entries and the command across a transient save failure"
   page,
 }) => {
   await page.goto("/?screen=client-week-zero&state=assessment-save-error-once");
+  await expect(page.getByRole("progressbar")).toBeVisible();
+  const steps = page.getByRole("button", { name: /Voir les étapes/i });
+  if (await steps.isVisible()) await steps.click();
+  await page.getByRole("button", { name: /3\. Mesures/i }).click();
   const weight = page.getByLabel(/Poids au réveil \(lb\)/i);
   await weight.fill("214.5");
   await page
@@ -770,6 +783,10 @@ test("Week Zero keeps local entries on 409 until explicit reload", async ({
   page,
 }) => {
   await page.goto("/?screen=client-week-zero&state=assessment-conflict");
+  await expect(page.getByRole("progressbar")).toBeVisible();
+  const steps = page.getByRole("button", { name: /Voir les étapes/i });
+  if (await steps.isVisible()) await steps.click();
+  await page.getByRole("button", { name: /3\. Mesures/i }).click();
   const weight = page.getByLabel(/Poids au réveil \(lb\)/i);
   await weight.fill("214.5");
   await page
@@ -790,29 +807,32 @@ test("Week Zero blocks incomplete submission and keeps submitted answers read-on
   page,
 }) => {
   await page.goto("/?screen=client-week-zero");
-  await expect(page.getByLabel(/Poids au réveil/)).toBeVisible();
+  await expect(page.getByRole("progressbar")).toBeVisible();
   const steps = page.getByRole("button", { name: /Voir les étapes/i });
   if (await steps.isVisible()) await steps.click();
   await page
-    .getByRole("button", { name: /4\. Vérifier et transmettre/i })
+    .getByRole("button", { name: /7\. Vérifier et transmettre/i })
     .click();
   await expect(
     page.getByText(/À compléter avant de transmettre/i),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /Transmettre mon bilan au Coach/i }),
+    page.getByRole("button", { name: /Transmettre ma semaine zéro au Coach/i }),
   ).toBeDisabled();
-  await expect(page.getByText(/photos, charges et cardio/i)).toBeVisible();
 
   await page.goto("/?screen=client-week-zero&state=assessment-submitted");
+  await expect(page.locator('[data-state="not_started"]')).toBeVisible();
+  await expect(page.getByText("Archive — bilan initial V1", { exact: true })).toBeVisible();
+  await expect(page.locator('[data-state="submitted"]')).toHaveCount(0);
+
+  await page.goto("/?screen=client-week-zero&state=acquisition-submitted");
   await expect(
     page.getByText(/Semaine zéro transmise au Coach/i),
   ).toBeVisible();
   await expect(
-    page.getByText(/réponses transmises sont conservées en lecture seule/i),
+    page.getByText(/réponses et photos transmises sont conservées en lecture seule/i),
   ).toBeVisible();
   await expect(page.locator("form")).toHaveCount(0);
-  await expect(page.getByText(/Photos, calibration des charges et cardio/i)).toBeVisible();
   await expect(page.getByText(/Week Zero terminé/i)).toHaveCount(0);
 });
 

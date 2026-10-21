@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
+import { verifyWeekZeroBrowserJourney } from "../harness/week-zero-browser";
 
 import {
   ONBOARDING_SECTIONS,
@@ -520,179 +521,8 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     data: { assessment: { status: "NOT_STARTED", version: 0 } },
   });
 
-  await continuedPage.goto(`${environment.appUrl}/client/week-zero`);
-  await expect(continuedPage).toHaveURL(/\/client\/week-zero(?:\?.*)?$/);
-  await expect(
-    continuedPage.getByRole("heading", { name: "Ta semaine zéro" }),
-  ).toBeVisible();
-  await expect(
-    continuedPage.getByText(/photos, calibration des charges et cardio/i),
-  ).toHaveCount(0);
-  await expect(continuedPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
-  await continuedPage.getByLabel(/Poids au réveil \(lb\)/i).fill("214.5");
-  await continuedPage
-    .getByLabel(/Tour de taille au nombril \(po\)/i)
-    .fill("41.25");
-  await continuedPage.getByText("Tes mensurations de départ", { exact: true }).click();
-  await continuedPage
-    .getByLabel(/Autres précisions \(facultatif\)/i)
-    .fill("Poids et tour de taille pris au réveil.");
-  await continuedPage
-    .getByRole("button", { name: /Enregistrer mon brouillon/i })
-    .click();
-  await expect(
-    continuedPage.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
-  ).toBeVisible();
-
-  await maxPage.goto(
-    `${environment.appUrl}/coach/clients/${encodeURIComponent(clientId)}`,
-  );
-  await expect(maxPage.getByTestId("coach-client-detail")).toBeVisible();
-  await expect(maxPage.getByTestId("initial-assessment-status")).toHaveText(
-    /Non transmis/i,
-  );
-  await expect(maxPage.getByText(/Aucune semaine zéro transmise/i)).toBeVisible();
-  await expect(maxPage.getByText(/pris au réveil/i)).toHaveCount(0);
-  await expect(continuedPage.getByLabel(/Poids au réveil \(lb\)/i)).toHaveValue(
-    "214.5",
-  );
-  await expect(
-    continuedPage.getByLabel(/Tour de taille au nombril \(po\)/i),
-  ).toHaveValue("41.25");
-  await expect(
-    continuedPage.getByLabel(/Autres précisions \(facultatif\)/i),
-  ).toHaveValue("Poids et tour de taille pris au réveil.");
+  await verifyWeekZeroBrowserJourney({ clientPage: continuedPage, coachPage: maxPage, context: clientContext, appUrl: environment.appUrl, clientId });
   expect(continuedOtpRequests).toHaveLength(0);
-
-  await continuedPage
-    .getByRole("button", { name: /4\. Vérifier et transmettre/i })
-    .click();
-  await expect(
-    continuedPage.getByText(/À compléter avant de transmettre/i),
-  ).toBeVisible();
-  await expect(
-    continuedPage.getByRole("button", {
-      name: /Transmettre mon bilan au Coach/i,
-    }),
-  ).toBeDisabled();
-
-  await continuedPage.getByRole("button", { name: /2\. Mobilité/i }).click();
-  for (const label of [
-    /Douleur pendant le squat \/ les jambes/i,
-    /Douleur pendant la flexion des hanches/i,
-    /Douleur pendant une poussée/i,
-    /Douleur pendant un tirage/i,
-    /Douleur pendant le cardio/i,
-  ]) {
-    await continuedPage.getByLabel(label).selectOption("NO");
-  }
-  await continuedPage
-    .getByLabel(/Mouvement le plus limité/i)
-    .fill("Charnière de hanches limitée au lever.");
-  await continuedPage
-    .getByLabel(/Mouvement le plus confortable/i)
-    .fill("Marche et poussée horizontale.");
-  await continuedPage
-    .getByLabel(/Zone raide ou tendue/i)
-    .fill("Ischio-jambier droit.");
-
-  await continuedPage
-    .getByRole("button", { name: /3\. Disponibilités/i })
-    .click();
-  await continuedPage.getByLabel(/^Lundi$/i).check();
-  await continuedPage.getByLabel(/^Mercredi$/i).check();
-  await continuedPage
-    .getByLabel(/Moment de la journée \(facultatif\)/i)
-    .fill("06:30");
-  await continuedPage
-    .getByLabel(/Durée disponible par séance/i)
-    .fill("40");
-  await continuedPage
-    .getByLabel(/Séances possibles par semaine/i)
-    .fill("3");
-  await continuedPage
-    .getByLabel(/Contraintes à partager/i)
-    .fill("Déplacement professionnel le jeudi.");
-
-  await continuedPage
-    .getByRole("button", { name: /4\. Vérifier et transmettre/i })
-    .click();
-  await expect(
-    continuedPage.getByText(/champs requis de la semaine zéro sont remplis/i),
-  ).toBeVisible();
-  await expect(continuedPage.getByText(/Photos, charges et cardio/i)).toBeVisible();
-  await expect(continuedPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
-  await continuedPage
-    .getByRole("button", { name: /Transmettre mon bilan au Coach/i })
-    .click();
-  await expect(
-    continuedPage.getByText(/Semaine zéro transmise au Coach/i),
-  ).toBeVisible();
-  await expect(
-    continuedPage.getByText(/réponses transmises sont conservées en lecture seule/i),
-  ).toBeVisible();
-  await expect(
-    continuedPage.getByText(/Photos, calibration des charges et cardio/i),
-  ).toBeVisible();
-  await expect(continuedPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
-
-  const persistedAssessment = await clientContext.request.get(
-    `${environment.appUrl}/api/v1/client/week-zero`,
-  );
-  expect(persistedAssessment.status()).toBe(200);
-  expect(persistedAssessment.headers()["cache-control"]).toContain("no-store");
-  expect(await persistedAssessment.json()).toMatchObject({
-    data: {
-      assessment: {
-        status: "SUBMITTED",
-        responses: {
-          measurements: {
-            bodyWeightLb: 214.5,
-            waistIn: 41.25,
-            other: "Poids et tour de taille pris au réveil.",
-          },
-          mobility: {
-            painSquat: "NO",
-            painHinge: "NO",
-            painPush: "NO",
-            painPull: "NO",
-            painCardio: "NO",
-            limitedMovement: "Charnière de hanches limitée au lever.",
-            comfortableMovement: "Marche et poussée horizontale.",
-            tightArea: "Ischio-jambier droit.",
-          },
-          availability: {
-            days: ["MONDAY", "WEDNESDAY"],
-            bestTime: "06:30",
-            sessionDurationMinutes: 40,
-            sessionsPerWeek: 3,
-            constraints: "Déplacement professionnel le jeudi.",
-          },
-        },
-      },
-    },
-  });
-
-  await maxPage.reload();
-  await expect(maxPage.getByTestId("initial-assessment-status")).toHaveText(
-    /Semaine zéro transmise/i,
-  );
-  await expect(maxPage.getByText(/toute la Week Zero est terminée/i)).toBeVisible();
-  await expect(maxPage.getByTestId("assessment-measurements")).toContainText(
-    "214.5 lb",
-  );
-  await expect(maxPage.getByTestId("assessment-measurements")).toContainText(
-    "41.25 po",
-  );
-  await expect(maxPage.getByTestId("assessment-mobility")).toContainText(
-    "Charnière de hanches limitée au lever.",
-  );
-  await expect(maxPage.getByTestId("assessment-availability")).toContainText(
-    "Lundi, Mercredi",
-  );
-  await expect(maxPage.getByTestId("assessment-availability")).toContainText(
-    "Déplacement professionnel le jeudi.",
-  );
   await maxPage.getByRole("link", { name: /Retour aux clients/i }).click();
   await expect(maxPage).toHaveURL(/\/coach(?:\?.*)?$/);
 
@@ -764,6 +594,12 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   expect(await signedOutAssessment.text()).not.toMatch(
     /214\.5|41\.25|Charnière de hanches|Déplacement professionnel/i,
   );
+  const signedOutAcquisition = await clientContext.request.get(
+    `${environment.appUrl}/api/v1/client/week-zero/acquisition`,
+  );
+  expect(signedOutAcquisition.status()).toBe(401);
+  expect(signedOutAcquisition.headers()["cache-control"]).toContain("no-store");
+  expect(await signedOutAcquisition.text()).not.toMatch(/214\.5|41\.25|Charnière de hanches/i);
 
   const returningContext = await browser.newContext();
   const returningPage = await returningContext.newPage();

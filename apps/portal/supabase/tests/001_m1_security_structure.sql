@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(44);
+select plan(46);
 
 select has_table('public', 'organizations', 'organizations exists');
 select has_table('public', 'profiles', 'profiles exists');
@@ -12,6 +12,7 @@ select has_table('public', 'client_invitations', 'client_invitations exists');
 select has_table('public', 'audit_events', 'audit_events exists');
 select has_table('public', 'outbox_events', 'outbox_events exists');
 select has_table('public', 'client_onboarding_intakes', 'client_onboarding_intakes exists');
+select has_table('public', 'week_zero_acquisitions', 'week_zero_acquisitions exists');
 
 select ok(relrowsecurity and relforcerowsecurity, 'organizations has forced RLS')
 from pg_catalog.pg_class where oid = 'public.organizations'::regclass;
@@ -31,6 +32,8 @@ select ok(relrowsecurity and relforcerowsecurity, 'outbox_events has forced RLS'
 from pg_catalog.pg_class where oid = 'public.outbox_events'::regclass;
 select ok(relrowsecurity and relforcerowsecurity, 'client_onboarding_intakes has forced RLS')
 from pg_catalog.pg_class where oid = 'public.client_onboarding_intakes'::regclass;
+select ok(relrowsecurity and relforcerowsecurity, 'week_zero_acquisitions has forced RLS')
+from pg_catalog.pg_class where oid = 'public.week_zero_acquisitions'::regclass;
 
 select has_function(
   'public', 'create_invited_client',
@@ -170,6 +173,7 @@ select is(
     'training_program_drafts.training_program_drafts_owner_select:PERMISSIVE:SELECT:authenticated',
     'training_program_publications.training_publications_authorized_select:PERMISSIVE:SELECT:authenticated',
     'training_session_results.training_session_results_authorized_select:PERMISSIVE:SELECT:authenticated',
+    'week_zero_acquisitions.week_zero_acquisitions_select_authorized:PERMISSIVE:SELECT:authenticated',
     'week_zero_assessments.week_zero_assessments_select_authorized:PERMISSIVE:SELECT:authenticated'
   ]::text[],
   'the exact allowlisted read policies exist with no extra policy'

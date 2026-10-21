@@ -10,6 +10,7 @@ import {
   type SeededStaff,
 } from "../harness/m1-local-supabase";
 import { extractSixDigitOtp, waitForMail } from "../harness/mailpit";
+import { registerWeekZeroAcquisitionCases } from "../harness/week-zero-acquisition-cases";
 
 const environment = getM1TestEnvironment();
 const fixturePassword = "M1-local-only-Week-Zero!123";
@@ -819,4 +820,11 @@ describe.sequential("Week Zero persistence and isolation gate", () => {
     expect(submissionAudits.error).toBeNull();
     expect(submissionAudits.data).toHaveLength(1);
   });
+  registerWeekZeroAcquisitionCases(() => ({
+    environment, owner: clientASession, otherClient: clientBSession,
+    assigned: assignedCoachSession, unverified: unverifiedAssignedCoachSession,
+    unassigned: unassignedCoachSession, admin: organizationAdminSession,
+    crossOrg: crossOrganizationAdminSession, clientId: clientA.clientId,
+    organizationId: assignedCoach.organizationId,
+  }));
 });

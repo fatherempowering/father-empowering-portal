@@ -8,6 +8,7 @@ import { Feedback, Loading } from "@/components/fe/feedback";
 import { Icon } from "@/components/fe/icon";
 import { requestCoachLogout } from "@/features/coach/auth/request-coach-logout";
 import { CoachOnboardingDetail } from "./coach-onboarding-detail";
+import { CoachWeekZeroAcquisition } from "./coach-week-zero-acquisition";
 import {
   parseCoachClientApiEnvelope,
   type CoachClientApiEnvelope,
@@ -184,16 +185,18 @@ function ClientAssessment({ value }: { value: CoachClientWeekZero }) {
         Voir les entraînements et résultats
       </Link>
       <CoachOnboardingDetail clientId={client.id} />
-      <section
+      <CoachWeekZeroAcquisition clientId={client.id} timezone={client.timezone} />
+      {submitted && <details
         className={styles.assessment}
         aria-labelledby="initial-assessment-title"
       >
+        <summary className={styles.historySummary}>Consulter l’ancien bilan partiel transmis</summary>
         <header className={styles.assessmentHeader}>
           <div>
             <p className="fe-kicker">Week Zero</p>
-            <h2 id="initial-assessment-title">Semaine zéro</h2>
+            <h2 id="initial-assessment-title">Ancien bilan partiel — conservé</h2>
             <p>
-              Mesures, mobilité et disponibilités transmises par le client.
+              Réponses historiques. Ce bilan ne remplace pas la collecte complète de la semaine zéro.
             </p>
           </div>
           <span
@@ -201,7 +204,7 @@ function ClientAssessment({ value }: { value: CoachClientWeekZero }) {
             data-testid="initial-assessment-status"
           >
             <Icon name={submitted ? "check" : "clock"} />
-            {submitted ? "Semaine zéro transmise" : "Non transmis"}
+            {submitted ? "Ancien bilan transmis" : "Non transmis"}
           </span>
         </header>
         {!submitted ? (
@@ -252,7 +255,7 @@ function ClientAssessment({ value }: { value: CoachClientWeekZero }) {
             </div>
           </>
         )}
-      </section>
+      </details>}
     </>
   );
 }

@@ -233,7 +233,7 @@ export function ClientOnboarding({ reviewSubmittedResponses = false }: { reviewS
             <div className={styles.submittedGrid}>
               <OnboardingReview responses={responses} french={french} />
               <aside className={styles.related}>
-                <section><h2>{t("Semaine zéro", "Week Zero")}</h2><p>{t("Tes mesures, ta mobilité et tes disponibilités restent dans ta semaine zéro.", "Your measurements, mobility and availability remain in Week Zero.")}</p><a className="fe-button" href="/client/week-zero">{t("Consulter ma semaine zéro", "View my Week Zero")}</a></section>
+                <section><h2>{t("Semaine zéro", "Week Zero")}</h2><p>{t("Tes photos, mensurations, résultats de calibration, cardio et mobilité restent dans ta semaine zéro.", "Your photos, measurements, calibration, cardio and mobility results remain in Week Zero.")}</p><a className="fe-button" href="/client/week-zero">{t("Consulter ma semaine zéro", "View my Week Zero")}</a></section>
                 <ClientFamilyPhoto compact />
               </aside>
             </div>

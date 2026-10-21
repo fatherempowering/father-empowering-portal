@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: ".",
-  testMatch: ["m15-ui.spec.ts", "training-ui.spec.ts", "program-builder-ui.spec.ts", "program-publication-ui.spec.ts", "client-visual.spec.ts", "workout-results-ui.spec.ts", "esthetique-checkpoint-ui.spec.ts"],
+  testMatch: ["m15-ui.spec.ts", "training-ui.spec.ts", "program-builder-ui.spec.ts", "program-publication-ui.spec.ts", "client-visual.spec.ts", "workout-results-ui.spec.ts", "esthetique-checkpoint-ui.spec.ts", "week-zero-acquisition-ui.spec.ts", "coach-week-zero-ui.spec.ts"],
   fullyParallel: true,
   retries: 0,
   reporter: [["list"]],
