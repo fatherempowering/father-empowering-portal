@@ -38,7 +38,7 @@ for (const language of ["fr", "en"] as const) {
 
   test(`V1.1 optional values survive folding and step changes in ${language}`, async ({ page }) => {
     await page.goto(`/?screen=client-week-zero&language=${language}`);
-    const summary = page.getByText(french ? "Autres mesures · facultatif" : "Other measurements · optional", { exact: true });
+    const summary = page.getByText(french ? "Tes mensurations de départ" : "Your starting measurements", { exact: true });
     await summary.click();
     const chest = page.getByLabel(french ? "Poitrine (po)" : "Chest (in)", { exact: true });
     const note = page.getByRole("textbox", { name: french ? "Autres précisions (facultatif)" : "Other details (optional)", exact: true });
@@ -58,7 +58,7 @@ for (const language of ["fr", "en"] as const) {
 
   test(`V1.1 invalid folded field is revealed, focused and never saved in ${language}`, async ({ page }) => {
     await page.goto(`/?screen=client-week-zero&language=${language}`);
-    const summary = page.getByText(french ? "Autres mesures · facultatif" : "Other measurements · optional", { exact: true });
+    const summary = page.getByText(french ? "Tes mensurations de départ" : "Your starting measurements", { exact: true });
     await summary.click();
     const chest = page.getByLabel(french ? "Poitrine (po)" : "Chest (in)", { exact: true });
     await chest.fill("201");
@@ -70,6 +70,30 @@ for (const language of ["fr", "en"] as const) {
     await expect(chest).toHaveValue("201");
     await expect(page.locator('[data-state="dirty"]')).toBeVisible();
     await expect(page.locator('[data-state="draft"]')).toHaveCount(0);
+  });
+
+  test(`starting measurements stay noticeable and optional on mobile in ${language}`, async ({ page }, info) => {
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`/?screen=client-week-zero&language=${language}`);
+      const title = page.getByText(french ? "Tes mensurations de départ" : "Your starting measurements", { exact: true });
+      await expect(title).toBeVisible();
+      await expect(title).toHaveCSS("font-size", "20px");
+      const summary = page.locator("summary").filter({ has: title });
+      await expect(summary.getByText(french ? "Facultatif" : "Optional", { exact: true })).toBeVisible();
+      await expect(summary.getByText(french ? /prends ces mesures dès aujourd’hui/ : /take these measurements today/)).toHaveCSS("font-size", "16px");
+      await expect(page.getByLabel(french ? "Poitrine (po)" : "Chest (in)", { exact: true })).not.toBeVisible();
+      await summary.focus();
+      await page.keyboard.press("Enter");
+      const chest = page.getByLabel(french ? "Poitrine (po)" : "Chest (in)", { exact: true });
+      await expect(chest).toBeVisible();
+      await expect(chest).not.toHaveAttribute("required");
+      await summary.focus();
+      await page.keyboard.press("Enter");
+      await expect(chest).not.toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+      await page.screenshot({ path: info.outputPath(`measurements-${language}-${width}.png`), fullPage: true });
+    }
   });
 }
 

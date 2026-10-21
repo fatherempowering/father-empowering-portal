@@ -231,7 +231,14 @@ export function ClientWeekZero() {
                   {measurementFields.filter(([, , , required]) => required).map(([key,fr,en,,max]) => <label className={styles.field} key={key}>{t(fr,en)} *<input type="number" inputMode="decimal" min="0.01" max={max} step="any" value={responses.measurements[key] ?? ""} onChange={(e) => edit("measurements",key,e.target.value==="" ? null : Number(e.target.value))} /></label>)}
                 </div>
                 <details className={styles.optionalMeasurements}>
-                  <summary>{t("Autres mesures · facultatif", "Other measurements · optional")}</summary>
+                  <summary>
+                    <span className={styles.measurementsCopy}>
+                      <strong>{t("Tes mensurations de départ", "Your starting measurements")}</strong>
+                      <span className={styles.measurementsOptional}>{t("Facultatif", "Optional")}</span>
+                      <span>{t("Poitrine, hanches, bras et cuisse : prends ces mesures dès aujourd’hui pour garder un repère de départ.", "Chest, hips, arm and thigh: take these measurements today to record your starting point.")}</span>
+                    </span>
+                    <span className={styles.measurementsToggle} aria-hidden="true" />
+                  </summary>
                   <div className={styles.grid}>
                     {measurementFields.filter(([, , , required]) => !required).map(([key,fr,en,,max]) => <label className={styles.field} key={key}>{t(fr,en)}<input type="number" inputMode="decimal" min="0.01" max={max} step="any" value={responses.measurements[key] ?? ""} onChange={(e) => edit("measurements",key,e.target.value==="" ? null : Number(e.target.value))} /></label>)}
                     <label className={`${styles.field} ${styles.wide}`}>{t("Autres précisions (facultatif)", "Other details (optional)")}<textarea maxLength={500} value={responses.measurements.other ?? ""} onChange={(e) => edit("measurements","other",e.target.value || null)} /></label>
