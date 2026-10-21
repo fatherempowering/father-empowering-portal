@@ -126,6 +126,12 @@
   .mobileBrand { display: flex; align-items: center; gap: .625rem; min-width: 0; text-decoration: none; }
   .mobileBrand span { font: 400 1.0625rem "FE Display",sans-serif; letter-spacing: .13em; line-height: 1.3; }
   .mobileBrand img { width: 2.75rem; height: 2.75rem; flex-shrink: 0; }
+  /* Keep the representative page readable when text is enlarged, without
+     propagating the checkpoint to the other Client pages. */
+  .pilot[data-client-visual="week-zero"] .topbar { flex-wrap: wrap; }
+  .pilot[data-client-visual="week-zero"] .mobileBrand { flex: 1 1 auto; }
+  .pilot[data-client-visual="week-zero"] .mobileBrand img { width: 44px; height: 44px; }
+  .pilot[data-client-visual="week-zero"] .mobileBrand span { overflow-wrap: normal; }
 }
 @media (max-width: 42rem) {
   .hero { min-height: 14rem; padding: 1rem; align-items: center; }

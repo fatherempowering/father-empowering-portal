@@ -1,0 +1,53 @@
+FE — Esthétique Application V1.1 — Premier checkpoint
+Date : 2026-10-20
+Branche : codex/fe-esthetique-v1-1
+Base : 24ceac1edb3b74ff708daa7c3e32978507ae71a5
+
+RÉFÉRENCE ET EXCLUSION PRIORITAIRE
+FE-Sprint-UX-23-25-Octobre-2026-V1-1 transmis par Max.
+La photographie d’exercice des maquettes est exclue. Aucun nouvel asset
+d’exercice, faux lecteur ou mécanisme de bibliothèque média n’est intégré.
+
+LOT IMPLÉMENTÉ
+- /client/week-zero : shell Client existant, graphite, typographie et actions
+  orange ; introduction repliable ; position des étapes, pas une progression
+  inventée ; mesures requises visibles et mesures facultatives repliables.
+- Unités lb/po et valeurs inchangées. Consignes mobilité conservées.
+- Brouillon privé, erreurs, conflits et transmission explicite conservés.
+- Champ facultatif invalide automatiquement dévoilé pour la validation native.
+- FR/EN, navigation clavier, menu mobile et texte réellement agrandi à 200 %.
+- /client/program : le libellé « plan publié » dépend désormais du programme
+  réellement chargé. Aucun nouvel habillage propagé à cette page.
+- Message Week Zero transmis neutre quant à l’existence d’un programme.
+
+VÉRIFICATIONS LOCALES
+- 417 tests unitaires PASS ; 226 tests UI navigateur PASS.
+- TypeScript, lint, build Next et git diff --check PASS.
+- Quatre sentinelles serveur synthétiques absentes des 87 assets navigateur.
+- Configuration E2E chargée : 7 tests recensés, pas exécutés avec Supabase.
+- Captures de la page réelle via simulateur local, données exclusivement
+  fictives, FR/EN en 1440x1000, 390x844 et 320x820.
+- Premier champ mobile entièrement avant 600px, introduction repliée.
+- Un viewport court ne constitue pas une preuve de clavier mobile physique.
+
+LIMITES ET SUITE
+Docker n’est pas disponible dans cet environnement : aucun PASS global
+Supabase/pgTAP/RLS/intégration HTTP/E2E réel n’est revendiqué pour ce lot.
+Le gate complet reste nécessaire avant publication et intégration distante.
+La première page attend la validation visuelle de Max avant généralisation.
+Programme, constructeur, bibliothèque, dossier et résultats Coach restent
+à harmoniser dans les lots suivants, sans confondre esthétique et fonctions.
+Les décisions Training (saisie avant DONE, repos, copie/annulation, progression)
+et la banque média restent distinctes ; aucune implémentation implicite ici.
+
+PÉRIMÈTRE PRÉSERVÉ
+Aucun changement Auth, API, schéma, RPC, RLS, permissions, Legacy, données
+réelles, configuration hébergée ou Production. Aucun push/merge/déploiement.
+Les captures V2 historiques régénérées par les tests ont été restaurées.
+
+ACCÈS DE REVUE
+Serveur de démonstration local : tests/ux/serve.mjs (port 3016 loopback).
+URL : http://127.0.0.1:3016/?screen=client-week-zero&language=fr
+Sans identifiant ni mot de passe ; réponses et client synthétiques.
+Ce simulateur utilise les composants de l’application, mais ne prouve pas
+une connexion Auth ni une sauvegarde Supabase réelle. Accès sur ce Mac seulement.

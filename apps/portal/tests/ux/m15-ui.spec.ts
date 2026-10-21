@@ -790,6 +790,9 @@ test("Week Zero blocks incomplete submission and keeps submitted answers read-on
   page,
 }) => {
   await page.goto("/?screen=client-week-zero");
+  await expect(page.getByLabel(/Poids au réveil/)).toBeVisible();
+  const steps = page.getByRole("button", { name: /Voir les étapes/i });
+  if (await steps.isVisible()) await steps.click();
   await page
     .getByRole("button", { name: /4\. Vérifier et transmettre/i })
     .click();

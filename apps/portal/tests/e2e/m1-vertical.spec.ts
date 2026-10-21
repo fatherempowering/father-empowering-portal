@@ -533,6 +533,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await continuedPage
     .getByLabel(/Tour de taille au nombril \(po\)/i)
     .fill("41.25");
+  await continuedPage.getByText("Autres mesures · facultatif", { exact: true }).click();
   await continuedPage
     .getByLabel(/Autres précisions \(facultatif\)/i)
     .fill("Poids et tour de taille pris au réveil.");

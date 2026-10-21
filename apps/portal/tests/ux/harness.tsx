@@ -743,6 +743,8 @@ window.fetch = async (url, init) => {
     });
   }
   if (path.endsWith("/client/week-zero")) {
+    if (scenario === "assessment-load-error") return reply({ error: { code: "UNAVAILABLE" } }, 503);
+    if (scenario === "assessment-loading") return new Promise<Response>(() => {});
     if (scenario === "assessment-draft") {
       return reply({ data: { assessment: assessmentSnapshot("DRAFT") } });
     }

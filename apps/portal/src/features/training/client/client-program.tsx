@@ -200,7 +200,11 @@ export function ClientProgram() {
       <div className={styles.page}>
         <div className={styles.heading}>
           <div>
-            <p className="fe-kicker">TRAINING · {french ? "PLAN PUBLIÉ" : "PUBLISHED PLAN"}</p>
+            <p className="fe-kicker">{loading || failed
+              ? "TRAINING"
+              : program
+                ? `TRAINING · ${french ? "PLAN PUBLIÉ" : "PUBLISHED PLAN"}`
+                : french ? "PROGRAMME EN PRÉPARATION" : "PROGRAM IN PREPARATION"}</p>
             <h1 className="fe-title">{french ? "Mon programme." : "My program."}</h1>
           </div>
           <button className="fe-button" type="button" onClick={() => setFrench(!french)}>

@@ -65,7 +65,7 @@ test("the next-step panel is prominent and questionnaire consultation stays in l
 test("questionnaire consultation is explicit from the unchanged Client screens too", async ({ page }) => {
   for (const screen of ["client-today-staff", "client-week-zero", "client-program"]) {
     await page.goto("/?screen=" + screen);
-    const menu = page.getByRole("button", { name: "Ouvrir le menu", exact: true });
+    const menu = page.getByRole("button", { name: /^(Ouvrir le menu|Menu)$/ });
     if (await menu.isVisible()) await menu.click();
     const questionnaire = page.getByRole("link", { name: "Questionnaire d’accueil", exact: true });
     await expect(questionnaire).toHaveAttribute("href", "/client/onboarding?view=responses");

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { AppShell } from "@/components/fe/app-shell";
+import { ClientVisualShell } from "@/features/client/dashboard/client-visual-shell";
+import { Icon } from "@/components/fe/icon";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
 import type { ClientDashboard } from "@/features/client/dashboard/contracts";
@@ -53,6 +54,7 @@ export function ClientWeekZero() {
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [responses, setResponses] = useState<InitialAssessmentResponses | null>(null);
   const [step, setStep] = useState(0);
+  const [stepsOpen, setStepsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +115,10 @@ export function ClientWeekZero() {
     setResponses((current) => current && ({ ...current, [section]: { ...current[section], [field]: value } }));
     setSavedNotice(false); setError(null);
   }
-  function goToStep(next: number) { setStep(next); setTimeout(() => heading.current?.focus(), 0); }
+  function goToStep(next: number) {
+    setStep(next); setStepsOpen(false);
+    setTimeout(() => heading.current?.focus(), 0);
+  }
   function commandKey(ref: { current: Command | null }, payload: unknown) {
     const fingerprint = JSON.stringify(payload);
     if (ref.current?.fingerprint !== fingerprint) ref.current = { fingerprint, key: crypto.randomUUID() };
@@ -168,40 +173,71 @@ export function ClientWeekZero() {
   ] : [];
   const titles = [t("Mesures", "Measurements"), t("Mobilité", "Mobility"), t("Disponibilités", "Availability"), t("Vérifier et transmettre", "Review and submit")];
 
-  return <AppShell space="client" current="week-zero" name={client?.displayName} locale={french ? "fr" : "en"}
+  return <ClientVisualShell current="week-zero" name={client?.displayName} french={french} documentNavigation
     accountAction={<button className="fe-button" disabled={busy} onClick={() => void signOut()}>{t("Se déconnecter", "Sign out")}</button>}>
-    <div className={styles.page}>
+    <div className={styles.page} data-week-zero-checkpoint="v1.1">
       <header className={styles.intro}>
         <p className="fe-kicker">Week Zero</p>
         <h1 className="fe-title">{t("Ta semaine zéro", "Your Week Zero")}</h1>
-        <p>{t("Partage ton point de départ avec ton Coach : mesures, mobilité et disponibilités. Tu peux enregistrer, revenir plus tard, puis transmettre ton bilan.", "Share your starting point with your Coach: measurements, mobility and availability. Save your progress, return later, then submit your assessment.")}</p>
       </header>
+      <details className={styles.explanation}>
+        <summary><Icon name="alert" />{t("À propos de ta semaine zéro", "About your Week Zero")}</summary>
+        <p>{t("Partage ton point de départ avec ton Coach : mesures, mobilité et disponibilités. Tu peux enregistrer, revenir plus tard, puis transmettre ton bilan.", "Share your starting point with your Coach: measurements, mobility and availability. Save your progress, return later, then submit your assessment.")}</p>
+      </details>
       {error && <Feedback>{error}</Feedback>}
       {sessionExpired && <Link className="fe-button" href="/client-login">{t("Me reconnecter", "Sign in again")}</Link>}
       {conflict && <button className="fe-button" onClick={() => {
         if (window.confirm(t("Recharger remplacera les saisies affichées par la dernière version enregistrée. Continuer ?", "Reloading replaces the entries shown with the latest saved version. Continue?"))) setAttempt((n) => n+1);
       }}>{t("Recharger la version enregistrée", "Reload saved version")}</button>}
       {failed ? <><Feedback>{t("Impossible de charger ton bilan. Aucune donnée n’a été remplacée.", "Unable to load your assessment. No data was replaced.")}</Feedback><button className="fe-button" onClick={() => setAttempt((n) => n+1)}>{t("Réessayer", "Try again")}</button></> : !assessment || !responses ? <Loading>{t("Chargement du bilan…", "Loading assessment…")}</Loading> : <>
-        <p className={styles.status} role="status" aria-live="polite">
+        {!submitted && <nav className={styles.stepNavigation} aria-label={t("Étapes de la semaine zéro", "Week Zero steps")}>
+          <div className={styles.mobileSteps}>
+            <p>{step + 1} {t("sur", "of")} {titles.length} · {titles[step]}</p>
+            <button type="button" className={styles.stepToggle} aria-expanded={stepsOpen} aria-controls="week-zero-steps" onClick={() => setStepsOpen(!stepsOpen)}>
+              {stepsOpen ? t("Masquer les étapes", "Hide steps") : t("Voir les étapes", "View steps")} <span aria-hidden="true">{stepsOpen ? "−" : "+"}</span>
+            </button>
+          </div>
+          <ol id="week-zero-steps" className={styles.steps} data-expanded={stepsOpen}>
+            {titles.map((title,index) => <li key={title}><button className={styles.stepButton} type="button" aria-current={step===index ? "step" : undefined} disabled={busy} onClick={() => goToStep(index)}><span className={styles.stepNumber} aria-hidden="true">{index+1}</span><span><span className="fe-sr-only">{index+1}. </span>{title}</span></button></li>)}
+          </ol>
+        </nav>}
+        <div className={styles.statePanel}>
+        <p className={styles.status} role="status" aria-live="polite" data-state={busy ? "saving" : submitted ? "submitted" : dirty ? "dirty" : assessment.status.toLowerCase()}>
+          <Icon name={submitted ? "check" : busy ? "clock" : "alert"} />
+          <span>
           {busy ? t("Enregistrement en cours…", "Saving…") : submitted ? t("Semaine zéro transmise au Coach", "Week Zero submitted to your Coach") : dirty ? t("Modifications non enregistrées", "Unsaved changes") : assessment.status === "DRAFT" ? t("Brouillon enregistré — pas encore transmis au Coach", "Draft saved — not yet submitted to your Coach") : t("Semaine zéro non commencée", "Week Zero not started")}
           {savedNotice && !submitted ? t(". Sauvegarde confirmée.", ". Save confirmed.") : ""}
+          </span>
         </p>
+        {!submitted && <p className={styles.privacy}><Icon name="eye" /><span>{t("Seule la transmission rend tes réponses visibles au Coach.", "Only submission makes your answers visible to your Coach.")}</span></p>}
+        </div>
         {submitted ? <>
           <Feedback tone="success">{t("Ton Coach peut maintenant consulter ce bilan dans ton dossier. Tu n’as pas à le renvoyer. Les réponses transmises sont conservées en lecture seule.", "Your Coach can now read this assessment in your file. You do not need to resend it. Submitted answers are kept read-only.")}</Feedback>
-          <p className={styles.notice}>{t("Ce bilan est la première étape du Week Zero. Photos, calibration des charges et cardio ne sont pas encore disponibles dans cette application. Ton programme n’est pas encore publié ici.", "This assessment is the first Week Zero step. Photos, load calibration and cardio are not yet available in this application. Your program is not published here yet.")}</p>
+          <p className={styles.notice}>{t("Ce bilan est la première étape du Week Zero. Photos, calibration des charges et cardio ne sont pas encore disponibles dans cette application. La transmission de ce bilan ne publie pas de programme.", "This assessment is the first Week Zero step. Photos, load calibration and cardio are not yet available in this application. Submitting this assessment does not publish a program.")}</p>
           <AssessmentReview responses={responses} french={french} />
           <Link className="fe-button" href="/client">{t("Retour à mon portail", "Back to my portal")}</Link>
         </> : <>
-          <p className={styles.notice}>{t("Enregistrer conserve tes réponses dans ton espace privé. Seul « Transmettre mon bilan au Coach » rend ce bilan visible dans ton dossier Coach.", "Saving keeps your answers in your private portal. Only “Submit my assessment to my Coach” makes it visible in your Coach’s client file.")}</p>
-          <nav aria-label={t("Étapes de la semaine zéro", "Week Zero steps")}><ol className={styles.steps}>{titles.map((title,index) => <li key={title}><button className={`fe-button ${step===index ? "fe-button-primary" : ""}`} type="button" aria-current={step===index ? "step" : undefined} disabled={busy} onClick={() => goToStep(index)}>{index+1}. {title}</button></li>)}</ol></nav>
-          <form onSubmit={(event) => { event.preventDefault(); void persist(false); }}>
+          <form aria-busy={busy} onInvalidCapture={(event) => {
+            // Reveal an invalid optional field before native validation focuses it.
+            const group = (event.target as HTMLElement).closest("details");
+            if (group) group.open = true;
+          }} onSubmit={(event) => { event.preventDefault(); void persist(false); }}>
             <fieldset className={styles.panel} disabled={busy || conflict}>
               <legend className="fe-sr-only">{titles[step]}</legend>
               <h2 className="fe-title" ref={heading} tabIndex={-1}>{titles[step]}</h2>
-              {step === 0 && <><p>{t("Le poids et le tour de taille sont obligatoires pour transmettre. Les autres mesures sont facultatives. Les unités restent celles du portail Legacy : livres et pouces.", "Weight and waist are required to submit. Other measurements are optional. Units match the Legacy portal: pounds and inches.")}</p><div className={styles.grid}>
-                {measurementFields.map(([key,fr,en,required,max]) => <label className={styles.field} key={key}>{t(fr,en)}{required ? " *" : ""}<input type="number" inputMode="decimal" min="0.01" max={max} step="any" value={responses.measurements[key] ?? ""} onChange={(e) => edit("measurements",key,e.target.value==="" ? null : Number(e.target.value))} /></label>)}
-                <label className={`${styles.field} ${styles.wide}`}>{t("Autres précisions (facultatif)", "Other details (optional)")}<textarea maxLength={500} value={responses.measurements.other ?? ""} onChange={(e) => edit("measurements","other",e.target.value || null)} /></label>
-              </div></>}
+              {step === 0 && <>
+                <p className={styles.help}>{t("* Requis avant transmission · livres et pouces", "* Required before submission · pounds and inches")}</p>
+                <div className={styles.grid}>
+                  {measurementFields.filter(([, , , required]) => required).map(([key,fr,en,,max]) => <label className={styles.field} key={key}>{t(fr,en)} *<input type="number" inputMode="decimal" min="0.01" max={max} step="any" value={responses.measurements[key] ?? ""} onChange={(e) => edit("measurements",key,e.target.value==="" ? null : Number(e.target.value))} /></label>)}
+                </div>
+                <details className={styles.optionalMeasurements}>
+                  <summary>{t("Autres mesures · facultatif", "Other measurements · optional")}</summary>
+                  <div className={styles.grid}>
+                    {measurementFields.filter(([, , , required]) => !required).map(([key,fr,en,,max]) => <label className={styles.field} key={key}>{t(fr,en)}<input type="number" inputMode="decimal" min="0.01" max={max} step="any" value={responses.measurements[key] ?? ""} onChange={(e) => edit("measurements",key,e.target.value==="" ? null : Number(e.target.value))} /></label>)}
+                    <label className={`${styles.field} ${styles.wide}`}>{t("Autres précisions (facultatif)", "Other details (optional)")}<textarea maxLength={500} value={responses.measurements.other ?? ""} onChange={(e) => edit("measurements","other",e.target.value || null)} /></label>
+                  </div>
+                </details>
+              </>}
               {step === 1 && <><p>{t("Réponds selon ce que tu as déjà observé, sans provoquer une douleur pour compléter le formulaire. Inscris « N.A. » dans un texte si rien n’est à signaler.", "Answer from what you have already observed; do not cause pain to complete this form. Enter “N.A.” in a text field when there is nothing to report.")}</p><div className={styles.grid}>
                 {painFields.map(([key,fr,en]) => <label className={styles.field} key={key}>{t(fr,en)} *<select value={responses.mobility[key]} onChange={(e) => edit("mobility",key,e.target.value as InitialAssessmentResponses["mobility"][typeof key])}><option value="NOT_ASSESSED">{t("Choisir une réponse", "Choose an answer")}</option><option value="NO">{t("Non", "No")}</option><option value="YES">{t("Oui", "Yes")}</option></select></label>)}
                 {mobilityFields.map(([key,fr,en]) => <label className={`${styles.field} ${styles.wide}`} key={key}>{t(fr,en)} *<textarea maxLength={500} value={responses.mobility[key] ?? ""} onChange={(e) => edit("mobility",key,e.target.value || null)} /></label>)}
@@ -230,7 +266,7 @@ export function ClientWeekZero() {
         </>}
       </>}
     </div>
-  </AppShell>;
+  </ClientVisualShell>;
 }
 
 function AssessmentReview({ responses, french }: { responses: InitialAssessmentResponses; french: boolean }) {

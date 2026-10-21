@@ -7,13 +7,13 @@ import { Icon } from "@/components/fe/icon";
 import { usePortalAccess } from "@/components/fe/portal-access-context";
 import styles from "./client-home-pilot.module.css";
 
-/** Presentation-only shell for the first visual checkpoint (Home + Onboarding).
- * Other screens deliberately keep their existing shell until Max validates it. */
+/** Shared presentation shell. Week Zero is the representative V1.1 checkpoint;
+ * other screens keep their existing presentation until visual validation. */
 export function ClientVisualShell({ children, name, french, current, accountAction, documentNavigation = false }: {
   children: ReactNode;
   name?: string;
   french: boolean;
-  current: "home" | "onboarding";
+  current: "home" | "onboarding" | "week-zero";
   accountAction: ReactNode;
   documentNavigation?: boolean;
 }) {
