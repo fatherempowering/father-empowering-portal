@@ -47,14 +47,14 @@ test("Client reads the published prescription in French and English on narrow sc
   await page.goto("/?screen=client-program&state=program-published");
   await expect(page.getByRole("heading",{name:"Phase force",exact:true})).toBeVisible();
   await expect(page.getByRole("heading",{name:"Dumbbell Press",exact:true})).toBeVisible();
-  await expect(page.locator("p").filter({hasText:"Série 1"})).toContainText("40 lb");
-  await expect(page.getByText(/saisie des résultats/)).toBeVisible();
+  await expect(page.locator("p").filter({hasText:"Série 1"})).toContainText("40 (lb)");
+  await expect(page.getByRole("link",{name:"Ouvrir la séance",exact:true})).toBeVisible();
   await page.getByRole("button",{name:"English",exact:true}).click();
   await expect(page.getByRole("heading",{name:"Strength phase",exact:true})).toBeVisible();
   for(const width of [1280,390,320]) { await page.setViewportSize({width,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true); }
 });
 test("Client failure is distinct from no published program",async({page})=>{
   await page.goto("/?screen=client-program");await expect(page.getByText(/n’a pas encore publié de programme/)).toBeVisible();
-  await page.goto("/?screen=client-program&state=publication-load-error");await expect(page.getByRole("alert")).toContainText("n’a pas pu être chargé");
+  await page.goto("/?screen=client-program&state=publication-load-error");await expect(page.getByRole("alert")).toContainText("n’ont pas pu être chargés");
   await expect(page.getByText(/n’a pas encore publié de programme/)).toHaveCount(0);
 });

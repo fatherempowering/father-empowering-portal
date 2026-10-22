@@ -632,6 +632,92 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
     }
   });
 
+  it("records Client workouts and preserves Coach-visible history across republication", async () => {
+    let stage="START";
+    const status=(label:string,response:Response,expected:number)=>{stage=label+" HTTP expected="+expected+" received="+response.status;expect(response.status).toBe(expected);};
+    const jsonPost=(actor:M1SsrSession,path:string,body:unknown)=>authenticatedFetch(environment,actor,path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+    try {
+      const own=await authenticatedFetch(environment,clientSessionB,"/api/v1/client/me");status("OWN",own,200);
+      const clientId=(await own.json()).client.clientId;
+      const prior=await authenticatedFetch(environment,session,`/api/v1/coach/clients/${clientId}/program`);status("PRIOR",prior,200);
+      const previous=(await prior.json()).data.program;
+      const exerciseResponse=await jsonPost(session,"/api/v1/coach/exercises",{id:null,expectedVersion:0,clientMutationId:randomUUID(),exercise:{name:"Workout HTTP Press",equipment:"Dumbbells",cue:{fr:"Contrôle",en:"Control"},defaultUnit:"lb",archived:false}});
+      status("EXERCISE",exerciseResponse,200);const exercise=(await exerciseResponse.json()).data.exercise;
+      const doc=newProgram();doc.title.fr="Résultats HTTP";
+      const trainingSession=newSession();trainingSession.title.fr="Séance résultats";
+      const block=newBlock();block.exercises.push(addLibraryExercise(exercise));trainingSession.blocks.push(block);
+      doc.weeks[0].sessions.push(trainingSession);doc.weeks.push({...structuredClone(doc.weeks[0]),number:2});
+      const saved=await jsonPost(session,"/api/v1/coach/programs",{id:null,expectedVersion:0,clientMutationId:randomUUID(),document:doc});status("DRAFT",saved,200);
+      const draft=(await saved.json()).data.program;
+      const publishedResponse=await jsonPost(session,"/api/v1/coach/programs/publish",{clientId,programId:draft.id,draftVersion:1,expectedPublicationId:previous.id,clientMutationId:randomUUID()});status("PUBLICATION",publishedResponse,200);
+      const published=(await publishedResponse.json()).data.program;
+      const selector={publicationId:published.id,weekNumber:1,sessionId:trainingSession.id};
+      const query=new URLSearchParams({...selector,weekNumber:"1"}).toString();
+      const get=()=>authenticatedFetch(environment,clientSessionB,`/api/v1/client/workouts/session?${query}`);
+      status("ANONYMOUS",await fetch(`${environment.appUrl}/api/v1/client/workouts`),401);
+      status("NO_CLIENT_TARGET",await authenticatedFetch(environment,clientSessionB,`/api/v1/client/workouts?clientId=${clientId}`),400);
+      const empty=await get();status("EMPTY",empty,200);stage="EMPTY_WORKOUT";expect((await empty.json()).data.workout).toBeNull();
+      const command={...selector,expectedVersion:0,clientMutationId:randomUUID(),status:"IN_PROGRESS",sets:[],note:""};
+      const write=(body:unknown)=>jsonPost(clientSessionB,"/api/v1/client/workouts",body);
+      status("ORIGIN",await fetch(`${environment.appUrl}/api/v1/client/workouts`,{method:"POST",headers:{"content-type":"application/json",cookie:clientSessionB.cookieHeader(),origin:"https://untrusted.example"},body:JSON.stringify(command),redirect:"manual"}),403);
+      status("INJECTED_IDENTITY",await write({...command,clientId}),400);
+      const started=await write(command);status("START_WORKOUT",started,200);const first=(await started.json()).data.workout;
+      const replay=await write(command);status("REPLAY",replay,200);stage="REPLAY_EQUAL";expect((await replay.json()).data.workout).toEqual(first);
+      status("CHANGED_REPLAY",await write({...command,note:"Different"}),409);
+      const exerciseId=block.exercises[0].id;
+      const oneSet={exerciseId,setNumber:1,status:"DONE",reps:8,load:40,rir:2};
+      const partial=await write({...command,expectedVersion:1,clientMutationId:randomUUID(),sets:[oneSet]});status("SAVE_PARTIAL",partial,200);stage="VERSION_2";expect((await partial.json()).data.workout.version).toBe(2);
+      status("STALE_VERSION",await write({...command,expectedVersion:1,clientMutationId:randomUUID()}),409);
+      const coachRead=await authenticatedFetch(environment,session,`/api/v1/coach/clients/${clientId}/workouts`);status("COACH_READ",coachRead,200);
+      stage="COACH_PARTIAL";expect((await coachRead.json()).data.items.find((w:{id:string})=>w.id===first.id).status).toBe("IN_PROGRESS");
+      const coachDetail=await authenticatedFetch(environment,session,`/api/v1/coach/clients/${clientId}/workouts/session?${query}`);status("COACH_DETAIL",coachDetail,200);stage="COACH_PARTIAL_LOAD";expect((await coachDetail.json()).data.workout.sets[0].load).toBe(40);
+      status("UNVERIFIED_COACH",await authenticatedFetch(environment,unverifiedCoachSession,`/api/v1/coach/clients/${clientId}/workouts`),403);
+      status("CLIENT_COACH_PATH",await authenticatedFetch(environment,clientSessionB,`/api/v1/coach/clients/${clientId}/workouts`),403);
+      doc.weeks[0].sessions[0].blocks[0].exercises[0].prescription.loadTarget="50 lb";
+      const edit=await jsonPost(session,"/api/v1/coach/programs",{id:draft.id,expectedVersion:1,clientMutationId:randomUUID(),document:doc});status("EDIT",edit,200);
+      const republish=await jsonPost(session,"/api/v1/coach/programs/publish",{clientId,programId:draft.id,draftVersion:2,expectedPublicationId:published.id,clientMutationId:randomUUID()});status("REPUBLISH",republish,200);
+      const next=(await republish.json()).data.program;
+      status("OLD_NOT_STARTED",await write({...command,weekNumber:2,clientMutationId:randomUUID()}),409);
+      const old=await get();status("OLD_IN_PROGRESS",old,200);stage="OLD_SNAPSHOT";expect((await old.json()).data.publication.document.weeks[0].sessions[0].blocks[0].exercises[0].prescription.loadTarget).not.toBe("50 lb");
+      status("INCOMPLETE_CLOSE",await write({...command,expectedVersion:2,clientMutationId:randomUUID(),status:"COMPLETED",sets:[oneSet]}),400);
+      const count=block.exercises[0].prescription.sets;
+      const complete={...command,expectedVersion:2,clientMutationId:randomUUID(),status:"COMPLETED",sets:Array.from({length:count+1},(_,i)=>({...oneSet,setNumber:i+1})),note:"Note de séance synthétique"};
+      const finish=await write(complete);status("COMPLETE",finish,200);const completed=(await finish.json()).data.workout;
+      stage="COMPLETED_EXTRA";expect(completed.status).toBe("COMPLETED");expect(completed.sets[count].kind).toBe("EXTRA");
+      status("COMPLETED_REPLAY",await write(complete),200);
+      status("COMPLETED_IMMUTABLE",await write({...complete,expectedVersion:3,clientMutationId:randomUUID()}),409);
+      const simultaneous=await Promise.all([
+        write({...command,publicationId:next.id,clientMutationId:randomUUID()}),
+        write({...command,publicationId:next.id,clientMutationId:randomUUID()}),
+      ]);
+      stage="CONCURRENT_START_STATUSES";expect(simultaneous.map(response=>response.status).sort()).toEqual([200,409]);
+      const concurrentResult=(await simultaneous.find(response=>response.status===200)!.json()).data.workout;
+      const admin=createM1AdminClient(environment);
+      const observed=await admin.from("training_session_results").select("id",{count:"exact",head:true}).eq("publication_id",next.id).eq("week_number",1).eq("session_id",trainingSession.id);
+      stage="CONCURRENT_SINGLE_RESULT";expect(observed.error).toBeNull();expect(observed.count).toBe(1);
+      const audit=await admin.from("audit_events").select("id",{count:"exact",head:true}).eq("entity_id",concurrentResult.id).eq("command","SAVE_TRAINING_SESSION_RESULT");
+      stage="CONCURRENT_SINGLE_AUDIT";expect(audit.error).toBeNull();expect(audit.count).toBe(1);
+      doc.title.fr="Résultats HTTP nouvelle révision";
+      status("RACE_DRAFT",await jsonPost(session,"/api/v1/coach/programs",{id:draft.id,expectedVersion:2,clientMutationId:randomUUID(),document:doc}),200);
+      const publishRace=await Promise.all([
+        write({...command,publicationId:next.id,weekNumber:2,clientMutationId:randomUUID()}),
+        jsonPost(session,"/api/v1/coach/programs/publish",{clientId,programId:draft.id,draftVersion:3,expectedPublicationId:next.id,clientMutationId:randomUUID()}),
+      ]);
+      status("CONCURRENT_REPUBLICATION",publishRace[1],200);stage="CONCURRENT_START_SERIALIZED";expect([200,409]).toContain(publishRace[0].status);
+      if(publishRace[0].status===200){
+        const raced=(await publishRace[0].json()).data.workout;
+        status("STARTED_BEFORE_REPUBLICATION_REMAINS_WRITABLE",await write({...command,publicationId:next.id,weekNumber:2,expectedVersion:raced.version,clientMutationId:randomUUID()}),200);
+      }else{
+        const absent=await admin.from("training_session_results").select("id",{count:"exact",head:true}).eq("publication_id",next.id).eq("week_number",2).eq("session_id",trainingSession.id);
+        stage="START_AFTER_REPUBLICATION_NOT_WRITTEN";expect(absent.error).toBeNull();expect(absent.count).toBe(0);
+      }
+      const history=await authenticatedFetch(environment,clientSessionB,"/api/v1/client/workouts");status("HISTORY",history,200);stage="HISTORY_RETAINED";expect((await history.json()).data.items.some((w:{id:string,status:string})=>w.id===first.id&&w.status==="COMPLETED")).toBe(true);
+      const coachHistory=await authenticatedFetch(environment,session,`/api/v1/coach/clients/${clientId}/workouts`);status("COACH_HISTORY",coachHistory,200);stage="COACH_HISTORY_COMPACT";expect((await coachHistory.json()).data.items.find((w:{id:string})=>w.id===first.id).status).toBe("COMPLETED");
+      const coachFinal=await authenticatedFetch(environment,session,`/api/v1/coach/clients/${clientId}/workouts/session?${query}`);status("COACH_FINAL",coachFinal,200);stage="COACH_NOTE";expect((await coachFinal.json()).data.workout.note).toBe("Note de séance synthétique");
+      const direct=await clientSessionB.client.from("training_session_results").update({note:"Forbidden"}).eq("id",first.id);stage="DIRECT_WRITE_DENIED";expect(direct.error?.code).toBe("42501");
+    } catch { throw new Error("Workout integration failed at "+stage); }
+  }, 30_000);
+
   it("persiste la bibliothèque Training sans élargir les accès Client ou Coach non vérifié", async () => {
     const path = "/api/v1/coach/exercises";
     const command = {

@@ -1,0 +1,10 @@
+.page { max-width: 1050px; margin: 0 auto; padding: clamp(16px, 3vw, 40px); display: grid; gap: 20px; min-width: 0; }
+.card { border: 1px solid var(--fe-border, #bcb8af); border-radius: 12px; padding: clamp(16px, 3vw, 24px); min-width: 0; overflow-wrap: anywhere; }
+.card h2,.card h3 { margin-top: 0; }
+.card summary { cursor: pointer; padding: 12px 0; font-weight: 700; }
+.exercise { border-top: 1px solid var(--fe-border, #bcb8af); margin-top: 16px; padding-top: 12px; }
+.exercise ul { padding-left: 22px; }
+.exercise li { margin: 10px 0; }
+.note { white-space: pre-wrap; overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+@media (max-width: 480px) { .actions button { width: 100%; } }

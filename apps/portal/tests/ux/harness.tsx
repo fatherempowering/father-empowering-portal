@@ -12,10 +12,17 @@ import { PersonalPortalSetup } from "../../src/features/coach/personal-portal/pe
 import { ExerciseLibrary } from "../../src/features/training/coach/exercise-library";
 import { ProgramBuilder } from "../../src/features/training/coach/program-builder";
 import { ClientProgram } from "../../src/features/training/client/client-program";
+import { ClientWorkout } from "../../src/features/training/client/client-workout";
+import { CoachWorkoutResults } from "../../src/features/training/coach/workout-results";
 import { newProgram, newSession, newBlock, addLibraryExercise } from "../../src/lib/training/program-editor";
 import type { ProgramPublication, PublishProgramRequest } from "../../src/lib/contracts/training-publication";
 import type { ProgramSnapshot, SaveProgramRequest } from "../../src/lib/contracts/training-drafts";
 import type { ExerciseSnapshot, SaveExerciseRequest } from "../../src/lib/contracts/training";
+import {
+  type SaveWorkoutRequest,
+  type WorkoutSnapshot,
+  type WorkoutWireSnapshot,
+} from "../../src/lib/contracts/training-results";
 import { EMPTY_INITIAL_ASSESSMENT_RESPONSES } from "../../src/lib/contracts/week-zero";
 import { ONBOARDING_QUESTIONS } from "../../src/lib/contracts/onboarding-definition";
 import {
@@ -178,28 +185,273 @@ const programRequests: SaveProgramRequest[] = [];
 Object.assign(window, { __programRequests: programRequests });
 let programResponseLost = false;
 const recipientId = "19100000-0000-4000-8000-000000000005";
+const workoutPublicationId = "19200000-0000-4000-8000-000000000001";
+const previousWorkoutPublicationId = "19200000-0000-4000-8000-000000000002";
+const workoutProgramId = "19200000-0000-4000-8000-000000000003";
+const workoutSessionId = "19200000-0000-4000-8000-000000000004";
+const uppercaseWorkoutSessionId = "19200000-0000-4000-8000-00000000ABCD";
+const workoutExerciseId = "19200000-0000-4000-8000-000000000005";
 const publicationRequests: PublishProgramRequest[] = [];
 const publicationReceipts = new Map<string, ProgramPublication>();
 let publication: ProgramPublication | null = null;
 let publicationResponseLost = false;
 Object.assign(window, { __publicationRequests: publicationRequests });
-if (scenario === "program-published") {
-  const document = newProgram(); document.title = { fr: "Phase force", en: "Strength phase" };
-  const session = newSession(); session.title = { fr: "Séance A", en: "Session A" }; const block = newBlock();
-  const exercise = addLibraryExercise({ id: crypto.randomUUID(), name: "Dumbbell Press", equipment: "", cue: { fr: "Contrôle", en: "Control" }, defaultUnit: "lb", archived: false, version: 1, createdBy: crypto.randomUUID(), updatedAt: new Date(now).toISOString(), canEdit: true });
-  exercise.prescription.loadTarget = "40 lb"; block.exercises.push(exercise); session.blocks.push(block); document.weeks[0].sessions.push(session);
-  publication = { id: crypto.randomUUID(), clientId: recipientId, programId: crypto.randomUUID(), draftVersion: 2, revision: 1, document, publishedAt: new Date(now).toISOString() };
+const workoutPublications = new Map<string, ProgramPublication>();
+const workoutRecords = new Map<string, WorkoutSnapshot>();
+const workoutReceipts = new Map<string, WorkoutSnapshot>();
+const workoutRequests: SaveWorkoutRequest[] = [];
+let workoutResponseLost = false;
+Object.assign(window, {
+  __publicationRequests: publicationRequests,
+  __workoutRequests: workoutRequests,
+});
+
+function workoutKey(publicationId: string, weekNumber: number, sessionId: string) {
+  return `${publicationId}:${weekNumber}:${sessionId.toLowerCase()}`;
+}
+
+function makePublication(
+  id = workoutPublicationId,
+  revision = 2,
+  sessionIdentifier = workoutSessionId,
+) {
+  const document = newProgram();
+  document.title = revision === 1
+    ? { fr: "Phase fondation", en: "Foundation phase" }
+    : { fr: "Phase force", en: "Strength phase" };
+  document.weeks[0].objective = { fr: "Construire la force", en: "Build strength" };
+  const session = newSession();
+  session.id = sessionIdentifier;
+  session.title = { fr: "Séance A", en: "Session A" };
+  session.warmup = { fr: "Échauffement progressif.", en: "Progressive warm-up." };
+  const block = newBlock();
+  block.label = { fr: "Poussée", en: "Push" };
+  const exercise = addLibraryExercise({
+    id: "19200000-0000-4000-8000-000000000006",
+    name: "Dumbbell Press",
+    equipment: "Dumbbells",
+    cue: { fr: "Contrôle la descente.", en: "Control the descent." },
+    defaultUnit: "lb",
+    archived: false,
+    version: 1,
+    createdBy: "19200000-0000-4000-8000-000000000007",
+    updatedAt: new Date(now).toISOString(),
+    canEdit: true,
+  });
+  exercise.id = workoutExerciseId;
+  exercise.prescription.sets = 2;
+  exercise.prescription.reps = "8";
+  exercise.prescription.targetRir = 2;
+  exercise.prescription.loadTarget = "40";
+  block.exercises.push(exercise);
+  session.blocks.push(block);
+  document.weeks[0].sessions.push(session);
+  return {
+    id,
+    clientId: recipientId,
+    programId: workoutProgramId,
+    draftVersion: revision + 1,
+    revision,
+    document,
+    publishedAt: new Date(now - (2 - revision) * 86_400_000).toISOString(),
+  } satisfies ProgramPublication;
+}
+
+function makeWorkout(
+  source: ProgramPublication,
+  status: "IN_PROGRESS" | "COMPLETED",
+): WorkoutSnapshot {
+  const session = structuredClone(source.document.weeks[0].sessions[0]);
+  return {
+    id: source.id === previousWorkoutPublicationId
+      ? "19300000-0000-4000-8000-000000000002"
+      : "19300000-0000-4000-8000-000000000001",
+    publicationId: source.id,
+    weekNumber: 1,
+    sessionId: session.id.toLowerCase(),
+    version: status === "COMPLETED" ? 3 : 2,
+    status,
+    sets: [
+      { exerciseId: workoutExerciseId, setNumber: 1, status: "DONE", reps: 8, load: 40, rir: 2, kind: "PRESCRIBED", unit: "lb" },
+      status === "COMPLETED"
+        ? { exerciseId: workoutExerciseId, setNumber: 2, status: "DONE", reps: 7, load: 40, rir: null, kind: "PRESCRIBED", unit: "lb" }
+        : { exerciseId: workoutExerciseId, setNumber: 2, status: "PENDING", reps: null, load: null, rir: null, kind: "PRESCRIBED", unit: "lb" },
+    ],
+    note: status === "COMPLETED" ? "Bonne séance, progression contrôlée." : null,
+    startedAt: new Date(now - 3_600_000).toISOString(),
+    updatedAt: new Date(now - 600_000).toISOString(),
+    completedAt: status === "COMPLETED" ? new Date(now - 600_000).toISOString() : null,
+    session,
+    programTitle: source.document.title,
+    publicationRevision: source.revision,
+  };
+}
+
+function compactWorkout(workout: WorkoutSnapshot) {
+  return {
+    id: workout.id,
+    publicationId: workout.publicationId,
+    weekNumber: workout.weekNumber,
+    sessionId: workout.sessionId,
+    version: workout.version,
+    status: workout.status,
+    startedAt: workout.startedAt,
+    updatedAt: workout.updatedAt,
+    completedAt: workout.completedAt,
+    session: {
+      id: workout.session.id,
+      title: workout.session.title,
+      type: workout.session.type,
+    },
+    programTitle: workout.programTitle,
+    publicationRevision: workout.publicationRevision,
+  };
+}
+
+function wireWorkout(workout: WorkoutSnapshot): WorkoutWireSnapshot {
+  return {
+    id: workout.id,
+    publicationId: workout.publicationId,
+    weekNumber: workout.weekNumber,
+    sessionId: workout.sessionId,
+    version: workout.version,
+    status: workout.status,
+    sets: structuredClone(workout.sets),
+    note: workout.note,
+    startedAt: workout.startedAt,
+    updatedAt: workout.updatedAt,
+    completedAt: workout.completedAt,
+    programTitle: structuredClone(workout.programTitle),
+    publicationRevision: workout.publicationRevision,
+  };
+}
+
+const workoutScreen = harnessParameters.get("screen");
+const needsWorkoutPublication = scenario === "program-published"
+  || scenario.startsWith("workout-")
+  || scenario.startsWith("coach-workout-")
+  || workoutScreen === "client-workout"
+  || workoutScreen === "coach-workouts";
+if (needsWorkoutPublication) {
+  publication = makePublication(
+    workoutPublicationId,
+    2,
+    scenario.startsWith("workout-uppercase-session")
+      ? uppercaseWorkoutSessionId
+      : workoutSessionId,
+  );
+  workoutPublications.set(publication.id, publication);
+  if (["workout-in-progress", "workout-response-lost", "workout-conflict", "workout-dirty", "workout-uppercase-session", "coach-workout-pending"].includes(scenario)) {
+    const record = makeWorkout(publication, "IN_PROGRESS");
+    workoutRecords.set(workoutKey(record.publicationId, record.weekNumber, record.sessionId), record);
+  }
+  if (["workout-completed", "coach-workout-completed"].includes(scenario)) {
+    const record = makeWorkout(publication, "COMPLETED");
+    workoutRecords.set(workoutKey(record.publicationId, record.weekNumber, record.sessionId), record);
+  }
+  if (scenario === "workout-history" || scenario === "coach-workout-history") {
+    const previous = makePublication(previousWorkoutPublicationId, 1);
+    workoutPublications.set(previous.id, previous);
+    const record = makeWorkout(previous, "COMPLETED");
+    workoutRecords.set(workoutKey(record.publicationId, record.weekNumber, record.sessionId), record);
+  }
 }
 if (harnessParameters.get("screen") === "program-builder") {
   exerciseRecords.push({ id: "19000000-0000-4000-8000-000000000010", name: "Dumbbell Press", equipment: "Dumbbells", cue: { fr: "Contrôle", en: "Control" }, defaultUnit: "lb", archived: false, version: 1, createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString(), canEdit: true });
 }
 window.fetch = async (url, init) => {
   const path = String(url);
+  const parsedPath = new URL(path, window.location.origin);
   if (path === "/api/v1/auth/client-logout" && ["client-logout-network-error", "onboarding-load-logout-error"].includes(scenario)) throw new TypeError("Synthetic network failure");
   if (path === "/api/v1/client/onboarding" && scenario === "onboarding-load-logout-error") {
     return new Promise<Response>((resolve) => Object.assign(window, {
       __releaseOnboardingLoad: () => resolve(reply({ data: { intake: onboardingSnapshot("NOT_STARTED") } })),
     }));
+  }
+  if (parsedPath.pathname === "/api/v1/client/workouts/session") {
+    if (scenario === "workout-load-error") return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
+    if (scenario === "workout-auth-error") return reply({ error: { code: "UNAUTHENTICATED" } }, 401);
+    const publicationId = parsedPath.searchParams.get("publicationId") ?? "";
+    const weekNumber = Number(parsedPath.searchParams.get("weekNumber"));
+    const sessionId = parsedPath.searchParams.get("sessionId") ?? "";
+    const selectedPublication = workoutPublications.get(publicationId);
+    if (!selectedPublication) return reply({ error: { code: "NOT_FOUND" } }, 404);
+    const selectedWorkout = workoutRecords.get(workoutKey(publicationId, weekNumber, sessionId));
+    const fixture = {
+      workout: selectedWorkout ? wireWorkout(selectedWorkout) : null,
+      publication: selectedPublication,
+    };
+    return reply({ data: fixture });
+  }
+  if (parsedPath.pathname === "/api/v1/client/workouts" && init?.method === "POST") {
+    const input = JSON.parse(String(init.body)) as SaveWorkoutRequest;
+    workoutRequests.push(input);
+    if (scenario === "workout-conflict" || scenario === "workout-start-conflict") {
+      return reply({ error: { code: "VERSION_CONFLICT" } }, 409);
+    }
+    let saved = workoutReceipts.get(input.clientMutationId);
+    if (!saved) {
+      const selectedPublication = workoutPublications.get(input.publicationId);
+      const selectedSession = selectedPublication?.document.weeks
+        .find((week) => week.number === input.weekNumber)?.sessions
+        .find((session) => session.id.toLowerCase() === input.sessionId.toLowerCase());
+      if (!selectedPublication || !selectedSession) return reply({ error: { code: "NOT_FOUND" } }, 404);
+      const previous = workoutRecords.get(workoutKey(input.publicationId, input.weekNumber, input.sessionId));
+      const exercises = selectedSession.blocks.flatMap((block) => block.exercises);
+      saved = {
+        id: previous?.id ?? "19300000-0000-4000-8000-000000000001",
+        publicationId: input.publicationId,
+        weekNumber: input.weekNumber,
+        sessionId: input.sessionId.toLowerCase(),
+        version: input.expectedVersion + 1,
+        status: input.status,
+        sets: input.sets.map((set) => {
+          const exercise = exercises.find((candidate) => candidate.id === set.exerciseId)!;
+          return {
+            ...set,
+            kind: set.setNumber <= exercise.prescription.sets ? "PRESCRIBED" as const : "EXTRA" as const,
+            unit: exercise.prescription.prescribedSets?.[set.setNumber - 1]?.unit ?? exercise.prescription.unit,
+          };
+        }),
+        note: input.note,
+        startedAt: previous?.startedAt ?? new Date(now).toISOString(),
+        updatedAt: new Date(now).toISOString(),
+        completedAt: input.status === "COMPLETED" ? new Date(now).toISOString() : null,
+        session: structuredClone(selectedSession),
+        programTitle: selectedPublication.document.title,
+        publicationRevision: selectedPublication.revision,
+      };
+      workoutReceipts.set(input.clientMutationId, saved);
+      workoutRecords.set(workoutKey(input.publicationId, input.weekNumber, input.sessionId), saved);
+    }
+    if (scenario === "workout-response-lost" && !workoutResponseLost) {
+      workoutResponseLost = true;
+      throw new TypeError("Workout confirmation lost after commit");
+    }
+    return reply({ data: { workout: saved } });
+  }
+  if (parsedPath.pathname === "/api/v1/client/workouts") {
+    const page = Number(parsedPath.searchParams.get("page") ?? 0);
+    const items = [...workoutRecords.values()].map(compactWorkout);
+    return reply({ data: { items: items.slice(page * 20, page * 20 + 20), total: items.length, page, pageSize: 20 } });
+  }
+  if (/^\/api\/v1\/coach\/clients\/[^/]+\/workouts\/session$/.test(parsedPath.pathname)) {
+    if (scenario === "coach-workout-error") return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
+    if (scenario === "coach-workout-forbidden") return reply({ error: { code: "FORBIDDEN" } }, 403);
+    const publicationId = parsedPath.searchParams.get("publicationId") ?? "";
+    const weekNumber = Number(parsedPath.searchParams.get("weekNumber"));
+    const sessionId = parsedPath.searchParams.get("sessionId") ?? "";
+    const selectedPublication = workoutPublications.get(publicationId);
+    const selectedWorkout = workoutRecords.get(workoutKey(publicationId, weekNumber, sessionId));
+    if (!selectedPublication || !selectedWorkout) return reply({ error: { code: "NOT_FOUND" } }, 404);
+    return reply({ data: { workout: wireWorkout(selectedWorkout), publication: selectedPublication } });
+  }
+  if (/^\/api\/v1\/coach\/clients\/[^/]+\/workouts$/.test(parsedPath.pathname)) {
+    if (scenario === "coach-workout-error") return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
+    if (scenario === "coach-workout-forbidden") return reply({ error: { code: "NOT_FOUND" } }, 404);
+    const page = Number(parsedPath.searchParams.get("page") ?? 0);
+    const items = [...workoutRecords.values()].map(compactWorkout);
+    return reply({ data: { items: items.slice(page * 20, page * 20 + 20), total: items.length, page, pageSize: 20 } });
   }
   if (path.startsWith("/api/v1/coach/programs/recipients")) return reply({data:{clients:[{id:recipientId,name:"Client Test"}],total:1,page:0}});
   if (path === "/api/v1/coach/programs/publish") {
@@ -647,6 +899,8 @@ function Harness() {
   if (view === "exercise-library") return <ExerciseLibrary />;
   if (view === "program-builder") return <ProgramBuilder />;
   if (view === "client-program") return <ClientProgram />;
+  if (view === "client-workout") return <ClientWorkout />;
+  if (view === "coach-workouts") return <CoachWorkoutResults clientId={recipientId} />;
   if (view === "landing-en" || view === "landing-fr") {
     return <LandingPage locale={view === "landing-fr" ? "fr" : "en"} />;
   }
@@ -706,6 +960,9 @@ function Harness() {
             <option value="client-today-staff">Client · Aujourd’hui · Staff</option>
             <option value="client-onboarding">Client · Questionnaire d’accueil</option>
             <option value="client-week-zero">Client · Week Zero</option>
+            <option value="client-program">Client · Programme</option>
+            <option value="client-workout">Client · Résultats de séance</option>
+            <option value="coach-workouts">Coach · Résultats Client</option>
             <option value="personal-portal-setup">Coach · Portail personnel</option>
             <option value="login">Connexion Client</option>
             <option value="activation">Activation</option>
