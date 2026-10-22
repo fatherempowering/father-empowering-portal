@@ -9,9 +9,9 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request): Promise<Response> {
   try {
     requireSameOrigin(request);
-    await signOutClientSession();
+    const redirectTo = await signOutClientSession();
     return NextResponse.json(
-      { data: { signedOut: true, redirectTo: "/client-login" } },
+      { data: { signedOut: true, redirectTo } },
       {
         headers: {
           "Cache-Control": "no-store, max-age=0",

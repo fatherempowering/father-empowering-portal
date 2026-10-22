@@ -155,9 +155,9 @@ export function ClientWeekZero() {
   async function signOut() {
     if (dirty && !window.confirm(t("Tes modifications ne sont pas enregistrées. Te déconnecter ?", "Your changes have not been saved. Sign out?"))) return;
     setBusy(true);
-    const received = await requestClientLogout(() => {
+    const received = await requestClientLogout((destination) => {
       leavingIntentionally.current = true;
-      window.location.replace("/client-login");
+      window.location.replace(destination);
     });
     if (!received) { setError(t("Déconnexion impossible. Réessaie.", "Unable to sign out. Try again.")); setBusy(false); }
   }

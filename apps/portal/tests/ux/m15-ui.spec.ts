@@ -244,6 +244,111 @@ test("Client V2 supports English and 200% reflow at 320px", async ({ page }) => 
   );
 });
 
+test("personal portal navigation is staff-only across Coach and Client shells", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-v2");
+  await expect(page.getByRole("heading", { name: "Ton portail." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Espace Coach" })).toHaveCount(0);
+
+  await page.goto("/?screen=client-v2-staff");
+  await expect(page.getByRole("heading", { name: "Ton portail." })).toBeVisible();
+  const pilotMenu = page.getByRole("button", { name: "Menu" });
+  if (await pilotMenu.isVisible()) await pilotMenu.click();
+  const pilotCoachLink = page.getByRole("link", { name: "Espace Coach" });
+  await expect(pilotCoachLink).toHaveAttribute("href", "/coach");
+  expect(await pilotCoachLink.evaluate((element) => element.tagName)).toBe("A");
+
+  await page.goto("/?screen=client-today-staff");
+  await expect(page.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
+  const shellMenu = page.getByRole("button", { name: "Ouvrir le menu" });
+  if (await shellMenu.isVisible()) await shellMenu.click();
+  await expect(
+    page.getByRole("link", { name: "Espace Coach" }),
+  ).toHaveAttribute("href", "/coach");
+
+  await page.goto("/?screen=coach");
+  await expect(
+    page.getByRole("heading", { name: "Clients", exact: true }),
+  ).toBeVisible();
+  const coachMenu = page.getByRole("button", { name: "Ouvrir le menu" });
+  if (await coachMenu.isVisible()) await coachMenu.click();
+  await expect(
+    page.getByRole("link", { name: "Mon portail personnel" }),
+  ).toHaveAttribute("href", "/coach/personal");
+});
+
+test("personal portal setup sends the strict intent and follows the safe success destination", async ({
+  page,
+}) => {
+  await page.goto("/?screen=personal-portal-setup&state=personal-success");
+  await expect(
+    page.getByRole("heading", { name: "Mon portail personnel" }),
+  ).toBeVisible();
+  await expect(page.getByText(/ancien Client test demeure intact/i)).toBeVisible();
+  await expect(page.getByText(/aucune invitation/i)).toBeVisible();
+
+  await page.getByLabel("Prénom").fill(" Maxime ");
+  await page.getByLabel("Nom", { exact: true }).fill("Coach");
+  await page.getByLabel("Langue du portail personnel").selectOption("en-CA");
+  await page.getByLabel("Fuseau horaire").fill("Asia/Tokyo");
+  await page.getByRole("button", { name: "Activer mon portail personnel" }).click();
+
+  await expect(page).toHaveURL(/\/client$/);
+});
+
+test("personal portal setup blocks a duplicate submit and reuses its key on retry", async ({
+  page,
+}) => {
+  await page.goto("/?screen=personal-portal-setup&state=personal-retry");
+  await page.getByLabel("Prénom").fill("Maxime");
+  await page.getByLabel("Nom", { exact: true }).fill("Coach");
+  const activate = page.getByRole("button", {
+    name: "Activer mon portail personnel",
+  });
+
+  await activate.evaluate((button) => {
+    const form = button.closest("form");
+    form?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    form?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  });
+  await expect(
+    page.getByRole("alert").filter({ hasText: /n’a pas pu être activé/i }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => (window as typeof window & {
+        __personalPortalRequests: unknown[];
+      }).__personalPortalRequests.length,
+    ),
+  ).toBe(1);
+
+  await activate.click();
+  await expect(page).toHaveURL(/\/client$/);
+});
+
+test("personal portal setup keeps entries and recovery after server and network errors", async ({
+  page,
+}) => {
+  for (const state of ["personal-error", "personal-network"] as const) {
+    await page.goto(`/?screen=personal-portal-setup&state=${state}`);
+    const firstName = page.getByLabel("Prénom");
+    const lastName = page.getByLabel("Nom", { exact: true });
+    await firstName.fill("Maxime");
+    await lastName.fill("Coach");
+    await page
+      .getByRole("button", { name: "Activer mon portail personnel" })
+      .click();
+
+    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(firstName).toHaveValue("Maxime");
+    await expect(lastName).toHaveValue("Coach");
+    await expect(
+      page.getByRole("button", { name: "Activer mon portail personnel" }),
+    ).toBeEnabled();
+  }
+});
+
 test("Client onboarding takes priority in the pilot until it is submitted", async ({
   page,
 }) => {

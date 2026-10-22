@@ -51,7 +51,7 @@ describe("Client login page session continuity", () => {
     expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
-  it("does not alter Coach MFA routing from the Client entry point", async () => {
+  it("sends staff to the guarded personal entry without asking for a Client OTP", async () => {
     mocks.getServerActor.mockResolvedValue({
       userId: "11000000-0000-4000-8000-000000000001",
       organizationId: "21000000-0000-4000-8000-000000000001",
@@ -61,9 +61,7 @@ describe("Client login page session continuity", () => {
       aal: "aal2",
     });
 
-    const page = await ClientLoginPage();
-
-    expect(page).toBeTruthy();
-    expect(mocks.redirect).not.toHaveBeenCalled();
+    await expect(ClientLoginPage()).rejects.toThrow("NEXT_REDIRECT");
+    expect(mocks.redirect).toHaveBeenCalledWith("/coach/personal");
   });
 });

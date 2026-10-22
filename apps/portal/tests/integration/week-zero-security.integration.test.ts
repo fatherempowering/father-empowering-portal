@@ -336,7 +336,7 @@ describe.sequential("Week Zero persistence and isolation gate", () => {
     await verifyCoachEmail(crossOrganizationAdminSession, crossOrganizationAdmin);
   });
 
-  it("refuse toute lecture Week Zero sans session ou avec un rôle inadéquat", async () => {
+  it("refuse l’anonyme, le Client côté Coach et le Staff vérifié sans profil personnel", async () => {
     const anonymousClient = await fetch(
       `${environment.appUrl}/api/v1/client/week-zero`,
       { redirect: "manual" },
@@ -389,7 +389,7 @@ describe.sequential("Week Zero persistence and isolation gate", () => {
       assignedCoachSession,
       "/api/v1/client/week-zero",
     );
-    await expectErrorCode(coachAtClientBoundary, 403, "FORBIDDEN");
+    await expectErrorCode(coachAtClientBoundary, 404, "NOT_FOUND");
 
     const clientAtCoachBoundary = await authenticatedFetch(
       environment,

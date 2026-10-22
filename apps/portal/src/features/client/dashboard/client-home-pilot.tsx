@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { Icon } from "@/components/fe/icon";
+import { usePortalAccess } from "@/components/fe/portal-access-context";
 import { OnboardingAction } from "@/features/client/onboarding/onboarding-action";
 import {
   clientPortalCopy,
@@ -36,6 +37,7 @@ export function ClientHomePilot({
   onRetry,
   onSignOut,
 }: ClientHomePilotProps) {
+  const { isStaff } = usePortalAccess();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
   const menu = useRef<HTMLElement>(null);
@@ -147,6 +149,12 @@ export function ClientHomePilot({
             <Icon name="check" />
             {french ? "Week Zero · Bilan initial" : "Week Zero · Initial assessment"}
           </Link>
+          {isStaff ? (
+            <a className={styles.navigationLink} href="/coach" onClick={() => setMenuOpen(false)}>
+              <Icon name="users" />
+              {french ? "Espace Coach" : "Coach portal"}
+            </a>
+          ) : null}
         </nav>
         <div className={styles.sidebarBottom}>
           <p className={styles.motto}>Shape your legacy.</p>

@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Brand } from "./brand";
 import { Icon } from "./icon";
+import { usePortalAccess } from "./portal-access-context";
 
 export function AppShell({
   children,
@@ -17,9 +18,10 @@ export function AppShell({
   space: "coach" | "client";
   name?: string;
   locale?: "fr" | "en";
-  current?: "clients" | "home" | "today" | "onboarding" | "week-zero";
+  current?: "clients" | "personal" | "home" | "today" | "onboarding" | "week-zero";
   accountAction?: ReactNode;
 }) {
+  const { isStaff } = usePortalAccess();
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const navId = useId();
@@ -34,7 +36,16 @@ export function AppShell({
         : "Client portal");
   const navigation =
     space === "coach"
-      ? [{ href: "/coach", label: "Clients", icon: "users" as const, id: "clients" as const }]
+      ? [
+          { href: "/coach", label: "Clients", icon: "users" as const, id: "clients" as const },
+          {
+            href: "/coach/personal",
+            label: "Mon portail personnel",
+            icon: "home" as const,
+            id: "personal" as const,
+            document: true,
+          },
+        ]
       : [
           {
             href: "/client",
@@ -53,6 +64,7 @@ export function AppShell({
             label: french ? "Questionnaire d’accueil" : "Welcome questionnaire",
             icon: "check" as const,
             id: "onboarding" as const,
+            document: true,
           },
           {
             href: "/client/week-zero",
@@ -60,6 +72,17 @@ export function AppShell({
             icon: "check" as const,
             id: "week-zero" as const,
           },
+          ...(isStaff
+            ? [
+                {
+                  href: "/coach",
+                  label: french ? "Espace Coach" : "Coach portal",
+                  icon: "users" as const,
+                  id: "coach" as const,
+                  document: true,
+                },
+              ]
+            : []),
         ];
   const activeLabel =
     navigation.find((item) => item.id === current)?.label ?? navigation[0].label;
@@ -86,9 +109,9 @@ export function AppShell({
         <nav aria-label={french ? "Navigation principale" : "Main navigation"}>
           <p className="fe-side-label">{spaceLabel}</p>
           {navigation.map((item) => {
-            // A document entry lets the long intake form protect browser Back
-            // with beforeunload, without adding a parallel history router.
-            const NavLink = item.id === "onboarding" ? "a" : Link;
+            // Document entries let long forms protect browser navigation with
+            // beforeunload and make the Coach/Client boundary explicit.
+            const NavLink = "document" in item && item.document ? "a" : Link;
             return <NavLink
               className="fe-side-link"
               href={item.href}

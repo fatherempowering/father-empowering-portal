@@ -151,7 +151,7 @@ export function ClientOnboarding() {
     if (inFlight.current) return;
     if (dirty && !window.confirm(t("Tes dernières réponses ne sont pas enregistrées. Te déconnecter ?", "Your latest answers have not been saved. Sign out?"))) return;
     inFlight.current = true; setBusy(true);
-    const ok = await requestClientLogout(() => { leavingIntentionally.current = true; window.location.replace("/client-login"); });
+    const ok = await requestClientLogout((destination) => { leavingIntentionally.current = true; window.location.replace(destination); });
     if (!ok) { setError(t("Déconnexion impossible. Réessaie.", "Unable to sign out. Try again.")); inFlight.current = false; setBusy(false); }
   }
 

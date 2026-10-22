@@ -2,7 +2,8 @@ import "server-only";
 
 import { randomBytes } from "node:crypto";
 
-import { requireCoachVerified, requireRole } from "@/lib/auth/actor";
+import { requireCoachVerified } from "@/lib/auth/actor";
+import { requireOwnClientAccess } from "@/lib/auth/own-client-access";
 import { hashInvitationToken } from "@/lib/auth/invitation-token";
 import {
   createClientInputSchema,
@@ -180,15 +181,12 @@ export async function getCoachClientInvitationBundle(input: {
 }
 
 export async function getOwnClientDashboard() {
-  const actor = await requireRole("CLIENT");
-  if (!actor.clientId) {
-    throw new M1ContractError("FORBIDDEN", "Client identity is not linked", 403);
-  }
+  const actor = await requireOwnClientAccess();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("clients")
     .select("id, organization_id, first_name, last_name, locale, time_zone, status")
-    .eq("id", actor.clientId)
+    .eq("id", actor.ownClientId)
     .eq("organization_id", actor.organizationId)
     .eq("auth_user_id", actor.userId)
     .eq("status", "ACTIVE")

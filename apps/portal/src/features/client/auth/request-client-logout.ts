@@ -4,11 +4,12 @@ type ClientLogoutTransport = (
 ) => Promise<Response>;
 
 export async function requestClientLogout(
-  onHttpResponse: () => void,
+  onHttpResponse: (destination: "/login" | "/client-login") => void,
   transport: ClientLogoutTransport = fetch,
 ): Promise<boolean> {
+  let response: Response;
   try {
-    await transport("/api/v1/auth/client-logout", {
+    response = await transport("/api/v1/auth/client-logout", {
       method: "POST",
       headers: { "content-type": "application/json" },
     });
@@ -16,6 +17,12 @@ export async function requestClientLogout(
     return false;
   }
 
-  onHttpResponse();
+  let destination: "/login" | "/client-login" = "/client-login";
+  try {
+    const payload = await response.json();
+    // Only local known routes may ever be used as a logout destination.
+    if (response.ok && payload?.data?.redirectTo === "/login") destination = "/login";
+  } catch { /* Preserve the fail-closed navigation on a non-JSON response. */ }
+  onHttpResponse(destination);
   return true;
 }
