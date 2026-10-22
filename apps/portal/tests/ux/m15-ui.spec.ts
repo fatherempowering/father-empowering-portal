@@ -115,10 +115,10 @@ test("Client V2 pilot preserves the dark FE composition without invented program
     await expect(page.getByRole("heading", { name: "Ton portail." })).toBeVisible();
     await expect(page.getByText("Bienvenue, Alex Martin.")).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Ton point de départ : le bilan initial" }),
+      page.getByRole("heading", { name: "Ta semaine zéro" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Compléter mon bilan initial" }),
+      page.getByRole("link", { name: "Commencer ma semaine zéro" }),
     ).toHaveAttribute("href", "/client/week-zero");
     await expect(page.getByRole("link", { name: "Voir aujourd’hui" })).toHaveCount(0);
     await expect(page.getByText(/87,4 kg|7 h 28|3 \/ 4|score|séance du jour/i)).toHaveCount(0);
@@ -220,11 +220,11 @@ test("Client V2 supports English and 200% reflow at 320px", async ({ page }) => 
   await expect(page.getByText("Welcome, Alex Martin.")).toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "Your starting point: the initial assessment",
+      name: "Your Week Zero",
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Complete my initial assessment" }),
+    page.getByRole("link", { name: "Start my Week Zero" }),
   ).toHaveAttribute("href", "/client/week-zero");
   await page.locator("html").evaluate((element) => {
     element.style.fontSize = "200%";
@@ -359,7 +359,7 @@ test("Client onboarding takes priority in the pilot until it is submitted", asyn
   await expect(start).toBeVisible();
   await expect(start).toHaveAttribute("href", "/client/onboarding");
   await expect(
-    page.getByRole("link", { name: "Compléter mon bilan initial" }),
+    page.getByRole("link", { name: "Commencer ma semaine zéro" }),
   ).toHaveCount(0);
 
   await page.goto("/?screen=client-v2&state=onboarding-draft");
@@ -367,11 +367,11 @@ test("Client onboarding takes priority in the pilot until it is submitted", asyn
     page.getByRole("link", { name: "Reprendre mon questionnaire d’accueil" }),
   ).toHaveAttribute("href", "/client/onboarding");
   await expect(
-    page.getByRole("link", { name: "Compléter mon bilan initial" }),
+    page.getByRole("link", { name: "Commencer ma semaine zéro" }),
   ).toHaveCount(0);
 });
 
-test("Client onboarding status failure keeps recovery and direct initial assessment access", async ({
+test("Client onboarding status failure keeps recovery without an extra assessment task", async ({
   page,
 }) => {
   await page.goto("/?screen=client-v2&state=onboarding-action-error");
@@ -382,9 +382,178 @@ test("Client onboarding status failure keeps recovery and direct initial assessm
     }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Réessayer" })).toBeEnabled();
-  await expect(
-    page.getByRole("link", { name: "Accéder à mon bilan initial" }),
-  ).toHaveAttribute("href", "/client/week-zero");
+  await expect(page.getByRole("link", { name: /bilan initial/i })).toHaveCount(0);
+});
+
+test("Onboarding wheels save explicit units and decimals with no automatic answers", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
+  const height = page.locator('[data-question="height"]');
+  const weight = page.locator('[data-question="currentBodyweight"]');
+  await expect(page.getByRole("progressbar")).toHaveAttribute("value", "0");
+  await expect(height.getByRole("listbox", { name: "Pieds" })).toHaveAttribute("aria-required", "true");
+  await expect(height.getByRole("listbox", { name: "Pouces" })).toHaveAttribute("aria-disabled", "true");
+  await height.getByRole("listbox", { name: "Pieds" }).getByRole("option", { name: "5", exact: true }).click();
+  await height.getByRole("listbox", { name: "Pouces" }).getByRole("option", { name: "10", exact: true }).click();
+  await expect(height.getByText("Réponse : 5 pi 10 po", { exact: true })).toBeVisible();
+  await weight.getByRole("button", { name: /Métrique/ }).click();
+  await weight.getByRole("listbox", { name: "Kilogrammes" }).getByRole("option", { name: "84", exact: true }).click();
+  await weight.getByRole("listbox", { name: "Décimales" }).getByRole("option", { name: ",5", exact: true }).click();
+  await expect(weight.getByText("Réponse : 84,5 kg", { exact: true })).toBeVisible();
+  await expect(page.getByRole("progressbar")).toHaveAttribute("value", "2");
+  await page.getByRole("button", { name: "Enregistrer mon brouillon" }).click();
+  await expect(page.getByText(/Sauvegarde confirmée/)).toBeVisible();
+  const commands = await page.evaluate(() => (window as unknown as { __onboardingRequests: { responses: Record<string, unknown> }[] }).__onboardingRequests);
+  expect(commands.at(-1)?.responses).toMatchObject({ height: "5 ft 10 in", currentBodyweight: "84.5 kg" });
+});
+
+test("Unit switches convert visually without rounding or overwriting saved answers", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-measurement-draft");
+  const height = page.locator('[data-question="height"]');
+  const weight = page.locator('[data-question="currentBodyweight"]');
+  await height.getByRole("button", { name: /Métrique/ }).click();
+  await expect(height.getByRole("option", { name: "178", exact: true })).toHaveAttribute("aria-selected", "true");
+  await weight.getByRole("button", { name: /Métrique/ }).click();
+  await expect(weight.getByText("Réponse : 185,5 lb ≈ 84,1 kg", { exact: true })).toBeVisible();
+  await height.getByRole("button", { name: /Impérial/ }).click();
+  await weight.getByRole("button", { name: /Impérial/ }).click();
+  await expect(height.getByText("Réponse : 5 pi 10 po", { exact: true })).toBeVisible();
+  await expect(weight.getByText("Réponse : 185,5 lb", { exact: true })).toBeVisible();
+  await expect(page.getByText("Brouillon privé enregistré", { exact: true })).toBeVisible();
+  await expect(page.getByText("Modifications non enregistrées", { exact: true })).toHaveCount(0);
+});
+
+test("Old measurements stay intact until an explicit replacement", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-legacy-measurements");
+  const height = page.locator('[data-question="height"]');
+  await expect(height.getByText("Réponse : Ancienne taille sans unité", { exact: true })).toBeVisible();
+  await height.getByRole("button", { name: /Métrique/ }).click();
+  await expect(height.getByText("Réponse : Ancienne taille sans unité", { exact: true })).toBeVisible();
+  await expect(page.getByText("Brouillon privé enregistré", { exact: true })).toBeVisible();
+  await height.getByRole("button", { name: "Saisir autrement" }).click();
+  await expect(height.getByLabel("Taille avec unité")).toHaveValue("Ancienne taille sans unité");
+  await height.getByLabel("Taille avec unité").fill("180 cm");
+  await height.getByRole("button", { name: "Utiliser les rouleaux" }).click();
+  await expect(height.getByRole("option", { name: "180", exact: true })).toHaveAttribute("aria-selected", "true");
+});
+
+test("Vision scale uses an accessible wheel and includes non-fathers", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
+  await page.getByRole("button", { name: "2. Objectifs et vision" }).click();
+  await expect(page.getByLabel("Quel homme veux-tu devenir et quel père, si applicable ? *")).toBeVisible();
+  const score = page.locator('[data-question="commitmentScore"]').getByRole("listbox");
+  await expect(score).toHaveAttribute("aria-required", "true");
+  await score.focus();
+  await score.press("End");
+  await expect(score.getByRole("option", { name: "10", exact: true })).toHaveAttribute("aria-selected", "true");
+  await score.press("ArrowUp");
+  await expect(score.getByRole("option", { name: "9", exact: true })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("progressbar")).toHaveAttribute("value", "1");
+  await score.press("Delete");
+  await expect(page.getByRole("progressbar")).toHaveAttribute("value", "0");
+  await score.press("Home");
+  await expect(score.getByRole("option", { name: "1", exact: true })).toHaveAttribute("aria-selected", "true");
+});
+
+test("Wheel scrolling commits the centered score and never invents an answer on mount", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
+  await page.getByRole("button", { name: "2. Objectifs et vision" }).click();
+  const score = page.locator('[data-question="commitmentScore"]').getByRole("listbox");
+  await expect(score.getByRole("option", { name: "Choisir", exact: true })).toHaveAttribute("aria-selected", "true");
+  await score.hover();
+  await page.mouse.wheel(0, 132);
+  await expect(score.getByRole("option", { name: "3", exact: true })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("button", { name: "Enregistrer mon brouillon" }).click();
+  await expect(page.getByText(/Sauvegarde confirmée/)).toBeVisible();
+  const commands = await page.evaluate(() => (window as unknown as { __onboardingRequests: { responses: Record<string, unknown> }[] }).__onboardingRequests);
+  expect(commands.at(-1)?.responses.commitmentScore).toBe(3);
+});
+
+test("Touch scroll followed immediately by Continue cannot lose the selected score", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
+  await page.getByRole("button", { name: "2. Objectifs et vision" }).click();
+  const score = page.locator('[data-question="commitmentScore"]').getByRole("listbox");
+  await expect(score).toBeVisible();
+  await page.clock.pauseAt(new Date());
+  await score.dispatchEvent("pointerdown", { pointerType: "touch" });
+  await score.evaluate((element) => {
+    element.scrollTop = 132;
+    element.dispatchEvent(new Event("scroll", { bubbles: true }));
+  });
+  // No clock advancement: the old 160-ms debounce cannot run before navigation.
+  await page.getByRole("button", { name: "Continuer", exact: true }).click();
+  await page.clock.runFor(250);
+  await expect(page.getByRole("heading", { name: "Entraînement et équipement", exact: true })).toBeVisible();
+  const commands = await page.evaluate(() => (window as unknown as { __onboardingRequests: { responses: Record<string, unknown> }[] }).__onboardingRequests);
+  expect(commands.at(-1)?.responses.commitmentScore).toBe(3);
+});
+
+test("Custom wheels lock while saving and recover after a network failure", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-save-error-once");
+  const feet = page.getByRole("listbox", { name: "Pieds", exact: true });
+  await feet.getByRole("option", { name: "5", exact: true }).click();
+  await page.clock.pauseAt(new Date());
+  await page.getByRole("button", { name: "Enregistrer mon brouillon" }).click();
+  await expect(feet).toHaveAttribute("aria-disabled", "true");
+  await page.clock.runFor(250);
+  await expect(page.getByText(/La confirmation n’a pas été reçue/)).toBeVisible();
+  await expect(feet).not.toHaveAttribute("aria-disabled", "true");
+  await feet.press("ArrowDown");
+  await expect(feet.getByRole("option", { name: "6", exact: true })).toHaveAttribute("aria-selected", "true");
+});
+
+test("Custom wheels stay locked during a version conflict", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-conflict");
+  const feet = page.getByRole("listbox", { name: "Pieds", exact: true });
+  await feet.getByRole("option", { name: "5", exact: true }).click();
+  await page.getByRole("button", { name: "Enregistrer mon brouillon" }).click();
+  await expect(page.getByText(/Une version plus récente existe/)).toBeVisible();
+  await expect(feet).toHaveAttribute("aria-disabled", "true");
+  await feet.press("ArrowDown");
+  await expect(feet.getByRole("option", { name: "5", exact: true })).toHaveAttribute("aria-selected", "true");
+});
+
+test("No equipment remains explicit in English questionnaire review", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-not-started&language=en");
+  await page.getByRole("button", { name: "3. Training History & Equipment" }).click();
+  await page.getByRole("checkbox", { name: "Not applicable — no equipment at home" }).check();
+  await page.getByRole("button", { name: "Review and submit", exact: true }).click();
+  await expect(page.getByText("Not applicable — no equipment at home.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Non applicable — aucun équipement à la maison.", { exact: true })).toHaveCount(0);
+});
+
+test("No equipment is explicit, reversible and saved as an answer", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
+  await page.getByRole("button", { name: "3. Entraînement et équipement" }).click();
+  const equipment = page.getByLabel("Équipement disponible", { exact: true });
+  await equipment.fill("Haltères disponibles à la salle");
+  const none = page.getByRole("checkbox", { name: "Non applicable — aucun équipement à la maison" });
+  await none.check();
+  await expect(equipment).toHaveCount(0);
+  await none.uncheck();
+  await expect(equipment).toHaveValue("Haltères disponibles à la salle");
+  await none.check();
+  await page.getByRole("button", { name: "Enregistrer mon brouillon" }).click();
+  await expect(page.getByText(/Sauvegarde confirmée/)).toBeVisible();
+  const commands = await page.evaluate(() => (window as unknown as { __onboardingRequests: { responses: Record<string, unknown> }[] }).__onboardingRequests);
+  expect(commands.at(-1)?.responses.availableEquipment).toBe("Non applicable — aucun équipement à la maison.");
+  await page.getByRole("button", { name: "Vérifier et transmettre", exact: true }).click();
+  await expect(page.getByText("Non applicable — aucun équipement à la maison.", { exact: true })).toBeVisible();
+});
+
+test("Green progress is below the steps, counts answers not navigation, and reaches 100 only when complete", async ({ page }) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
+  const progress = page.getByRole("progressbar", { name: "Progression du questionnaire" });
+  await expect(progress).toHaveAttribute("value", "0");
+  const steps = page.getByRole("navigation", { name: "Sections du questionnaire" });
+  expect((await progress.boundingBox())!.y).toBeGreaterThan((await steps.boundingBox())!.y + (await steps.boundingBox())!.height);
+  await page.getByRole("button", { name: "Vérifier et transmettre", exact: true }).click();
+  await expect(progress).toHaveAttribute("value", "0");
+  await expect(page.getByRole("button", { name: "Transmettre mon questionnaire", exact: true })).toBeDisabled();
+  await page.goto("/?screen=client-onboarding&state=onboarding-complete-draft");
+  await expect(progress).toHaveAttribute("value", "54");
+  await expect(progress).toHaveAttribute("max", "54");
+  await expect(page.getByText("100 %", { exact: true })).toBeVisible();
+  await expect(page.getByText("Tout est rempli : il ne reste qu’à vérifier et transmettre.")).toBeVisible();
 });
 
 test("Client onboarding resumes its server draft after a document reload", async ({
@@ -473,7 +642,7 @@ test("Client onboarding excludes invalid formats from progress and lists them be
   ).toBeDisabled();
 });
 
-test("Submitted Client onboarding is read-only and remains distinct from the initial assessment", async ({
+test("Submitted Client onboarding is read-only and returns to the portal without another assessment", async ({
   page,
 }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-submitted");
@@ -485,9 +654,8 @@ test("Submitted Client onboarding is read-only and remains distinct from the ini
   ).toBeVisible();
   await expect(page.locator("form")).toHaveCount(0);
   await expect(page.locator("details")).toHaveCount(6);
-  await expect(
-    page.getByRole("link", { name: "Accéder à mon bilan initial" }),
-  ).toHaveAttribute("href", "/client/week-zero");
+  await expect(page.getByRole("link", { name: "Retour à mon portail" })).toHaveAttribute("href", "/client");
+  await expect(page.getByRole("link", { name: /bilan initial/i })).toHaveCount(0);
 });
 
 test("Client onboarding reflows without browser storage at narrow widths", async ({
@@ -549,7 +717,7 @@ test("Week Zero resumes a saved draft and reflows at Client mobile widths", asyn
     await page.setViewportSize(viewport);
     await page.goto("/?screen=client-week-zero&state=assessment-draft");
     await expect(
-      page.getByRole("heading", { name: "Ton bilan initial" }),
+      page.getByRole("heading", { name: "Ta semaine zéro" }),
     ).toBeVisible();
     await expect(
       page.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
@@ -635,7 +803,7 @@ test("Week Zero blocks incomplete submission and keeps submitted answers read-on
 
   await page.goto("/?screen=client-week-zero&state=assessment-submitted");
   await expect(
-    page.getByText(/Bilan initial transmis au Coach/i),
+    page.getByText(/Semaine zéro transmise au Coach/i),
   ).toBeVisible();
   await expect(
     page.getByText(/réponses transmises sont conservées en lecture seule/i),
@@ -863,10 +1031,10 @@ test("Client pilot exposes only factual M1 content and keeps Today outside the d
   );
   await expect(page.getByRole("link", { name: "Voir aujourd’hui" })).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "Ton point de départ : le bilan initial" }),
+    page.getByRole("heading", { name: "Ta semaine zéro" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Compléter mon bilan initial" }),
+    page.getByRole("link", { name: "Commencer ma semaine zéro" }),
   ).toHaveAttribute("href", "/client/week-zero");
   await expect(page.getByText("Compte", { exact: true }).first()).toBeVisible();
   await expect(
@@ -881,10 +1049,10 @@ test("Client pilot exposes only factual M1 content and keeps Today outside the d
   await expect(page.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
   await expect(page.getByText("Accès actif", { exact: true })).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Ton point de départ : le bilan initial" }),
+    page.getByRole("heading", { name: "Ta semaine zéro" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Compléter mon bilan initial" }),
+    page.getByRole("link", { name: "Commencer ma semaine zéro" }),
   ).toHaveAttribute("href", "/client/week-zero");
   await expect(page.getByText(/à jour|rien à faire/i)).toHaveCount(0);
   await expect(page.getByText("Compte", { exact: true })).toBeVisible();

@@ -7,6 +7,7 @@ import type {
   OnboardingResponses,
   OnboardingResponseValue,
 } from "@/lib/contracts/onboarding";
+import { displayOnboardingText } from "@/lib/onboarding/answer-display";
 
 export type OnboardingLanguage = "fr" | "en";
 
@@ -117,7 +118,7 @@ export function displayOnboardingAnswer(
     return formatNumberAnswer(question.key, value, language);
   }
 
-  return typeof value === "string" ? value : unavailableCopy[language];
+  return typeof value === "string" ? displayOnboardingText(question.key, value, language === "fr") : unavailableCopy[language];
 }
 
 export function onboardingPresentationSections(

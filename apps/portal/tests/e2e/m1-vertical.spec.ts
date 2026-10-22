@@ -334,7 +334,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     clientPage.getByRole("link", { name: "Compléter mon questionnaire d’accueil" }),
   ).toHaveAttribute("href", "/client/onboarding");
   await expect(
-    clientPage.getByRole("link", { name: "Accéder à mon bilan initial" }),
+    clientPage.getByRole("link", { name: "Semaine zéro", exact: true }),
   ).toHaveAttribute("href", "/client/week-zero");
   await expect(
     clientPage.getByRole("link", { name: "Voir aujourd’hui" }),
@@ -506,7 +506,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await continuedPage.goto(`${environment.appUrl}/client/week-zero`);
   await expect(continuedPage).toHaveURL(/\/client\/week-zero(?:\?.*)?$/);
   await expect(
-    continuedPage.getByRole("heading", { name: "Ton bilan initial" }),
+    continuedPage.getByRole("heading", { name: "Ta semaine zéro" }),
   ).toBeVisible();
   await expect(
     continuedPage.getByText(/photos, calibration des charges et cardio/i),
@@ -533,7 +533,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(maxPage.getByTestId("initial-assessment-status")).toHaveText(
     /Non transmis/i,
   );
-  await expect(maxPage.getByText(/Aucun bilan initial transmis/i)).toBeVisible();
+  await expect(maxPage.getByText(/Aucune semaine zéro transmise/i)).toBeVisible();
   await expect(maxPage.getByText(/pris au réveil/i)).toHaveCount(0);
   await expect(continuedPage.getByLabel(/Poids au réveil \(lb\)/i)).toHaveValue(
     "214.5",
@@ -600,7 +600,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     .getByRole("button", { name: /4\. Vérifier et transmettre/i })
     .click();
   await expect(
-    continuedPage.getByText(/champs requis du bilan initial sont remplis/i),
+    continuedPage.getByText(/champs requis de la semaine zéro sont remplis/i),
   ).toBeVisible();
   await expect(continuedPage.getByText(/Photos, charges et cardio/i)).toBeVisible();
   await expect(continuedPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
@@ -608,7 +608,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     .getByRole("button", { name: /Transmettre mon bilan au Coach/i })
     .click();
   await expect(
-    continuedPage.getByText(/Bilan initial transmis au Coach/i),
+    continuedPage.getByText(/Semaine zéro transmise au Coach/i),
   ).toBeVisible();
   await expect(
     continuedPage.getByText(/réponses transmises sont conservées en lecture seule/i),
@@ -657,7 +657,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
 
   await maxPage.reload();
   await expect(maxPage.getByTestId("initial-assessment-status")).toHaveText(
-    /Bilan initial transmis/i,
+    /Semaine zéro transmise/i,
   );
   await expect(maxPage.getByText(/toute la Week Zero est terminée/i)).toBeVisible();
   await expect(maxPage.getByTestId("assessment-measurements")).toContainText(
@@ -684,7 +684,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   ).toBeVisible();
   await expect(continuedPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   await expect(
-    continuedPage.getByRole("link", { name: /Consulter mon bilan transmis/i }),
+    continuedPage.getByRole("link", { name: /Consulter ma semaine zéro/i }),
   ).toBeVisible();
   await continuedPage.goto(`${environment.appUrl}/client-login`);
   await expect(continuedPage).toHaveURL(/\/client(?:\?.*)?$/);
@@ -894,7 +894,15 @@ async function fillOnboardingSection(page: Page, sectionIndex: number): Promise<
       continue;
     }
     const answer = onboardingBrowserAnswer(question);
-    if (question.type === "single" || question.type === "scale") {
+    if (question.key === "height") {
+      await field.getByRole("button", { name: /Métrique/ }).click();
+      await field.getByRole("listbox", { name: "Centimètres" }).getByRole("option", { name: "180", exact: true }).click();
+    } else if (question.key === "currentBodyweight") {
+      await field.getByRole("listbox", { name: "Livres" }).getByRole("option", { name: "185", exact: true }).click();
+      await field.getByRole("listbox", { name: "Décimales" }).getByRole("option", { name: ",5", exact: true }).click();
+    } else if (question.type === "scale") {
+      await field.getByRole("listbox").getByRole("option", { name: String(answer), exact: true }).click();
+    } else if (question.type === "single") {
       await field.locator("select").selectOption(String(answer));
     } else if (question.type === "textarea") {
       await field.locator("textarea").fill(String(answer));
@@ -908,6 +916,8 @@ function onboardingBrowserAnswer(question: OnboardingQuestion): string | number 
   if (question.key === "fullName") return "Client Vertical questionnaire";
   if (question.key === "email") return "questionnaire-only@example.test";
   if (question.key === "phoneNumber") return "+1 514 555 0199";
+  if (question.key === "height") return "180 cm";
+  if (question.key === "currentBodyweight") return "185.5 lb";
   if (question.key === "healthNotes") return privateHealthSentinel;
   if (question.key === "nutritionPriority") return privateNutritionSentinel;
   if (question.type === "single") return question.options?.[0]?.value ?? "";

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { InitialAssessmentAction } from "@/features/client/week-zero/initial-assessment-action";
 import { onboardingSnapshotSchema, type OnboardingStatus } from "@/lib/contracts/onboarding";
 
-/** Intake is the first suggested action, not a lock on the separate assessment. */
+/** Onboarding first; Week Zero stays available in its single navigation entry. */
 export function OnboardingAction({ french, actionClassName = "fe-button fe-button-primary" }: {
   french: boolean;
   actionClassName?: string;
@@ -46,7 +46,6 @@ export function OnboardingAction({ french, actionClassName = "fe-button fe-butto
     <p>{t("Nous n’avons pas pu vérifier l’état de ton questionnaire. Tes réponses enregistrées restent conservées.", "We could not check your questionnaire’s status. Your saved answers are retained.")}</p>
     <button className={actionClassName} type="button" onClick={() => setAttempt((n) => n+1)}>{t("Réessayer", "Try again")}</button>
     <p><a href="/client/onboarding">{t("Ouvrir mon questionnaire d’accueil", "Open my welcome questionnaire")}</a></p>
-    <p><Link href="/client/week-zero">{t("Accéder à mon bilan initial", "Open my initial assessment")}</Link></p>
   </div>;
   if (!status) return <p role="status">{t("Chargement de ta prochaine étape…", "Loading your next step…")}</p>;
   if (status === "SUBMITTED") return <div data-onboarding-status={status}>
@@ -59,6 +58,5 @@ export function OnboardingAction({ french, actionClassName = "fe-button fe-butto
     <a className={actionClassName} href="/client/onboarding">{status === "DRAFT"
       ? t("Reprendre mon questionnaire d’accueil", "Continue my welcome questionnaire")
       : t("Compléter mon questionnaire d’accueil", "Complete my welcome questionnaire")}</a>
-    <p>{t("Ton bilan de mesures et de mobilité est une étape distincte. ", "Your measurements and mobility assessment is a separate step. ")}<Link href="/client/week-zero">{t("Accéder à mon bilan initial", "Open my initial assessment")}</Link></p>
   </div>;
 }

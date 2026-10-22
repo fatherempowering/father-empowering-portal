@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
+import { WheelPicker } from "@/components/fe/wheel-picker";
+import { MeasurementPicker } from "./measurement-picker";
+import { EquipmentField } from "./equipment-field";
+import { displayOnboardingText } from "@/lib/onboarding/answer-display";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
 import type { ClientDashboard } from "@/features/client/dashboard/contracts";
 import { ONBOARDING_QUESTIONS, ONBOARDING_SECTIONS, type OnboardingCopy, type OnboardingQuestion, type OnboardingQuestionKey } from "@/lib/contracts/onboarding-definition";
@@ -54,6 +58,7 @@ export function ClientOnboarding() {
   const invalidKeys = new Set(validation && !validation.success ? validation.error.issues.map((issue) => String(issue.path[0])) : []);
   const needsAttention = ONBOARDING_QUESTIONS.filter((q) => invalidKeys.has(q.key));
   const validRequiredCount = required.filter((q) => responses && hasAnswer(responses[q.key]) && !invalidKeys.has(q.key)).length;
+  const progress = Math.floor(validRequiredCount / required.length * 100);
   const currentSection = ONBOARDING_SECTIONS[step];
 
   useEffect(() => {
@@ -161,7 +166,7 @@ export function ClientOnboarding() {
       <header className={styles.intro}>
         <p className="fe-kicker">The Legacy Protocol</p>
         <h1 className="fe-title">{t("Ton questionnaire d’accueil", "Your welcome questionnaire")}</h1>
-        <p>{t("Ta vie, tes objectifs, tes habitudes : ces réponses aident Max à mieux te connaître. Ce questionnaire est distinct de ton bilan initial de mesures et de mobilité.", "Your life, goals and habits: these answers help Max get to know you. This questionnaire is separate from your initial measurements and mobility assessment.")}</p>
+        <p>{t("Ta vie, tes objectifs, tes habitudes : ces réponses aident Max à mieux te connaître et à préparer ton accompagnement.", "Your life, goals and habits: these answers help Max get to know you and prepare your coaching.")}</p>
       </header>
       {error && <Feedback>{error}</Feedback>}
       {sessionExpired && <Link className="fe-button" href="/client-login">{t("Me reconnecter", "Sign in again")}</Link>}
@@ -172,26 +177,31 @@ export function ClientOnboarding() {
         <p className={styles.status} role="status" aria-live="polite">{busy ? t("Enregistrement en cours…", "Saving…") : submitted ? t("Questionnaire transmis au Coach", "Questionnaire submitted to your Coach") : dirty ? t("Modifications non enregistrées", "Unsaved changes") : intake.status === "DRAFT" ? t("Brouillon privé enregistré", "Private draft saved") : t("Questionnaire non commencé", "Questionnaire not started")}{savedNotice && !submitted ? t(". Sauvegarde confirmée.", ". Save confirmed.") : ""}</p>
         {submitted ? <>
           <Feedback tone="success">{t("Max peut maintenant lire tes réponses dans ton dossier. Tu n’as pas à les renvoyer. Ton questionnaire transmis est conservé en lecture seule.", "Max can now read your answers in your file. You do not need to resend them. Your submitted questionnaire is kept read-only.")}</Feedback>
-          <div className={styles.actions}><Link className="fe-button fe-button-primary" href="/client/week-zero">{t("Accéder à mon bilan initial", "Open my initial assessment")}</Link><Link className="fe-button" href="/client">{t("Retour à mon portail", "Back to my portal")}</Link></div>
+          <div className={styles.actions}><Link className="fe-button fe-button-primary" href="/client">{t("Retour à mon portail", "Back to my portal")}</Link></div>
           <OnboardingReview responses={responses} french={french} />
         </> : <>
           <p className={styles.notice}>{t("Six sections, à ton rythme. « Continuer » et « Enregistrer mon brouillon » sauvegardent tes réponses dans ton espace privé. Max les verra seulement lorsque tu confirmeras « Transmettre mon questionnaire » à la fin.", "Six sections, at your own pace. “Continue” and “Save my draft” save your answers in your private portal. Max only sees them after you confirm “Submit my questionnaire” at the end.")}</p>
-          <p>{t(`${validRequiredCount} réponses obligatoires sur ${required.length} complétées et valides. Les champs marqués * sont requis avant transmission.`, `${validRequiredCount} of ${required.length} required answers completed and valid. Fields marked * are required before submission.`)}</p>
           <nav aria-label={t("Sections du questionnaire", "Questionnaire sections")}><ol className={styles.steps}>
             {ONBOARDING_SECTIONS.map((section, index) => <li key={section.id}><button className={`fe-button ${step === index ? "fe-button-primary" : ""}`} type="button" disabled={busy} aria-current={step === index ? "step" : undefined} onClick={() => goToStep(index)}>{index+1}. {copy(section.title)}</button></li>)}
             <li><button className={`fe-button ${step === REVIEW_STEP ? "fe-button-primary" : ""}`} disabled={busy} type="button" aria-current={step === REVIEW_STEP ? "step" : undefined} onClick={() => goToStep(REVIEW_STEP)}>{t("Vérifier et transmettre", "Review and submit")}</button></li>
           </ol></nav>
+          <div className={styles.progress}>
+            <div className={styles.progressHeading}><strong>{t("Ta progression", "Your progress")}</strong><span>{progress} %</span></div>
+            <progress aria-label={t("Progression du questionnaire", "Questionnaire progress")} max={required.length} value={validRequiredCount} />
+            <p>{t(`${validRequiredCount} réponses obligatoires sur ${required.length} complétées et valides. Les champs marqués * sont requis avant transmission.`, `${validRequiredCount} of ${required.length} required answers completed and valid. Fields marked * are required before submission.`)}</p>
+            <p>{progress === 100 ? t("Tout est rempli : il ne reste qu’à vérifier et transmettre.", "All filled in: just review and submit.") : progress >= 75 ? t("Tu approches de la fin. Encore quelques réponses !", "Nearly there. Just a few more answers!") : progress >= 50 ? t("Tu as déjà passé la moitié !", "You are already past halfway!") : t("Tu peux enregistrer et reprendre quand tu veux.", "You can save and return whenever you like.")}</p>
+          </div>
           <form ref={form} onSubmit={(event) => { event.preventDefault(); void persist(false); }}>
             <fieldset className={styles.panel} disabled={busy || conflict || sessionExpired}>
               <legend className="fe-sr-only">{currentSection ? copy(currentSection.title) : t("Vérifier et transmettre", "Review and submit")}</legend>
               <h2 className="fe-title" ref={heading} tabIndex={-1}>{currentSection ? copy(currentSection.title) : t("Vérifier et transmettre", "Review and submit")}</h2>
               {currentSection ? <>
                 <p>{copy(currentSection.description)}</p>
-                <div className={styles.questions}>{currentSection.questions.map((question) => <QuestionField key={question.key} question={question} value={responses[question.key]} french={french} onChange={(value) => edit(question.key, value)} />)}</div>
+                <div className={styles.questions}>{currentSection.questions.map((question) => <QuestionField key={question.key} question={question} value={responses[question.key]} french={french} disabled={busy || conflict || sessionExpired} onChange={(value) => edit(question.key, value)} />)}</div>
               </> : <>
                 <OnboardingReview responses={responses} french={french} />
                 {needsAttention.length ? <div className={styles.notice} role="alert"><p>{t("Ces réponses sont manquantes ou leur format doit être corrigé. Clique sur une question pour la retrouver :", "These answers are missing or need a format correction. Select a question to find it:")}</p><ul>{needsAttention.map((question) => <li key={question.key}><button type="button" className={styles.questionLink} onClick={() => goToStep(ONBOARDING_SECTIONS.findIndex((section) => section.questions.some((q) => q.key === question.key)))}>{copy(question.label)}</button></li>)}</ul></div> : <Feedback tone="info">{t("Les réponses obligatoires sont complètes. Relis ton questionnaire avant de le transmettre à Max.", "The required answers are complete. Review your questionnaire before submitting it to Max.")}</Feedback>}
-                <p>{t("Après transmission, cette version restera en lecture seule. Elle ne remplace pas ton bilan initial.", "After submission, this version remains read-only. It does not replace your initial assessment.")}</p>
+                <p>{t("Après transmission, cette version restera en lecture seule.", "After submission, this version remains read-only.")}</p>
                 <button className="fe-button fe-button-primary fe-button-wide" type="button" disabled={busy || conflict || sessionExpired || !isOnboardingComplete(responses)} onClick={() => void persist(true)}>{t("Transmettre mon questionnaire", "Submit my questionnaire")}</button>
               </>}
             </fieldset>
@@ -201,29 +211,37 @@ export function ClientOnboarding() {
               {step < REVIEW_STEP && <button className="fe-button fe-button-primary" type="button" disabled={busy || conflict || sessionExpired} onClick={() => void persist(false, step+1)}>{t("Continuer", "Continue")}</button>}
             </div>
           </form>
-          <p><Link href="/client/week-zero">{t("Accéder à mon bilan initial de mesures et de mobilité", "Open my measurements and mobility assessment")}</Link></p>
         </>}
       </>}
     </div>
   </AppShell>;
 }
 
-function QuestionField({ question: q, value, french, onChange }: {
-  question: OnboardingQuestion; value: OnboardingResponses[OnboardingQuestionKey]; french: boolean;
+function QuestionField({ question: q, value, french, disabled, onChange }: {
+  question: OnboardingQuestion; value: OnboardingResponses[OnboardingQuestionKey]; french: boolean; disabled: boolean;
   onChange(value: OnboardingResponses[OnboardingQuestionKey]): void;
 }) {
   const copy = (text: OnboardingCopy) => french ? text.fr : text.en;
   const label = `${copy(q.label)}${q.required ? " *" : ""}`;
   const id = `onboarding-${q.key}`;
   const hintId = `${id}-hint`;
+  if (q.key === "height" || q.key === "currentBodyweight") return <div className={styles.field} data-question={q.key}>
+    <strong>{label}</strong>
+    <MeasurementPicker kind={q.key === "height" ? "height" : "weight"} value={typeof value === "string" ? value : null} french={french} disabled={disabled} onChange={onChange} />
+  </div>;
+  if (q.key === "availableEquipment") return <EquipmentField id={id} label={label} value={typeof value === "string" ? value : null} french={french} onChange={onChange} />;
+  if (q.type === "scale") return <div className={styles.field} data-question={q.key}>
+    <WheelPicker label={label} values={Array.from({ length: (q.max ?? 10) - (q.min ?? 0) + 1 }, (_, index) => index + (q.min ?? 0))} value={typeof value === "number" ? value : null} emptyLabel={french ? "Choisir" : "Choose"} disabled={disabled} required={q.required} onChange={onChange} />
+    <small>{french ? `Fais défiler pour choisir de ${q.min} à ${q.max}.` : `Scroll to choose from ${q.min} to ${q.max}.`}</small>
+  </div>;
   const hint = <small id={hintId}>{q.helper ? `${copy(q.helper)} ` : ""}{q.maxLength ? french ? `${q.maxLength} caractères maximum.` : `${q.maxLength} characters maximum.` : q.min !== undefined ? french ? `De ${q.min} à ${q.max}.` : `From ${q.min} to ${q.max}.` : ""}</small>;
   if (q.type === "multi") return <fieldset className={styles.choices} data-question={q.key}><legend>{label}</legend>{hint}<div>{q.options?.map((option) => <label key={option.value}><input type="checkbox" checked={Array.isArray(value) && value.includes(option.value)} onChange={(event) => { const selected = Array.isArray(value) ? value : []; onChange(event.target.checked ? [...selected, option.value] : selected.filter((item) => item !== option.value)); }}/>{copy(option.label)}</label>)}</div></fieldset>;
   return <div className={styles.field} data-question={q.key}>
     <label htmlFor={id}>{label}</label>
     {q.type === "textarea" ? <textarea id={id} maxLength={q.maxLength} aria-describedby={hintId} value={typeof value === "string" ? value : ""} onChange={(event) => onChange(event.target.value.trim() ? event.target.value : null)}/>
-      : q.type === "single" || q.type === "scale" ? <select id={id} aria-describedby={hintId} value={value === null ? "" : String(value)} onChange={(event) => onChange(event.target.value === "" ? null : q.type === "scale" ? Number(event.target.value) : event.target.value)}>
+      : q.type === "single" ? <select id={id} aria-describedby={hintId} value={value === null ? "" : String(value)} onChange={(event) => onChange(event.target.value === "" ? null : event.target.value)}>
         <option value="">{french ? "Choisir une réponse" : "Choose an answer"}</option>
-        {q.type === "scale" ? Array.from({ length: (q.max ?? 10) - (q.min ?? 0) + 1 }, (_, index) => index + (q.min ?? 0)).map((score) => <option value={score} key={score}>{score}</option>) : q.options?.map((option) => <option value={option.value} key={option.value}>{copy(option.label)}</option>)}
+        {q.options?.map((option) => <option value={option.value} key={option.value}>{copy(option.label)}</option>)}
       </select>
         : <input id={id} type={q.type} inputMode={q.type === "number" ? "decimal" : q.type === "tel" ? "tel" : undefined} autoComplete={q.key === "fullName" ? "name" : q.type === "email" ? "email" : q.type === "tel" ? "tel" : "off"} maxLength={q.maxLength} min={q.min} max={q.max} step={q.step ?? "any"} aria-describedby={hintId} value={value === null ? "" : String(value)} onChange={(event) => onChange(event.target.value.trim() === "" ? null : q.type === "number" ? Number(event.target.value) : event.target.value)}/>
     }
@@ -237,7 +255,7 @@ function OnboardingReview({ responses, french }: { responses: OnboardingResponse
     <summary>{copy(section.title)}</summary>
     <dl>{section.questions.map((question) => {
       const value = responses[question.key];
-      const optionLabel = (answer: string) => { const option = question.options?.find((o) => o.value === answer); return option ? copy(option.label) : answer; };
+      const optionLabel = (answer: string) => { const option = question.options?.find((o) => o.value === answer); return option ? copy(option.label) : displayOnboardingText(question.key, answer, french); };
       const display = !hasAnswer(value) ? french ? "Non renseigné" : "Not provided" : Array.isArray(value) ? value.map(optionLabel).join(", ") : typeof value === "string" ? optionLabel(value) : String(value);
       return <div key={question.key}><dt>{copy(question.label)}</dt><dd>{display}</dd></div>;
     })}</dl>

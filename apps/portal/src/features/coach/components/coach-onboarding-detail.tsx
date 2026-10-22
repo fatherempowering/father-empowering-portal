@@ -208,7 +208,7 @@ function OnboardingContent({
             ? `Transmis le ${submittedAt}.`
             : "Le questionnaire d’accueil a été transmis."}{" "}
           Les réponses sont en lecture seule et restent distinctes de l’identité
-          du compte et du bilan initial.
+          du compte et des données de la semaine zéro.
         </p>
       </div>
       <div className={styles.onboardingSections}>

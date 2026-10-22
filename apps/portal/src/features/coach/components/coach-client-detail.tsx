@@ -188,7 +188,7 @@ function ClientAssessment({ value }: { value: CoachClientWeekZero }) {
         <header className={styles.assessmentHeader}>
           <div>
             <p className="fe-kicker">Week Zero</p>
-            <h2 id="initial-assessment-title">Bilan initial</h2>
+            <h2 id="initial-assessment-title">Semaine zéro</h2>
             <p>
               Mesures, mobilité et disponibilités transmises par le client.
             </p>
@@ -198,12 +198,12 @@ function ClientAssessment({ value }: { value: CoachClientWeekZero }) {
             data-testid="initial-assessment-status"
           >
             <Icon name={submitted ? "check" : "clock"} />
-            {submitted ? "Bilan initial transmis" : "Non transmis"}
+            {submitted ? "Semaine zéro transmise" : "Non transmis"}
           </span>
         </header>
         {!submitted ? (
           <div className={styles.empty}>
-            <h3>Aucun bilan initial transmis</h3>
+            <h3>Aucune semaine zéro transmise</h3>
             <p>
               Le client peut enregistrer un brouillon, mais ses réponses ne
               deviennent visibles ici qu’après la transmission.
@@ -222,7 +222,7 @@ function ClientAssessment({ value }: { value: CoachClientWeekZero }) {
               <p>
                 {submittedAt
                   ? `Transmis le ${submittedAt}.`
-                  : "Le bilan initial a été transmis."}
+                : "La semaine zéro a été transmise."}
                 {" "}
                 Cette première étape ne signifie pas que toute la Week Zero est
                 terminée.
