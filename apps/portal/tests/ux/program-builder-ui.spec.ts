@@ -200,7 +200,7 @@ test("bulk selection bounds, shortcuts, cancellation and narrow layout stay safe
   expect(await requests(page)).toHaveLength(0);
 });
 
-test("keyboard focus stays inside selection and replacement confirmation", async ({ page }) => {
+test("keyboard never reaches background controls during selection or replacement confirmation", async ({ page }) => {
   await page.goto("/?screen=program-builder");
   await page.getByLabel("Objectif de la semaine · français").fill("Source");
   await page.getByRole("button", { name: "Dupliquer cette semaine", exact: true }).click();
@@ -209,6 +209,16 @@ test("keyboard focus stays inside selection and replacement confirmation", async
   await open.focus();
   await page.keyboard.press("Enter");
   const dialog = page.getByRole("dialog");
+  async function verifyFocus(key: string) {
+    const focus = await dialog.evaluate((element) => ({ inside: element.contains(document.activeElement), tag: document.activeElement?.tagName, hasFocus: document.hasFocus() }));
+    if (!focus.inside) {
+      // Native dialogs permit access to browser chrome, not the inert page.
+      // Chromium reports BODY + hasFocus=false there; the next Tab returns.
+      expect(focus).toEqual({ inside: false, tag: "BODY", hasFocus: false });
+      await page.keyboard.press(key);
+      expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+    }
+  }
   await page.keyboard.press("Shift+Tab");
   await expect(dialog.getByRole("button", { name: "Fermer la copie de semaine", exact: true })).toBeFocused();
   await page.keyboard.press("Tab");
@@ -219,7 +229,7 @@ test("keyboard focus stays inside selection and replacement confirmation", async
   for (const key of ["Tab", "Shift+Tab"]) {
     for (let i = 0; i < 18; i++) {
       await page.keyboard.press(key);
-      expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+      await verifyFocus(key);
     }
   }
   await dialog.getByRole("button", { name: "Vérifier le remplacement", exact: true }).focus();
@@ -228,7 +238,7 @@ test("keyboard focus stays inside selection and replacement confirmation", async
   for (const key of ["Tab", "Shift+Tab"]) {
     for (let i = 0; i < 6; i++) {
       await page.keyboard.press(key);
-      expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+      await verifyFocus(key);
     }
   }
   await page.keyboard.press("Escape");
