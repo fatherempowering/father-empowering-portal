@@ -520,4 +520,51 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
     expect(invitations.data?.[0]?.token_hash).toMatch(/^[0-9a-f]{64}$/);
     expect(audits.data?.filter((audit) => audit.command === "CreateInvitedClient")).toHaveLength(1);
   });
+
+  it("persiste la bibliothèque Training sans élargir les accès Client ou Coach non vérifié", async () => {
+    const path = "/api/v1/coach/exercises";
+    const command = {
+      id: null, expectedVersion: 0, clientMutationId: randomUUID(),
+      exercise: { name: `Press ${randomUUID()}`, equipment: "Dumbbells",
+        cue: { fr: "Contrôle", en: "Control" }, defaultUnit: "lb", archived: false },
+    };
+    for (const denied of [unverifiedCoachSession, clientSessionB]) {
+      expect((await authenticatedFetch(environment, denied, path)).status).toBe(403);
+      expect((await authenticatedFetch(environment, denied, path, {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(command),
+      })).status).toBe(403);
+    }
+    expect((await fetch(`${environment.appUrl}${path}`)).status).toBe(401);
+    async function save(body: unknown) {
+      return authenticatedFetch(environment, session, path, {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
+      });
+    }
+    const created = await save(command);
+    expect(created.status).toBe(200);
+    expect(created.headers.get("cache-control")).toContain("no-store");
+    const first = (await created.json()).data.exercise;
+    expect(first.version).toBe(1);
+    expect(first.canEdit).toBe(true);
+    const replay = await save(command);
+    expect(replay.status).toBe(200);
+    expect((await replay.json()).data.exercise).toEqual(first);
+    const listed = await authenticatedFetch(environment, session, `${path}?query=${encodeURIComponent(command.exercise.name)}`);
+    expect(listed.status).toBe(200);
+    expect((await listed.json()).data.items.map((item: { id: string }) => item.id)).toEqual([first.id]);
+    const updated = await save({ ...command, id: first.id, expectedVersion: 1,
+      clientMutationId: randomUUID(), exercise: { ...command.exercise, archived: true } });
+    expect(updated.status).toBe(200);
+    expect((await updated.json()).data.exercise.version).toBe(2);
+    const stale = await save({ ...command, id: first.id, expectedVersion: 1, clientMutationId: randomUUID() });
+    expect(stale.status).toBe(409);
+    const hidden = await authenticatedFetch(environment, session, `${path}?query=${encodeURIComponent(command.exercise.name)}`);
+    expect((await hidden.json()).data.items).toEqual([]);
+    const archived = await authenticatedFetch(environment, session, `${path}?archived=true&query=${encodeURIComponent(command.exercise.name)}`);
+    expect((await archived.json()).data.items).toHaveLength(1);
+    const direct = await session.client.from("training_exercises").update({ name: "Unauthorized direct update" }).eq("id", first.id);
+    expect(direct.error?.code).toBe("42501");
+    const clientRead = await clientSessionB.client.from("training_exercises").select("id");
+    expect(clientRead.error).toBeNull(); expect(clientRead.data).toEqual([]);
+  });
 });

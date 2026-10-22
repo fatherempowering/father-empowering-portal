@@ -1,0 +1,26 @@
+.page { display: grid; gap: 24px; max-width: 1300px; margin: auto; }
+.heading, .actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.heading p { max-width: 65ch; }
+.columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.panel { padding: 24px; background: var(--fe-surface, #fff); border: 1px solid var(--fe-border, #ddd); border-radius: 12px; min-width: 0; }
+.panel h2 { margin: 0 0 16px; }
+.filters, .form { display: grid; gap: 16px; }
+.filters { margin-bottom: 20px; }
+.form label, .filters label { display: grid; gap: 6px; font-weight: 600; }
+.form input:not([type=checkbox]), .form textarea, .form select, .filters input, .filters select {
+  width: 100%; min-height: 44px; border: 1px solid #777; border-radius: 6px;
+  padding: 10px; background: #fff; color: #181818; font: inherit; box-sizing: border-box;
+}
+.form textarea { min-height: 80px; resize: vertical; }
+.form fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 16px; min-width: 0; }
+.form input:focus-visible, .form textarea:focus-visible, .form select:focus-visible,
+.filters input:focus-visible, .filters select:focus-visible { outline: 3px solid #a84300; outline-offset: 3px; }
+.form .check { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.check input { width: 20px; height: 20px; }
+.list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 12px; }
+.list li { border-bottom: 1px solid #ddd; padding-bottom: 12px; overflow-wrap: anywhere; }
+.list h3 { margin: 0 0 6px; }
+.list p { margin: 6px 0; }
+.note { font-size: .9rem; color: #555; line-height: 1.6; }
+@media (max-width: 900px) { .columns { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .panel { padding: 16px; } }

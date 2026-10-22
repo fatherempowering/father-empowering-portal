@@ -9,6 +9,8 @@ import { CoachEmailVerificationCard } from "../../src/features/coach/auth/coach-
 import { ClientOnboarding } from "../../src/features/client/onboarding/client-onboarding";
 import { ClientWeekZero } from "../../src/features/client/week-zero/client-week-zero";
 import { PersonalPortalSetup } from "../../src/features/coach/personal-portal/personal-portal-setup";
+import { ExerciseLibrary } from "../../src/features/training/coach/exercise-library";
+import type { ExerciseSnapshot, SaveExerciseRequest } from "../../src/lib/contracts/training";
 import { EMPTY_INITIAL_ASSESSMENT_RESPONSES } from "../../src/lib/contracts/week-zero";
 import { ONBOARDING_QUESTIONS } from "../../src/lib/contracts/onboarding-definition";
 import {
@@ -160,8 +162,38 @@ function reply(body: unknown, status = 200) {
     headers: { "Content-Type": "application/json" },
   });
 }
+let exerciseRecords: ExerciseSnapshot[] = [];
+const exerciseReceipts = new Map<string, ExerciseSnapshot>();
+const exerciseRequests: SaveExerciseRequest[] = [];
+Object.assign(window, { __exerciseRequests: exerciseRequests });
+let exerciseResponseLost = false;
 window.fetch = async (url, init) => {
   const path = String(url);
+  if (path.startsWith("/api/v1/coach/exercises")) {
+    if (scenario === "exercise-load-error") return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
+    if (init?.method === "POST") {
+      const input = JSON.parse(String(init.body)) as SaveExerciseRequest;
+      exerciseRequests.push(input);
+      if (scenario === "exercise-conflict") return reply({ error: { code: "VERSION_CONFLICT" } }, 409);
+      let saved = exerciseReceipts.get(input.clientMutationId);
+      if (!saved) {
+        saved = { ...input.exercise, id: input.id ?? "18000000-0000-4000-8000-000000000001",
+          version: input.expectedVersion + 1, createdBy: "18000000-0000-4000-8000-000000000002",
+          updatedAt: new Date(now).toISOString(), canEdit: true };
+        exerciseReceipts.set(input.clientMutationId, saved);
+        exerciseRecords = [...exerciseRecords.filter((item) => item.id !== saved!.id), saved];
+      }
+      if (scenario === "exercise-response-lost" && !exerciseResponseLost) {
+        exerciseResponseLost = true;
+        throw new TypeError("Confirmation lost after commit");
+      }
+      return reply({ data: { exercise: saved } });
+    }
+    const query = new URL(path, window.location.origin).searchParams;
+    const filtered = exerciseRecords.filter((item) => item.archived === (query.get("archived") === "true") &&
+      item.name.toLowerCase().includes((query.get("query") ?? "").toLowerCase()));
+    return reply({ data: { items: filtered, total: filtered.length, page: 0, pageSize: 50 } });
+  }
   if (scenario === "network") throw new TypeError("Network unavailable");
   if (
     path.endsWith("/client/me") &&
@@ -544,6 +576,7 @@ function Harness() {
   const initialView = harnessParameters.get("screen");
   const [view, setView] = useState(initialView ?? "coach");
   const [key, setKey] = useState(0);
+  if (view === "exercise-library") return <ExerciseLibrary />;
   if (view === "landing-en" || view === "landing-fr") {
     return <LandingPage locale={view === "landing-fr" ? "fr" : "en"} />;
   }

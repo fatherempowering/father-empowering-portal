@@ -166,6 +166,7 @@ select is(
     'organization_memberships.memberships_select_self_or_admin:PERMISSIVE:SELECT:authenticated',
     'organizations.organizations_select_authorized:PERMISSIVE:SELECT:authenticated',
     'profiles.profiles_select_self:PERMISSIVE:SELECT:authenticated',
+    'training_exercises.training_exercises_staff_select:PERMISSIVE:SELECT:authenticated',
     'week_zero_assessments.week_zero_assessments_select_authorized:PERMISSIVE:SELECT:authenticated'
   ]::text[],
   'the exact allowlisted read policies exist with no extra policy'
