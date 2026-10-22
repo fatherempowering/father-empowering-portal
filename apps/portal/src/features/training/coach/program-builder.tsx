@@ -8,6 +8,7 @@ import { programListSchema, programSnapshotSchema, saveProgramRequestSchema, typ
 import { addLibraryExercise, compactUniformSets, draftWarnings, duplicateWeek, moveItem, newBlock, newProgram, newSession } from "@/lib/training/program-editor";
 import styles from "./program-builder.module.css";
 import { ProgramPublish } from "./program-publish";
+import { CopyWeekDialog } from "./copy-week-dialog";
 
 type Text = { fr: string; en: string };
 function TextPair({ label, value, change }: { label: string; value: Text; change: (value: Text) => void }) {
@@ -62,11 +63,18 @@ export function ProgramBuilder() {
   const [dirty, setDirty] = useState(false); const [saving, setSaving] = useState(false); const [opening, setOpening] = useState(false);
   const [uncertain, setUncertain] = useState(false); const [conflict, setConflict] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [copyingWeek, setCopyingWeek] = useState(false);
   const [error, setError] = useState<string | null>(null); const [success, setSuccess] = useState<string | null>(null);
   const pending = useRef<SaveProgramRequest | null>(null); const busy = useRef(false);
+  const copyWeekButton = useRef<HTMLButtonElement>(null); const wasCopyingWeek = useRef(false);
   const locked = saving || opening || uncertain || conflict || publishing;
   const week = document.weeks[weekIndex]; const session = week.sessions[sessionIndex];
   const warnings = draftWarnings(document);
+
+  useEffect(() => {
+    if (wasCopyingWeek.current && !copyingWeek) copyWeekButton.current?.focus();
+    wasCopyingWeek.current = copyingWeek;
+  }, [copyingWeek]);
 
   useEffect(() => {
     const controller = new AbortController(); let active = true;
@@ -159,6 +167,7 @@ export function ProgramBuilder() {
               <div className={styles.actions}>
                 <button className="fe-button" type="button" disabled={document.weeks.length>=52} onClick={() => { change((copy) => { copy.weeks.push({ number: copy.weeks.length+1, objective: {fr:"",en:""}, sessions:[] }); }); setWeekIndex(document.weeks.length); setSessionIndex(0); }}>Ajouter une semaine</button>
                 <button className="fe-button" type="button" disabled={document.weeks.length>=52} onClick={() => { change((copy) => { copy.weeks=duplicateWeek(copy,weekIndex).weeks; }); setWeekIndex(weekIndex+1); setSessionIndex(0); }}>Dupliquer cette semaine</button>
+                <button ref={copyWeekButton} className="fe-button" type="button" onClick={() => setCopyingWeek(true)}>Copier vers d’autres semaines</button>
                 <button className="fe-button" type="button" disabled={document.weeks.length<2} onClick={removeWeek}>Retirer cette semaine</button>
               </div>
               <TextPair label="Objectif de la semaine" value={week.objective} change={(value) => change((copy) => { copy.weeks[weekIndex].objective=value; })} />
@@ -212,5 +221,12 @@ export function ProgramBuilder() {
         </section>
       </div>
     </div>
+    {copyingWeek ? <CopyWeekDialog program={document} sourceIndex={weekIndex} locked={locked}
+      onClose={() => setCopyingWeek(false)} onCopy={(next, count) => {
+        if (locked) return;
+        change((copy) => { copy.weeks = next.weeks; });
+        setSuccess(`Semaine ${weekIndex + 1} copiée vers ${count} semaine${count > 1 ? "s" : ""}. Enregistre ton brouillon pour conserver ces copies. Rien n’a été publié.`);
+        setCopyingWeek(false);
+      }} /> : null}
   </AppShell>;
 }

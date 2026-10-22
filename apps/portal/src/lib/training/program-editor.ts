@@ -25,6 +25,42 @@ export function duplicateWeek(program: ProgramEditor, index: number): ProgramEdi
   result.weeks.forEach((week, i) => { week.number = i + 1; });
   return result;
 }
+export function weekHasContent(week: ProgramEditor["weeks"][number]): boolean {
+  return Boolean(week.sessions.length || week.objective.fr.trim() || week.objective.en.trim());
+}
+
+/** Week numbers are destinations, not insertion positions. Unselected weeks stay put. */
+export function planWeekCopy(program: ProgramEditor, sourceIndex: number, destinations: number[]) {
+  if (!Number.isInteger(sourceIndex) || !program.weeks[sourceIndex] ||
+    destinations.some((number) => !Number.isInteger(number) || number < 1 || number > 52 || number === sourceIndex + 1)) {
+    throw new RangeError("INVALID_WEEK_SELECTION");
+  }
+  const targets = [...new Set(destinations)].sort((a, b) => a - b);
+  const lastWeek = Math.max(program.weeks.length, ...targets);
+  const added = Array.from({ length: lastWeek - program.weeks.length }, (_, i) => program.weeks.length + i + 1);
+  return {
+    targets,
+    replacements: targets.filter((number) => program.weeks[number - 1] && weekHasContent(program.weeks[number - 1])),
+    added,
+    empty: added.filter((number) => !targets.includes(number)),
+  };
+}
+
+export function copyWeekToWeeks(program: ProgramEditor, sourceIndex: number, destinations: number[], allowReplacement = false): ProgramEditor {
+  const plan = planWeekCopy(program, sourceIndex, destinations);
+  if (!plan.targets.length) throw new RangeError("INVALID_WEEK_SELECTION");
+  if (plan.replacements.length && !allowReplacement) throw new Error("WEEK_REPLACEMENT_REQUIRES_CONFIRMATION");
+  const result = structuredClone(program);
+  for (const number of plan.added) result.weeks.push({ number, objective: text(), sessions: [] });
+  for (const number of plan.targets) {
+    // Preserve movement identities across weeks, as with single-week duplication,
+    // while independently cloning every nested prescription and instruction.
+    result.weeks[number - 1] = { ...structuredClone(program.weeks[sourceIndex]), number };
+  }
+  // Match the existing draft contract before replacing any editor state.
+  if (new TextEncoder().encode(JSON.stringify(result)).length > 512_000) throw new Error("PROGRAM_TOO_LARGE");
+  return result;
+}
 export function moveItem<T>(items: T[], index: number, direction: -1 | 1): T[] {
   const next = [...items]; const target = index + direction;
   if (target < 0 || target >= items.length || !items[index]) return next;
