@@ -11,6 +11,7 @@ import {
   type SeededStaff,
 } from "../harness/m1-local-supabase";
 import { extractSixDigitOtp, waitForMail } from "../harness/mailpit";
+import { newProgram, newSession, newBlock, addLibraryExercise } from "../../src/lib/training/program-editor";
 
 const environment = getM1TestEnvironment();
 const password = "M1-local-only-Max!123";
@@ -519,6 +520,36 @@ describe.sequential("M1 HTTP security and transaction integration", () => {
     expect(invitations.data).toHaveLength(1);
     expect(invitations.data?.[0]?.token_hash).toMatch(/^[0-9a-f]{64}$/);
     expect(audits.data?.filter((audit) => audit.command === "CreateInvitedClient")).toHaveLength(1);
+  });
+
+  it("saves private program drafts through HTTP with version and retry protection", async () => {
+    const path="/api/v1/coach/programs";
+    const draft=newProgram(); draft.title.fr="HTTP draft";
+    const command={id:null,expectedVersion:0,clientMutationId:randomUUID(),document:draft};
+    for(const denied of [unverifiedCoachSession,clientSessionB]) {
+      expect((await authenticatedFetch(environment,denied,path)).status).toBe(403);
+      expect((await authenticatedFetch(environment,denied,path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(command)})).status).toBe(403);
+    }
+    expect((await fetch(`${environment.appUrl}${path}`)).status).toBe(401);
+    const save=(body:unknown)=>authenticatedFetch(environment,session,path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+    const created=await save(command); expect(created.status).toBe(200); expect(created.headers.get("cache-control")).toContain("no-store");
+    const first=(await created.json()).data.program;expect(first.version).toBe(1);
+    const replay=await save(command);expect(replay.status).toBe(200);expect((await replay.json()).data.program).toEqual(first);
+    const exerciseResponse=await authenticatedFetch(environment,session,"/api/v1/coach/exercises",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id:null,expectedVersion:0,clientMutationId:randomUUID(),exercise:{name:"Draft Press",equipment:"",cue:{fr:"",en:""},defaultUnit:"lb",archived:false}})});
+    expect(exerciseResponse.status).toBe(200);const exercise=(await exerciseResponse.json()).data.exercise;
+    const trainingSession=newSession();const block=newBlock();block.exercises.push(addLibraryExercise(exercise));trainingSession.blocks.push(block);draft.weeks[0].sessions.push(trainingSession);
+    const updated=await save({...command,id:first.id,expectedVersion:1,clientMutationId:randomUUID()});expect(updated.status).toBe(200);expect((await updated.json()).data.program.version).toBe(2);
+    const read=await authenticatedFetch(environment,session,`${path}/${first.id}`);expect(read.status).toBe(200);expect((await read.json()).data.program.document).toEqual(draft);
+    expect((await save({...command,id:first.id,expectedVersion:1,clientMutationId:randomUUID()})).status).toBe(409);
+    expect((await authenticatedFetch(environment,clientSessionB,`${path}/${first.id}`)).status).toBe(403);
+    expect((await authenticatedFetch(environment,session,`${path}/${randomUUID()}`)).status).toBe(404);
+    const direct=await session.client.from("training_program_drafts").update({document:draft}).eq("id",first.id);expect(direct.error?.code).toBe("42501");
+    const clientRead=await clientSessionB.client.from("training_program_drafts").select("id");expect(clientRead.error).toBeNull();expect(clientRead.data).toEqual([]);
+    const malformed=structuredClone(draft) as unknown as {weeks:{sessions:{type:null}[]}[]};malformed.weeks[0].sessions[0].type=null;
+    const invalid=await session.client.rpc("save_training_program_draft",{p_program_id:first.id,p_document:malformed,p_expected_version:2,p_idempotency_key:randomUUID()});expect(invalid.error?.message).toBe("FE_INVALID_TRAINING_DRAFT");
+    const admin=createM1AdminClient(environment);
+    const audits=await admin.from("audit_events").select("id").eq("entity_id",first.id);expect(audits.error).toBeNull();expect(audits.data).toHaveLength(2);
+    const outbox=await admin.from("outbox_events").select("id").eq("aggregate_id",first.id);expect(outbox.error).toBeNull();expect(outbox.data).toHaveLength(0);
   });
 
   it("persiste la bibliothèque Training sans élargir les accès Client ou Coach non vérifié", async () => {

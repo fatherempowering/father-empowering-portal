@@ -10,6 +10,8 @@ import { ClientOnboarding } from "../../src/features/client/onboarding/client-on
 import { ClientWeekZero } from "../../src/features/client/week-zero/client-week-zero";
 import { PersonalPortalSetup } from "../../src/features/coach/personal-portal/personal-portal-setup";
 import { ExerciseLibrary } from "../../src/features/training/coach/exercise-library";
+import { ProgramBuilder } from "../../src/features/training/coach/program-builder";
+import type { ProgramSnapshot, SaveProgramRequest } from "../../src/lib/contracts/training-drafts";
 import type { ExerciseSnapshot, SaveExerciseRequest } from "../../src/lib/contracts/training";
 import { EMPTY_INITIAL_ASSESSMENT_RESPONSES } from "../../src/lib/contracts/week-zero";
 import { ONBOARDING_QUESTIONS } from "../../src/lib/contracts/onboarding-definition";
@@ -167,8 +169,34 @@ const exerciseReceipts = new Map<string, ExerciseSnapshot>();
 const exerciseRequests: SaveExerciseRequest[] = [];
 Object.assign(window, { __exerciseRequests: exerciseRequests });
 let exerciseResponseLost = false;
+const programRecords = new Map<string, ProgramSnapshot>();
+const programReceipts = new Map<string, ProgramSnapshot>();
+const programRequests: SaveProgramRequest[] = [];
+Object.assign(window, { __programRequests: programRequests });
+let programResponseLost = false;
+if (harnessParameters.get("screen") === "program-builder") {
+  exerciseRecords.push({ id: "19000000-0000-4000-8000-000000000010", name: "Dumbbell Press", equipment: "Dumbbells", cue: { fr: "Contrôle", en: "Control" }, defaultUnit: "lb", archived: false, version: 1, createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString(), canEdit: true });
+}
 window.fetch = async (url, init) => {
   const path = String(url);
+  if (path.startsWith("/api/v1/coach/programs")) {
+    if (scenario === "program-load-error") return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
+    if (init?.method === "POST") {
+      const input = JSON.parse(String(init.body)) as SaveProgramRequest;
+      programRequests.push(input);
+      if (scenario === "program-conflict") return reply({ error: { code: "VERSION_CONFLICT" } }, 409);
+      let result = programReceipts.get(input.clientMutationId);
+      if (!result) {
+        result = { id: input.id ?? crypto.randomUUID(), document: input.document, version: input.expectedVersion + 1, createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString() };
+        programRecords.set(result.id, result); programReceipts.set(input.clientMutationId, result);
+      }
+      if (scenario === "program-response-lost" && !programResponseLost) { programResponseLost = true; throw new TypeError("Response lost after commit"); }
+      return reply({ data: { program: result } });
+    }
+    const id = new URL(path, window.location.origin).pathname.split("/")[5];
+    if (id) return programRecords.has(id) ? reply({ data: { program: programRecords.get(id) } }) : reply({ error: { code: "NOT_FOUND" } }, 404);
+    return reply({ data: { items: [...programRecords.values()].map((p) => ({ id: p.id, title: p.document.title, version: p.version, weekCount: p.document.weeks.length, updatedAt: p.updatedAt })), total: programRecords.size, page: 0, pageSize: 20 } });
+  }
   if (path.startsWith("/api/v1/coach/exercises")) {
     if (scenario === "exercise-load-error") return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
     if (init?.method === "POST") {
@@ -577,6 +605,7 @@ function Harness() {
   const [view, setView] = useState(initialView ?? "coach");
   const [key, setKey] = useState(0);
   if (view === "exercise-library") return <ExerciseLibrary />;
+  if (view === "program-builder") return <ProgramBuilder />;
   if (view === "landing-en" || view === "landing-fr") {
     return <LandingPage locale={view === "landing-fr" ? "fr" : "en"} />;
   }
