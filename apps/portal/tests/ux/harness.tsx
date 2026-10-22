@@ -11,6 +11,9 @@ import { ClientWeekZero } from "../../src/features/client/week-zero/client-week-
 import { PersonalPortalSetup } from "../../src/features/coach/personal-portal/personal-portal-setup";
 import { ExerciseLibrary } from "../../src/features/training/coach/exercise-library";
 import { ProgramBuilder } from "../../src/features/training/coach/program-builder";
+import { ClientProgram } from "../../src/features/training/client/client-program";
+import { newProgram, newSession, newBlock, addLibraryExercise } from "../../src/lib/training/program-editor";
+import type { ProgramPublication, PublishProgramRequest } from "../../src/lib/contracts/training-publication";
 import type { ProgramSnapshot, SaveProgramRequest } from "../../src/lib/contracts/training-drafts";
 import type { ExerciseSnapshot, SaveExerciseRequest } from "../../src/lib/contracts/training";
 import { EMPTY_INITIAL_ASSESSMENT_RESPONSES } from "../../src/lib/contracts/week-zero";
@@ -174,11 +177,41 @@ const programReceipts = new Map<string, ProgramSnapshot>();
 const programRequests: SaveProgramRequest[] = [];
 Object.assign(window, { __programRequests: programRequests });
 let programResponseLost = false;
+const recipientId = "19100000-0000-4000-8000-000000000005";
+const publicationRequests: PublishProgramRequest[] = [];
+const publicationReceipts = new Map<string, ProgramPublication>();
+let publication: ProgramPublication | null = null;
+let publicationResponseLost = false;
+Object.assign(window, { __publicationRequests: publicationRequests });
+if (scenario === "program-published") {
+  const document = newProgram(); document.title = { fr: "Phase force", en: "Strength phase" };
+  const session = newSession(); session.title = { fr: "Séance A", en: "Session A" }; const block = newBlock();
+  const exercise = addLibraryExercise({ id: crypto.randomUUID(), name: "Dumbbell Press", equipment: "", cue: { fr: "Contrôle", en: "Control" }, defaultUnit: "lb", archived: false, version: 1, createdBy: crypto.randomUUID(), updatedAt: new Date(now).toISOString(), canEdit: true });
+  exercise.prescription.loadTarget = "40 lb"; block.exercises.push(exercise); session.blocks.push(block); document.weeks[0].sessions.push(session);
+  publication = { id: crypto.randomUUID(), clientId: recipientId, programId: crypto.randomUUID(), draftVersion: 2, revision: 1, document, publishedAt: new Date(now).toISOString() };
+}
 if (harnessParameters.get("screen") === "program-builder") {
   exerciseRecords.push({ id: "19000000-0000-4000-8000-000000000010", name: "Dumbbell Press", equipment: "Dumbbells", cue: { fr: "Contrôle", en: "Control" }, defaultUnit: "lb", archived: false, version: 1, createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString(), canEdit: true });
 }
 window.fetch = async (url, init) => {
   const path = String(url);
+  if (path.startsWith("/api/v1/coach/programs/recipients")) return reply({data:{clients:[{id:recipientId,name:"Client Test"}],total:1,page:0}});
+  if (path === "/api/v1/coach/programs/publish") {
+    const input = JSON.parse(String(init?.body)) as PublishProgramRequest; publicationRequests.push(input);
+    if (scenario === "publication-conflict") return reply({error:{code:"VERSION_CONFLICT"}},409);
+    let result = publicationReceipts.get(input.clientMutationId);
+    if (!result) {
+      const draft = programRecords.get(input.programId)!;
+      result = {id:crypto.randomUUID(),clientId:input.clientId,programId:input.programId,draftVersion:input.draftVersion,revision:1,document:structuredClone(draft.document),publishedAt:new Date(now).toISOString()};
+      publicationReceipts.set(input.clientMutationId,result); publication=result;
+    }
+    if (scenario === "publication-response-lost" && !publicationResponseLost) { publicationResponseLost=true; throw new TypeError("Confirmation lost"); }
+    return reply({data:{program:result}});
+  }
+  if (path === "/api/v1/client/program" || (path.startsWith("/api/v1/coach/clients/") && path.endsWith("/program"))) {
+    if (scenario === "publication-load-error" || scenario === "network") return reply({error:{code:"TEMPORARILY_UNAVAILABLE"}},503);
+    return reply({data:{program:publication}});
+  }
   if (path.startsWith("/api/v1/coach/programs")) {
     if (scenario === "program-load-error") return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
     if (init?.method === "POST") {
@@ -606,6 +639,7 @@ function Harness() {
   const [key, setKey] = useState(0);
   if (view === "exercise-library") return <ExerciseLibrary />;
   if (view === "program-builder") return <ProgramBuilder />;
+  if (view === "client-program") return <ClientProgram />;
   if (view === "landing-en" || view === "landing-fr") {
     return <LandingPage locale={view === "landing-fr" ? "fr" : "en"} />;
   }

@@ -9,6 +9,7 @@ import { Icon } from "@/components/fe/icon";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
 import { ClientHomePilot } from "./client-home-pilot";
 import { OnboardingAction } from "@/features/client/onboarding/onboarding-action";
+import { ClientProgramAction } from "@/features/training/client/client-program";
 import {
   clientPortalCopy,
   formatClientToday,
@@ -220,7 +221,7 @@ function ClientProgramState({
         </span>
       </div>
       {date ? <p className="fe-today-date">{date}</p> : null}
-      <div id="client-program-state"><OnboardingAction french={dashboard.locale !== "en-CA"} /></div>
+      <div id="client-program-state"><OnboardingAction french={dashboard.locale !== "en-CA"} /><ClientProgramAction french={dashboard.locale !== "en-CA"} /></div>
       {showTodayLink ? (
         <Link className="fe-button fe-home-action" href="/client/today">
           {copy.openToday}
