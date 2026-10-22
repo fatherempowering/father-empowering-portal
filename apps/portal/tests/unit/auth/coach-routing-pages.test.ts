@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   actor: vi.fn(),
+  clientDetail: vi.fn(() => null),
   dashboard: vi.fn(() => null),
   redirect: vi.fn(),
   registerClientShell: vi.fn(() => null),
@@ -23,11 +24,15 @@ vi.mock("@/lib/auth/actor", () => ({
 vi.mock("@/features/coach/components/coach-dashboard", () => ({
   CoachDashboard: mocks.dashboard,
 }));
+vi.mock("@/features/coach/components/coach-client-detail", () => ({
+  CoachClientDetail: mocks.clientDetail,
+}));
 vi.mock("@/features/client/pwa/register-client-shell", () => ({
   RegisterClientShell: mocks.registerClientShell,
 }));
 
 import CoachPage from "@/app/(coach)/coach/page";
+import CoachClientPage from "@/app/(coach)/coach/clients/[clientId]/page";
 import ClientLayout from "@/app/(client)/layout";
 import { M1ContractError } from "@/lib/contracts/m1";
 
@@ -85,6 +90,50 @@ describe("Coach route verification", () => {
     await expect(CoachPage()).rejects.toThrow("NEXT_REDIRECT");
     expect(mocks.redirect).toHaveBeenCalledWith("/client");
     expect(mocks.requireVerified).not.toHaveBeenCalled();
+  });
+
+  it("protects a client dossier before rendering the requested client", async () => {
+    const page = await CoachClientPage({
+      params: Promise.resolve({ clientId: "client-123" }),
+    });
+
+    expect(React.isValidElement(page)).toBe(true);
+    expect(page.type).toBe(mocks.clientDetail);
+    expect(page.props).toEqual({ clientId: "client-123" });
+    expect(mocks.requireVerified).toHaveBeenCalledOnce();
+  });
+
+  it("keeps Client sessions out of Coach client dossiers", async () => {
+    mocks.actor.mockResolvedValue(client);
+
+    await expect(
+      CoachClientPage({
+        params: Promise.resolve({ clientId: "client-123" }),
+      }),
+    ).rejects.toThrow("NEXT_REDIRECT");
+
+    expect(mocks.redirect).toHaveBeenCalledWith("/client");
+    expect(mocks.requireVerified).not.toHaveBeenCalled();
+    expect(mocks.clientDetail).not.toHaveBeenCalled();
+  });
+
+  it("sends an unverified Coach away from client dossiers", async () => {
+    mocks.requireVerified.mockRejectedValue(
+      new M1ContractError(
+        "FORBIDDEN",
+        "Coach email verification is required",
+        403,
+      ),
+    );
+
+    await expect(
+      CoachClientPage({
+        params: Promise.resolve({ clientId: "client-123" }),
+      }),
+    ).rejects.toThrow("NEXT_REDIRECT");
+
+    expect(mocks.redirect).toHaveBeenCalledWith("/verify-email");
+    expect(mocks.clientDetail).not.toHaveBeenCalled();
   });
 });
 

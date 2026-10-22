@@ -105,9 +105,32 @@ select ok(
 );
 
 select is(
-  (select count(*)::bigint from pg_catalog.pg_policies where schemaname = 'public'),
-  7::bigint,
-  'only the seven explicit read policies exist'
+  (
+    select array_agg(
+      format(
+        '%s.%s:%s:%s:%s',
+        policy.tablename,
+        policy.policyname,
+        policy.permissive,
+        policy.cmd,
+        array_to_string(policy.roles, ',')
+      )
+      order by policy.tablename, policy.policyname
+    )
+    from pg_catalog.pg_policies policy
+    where policy.schemaname = 'public'
+  ),
+  array[
+    'audit_events.audit_select_admin:PERMISSIVE:SELECT:authenticated',
+    'client_invitations.invitations_select_coach_or_admin:PERMISSIVE:SELECT:authenticated',
+    'clients.clients_select_authorized:PERMISSIVE:SELECT:authenticated',
+    'coach_client_assignments.assignments_select_authorized:PERMISSIVE:SELECT:authenticated',
+    'organization_memberships.memberships_select_self_or_admin:PERMISSIVE:SELECT:authenticated',
+    'organizations.organizations_select_authorized:PERMISSIVE:SELECT:authenticated',
+    'profiles.profiles_select_self:PERMISSIVE:SELECT:authenticated',
+    'week_zero_assessments.week_zero_assessments_select_authorized:PERMISSIVE:SELECT:authenticated'
+  ]::text[],
+  'the exact allowlisted read policies exist with no extra policy'
 );
 
 select * from finish();

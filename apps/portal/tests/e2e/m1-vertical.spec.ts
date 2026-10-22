@@ -33,6 +33,42 @@ test.beforeAll(async () => {
   });
 });
 
+test("landing publique officielle → accès Coach et Client en EN/FR", async ({
+  page,
+}) => {
+  await page.goto(environment.appUrl);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("h1 > span")).toHaveText([
+    "Same",
+    "standards.",
+    "Different",
+    "day.",
+  ]);
+  await expect(page.getByRole("link", { name: "Coach login" })).toHaveAttribute(
+    "href",
+    "/login",
+  );
+  await expect(page.getByRole("link", { name: "Client login" })).toHaveAttribute(
+    "href",
+    "/client-login",
+  );
+
+  await page.goto(`${environment.appUrl}/?lang=fr`);
+  await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+  await expect(page.locator("h1 > span")).toHaveText([
+    "Mêmes",
+    "standards.",
+    "Nouveau",
+    "jour.",
+  ]);
+  await expect(
+    page.getByRole("link", { name: "Connexion coach" }),
+  ).toHaveAttribute("href", "/login");
+  await expect(
+    page.getByRole("link", { name: "Connexion client" }),
+  ).toHaveAttribute("href", "/client-login");
+});
+
 test("Admin sans mot de passe → récupération → code courriel → reconnexion", async ({
   browser,
 }) => {
@@ -275,8 +311,79 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await clientPage.getByRole("button", { name: /activer mon portail/i }).click();
 
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
-  await expect(clientPage.getByRole("heading", { name: /bienvenue, Client Vertical/i })).toBeVisible();
-  await expect(clientPage.getByText(/^portail activé$/i).first()).toBeVisible();
+  await expect(clientPage.getByRole("heading", { name: "Ton portail." })).toBeVisible();
+  await expect(clientPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
+  await expect(clientPage.getByText(/^accès actif$/i).first()).toBeVisible();
+  await clientPage.getByRole("button", { name: "Menu", exact: true }).click();
+  await expect(
+    clientPage.locator('a[href="/client"][aria-current="page"]'),
+  ).toBeVisible();
+  await expect(
+    clientPage.getByRole("heading", {
+      name: "Ton point de départ : le bilan initial",
+    }),
+  ).toBeVisible();
+  await expect(
+    clientPage.getByRole("link", { name: "Compléter mon bilan initial" }),
+  ).toHaveAttribute("href", "/client/week-zero");
+  await expect(
+    clientPage.getByRole("link", { name: "Voir aujourd’hui" }),
+  ).toHaveCount(0);
+  await clientPage.getByRole("link", { name: "Aujourd’hui" }).click();
+  await expect(clientPage).toHaveURL(/\/client\/today(?:\?.*)?$/);
+  await expect(clientPage.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
+  await expect(clientPage.getByText(/^accès actif$/i)).toBeVisible();
+  await expect(
+    clientPage.getByRole("heading", {
+      name: "Ton point de départ : le bilan initial",
+    }),
+  ).toBeVisible();
+  await expect(
+    clientPage.getByRole("link", { name: "Compléter mon bilan initial" }),
+  ).toHaveAttribute("href", "/client/week-zero");
+  await expect(clientPage.getByText(/à jour|rien à faire/i)).toHaveCount(0);
+  await clientPage.getByRole("button", { name: /ouvrir le menu/i }).click();
+  await expect(clientPage.getByRole("link", { name: "Aujourd’hui" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await clientPage.locator('a[href="/client"]').click();
+  await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
+
+  await clientPage.goto(`${environment.appUrl}/client/week-zero`);
+  await expect(clientPage).toHaveURL(/\/client\/week-zero(?:\?.*)?$/);
+  await expect(
+    clientPage.getByRole("heading", { name: "Ton bilan initial" }),
+  ).toBeVisible();
+  await expect(
+    clientPage.getByText(/photos, calibration des charges et cardio/i),
+  ).toHaveCount(0);
+  await expect(clientPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
+  await clientPage.getByLabel(/Poids au réveil \(lb\)/i).fill("214.5");
+  await clientPage
+    .getByLabel(/Tour de taille au nombril \(po\)/i)
+    .fill("41.25");
+  await clientPage
+    .getByLabel(/Autres précisions \(facultatif\)/i)
+    .fill("Poids et tour de taille pris au réveil.");
+  await clientPage
+    .getByRole("button", { name: /Enregistrer mon brouillon/i })
+    .click();
+  await expect(
+    clientPage.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
+  ).toBeVisible();
+
+  const clientId = storedInvitation.data?.client_id;
+  if (!clientId) throw new Error("The activated Client has no persisted identifier.");
+  await maxPage.goto(
+    `${environment.appUrl}/coach/clients/${encodeURIComponent(clientId)}`,
+  );
+  await expect(maxPage.getByTestId("coach-client-detail")).toBeVisible();
+  await expect(maxPage.getByTestId("initial-assessment-status")).toHaveText(
+    /Non transmis/i,
+  );
+  await expect(maxPage.getByText(/Aucun bilan initial transmis/i)).toBeVisible();
+  await expect(maxPage.getByText(/pris au réveil/i)).toHaveCount(0);
 
   const ownProfile = await clientContext.request.get(`${environment.appUrl}/api/v1/client/me`);
   expect(ownProfile.status()).toBe(200);
@@ -306,14 +413,172 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     }
   });
 
+  await continuedPage.goto(`${environment.appUrl}/client/week-zero`);
+  await expect(
+    continuedPage.getByRole("heading", { name: "Ton bilan initial" }),
+  ).toBeVisible();
+  await expect(continuedPage.getByLabel(/Poids au réveil \(lb\)/i)).toHaveValue(
+    "214.5",
+  );
+  await expect(
+    continuedPage.getByLabel(/Tour de taille au nombril \(po\)/i),
+  ).toHaveValue("41.25");
+  await expect(
+    continuedPage.getByLabel(/Autres précisions \(facultatif\)/i),
+  ).toHaveValue("Poids et tour de taille pris au réveil.");
+  expect(continuedOtpRequests).toHaveLength(0);
+
+  await continuedPage
+    .getByRole("button", { name: /4\. Vérifier et transmettre/i })
+    .click();
+  await expect(
+    continuedPage.getByText(/À compléter avant de transmettre/i),
+  ).toBeVisible();
+  await expect(
+    continuedPage.getByRole("button", {
+      name: /Transmettre mon bilan au Coach/i,
+    }),
+  ).toBeDisabled();
+
+  await continuedPage.getByRole("button", { name: /2\. Mobilité/i }).click();
+  for (const label of [
+    /Douleur pendant le squat \/ les jambes/i,
+    /Douleur pendant la flexion des hanches/i,
+    /Douleur pendant une poussée/i,
+    /Douleur pendant un tirage/i,
+    /Douleur pendant le cardio/i,
+  ]) {
+    await continuedPage.getByLabel(label).selectOption("NO");
+  }
+  await continuedPage
+    .getByLabel(/Mouvement le plus limité/i)
+    .fill("Charnière de hanches limitée au lever.");
+  await continuedPage
+    .getByLabel(/Mouvement le plus confortable/i)
+    .fill("Marche et poussée horizontale.");
+  await continuedPage
+    .getByLabel(/Zone raide ou tendue/i)
+    .fill("Ischio-jambier droit.");
+
+  await continuedPage
+    .getByRole("button", { name: /3\. Disponibilités/i })
+    .click();
+  await continuedPage.getByLabel(/^Lundi$/i).check();
+  await continuedPage.getByLabel(/^Mercredi$/i).check();
+  await continuedPage
+    .getByLabel(/Moment de la journée \(facultatif\)/i)
+    .fill("06:30");
+  await continuedPage
+    .getByLabel(/Durée disponible par séance/i)
+    .fill("40");
+  await continuedPage
+    .getByLabel(/Séances possibles par semaine/i)
+    .fill("3");
+  await continuedPage
+    .getByLabel(/Contraintes à partager/i)
+    .fill("Déplacement professionnel le jeudi.");
+
+  await continuedPage
+    .getByRole("button", { name: /4\. Vérifier et transmettre/i })
+    .click();
+  await expect(
+    continuedPage.getByText(/champs requis du bilan initial sont remplis/i),
+  ).toBeVisible();
+  await expect(continuedPage.getByText(/Photos, charges et cardio/i)).toBeVisible();
+  await expect(continuedPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
+  await continuedPage
+    .getByRole("button", { name: /Transmettre mon bilan au Coach/i })
+    .click();
+  await expect(
+    continuedPage.getByText(/Bilan initial transmis au Coach/i),
+  ).toBeVisible();
+  await expect(
+    continuedPage.getByText(/réponses transmises sont conservées en lecture seule/i),
+  ).toBeVisible();
+  await expect(
+    continuedPage.getByText(/Photos, calibration des charges et cardio/i),
+  ).toBeVisible();
+  await expect(continuedPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
+
+  const persistedAssessment = await clientContext.request.get(
+    `${environment.appUrl}/api/v1/client/week-zero`,
+  );
+  expect(persistedAssessment.status()).toBe(200);
+  expect(persistedAssessment.headers()["cache-control"]).toContain("no-store");
+  expect(await persistedAssessment.json()).toMatchObject({
+    data: {
+      assessment: {
+        status: "SUBMITTED",
+        responses: {
+          measurements: {
+            bodyWeightLb: 214.5,
+            waistIn: 41.25,
+            other: "Poids et tour de taille pris au réveil.",
+          },
+          mobility: {
+            painSquat: "NO",
+            painHinge: "NO",
+            painPush: "NO",
+            painPull: "NO",
+            painCardio: "NO",
+            limitedMovement: "Charnière de hanches limitée au lever.",
+            comfortableMovement: "Marche et poussée horizontale.",
+            tightArea: "Ischio-jambier droit.",
+          },
+          availability: {
+            days: ["MONDAY", "WEDNESDAY"],
+            bestTime: "06:30",
+            sessionDurationMinutes: 40,
+            sessionsPerWeek: 3,
+            constraints: "Déplacement professionnel le jeudi.",
+          },
+        },
+      },
+    },
+  });
+
+  await maxPage.reload();
+  await expect(maxPage.getByTestId("initial-assessment-status")).toHaveText(
+    /Bilan initial transmis/i,
+  );
+  await expect(maxPage.getByText(/toute la Week Zero est terminée/i)).toBeVisible();
+  await expect(maxPage.getByTestId("assessment-measurements")).toContainText(
+    "214.5 lb",
+  );
+  await expect(maxPage.getByTestId("assessment-measurements")).toContainText(
+    "41.25 po",
+  );
+  await expect(maxPage.getByTestId("assessment-mobility")).toContainText(
+    "Charnière de hanches limitée au lever.",
+  );
+  await expect(maxPage.getByTestId("assessment-availability")).toContainText(
+    "Lundi, Mercredi",
+  );
+  await expect(maxPage.getByTestId("assessment-availability")).toContainText(
+    "Déplacement professionnel le jeudi.",
+  );
+  await maxPage.getByRole("link", { name: /Retour aux clients/i }).click();
+  await expect(maxPage).toHaveURL(/\/coach(?:\?.*)?$/);
+
   await continuedPage.goto(`${environment.appUrl}/client`);
   await expect(
-    continuedPage.getByRole("heading", { name: /bienvenue, Client Vertical/i }),
+    continuedPage.getByRole("heading", { name: "Ton portail." }),
+  ).toBeVisible();
+  await expect(continuedPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
+  await expect(
+    continuedPage.getByRole("link", { name: /Consulter mon bilan transmis/i }),
   ).toBeVisible();
   await continuedPage.goto(`${environment.appUrl}/client-login`);
   await expect(continuedPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(
-    continuedPage.getByRole("heading", { name: /bienvenue, Client Vertical/i }),
+    continuedPage.getByRole("heading", { name: "Ton portail." }),
+  ).toBeVisible();
+  expect(continuedOtpRequests).toHaveLength(0);
+
+  await continuedPage.goto(`${environment.appUrl}/client/today`);
+  await expect(continuedPage).toHaveURL(/\/client\/today(?:\?.*)?$/);
+  await expect(
+    continuedPage.getByRole("heading", { name: "Aujourd’hui" }),
   ).toBeVisible();
   expect(continuedOtpRequests).toHaveLength(0);
 
@@ -322,8 +587,29 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(continuedPage.getByLabel(/^courriel$/i)).toBeVisible();
   const signedOutProfile = await clientContext.request.get(`${environment.appUrl}/api/v1/client/me`);
   expect(signedOutProfile.status()).toBe(401);
+  expect(await signedOutProfile.text()).not.toMatch(
+    /Client Vertical|client\.vertical|max\.vertical/i,
+  );
+  const clientSignedOutCoachApi = await clientContext.request.get(
+    `${environment.appUrl}/api/v1/coach/clients`,
+  );
+  expect([401, 403]).toContain(clientSignedOutCoachApi.status());
+  expect(await clientSignedOutCoachApi.text()).not.toMatch(
+    /Client Vertical|client\.vertical|max\.vertical/i,
+  );
   await continuedPage.goto(`${environment.appUrl}/client`);
   await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
+  await continuedPage.goto(`${environment.appUrl}/client/today`);
+  await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
+  await continuedPage.goto(`${environment.appUrl}/client/week-zero`);
+  await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
+  const signedOutAssessment = await clientContext.request.get(
+    `${environment.appUrl}/api/v1/client/week-zero`,
+  );
+  expect(signedOutAssessment.status()).toBe(401);
+  expect(await signedOutAssessment.text()).not.toMatch(
+    /214\.5|41\.25|Charnière de hanches|Déplacement professionnel/i,
+  );
 
   const returningContext = await browser.newContext();
   const returningPage = await returningContext.newPage();
@@ -355,8 +641,9 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await returningPage.getByRole("button", { name: /ouvrir mon portail/i }).click();
   await expect(returningPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(
-    returningPage.getByRole("heading", { name: /bienvenue, Client Vertical/i }),
+    returningPage.getByRole("heading", { name: "Ton portail." }),
   ).toBeVisible();
+  await expect(returningPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   const authUsers = await admin.auth.admin.listUsers({ page: 1, perPage: 1_000 });
   expect(authUsers.error).toBeNull();
   expect(authUsers.data.users.filter((user) => user.email === clientEmail)).toHaveLength(1);

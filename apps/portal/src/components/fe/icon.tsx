@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-type IconName =
+export type IconName =
   | "plus"
   | "check"
   | "clock"
@@ -10,6 +10,8 @@ type IconName =
   | "eye"
   | "eye-off"
   | "arrow"
+  | "home"
+  | "today"
   | "users";
 
 /** Small, decorative interface symbols; controls supply the accessible name. */
@@ -47,6 +49,18 @@ export function Icon({
       </>
     ),
     arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
+    home: (
+      <>
+        <path d="m3 11 9-8 9 8" />
+        <path d="M5 10v10h14V10M9 20v-6h6v6" />
+      </>
+    ),
+    today: (
+      <>
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01" />
+      </>
+    ),
     users: (
       <>
         <circle cx="9" cy="8" r="3" />

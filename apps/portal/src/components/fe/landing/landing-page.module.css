@@ -1,0 +1,119 @@
+.landing {
+  color-scheme: dark;
+  position: relative;
+  isolation: isolate;
+  min-height: max(53rem, 100svh);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: #060708;
+  color: #fff;
+  font-family: "FE Sans", Arial, sans-serif;
+  min-width: 0;
+}
+.landing ul { padding: 0; margin: 0; list-style: none; }
+.landing a { color: inherit; -webkit-tap-highlight-color: transparent; }
+.landing svg { display: block; flex-shrink: 0; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.landing .solid { fill: currentColor; stroke: none; }
+.landing a:focus-visible, .skipLink:focus-visible { outline: 3px solid #e8751a; outline-offset: 5px; }
+.skipLink { position: absolute; top: 1rem; left: 1rem; z-index: 10; padding: 1rem; background: #060708; border: 1px solid #fff; color: #fff; transform: translateY(-180%); }
+.skipLink:focus { transform: none; }
+.hero, .heroShade { position: absolute; inset: 0; z-index: -2; pointer-events: none; }
+.hero img { width: 100%; max-width: none; height: 100%; object-fit: cover; object-position: 28% center; display: block; }
+.heroShade { z-index: -1; background: linear-gradient(180deg, transparent 77%, rgba(6,7,8,.65) 100%), linear-gradient(90deg, transparent 34%, rgba(6,7,8,.1) 44%, rgba(6,7,8,.78) 59%, rgba(6,7,8,.97) 68%, #060708 100%); }
+.masthead { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; padding: 2.5rem 3.4vw 0; }
+.brand { display: block; width: clamp(8rem, 11.1vw, 10.7rem); max-width: 34%; border-radius: 2px; }
+.brand img { display: block; width: 100%; height: auto; }
+.protocol { display: flex; align-items: center; gap: 1rem; padding-top: .5rem; font-size: .875rem; letter-spacing: .28em; line-height: 1.5; white-space: nowrap; background: rgba(6,7,8,.82); box-shadow: 0 0 1.1rem .65rem rgba(6,7,8,.82); }
+.protocol > i { height: 1px; width: 4.5rem; background: #aaa9a5; }
+.entryGrid { display: grid; grid-template-columns: 62% 38%; align-items: center; padding: 0 0 3.75rem; min-width: 0; }
+.access { grid-column: 2; min-width: 0; margin-left: 7.5%; width: 67%; max-width: 27rem; }
+.eyebrow { font-size: 1rem; font-weight: 600; line-height: 1.5; letter-spacing: .22em; color: #e8751a; margin-bottom: 1.1rem; width: fit-content; max-width: 100%; background: rgba(6,7,8,.88); box-shadow: 0 0 .8rem .5rem rgba(6,7,8,.88); }
+.headline { font-family: "FE Display", Impact, sans-serif; font-weight: 400; letter-spacing: .005em; font-size: clamp(3.5rem, 5vw, 5rem); line-height: .94; }
+.headline > span { display: block; overflow-wrap: anywhere; }
+.accent { color: #e8751a; }
+.invitation { font-size: 1rem; letter-spacing: .24em; line-height: 1.5; text-transform: uppercase; margin-top: 1.5rem; }
+.loginOptions { display: grid; grid-template-columns: minmax(0, 1fr); gap: .875rem; margin-top: 1.5rem; min-width: 0; }
+.loginLink { display: flex; align-items: center; justify-content: center; gap: 1rem; min-height: 3.75rem; padding: .9rem 1.1rem; border: 1px solid #aaa9a5; border-radius: .5rem; text-decoration: none; font-size: 1.0625rem; line-height: 1.5; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; text-align: center; transition: background-color .16s, border-color .16s; flex-wrap: wrap; min-width: 0; }
+.loginLink svg { width: 1.6rem; height: 1.6rem; }
+.loginLink > span { min-width: 0; overflow-wrap: anywhere; }
+.primary { background: #b95000; border-color: #b95000; }
+.primary:hover { background: #a64700; border-color: #a64700; }
+.secondary { background: rgba(6,7,8,.68); }
+.secondary:hover { background: #2e2e2e; border-color: #fff; }
+.pillars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 4rem -1.4rem 0; gap: 0; }
+.pillars li { display: flex; flex-direction: column; align-items: center; gap: .7rem; min-width: 0; padding: 0 .45rem; }
+.pillars li + li { border-left: 1px solid #757574; }
+.pillars svg { width: 1.875rem; height: 1.875rem; }
+.pillars span { font-size: .75rem; letter-spacing: .12em; line-height: 1.4; text-transform: uppercase; text-align: center; overflow-wrap: anywhere; }
+.footer { display: grid; grid-template-columns: 62% 38%; align-items: end; gap: 0; padding: 1rem 0 3.25rem; }
+.legacyPromise { padding-left: 3.4vw; }
+.legacyPromise p { font-size: .8rem; letter-spacing: .2em; line-height: 1.7; text-transform: uppercase; text-shadow: 0 1px 6px #000; }
+.legacyPromise p > span { display: block; }
+.brandRule { display: block; position: relative; width: 7.5rem; height: 2px; background: #e8751a; margin-top: 1.25rem; }
+.brandRule::after { content: ""; position: absolute; left: 37%; width: 26%; top: -2px; height: 6px; background: #e8751a; }
+.legacyPromise .brandRule { width: 5.5rem; }
+.principles { margin-left: 7.5%; width: 67%; min-width: 0; max-width: 27rem; }
+.principles ul { display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap; }
+.principles li { font-size: .75rem; text-transform: uppercase; letter-spacing: .2em; line-height: 1.5; }
+.principles li + li { border-left: 1px solid #93928e; padding-left: 1.2rem; }
+.principles .brandRule { margin: 1.4rem auto 0; }
+
+@media (min-width: 47.501rem) and (max-width: 68rem) {
+  .entryGrid, .footer { grid-template-columns: 55% 45%; }
+  .access, .principles { width: 84%; margin-left: 8%; }
+  .protocol { font-size: .75rem; letter-spacing: .2em; }
+  .heroShade { background: linear-gradient(90deg, transparent 22%, rgba(6,7,8,.5) 43%, rgba(6,7,8,.95) 57%, #060708 90%); }
+  .hero img { object-position: 22% center; }
+  .pillars { margin-inline: -.5rem; margin-top: 2.5rem; }
+  .pillars span { letter-spacing: .04em; }
+  .principles li { letter-spacing: .07em; }
+  .principles li + li { padding-left: .55rem; }
+}
+
+@media (max-width: 47.5rem) {
+  .landing { display: block; min-height: 100svh; }
+  .hero { inset: 0 0 auto; height: 145vw; max-height: 67rem; }
+  .hero img { height: 100%; object-position: 50% 0%; object-fit: cover; }
+  .heroShade { inset: 0 0 auto; height: 145vw; max-height: 67rem; background: linear-gradient(180deg, rgba(6,7,8,.25) 0%, transparent 15%, transparent 40%, rgba(6,7,8,.35) 48%, rgba(6,7,8,.86) 66%, #060708 98%); }
+  .masthead { position: absolute; inset: 0 0 auto; align-items: flex-start; padding: 1.1rem 5.65vw; gap: .75rem; }
+  .brand { width: 23vw; max-width: 6.5rem; }
+  .protocol { padding-top: .2rem; white-space: normal; font-size: .6875rem; letter-spacing: .1em; gap: .5rem; line-height: 1.5; max-width: 61%; text-align: right; }
+  .protocol > i { width: 1.8rem; flex: 0 0 1.8rem; }
+  .entryGrid { display: block; padding: 74vw 11.3vw 0; }
+  .access { margin: 0; width: 100%; max-width: none; }
+  .eyebrow { font-size: .75rem; letter-spacing: .17em; margin-bottom: 1rem; }
+  .headline { font-size: clamp(2.25rem, 10.5vw, 4.25rem); line-height: .96; }
+  .invitation { font-size: .875rem; letter-spacing: .18em; line-height: 1.6; margin-top: 1.2rem; }
+  .loginOptions { margin-top: 1.2rem; gap: .625rem; }
+  .loginLink { width: 100%; min-height: 3.25rem; padding: .8rem .75rem; gap: 1rem; font-size: 1rem; letter-spacing: .07em; border-radius: .4rem; }
+  .loginLink svg { width: 1.45rem; height: 1.45rem; }
+  .pillars { margin: 2rem -.5rem 0; }
+  .pillars li { padding: 0 .25rem; gap: .7rem; }
+  .pillars svg { width: 1.6rem; height: 1.6rem; }
+  .pillars span { font-size: .75rem; letter-spacing: 0; line-height: 1.5; }
+  .landing[lang="fr"] .pillars { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 1.5rem; }
+  .landing[lang="fr"] .pillars li:nth-child(3) { border-left: 0; }
+  .footer { display: block; padding: 2.25rem 7.5vw 1.75rem; }
+  .legacyPromise { display: none; }
+  .principles { margin: 0; padding: 0; width: 100%; max-width: none; }
+  .principles ul { justify-content: center; gap: .85rem; flex-wrap: wrap; }
+  .principles li { font-size: .6875rem; letter-spacing: .15em; }
+  .principles li + li { padding-left: .85rem; }
+  .principles .brandRule { width: 4.5rem; margin-top: 1.25rem; }
+  .brandRule::after { height: 5px; top: -1.5px; }
+}
+
+@media (max-width: 22rem) {
+  .entryGrid { padding-inline: 8vw; }
+  .eyebrow { letter-spacing: .14em; }
+  .protocol { font-size: .625rem; letter-spacing: .07em; }
+  .protocol > i { width: 1rem; flex-basis: 1rem; }
+  .pillars { margin-inline: 0; }
+  .pillars span { font-size: .7rem; letter-spacing: 0; }
+  .principles ul { gap: .6rem; }
+  .principles li { letter-spacing: .08em; }
+  .principles li + li { padding-left: .6rem; }
+}
+
+@media (prefers-reduced-motion: reduce) { .loginLink { transition: none; } }
+@media (forced-colors: active) { .hero, .heroShade { display: none; } .loginLink { border: 2px solid ButtonText; } .accent, .eyebrow { color: CanvasText; } }

@@ -39,6 +39,7 @@ const types = {
   ".js": "text/javascript",
   ".css": "text/css",
   ".png": "image/png",
+  ".webp": "image/webp",
   ".woff2": "font/woff2",
 };
 createServer(async (req, res) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
@@ -379,6 +380,12 @@ export function CoachDashboard() {
                       <small className="fe-status-meta">{status.detail}</small>
                     </div>
                     <div className="fe-client-actions">
+                      <Link
+                        className="fe-text-button"
+                        href={`/coach/clients/${encodeURIComponent(client.id)}`}
+                      >
+                        Voir le dossier
+                      </Link>
                       {canResend ? (
                         <button
                           className="fe-text-button"
