@@ -227,7 +227,7 @@ export function ClientWeekZero() {
               {step<3 && <button className="fe-button fe-button-primary" type="button" disabled={busy} onClick={() => goToStep(step+1)}>{t("Continuer", "Continue")}</button>}
             </div>
           </form>
-          <p>{t("Tu n’as pas encore rempli le questionnaire d’accueil ? ", "Have you completed the intake questionnaire? ")}<a href="https://tally.so/r/44zdvk" target="_blank" rel="noopener noreferrer">{t("Ouvrir le questionnaire Tally", "Open the Tally questionnaire")}</a>. {t("Il s’ouvre dans un autre onglet. Ses réponses restent dans Tally et ne sont pas importées dans ce bilan.", "It opens in another tab. Its answers stay in Tally and are not imported into this assessment.")}</p>
+          <p>{t("Pour partager tes objectifs, tes habitudes et ton parcours personnel : ", "To share your goals, habits and personal background: ")}<a href="/client/onboarding">{t("Ouvrir mon questionnaire d’accueil", "Open my welcome questionnaire")}</a>. {t("Il est distinct de ce bilan de mesures et de mobilité, et se remplit maintenant directement dans ton portail.", "It is separate from this measurements and mobility assessment, and is now completed directly in your portal.")}</p>
         </>}
       </>}
     </div>

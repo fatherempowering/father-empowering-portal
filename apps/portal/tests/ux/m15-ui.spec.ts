@@ -244,6 +244,196 @@ test("Client V2 supports English and 200% reflow at 320px", async ({ page }) => 
   );
 });
 
+test("Client onboarding takes priority in the pilot until it is submitted", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-v2&state=onboarding-not-started");
+  const start = page.getByRole("link", {
+    name: "Compléter mon questionnaire d’accueil",
+  });
+  await expect(start).toBeVisible();
+  await expect(start).toHaveAttribute("href", "/client/onboarding");
+  await expect(
+    page.getByRole("link", { name: "Compléter mon bilan initial" }),
+  ).toHaveCount(0);
+
+  await page.goto("/?screen=client-v2&state=onboarding-draft");
+  await expect(
+    page.getByRole("link", { name: "Reprendre mon questionnaire d’accueil" }),
+  ).toHaveAttribute("href", "/client/onboarding");
+  await expect(
+    page.getByRole("link", { name: "Compléter mon bilan initial" }),
+  ).toHaveCount(0);
+});
+
+test("Client onboarding status failure keeps recovery and direct initial assessment access", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-v2&state=onboarding-action-error");
+
+  await expect(
+    page.getByRole("heading", {
+      name: "Ta prochaine étape ne peut pas être chargée",
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Réessayer" })).toBeEnabled();
+  await expect(
+    page.getByRole("link", { name: "Accéder à mon bilan initial" }),
+  ).toHaveAttribute("href", "/client/week-zero");
+});
+
+test("Client onboarding resumes its server draft after a document reload", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-draft");
+  await expect(
+    page.getByRole("heading", { name: "Ton questionnaire d’accueil" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Brouillon privé enregistré", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel(/Nom complet/)).toHaveValue("Alex Brouillon");
+  await expect(page.getByLabel(/Courriel/)).toHaveValue("alex@example.test");
+
+  await page.reload();
+
+  await expect(page.getByLabel(/Nom complet/)).toHaveValue("Alex Brouillon");
+  await expect(page.getByLabel(/Courriel/)).toHaveValue("alex@example.test");
+});
+
+test("Client onboarding keeps entries and its mutation key across a transient PUT failure", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-save-error-once");
+  const fullName = page.getByLabel(/Nom complet/);
+  await fullName.fill("Alex Saisie locale");
+  const save = page.getByRole("button", { name: "Enregistrer mon brouillon" });
+
+  await save.click();
+  await expect(page.getByText(/La confirmation n’a pas été reçue/i)).toBeVisible();
+  await expect(fullName).toHaveValue("Alex Saisie locale");
+
+  await save.click();
+  await expect(page.getByText(/Sauvegarde confirmée/i)).toBeVisible();
+  await expect(fullName).toHaveValue("Alex Saisie locale");
+});
+
+test("Client onboarding keeps local entries on 409 and reloads only after confirmation", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-conflict");
+  const fullName = page.getByLabel(/Nom complet/);
+  await fullName.fill("Alex Saisie en conflit");
+  await page.getByRole("button", { name: "Enregistrer mon brouillon" }).click();
+
+  await expect(page.getByText(/Une version plus récente existe/i)).toBeVisible();
+  await expect(fullName).toHaveValue("Alex Saisie en conflit");
+  await expect(
+    page.getByRole("button", { name: "Enregistrer mon brouillon" }),
+  ).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Continuer" })).toBeDisabled();
+
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.getByRole("button", { name: "Recharger la version enregistrée" }).click();
+  await expect(fullName).toHaveValue("Alex Saisie en conflit");
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Recharger la version enregistrée" }).click();
+  await expect(fullName).toHaveValue("Alex Version enregistrée");
+  await expect(
+    page.getByText("Brouillon privé enregistré", { exact: true }),
+  ).toBeVisible();
+});
+
+test("Client onboarding excludes invalid formats from progress and lists them before submit", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
+  await page.getByLabel(/Nom complet/).fill("Alex Martin");
+  await page.getByLabel(/Courriel/).fill("courriel-invalide");
+  await expect(
+    page.getByText(/1 réponses obligatoires sur \d+ complétées et valides/i),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Vérifier et transmettre" }).click();
+  const attention = page.getByRole("alert").filter({
+    hasText: "Ces réponses sont manquantes ou leur format doit être corrigé",
+  });
+  await expect(attention).toBeVisible();
+  await expect(
+    attention.getByRole("button", { name: "Courriel" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Transmettre mon questionnaire" }),
+  ).toBeDisabled();
+});
+
+test("Submitted Client onboarding is read-only and remains distinct from the initial assessment", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-onboarding&state=onboarding-submitted");
+  await expect(
+    page.getByText("Questionnaire transmis au Coach", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/questionnaire transmis est conservé en lecture seule/i),
+  ).toBeVisible();
+  await expect(page.locator("form")).toHaveCount(0);
+  await expect(page.locator("details")).toHaveCount(6);
+  await expect(
+    page.getByRole("link", { name: "Accéder à mon bilan initial" }),
+  ).toHaveAttribute("href", "/client/week-zero");
+});
+
+test("Client onboarding reflows without browser storage at narrow widths", async ({
+  page,
+}) => {
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/?screen=client-onboarding&state=onboarding-draft");
+    await expect(page.getByLabel(/Nom complet/)).toHaveValue("Alex Brouillon");
+    expect(
+      await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
+      ),
+      `Client onboarding at ${width}px`,
+    ).toBe(true);
+    expect(
+      await page.evaluate(() => ({
+        local: window.localStorage.length,
+        session: window.sessionStorage.length,
+      })),
+    ).toEqual({ local: 0, session: 0 });
+  }
+});
+
+test("Document onboarding entry and cancelled browser Back preserve a dirty answer", async ({
+  page,
+}) => {
+  await page.goto("/?screen=client-v2&state=onboarding-not-started");
+  const entry = page.getByRole("link", {
+    name: "Compléter mon questionnaire d’accueil",
+  });
+  await expect(entry).toHaveAttribute("href", "/client/onboarding");
+  expect(await entry.evaluate((element) => element.tagName)).toBe("A");
+
+  await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
+  const fullName = page.getByLabel(/Nom complet/);
+  await fullName.fill("Alex à conserver");
+  let dialogType = "";
+  page.once("dialog", async (dialog) => {
+    dialogType = dialog.type();
+    await dialog.dismiss();
+  });
+  await page.evaluate(() => window.history.back());
+
+  await expect(fullName).toHaveValue("Alex à conserver");
+  expect(dialogType).toBe("beforeunload");
+  await expect(page).toHaveURL(/screen=client-onboarding/);
+});
+
 test("Week Zero resumes a saved draft and reflows at Client mobile widths", async ({
   page,
 }) => {
@@ -558,7 +748,7 @@ test("Client pilot exposes only factual M1 content and keeps Today outside the d
   const navigation = page.getByRole("navigation", {
     name: "Navigation principale",
   });
-  await expect(navigation.getByRole("link", { name: "Accueil" })).toHaveAttribute(
+  await expect(navigation.getByRole("link", { name: "Accueil", exact: true })).toHaveAttribute(
     "aria-current",
     "page",
   );

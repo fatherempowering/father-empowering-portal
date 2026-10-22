@@ -17,7 +17,7 @@ export function AppShell({
   space: "coach" | "client";
   name?: string;
   locale?: "fr" | "en";
-  current?: "clients" | "home" | "today" | "week-zero";
+  current?: "clients" | "home" | "today" | "onboarding" | "week-zero";
   accountAction?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -47,6 +47,12 @@ export function AppShell({
             label: french ? "Aujourd’hui" : "Today",
             icon: "today" as const,
             id: "today" as const,
+          },
+          {
+            href: "/client/onboarding",
+            label: french ? "Questionnaire d’accueil" : "Welcome questionnaire",
+            icon: "check" as const,
+            id: "onboarding" as const,
           },
           {
             href: "/client/week-zero",
@@ -79,8 +85,11 @@ export function AppShell({
         <Brand />
         <nav aria-label={french ? "Navigation principale" : "Main navigation"}>
           <p className="fe-side-label">{spaceLabel}</p>
-          {navigation.map((item) => (
-            <Link
+          {navigation.map((item) => {
+            // A document entry lets the long intake form protect browser Back
+            // with beforeunload, without adding a parallel history router.
+            const NavLink = item.id === "onboarding" ? "a" : Link;
+            return <NavLink
               className="fe-side-link"
               href={item.href}
               aria-current={item.id === current ? "page" : undefined}
@@ -89,8 +98,8 @@ export function AppShell({
             >
               <Icon name={item.icon} />
               {item.label}
-            </Link>
-          ))}
+            </NavLink>;
+          })}
         </nav>
         <div className="fe-side-bottom">
           <p className="fe-side-motto">Shape your legacy.</p>

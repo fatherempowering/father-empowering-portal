@@ -99,6 +99,7 @@ export function CoachEmailVerificationCard({
   const automaticRequestStarted = useRef(false);
   const requestAbortController = useRef<AbortController | null>(null);
   const verificationForm = useRef<HTMLFormElement>(null);
+  const refocusAfterVerify = useRef(false);
 
   const requestCode = useCallback(async (resent: boolean) => {
     requestAbortController.current?.abort();
@@ -183,6 +184,12 @@ export function CoachEmailVerificationCard({
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
+  useEffect(() => {
+    if (verifying || !refocusAfterVerify.current) return;
+    refocusAfterVerify.current = false;
+    verificationForm.current?.querySelector("input")?.focus();
+  }, [verifying]);
+
   async function verifyCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (verifying || requestState !== "SENT" || !/^\d{6}$/.test(code)) return;
@@ -217,9 +224,7 @@ export function CoachEmailVerificationCard({
           setError("Impossible de vérifier le code. Réessaie dans quelques instants.");
         }
         setCode("");
-        window.requestAnimationFrame(() => {
-          verificationForm.current?.querySelector("input")?.focus();
-        });
+        refocusAfterVerify.current = true;
         return;
       }
 
@@ -228,6 +233,7 @@ export function CoachEmailVerificationCard({
       setError(
         "Impossible de vérifier le code. Vérifie ta connexion Internet et réessaie.",
       );
+      refocusAfterVerify.current = true;
     } finally {
       setVerifying(false);
     }
