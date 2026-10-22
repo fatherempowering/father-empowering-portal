@@ -1,0 +1,70 @@
+{
+  "title": "Client visual checkpoint — Home and Onboarding",
+  "date": "2026-10-14",
+  "base": "b6e5944668a707156d333b82490469967820a490",
+  "branch": "codex/client-visual-integration",
+  "handoff": "FE-Client-Integration-UX-V1-2026-10-14",
+  "scope": [
+    "/client",
+    "/client/onboarding"
+  ],
+  "routing": {
+    "/client": "src/features/client/dashboard/client-home-pilot.tsx",
+    "/client/onboarding": "src/features/client/onboarding/client-onboarding.tsx",
+    "shell": "src/features/client/dashboard/client-visual-shell.tsx"
+  },
+  "decisions": {
+    "BASE-01": "Stacked on PR29, including PR23–29. No rollback to the older f0507c5 design catalog.",
+    "NAV-01": "Keep five real Client routes including /client/program. No invented account route. Actual Client identity; staff-only Coach return stays in the account area.",
+    "STATE-01": "Keep existing reads and Onboarding -> Week Zero action selection. Actual program component reports publication independently; remove contradictory unavailability text on the checkpoint Home only.",
+    "DATA-01": "No extra Week Zero summary query or fictitious values. Keep a link to the existing Client Week Zero.",
+    "LEGACY-01": "No additional migration or claim of Legacy feature parity.",
+    "PREF-01": "Existing locale and unit data preserved; no preference reset/storage. Existing local fonts/logo reused byte-identically.",
+    "SAVE-01": "Existing save/Continue/submit, idempotency, conflicts, read-only and unsaved-navigation guards retained. Document links from long questionnaire preserve navigation warnings.",
+    "FOLLOWUP-01": "Max requested confirmation without repeated answers after submission. Review before sending is preserved; intentional read-only consultation remains in landmarks/navigation via ?view=responses. A successful submission always advances to confirmation, including a draft entered through landmarks.",
+    "FOLLOWUP-02": "Reserve separate French/English Week Zero video slots using the existing Client locale. Assets are not supplied: localized pending messages only, no fake player, no external media requests, no cross-language video fallback. Return Home follows the video slot. No video management or upload system added.",
+    "FOLLOWUP-03": "Make Ta prochaine étape more prominent and remove the submitted-questionnaire shortcut from that panel. Existing Week Zero message remains unchanged pending Max's replacement text."
+  },
+  "deviations": [
+    "Desktop/mobile questionnaire references show different states; both states remain supported at all sizes.",
+    "Mobile navigation combines horizontally accessible steps and labelled native section selector; no swipe-only navigation.",
+    "Long section introductions remain available behind an explicit About this section disclosure, placing the first field above the fold.",
+    "Save/Continue controls remain in normal flow to avoid covering fields, errors or mobile keyboards.",
+    "Current program access and staff-only portal switch retained despite their absence in the older visual references.",
+    "Today, Week Zero, program detail, Coach and Auth not visually generalized before human checkpoint validation."
+  ],
+  "assets": [
+    {
+      "source": "assets/images/portal-hero-desktop-master.png",
+      "source_sha256": "a7d7fcb0d8df1a84f136db3058cd143daf5144bd8a688d00eae12506372b6a92",
+      "outputs": [
+        "public/brand/client/portal-hero.webp",
+        "public/brand/client/portal-hero-mobile.webp"
+      ],
+      "processing": "WebP quality85, desktop2172px/mobile1086px, CSS responsive crop; master retained in original handoff"
+    },
+    {
+      "source": "assets/images/father-child-master.png",
+      "source_sha256": "3d75433be96abba677d2dcc2acd06f914c96d3f4922cc90133b332d3cc5d1122",
+      "outputs": [
+        "public/brand/client/father-child.webp"
+      ],
+      "processing": "WebP quality85,720px wide; master retained in original handoff"
+    },
+    {
+      "source": "assets/fonts and FE logo",
+      "processing": "No duplication: existing local assets match supplied hashes"
+    }
+  ],
+  "restrictions": {
+    "auth_changed": false,
+    "api_changed": false,
+    "rls_changed": false,
+    "data_migration": false,
+    "coach_permissions_changed": false,
+    "production_deployment": false,
+    "legacy_changes": false,
+    "merge_authorized": false
+  },
+  "acceptance": "Technical verification does not replace Cavalier5/Max visual acceptance. No full WCAG certification, physical mobile keyboard test or new feature claims."
+}

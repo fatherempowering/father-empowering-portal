@@ -195,6 +195,12 @@ if (harnessParameters.get("screen") === "program-builder") {
 }
 window.fetch = async (url, init) => {
   const path = String(url);
+  if (path === "/api/v1/auth/client-logout" && ["client-logout-network-error", "onboarding-load-logout-error"].includes(scenario)) throw new TypeError("Synthetic network failure");
+  if (path === "/api/v1/client/onboarding" && scenario === "onboarding-load-logout-error") {
+    return new Promise<Response>((resolve) => Object.assign(window, {
+      __releaseOnboardingLoad: () => resolve(reply({ data: { intake: onboardingSnapshot("NOT_STARTED") } })),
+    }));
+  }
   if (path.startsWith("/api/v1/coach/programs/recipients")) return reply({data:{clients:[{id:recipientId,name:"Client Test"}],total:1,page:0}});
   if (path === "/api/v1/coach/programs/publish") {
     const input = JSON.parse(String(init?.body)) as PublishProgramRequest; publicationRequests.push(input);
@@ -356,6 +362,7 @@ window.fetch = async (url, init) => {
     }, 201);
   }
   if (path.endsWith("/client/onboarding/submit") && init?.method === "POST") {
+    if (scenario === "onboarding-submit-error") return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
     return reply({ data: { intake: onboardingSnapshot("SUBMITTED") } });
   }
   if (path.endsWith("/client/onboarding") && init?.method === "PUT") {
@@ -407,7 +414,7 @@ window.fetch = async (url, init) => {
     if (scenario === "onboarding-legacy-measurements") {
       return reply({ data: { intake: onboardingSnapshot("DRAFT", { ...EMPTY_ONBOARDING_RESPONSES, height: "Ancienne taille sans unité", currentBodyweight: "Ancien poids sans unité" }) } });
     }
-    if (scenario === "onboarding-complete-draft") {
+    if (scenario === "onboarding-complete-draft" || scenario === "onboarding-submit-error") {
       return reply({ data: { intake: onboardingSnapshot("DRAFT", completeOnboardingResponses()) } });
     }
     if (scenario === "onboarding-action-error") {
@@ -487,7 +494,7 @@ window.fetch = async (url, init) => {
     if (scenario === "assessment-draft") {
       return reply({ data: { assessment: assessmentSnapshot("DRAFT") } });
     }
-    if (scenario === "assessment-submitted") {
+    if (scenario === "assessment-submitted" || scenario === "program-published") {
       return reply({ data: { assessment: assessmentSnapshot("SUBMITTED") } });
     }
     if (scenario === "assessment-conflict" && assessmentConflictOccurred) {
@@ -660,7 +667,7 @@ function Harness() {
     return <ClientWeekZero />;
   }
   if (view === "client-onboarding") {
-    return <ClientOnboarding />;
+    return <ClientOnboarding reviewSubmittedResponses={harnessParameters.get("view") === "responses"} />;
   }
   if (view === "personal-portal-setup") {
     return <AppShell space="coach" current="personal">

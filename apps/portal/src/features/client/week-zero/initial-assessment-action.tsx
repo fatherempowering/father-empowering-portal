@@ -5,9 +5,11 @@ import { useEffect, useState } from "react";
 import { initialAssessmentSnapshotSchema, type InitialAssessmentStatus } from "@/lib/contracts/week-zero";
 
 /** The next action comes from the saved assessment, never from account activation. */
-export function InitialAssessmentAction({ french, actionClassName = "fe-button fe-button-primary" }: {
+export function InitialAssessmentAction({ french, actionClassName = "fe-button fe-button-primary", hideProgramAvailability = false }: {
   french: boolean;
   actionClassName?: string;
+  /** The visual Home reads the actual publication separately, never infers it from Week Zero. */
+  hideProgramAvailability?: boolean;
 }) {
   const [status, setStatus] = useState<InitialAssessmentStatus | null>(null);
   const [failed, setFailed] = useState(false);
@@ -48,7 +50,9 @@ export function InitialAssessmentAction({ french, actionClassName = "fe-button f
   return <div data-initial-assessment-status={status}>
     <h2>{sent ? t("Semaine zéro transmise", "Week Zero submitted") : t("Ta semaine zéro", "Your Week Zero")}</h2>
     <p>{sent
-      ? t("Ton Coach peut consulter tes réponses dans ton dossier. Tu n’as rien à renvoyer. Ton programme n’est pas encore disponible ici.", "Your Coach can read your answers in your file. There is nothing to resend. Your program is not available here yet.")
+      ? hideProgramAvailability
+        ? t("Ton Coach peut consulter tes réponses dans ton dossier. Tu n’as rien à renvoyer.", "Your Coach can read your answers in your file. There is nothing to resend.")
+        : t("Ton Coach peut consulter tes réponses dans ton dossier. Tu n’as rien à renvoyer. Ton programme n’est pas encore disponible ici.", "Your Coach can read your answers in your file. There is nothing to resend. Your program is not available here yet.")
       : t("Renseigne tes mesures, ta mobilité et tes disponibilités pour aider ton Coach à préparer la suite. Enregistre un brouillon, puis transmets-le quand tu es prêt.", "Share your measurements, mobility and availability to help your Coach plan the next steps. Save a draft, then submit it when you are ready.")}</p>
     <Link className={actionClassName} href="/client/week-zero">{sent
       ? t("Consulter ma semaine zéro", "View my Week Zero")

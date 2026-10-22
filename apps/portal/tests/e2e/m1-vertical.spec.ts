@@ -318,27 +318,31 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await clientPage.getByRole("button", { name: /activer mon portail/i }).click();
 
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
-  await expect(clientPage.getByRole("heading", { name: "Ton portail." })).toBeVisible();
+  await expect(clientPage.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
   await expect(clientPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   await expect(clientPage.getByText(/^accès actif$/i).first()).toBeVisible();
   await clientPage.getByRole("button", { name: "Menu", exact: true }).click();
   await expect(
     clientPage.locator('a[href="/client"][aria-current="page"]'),
   ).toBeVisible();
+  await expect(clientPage.locator("[inert]")).toHaveCount(1);
+  await clientPage.getByRole("button", { name: "Fermer le menu", exact: true }).click();
+  await expect(clientPage.locator("[inert]")).toHaveCount(0);
   await expect(
     clientPage.getByRole("heading", {
-      name: "Commençons par mieux te connaître",
+      name: "Faisons connaissance.",
     }),
   ).toBeVisible();
   await expect(
     clientPage.getByRole("link", { name: "Compléter mon questionnaire d’accueil" }),
   ).toHaveAttribute("href", "/client/onboarding");
   await expect(
-    clientPage.getByRole("link", { name: "Semaine zéro", exact: true }),
-  ).toHaveAttribute("href", "/client/week-zero");
-  await expect(
     clientPage.getByRole("link", { name: "Voir aujourd’hui" }),
   ).toHaveCount(0);
+  await clientPage.getByRole("button", { name: "Menu", exact: true }).click();
+  await expect(
+    clientPage.getByRole("link", { name: "Semaine zéro", exact: true }),
+  ).toHaveAttribute("href", "/client/week-zero");
   await clientPage.getByRole("link", { name: "Aujourd’hui" }).click();
   await expect(clientPage).toHaveURL(/\/client\/today(?:\?.*)?$/);
   await expect(clientPage.getByRole("heading", { name: "Aujourd’hui" })).toBeVisible();
@@ -368,7 +372,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     .click();
   await expect(clientPage).toHaveURL(/\/client\/onboarding(?:\?.*)?$/);
   await expect(
-    clientPage.getByRole("heading", { name: "Ton questionnaire d’accueil" }),
+    clientPage.getByRole("heading", { name: "Faisons connaissance." }),
   ).toBeVisible();
   await clientPage.getByLabel(/Numéro de téléphone/i).fill("+1 514 555 0199");
 
@@ -432,9 +436,9 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     }
   });
 
-  await continuedPage.goto(`${environment.appUrl}/client/onboarding`);
+  await continuedPage.goto(`${environment.appUrl}/client/onboarding?view=responses`);
   await expect(
-    continuedPage.getByRole("heading", { name: "Ton questionnaire d’accueil" }),
+    continuedPage.getByRole("heading", { name: "Faisons connaissance." }),
   ).toBeVisible();
   await expect(continuedPage.getByLabel(/Numéro de téléphone/i)).toHaveValue(
     "+1 514 555 0199",
@@ -463,9 +467,22 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     continuedPage.getByText(/Questionnaire transmis au Coach/i).first(),
   ).toBeVisible();
   await expect(
-    continuedPage.getByText(/conservé en lecture seule/i),
+    continuedPage.getByText("Vidéo à venir", { exact: true }),
   ).toBeVisible();
+  await expect(continuedPage.locator("form, details, video, iframe")).toHaveCount(0);
+  await expect(continuedPage.locator("h1")).toBeFocused();
+  await expect(continuedPage).toHaveURL(`${environment.appUrl}/client/onboarding`);
+  await expect(continuedPage.getByRole("link", { name: "Retour à la page d’accueil", exact: true })).toHaveAttribute("href", "/client");
+  await continuedPage.reload();
+  await expect(continuedPage.locator("[data-onboarding-completion]")).toBeVisible();
+  await expect(continuedPage.locator("details")).toHaveCount(0);
   expect(await browserStorageContainsPrivateOnboarding(continuedPage)).toBe(false);
+
+  // Answers remain available only through an intentional read-only visit.
+  await continuedPage.goto(`${environment.appUrl}/client/onboarding?view=responses`);
+  await expect(continuedPage.getByText(/conservé en lecture seule/i)).toBeVisible();
+  await expect(continuedPage.locator("details")).toHaveCount(6);
+  await expect(continuedPage.locator("form")).toHaveCount(0);
 
   const persistedOnboarding = await clientContext.request.get(
     `${environment.appUrl}/api/v1/client/onboarding`,
@@ -680,7 +697,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
 
   await continuedPage.goto(`${environment.appUrl}/client`);
   await expect(
-    continuedPage.getByRole("heading", { name: "Ton portail." }),
+    continuedPage.getByRole("heading", { name: "Ton point de départ." }),
   ).toBeVisible();
   await expect(continuedPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   await expect(
@@ -689,11 +706,11 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await continuedPage.goto(`${environment.appUrl}/client-login`);
   await expect(continuedPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(
-    continuedPage.getByRole("heading", { name: "Ton portail." }),
+    continuedPage.getByRole("heading", { name: "Ton point de départ." }),
   ).toBeVisible();
   expect(continuedOtpRequests).toHaveLength(0);
 
-  await continuedPage.goto(`${environment.appUrl}/client/onboarding`);
+  await continuedPage.goto(`${environment.appUrl}/client/onboarding?view=responses`);
   await expect(continuedPage.getByText(privateHealthSentinel)).toBeVisible();
   await continuedPage.locator('a[href="/client/today"]').click();
   await expect(continuedPage).toHaveURL(/\/client\/today(?:\?.*)?$/);
@@ -728,6 +745,8 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await continuedPage.goto(`${environment.appUrl}/client/week-zero`);
   await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
   await continuedPage.goto(`${environment.appUrl}/client/onboarding`);
+  await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
+  await continuedPage.goto(`${environment.appUrl}/client/onboarding?view=responses`);
   await expect(continuedPage).toHaveURL(/\/client-login(?:\?.*)?$/);
   const signedOutOnboarding = await clientContext.request.get(
     `${environment.appUrl}/api/v1/client/onboarding`,
@@ -775,7 +794,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await returningPage.getByRole("button", { name: /ouvrir mon portail/i }).click();
   await expect(returningPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(
-    returningPage.getByRole("heading", { name: "Ton portail." }),
+    returningPage.getByRole("heading", { name: "Ton point de départ." }),
   ).toBeVisible();
   await expect(returningPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   const authUsers = await admin.auth.admin.listUsers({ page: 1, perPage: 1_000 });

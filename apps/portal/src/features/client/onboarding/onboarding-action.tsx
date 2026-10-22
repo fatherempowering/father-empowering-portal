@@ -6,9 +6,10 @@ import { InitialAssessmentAction } from "@/features/client/week-zero/initial-ass
 import { onboardingSnapshotSchema, type OnboardingStatus } from "@/lib/contracts/onboarding";
 
 /** Onboarding first; Week Zero stays available in its single navigation entry. */
-export function OnboardingAction({ french, actionClassName = "fe-button fe-button-primary" }: {
+export function OnboardingAction({ french, actionClassName = "fe-button fe-button-primary", visualCheckpoint = false }: {
   french: boolean;
   actionClassName?: string;
+  visualCheckpoint?: boolean;
 }) {
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
   const [failed, setFailed] = useState(false);
@@ -49,14 +50,14 @@ export function OnboardingAction({ french, actionClassName = "fe-button fe-butto
   </div>;
   if (!status) return <p role="status">{t("Chargement de ta prochaine étape…", "Loading your next step…")}</p>;
   if (status === "SUBMITTED") return <div data-onboarding-status={status}>
-    <InitialAssessmentAction french={french} actionClassName={actionClassName} />
-    <p><a href="/client/onboarding">{t("Consulter mon questionnaire d’accueil transmis", "View my submitted welcome questionnaire")}</a></p>
+    <InitialAssessmentAction french={french} actionClassName={actionClassName} hideProgramAvailability={visualCheckpoint} />
   </div>;
   return <div data-onboarding-status={status}>
-    <h2>{t("Commençons par mieux te connaître", "Let’s get to know you")}</h2>
-    <p>{t("Tes objectifs, ta santé, tes habitudes et ton quotidien : complète ton questionnaire d’accueil à ton rythme. Ton brouillon reste privé jusqu’à sa transmission à Max.", "Your goals, health, habits and daily life: complete your welcome questionnaire at your own pace. Your draft stays private until you submit it to Max.")}</p>
+    <h2>{visualCheckpoint ? t("Faisons connaissance.", "Let’s get to know you.") : t("Commençons par mieux te connaître", "Let’s get to know you")}</h2>
+    <p>{visualCheckpoint ? t("Tes objectifs, tes habitudes, ton quotidien. Prépare ton accompagnement avec Max.", "Your goals, your habits, your everyday life. Prepare your coaching journey with Max.") : t("Tes objectifs, ta santé, tes habitudes et ton quotidien : complète ton questionnaire d’accueil à ton rythme. Ton brouillon reste privé jusqu’à sa transmission à Max.", "Your goals, health, habits and daily life: complete your welcome questionnaire at your own pace. Your draft stays private until you submit it to Max.")}</p>
     <a className={actionClassName} href="/client/onboarding">{status === "DRAFT"
       ? t("Reprendre mon questionnaire d’accueil", "Continue my welcome questionnaire")
       : t("Compléter mon questionnaire d’accueil", "Complete my welcome questionnaire")}</a>
+    {visualCheckpoint ? <small>{t("Ton brouillon reste privé jusqu’à sa transmission.", "Your draft stays private until you submit it.")}</small> : null}
   </div>;
 }

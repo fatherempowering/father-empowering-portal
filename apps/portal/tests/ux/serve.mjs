@@ -20,7 +20,7 @@ await build({
   bundle: true,
   outdir: output,
   jsx: "automatic",
-  external: ["/fonts/*"],
+  external: ["/fonts/*", "/brand/*"],
   define: { "process.env.NODE_ENV": '"development"' },
   alias: {
     "@": resolve(app, "src"),
