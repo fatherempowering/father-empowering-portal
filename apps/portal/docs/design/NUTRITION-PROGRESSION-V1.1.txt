@@ -1,0 +1,181 @@
+FATHER EMPOWERING — RÉFÉRENCE NUTRITION / PROGRESSION / HISTORIQUE V1.1
+Intégration des directives visuelles transmises par Max — 21 octobre 2026
+
+SOURCE ET AUTORITÉ
+FE-Nutrition-Progression-Lookbook-V1-1.pdf, 12 pages, 20 octobre 2026.
+SHA256 : 0a3fd88fd9fd8fdc82439b3d6ef293dc141bd76e0b0df8f411f467e0bac82147
+Compagnons examinés : 00-LIRE-EN-PREMIER.txt,
+01-REVUE-LEGACY-ET-RECOMMANDATIONS.txt, 02-CONTRATS-UX-ET-DECISIONS.txt.
+Le PDF original et ses 7 planches restent dans le dossier transmis par Max.
+Ils ne sont ni des assets d'exécution ni une preuve de comportement codé.
+
+Max autorise les ajustements esthétiques applicables aux pages existantes
+et l'utilisation du dossier comme référence pour les pages futures.
+Cette autorisation ne crée pas de prescription nutritionnelle, formule de
+progression, règle de calendrier, nouvelle destination ou contrat de données.
+Ce document complète les références FE existantes ; il ne les remplace pas.
+La page Week Zero et la copie multiple restent dans leurs branches distinctes.
+Le Cavalier 5 est externe ; tout échange passe par Max. Aucun Agent 5 local.
+
+CE QUI EST DÉJÀ PRÉSENT
+- Accueil, questionnaire : shell Client graphite, polices locales Bebas Neue
+  et DM Sans, photos de marque, navigation mobile compacte et focus visible.
+- Questionnaire / semaine zéro : prochaine action issue d'un état chargé,
+  chargement et erreur distincts, pas de faux lecteur vidéo FR/EN.
+- Programme : publication figée, choix explicite semaine/séance, ouverture
+  distincte du démarrage et de l'enregistrement, résultats réels uniquement.
+- Historique dans /client/program : séances enregistrées, pagination et accès
+  à la séance de sa publication d'origine. Ni graphique ni ratio inventé.
+- Coach : consultation des résultats avec prescription d'origine, publications
+  précédentes identifiées et détail chargé à la demande.
+
+LOT APPLICABLE MAINTENANT — PRÉSENTATION UNIQUEMENT
+Base : main 59d2dc3bcbe0728dd715023e70bb7ff95746db53 (PR23 à PR31 intégrées).
+Composant : src/features/training/client/client-program.tsx, WorkoutHistory.
+- Panneau historique graphite et cartes sobres sur fond uni ; titre Bebas Neue.
+- Badges texte + icône : Terminée en vert, En cours en orange. La couleur ne
+  remplace jamais le libellé. L'état vient de la réponse existante, sans mutation.
+- Nom, programme d'époque, semaine et numéro de publication visibles ensemble.
+- Date réelle updatedAt explicitement nommée « Dernier enregistrement » ;
+  balise time et dateTime. Le fuseau de présentation existant reste inchangé.
+  Ce n'est pas une nouvelle date d'exécution ni un horaire de séance déduit.
+- Total nommé « séances enregistrées », pas « séances terminées ».
+- Action « Voir le résultat » ou « Reprendre », avec lien existant conservé.
+- Texte principal 16 px, métadonnées 14 px, actions >= 44 px, focus visible,
+  retours à la ligne à 390/320 px et texte agrandi à 200 %.
+- Espacements mobiles plafonnés pour conserver la largeur de lecture à 200 % ;
+  titres, statuts et mots des actions vérifiés sans coupure en FR et EN.
+- Aucun changement de requête, tri serveur, pagination, sauvegarde, identité,
+  modèle, Auth, permissions, RLS, RPC ou gestion des résultats.
+- Habillage limité à cette section. Le reste du shell Training/Coach reste
+  inchangé ; ce lot ne prétend pas généraliser le lookbook à toute l'application.
+- Correctif responsive complémentaire : à 320 px et texte 200 %, le nom de marque
+  compact du shell existant peut revenir à la ligne, sans repousser le bouton
+  Menu hors écran. Aucun changement de navigation ou d'authentification.
+
+CONTRAT VISUEL POUR LES PROCHAINES PAGES
+Fond #101416 ; panneaux #1A2229 ; texte #FFFFFF ; texte secondaire #CED3D7 ;
+orange #FF7A1A ; réalisations confirmées #60E88A. Données sur surface unie.
+Bebas Neue pour les titres ; DM Sans pour interface, nombres et saisie.
+Héros compact sur les pages de travail, pas de photographie derrière les valeurs.
+Desktop : shell existant et deux colonnes si utiles. Sous 1024 px : menu compact,
+pas six petits onglets fixes. Mobile : une colonne, 16 px de marge à 390 px,
+12 px à 320 px, scroll vertical naturel, labels non réduits pour tenir à l'écran.
+Contraste AA, clavier, focus, erreurs liées aux champs et réduction des animations.
+Pas de célébration qui force le scroll. Pas de nouvelle police distante.
+Pas d'image d'exercice extraite du PDF, de substitut générique ni de faux lecteur.
+La banque d'images/vidéos de Max demeure la seule future source d'exercices.
+Ne pas supprimer silencieusement une capacité Legacy, y compris le thème clair.
+
+NUTRITION — PAGES 3 ET 4 — FUTUR MODULE
+La planche 4 prime pour la navigation mobile : Repas / Préparation / Épicerie.
+Conserver plan/version et jour explicites ; changement de plan != consommation.
+Les cibles prescrites, repas, portions et notes restent ceux publiés par le coach.
+Afficher cru/cuit seulement si fourni ; ne jamais inventer durée de cuisson,
+conversion, substitution, supplément ou multiplicateur de portions familial.
+Préparation et épicerie appartiennent au même plan. N'afficher une destination
+active que si son contenu existe. « Dans le panier » décrit les courses,
+pas un repas mangé. Aucun suivi calorique consommé sans contrat correspondant.
+Le retour à Aujourd'hui ne doit pas perdre le plan choisi ou les courses cochées.
+L'agrégation, les unités et la synchronisation des courses restent à spécifier.
+
+PROGRESSION — PAGES 5, 6, 9 ET 10 — FUTUR MODULE
+Référence principale recommandée : A (preuves), enrichie de C (jalons vérifiables).
+B (cadran) est facultatif, conditionné à un objectif individuel validé et daté.
+L'acceptation visuelle n'approuve aucune nouvelle formule ni cible de poids.
+- Séances réellement terminées d'abord ; période et dénominateur explicités.
+  Pas de score de santé, chaîne punitive ou pénalité pour un repos prescrit.
+  Une série EXTRA n'est pas une séance supplémentaire. Ouvrir != terminer.
+- Poids : valeur/unité/date, variation signée neutre. Ni hausse ni baisse n'est
+  universellement bonne/mauvaise. Pas de projection de date de résultat.
+- Courbe orange avec fondu SOUS la courbe, opacité indicative 25–30 % vers 0 %.
+  Le fondu est décoratif, ne code aucune donnée supplémentaire. Les réalisations
+  restent vertes. Pas d'espace coloré au-dessus de la courbe.
+- Dates réelles correctement espacées, points mesurés distingués, axes/unité,
+  détail et tableau accessibles sans survol. Pas de lissage implicite ni courbe
+  inventée pour des données manquantes ; toute moyenne doit être définie.
+- Zéro mesure : carte explicative, pas d'axes vides ni zéro artificiel.
+  Une mesure : point de départ daté, pas de tendance. Poids stable : variation
+  neutre et séances accomplies toujours visibles.
+- Mensurations : zone/unité comparables, dates première/dernière explicites ;
+  données disponibles par zone. Sommeil durée != sommeil qualité sur 10.
+  Énergie, stress, douleur et sommeil restent distincts, pas un pourcentage santé.
+- Charges : comparer les exercices/unités/prescriptions réellement comparables.
+  Pas de record inventé par ajout de séries, d'estimation 1RM ou nouveau score.
+- Cadran : baseline, objectif, unité, changements de cible, maintien, dépassement
+  et données anciennes doivent être définis avant codage. Jamais un cadran 0 %
+  faute d'objectif. Cible atteinte != encouragement à perdre encore du poids.
+- Jalons : faits datés reliés à une séance/bilan réel ; pas de témoignage Coach,
+  comparaison sociale ou date fabriquée. Ne pas créer trois dashboards concurrents.
+
+ACCUEIL ACTIF — PAGE 7 — PARTIELLEMENT FUTUR
+Une action dominante : reprise d'une séance, séance disponible, repos prescrit
+ou attente réelle. L'arbitrage doit utiliser un contrat explicite, pas l'ordre
+des requêtes ni une supposition fondée sur l'heure. Les accès existants restent.
+Ensuite : semaine, nutrition si disponible, progrès si calculables, dernière séance.
+Le questionnaire transmis reste consultable dans les repères, pas répété.
+Les exemples 3/4, 18 séances et 6 semaines ne doivent jamais être affichés en réel.
+Ne pas dire « enregistré » avant confirmation et ne pas transformer une erreur
+de chargement en attente de publication. Ne pas masquer un besoin onboarding
+en ajoutant une action entraînement sur la seule base d'une maquette.
+
+HISTORIQUE ENRICHI — PAGE 8 — EXISTANT + FUTURE EXTENSION
+Liste datée puis détail ; desktop deux colonnes si utile, mobile liste puis détail.
+Prescription d'époque et réalisé distincts ; unités et noms d'époque conservés.
+En cours / terminé / non effectué / erreur ne se confondent pas ; ne pas créer
+un nouveau statut métier parce qu'il apparaît dans une maquette.
+Consultation en lecture seule par défaut. Corrections seulement via le contrat
+autorisé. Retour : même filtre/position/focus quand ces fonctions seront ajoutées.
+Recherche, filtres, phases et nouvelle route dédiée ne sont pas créés par ce lot.
+« Voir cette progression » seulement si une mesure comparable existe.
+Le tri réel et le fuseau retenu restent à expliciter pour les futurs filtres.
+Les archives/export/import/photos Legacy et le bilan privé du parcours ne sont
+pas déclarés migrés. Aucun partage automatique ; toute diffusion sera volontaire.
+
+ÉTATS À TESTER LORS DE CHAQUE FUTURE SLICE
+Chargement ; aucune donnée ; une seule mesure ; données espacées ; poids stable ;
+repos prescrit ; objectif absent/modifié/dépassé ; plan indisponible ; erreur avec
+reprise du contexte ; filtre vide ; média absent ; FR/EN ; 1440/390/320 px ;
+zoom texte 200 % ; clavier ; focus ; cibles tactiles ; réduction des animations.
+Offline : ne promettre ni disponibilité ni sauvegarde serveur non implémentées.
+Une dernière date ne peut être affichée que si un cache autorisé existe réellement.
+Pas de fausse page Nutrition/Progression cliquable tant qu'elle n'est pas construite.
+
+LIBELLÉS À RÉUTILISER DANS LE CONTEXTE APPROPRIÉ (FR / EN)
+Tes progrès / Your progress
+Séances terminées / Completed workouts
+Cibles prescrites / Prescribed targets
+Préparation / Meal prep ; Épicerie / Grocery list ; Dans le panier / In the cart
+Pas encore de mesure enregistrée / No measurements recorded yet
+Repos prévu / Scheduled rest ; Voir les valeurs / View values
+Prescription / Réalisé — Prescribed / Completed
+Tes efforts comptent. / Your efforts count.
+Tes efforts restent visibles, même quand la courbe ralentit. /
+Your efforts remain visible, even when the curve slows down.
+« Tes premières preuves » reste provisoire avant sa future utilisation produit.
+« Aujourd'hui, repos » seulement pour un repos réellement prescrit.
+Ne pas traduire approximativement les noms d'exercice ni réinterpréter les valeurs.
+
+DÉCISIONS TECHNIQUES CONSERVÉES — NE BLOQUENT PAS LE LOT VISUEL
+TDR-N01 : source nutrition Legacy remplie, plans/jours/sections, versions/cibles.
+TDR-N02 : courses cochées, agrégation/unités, changement de plan, sync/offline.
+TDR-P01 : séances attendues/terminées par période ; repos, optionnelles,
+          annulations, corrections, modification du programme et EXTRA.
+TDR-P02 : objectif individuel, baseline, cible et signification du cadran.
+TDR-P03 : sources de mesures, dates/fuseaux/unités, conversions et tendances.
+TDR-P04 : exercices comparables, charges clés ; aucun nouveau score/1RM.
+TDR-H01 : archives par publication/phase, noms/unités d'époque, correction,
+          filtres/recherche/pagination et retour au contexte.
+TDR-H02 : conservation export/import/photos, droits, séparation, migration/offline.
+TDR-U01 : priorité des prochaines actions, langue et cohérence de navigation.
+TDR-U02 : bilan privé du parcours, photos facultatives, téléchargement et partage.
+Les risques historiques L-07 (nom résolu depuis le programme courant) et L-08
+(lb imprimé indépendamment de l'unité) ne sont pas des bugs staging confirmés.
+Avant migration : vérifier une phase A archivée après renommage en B et des
+résultats de différentes unités, sans recalculer ni réécrire les anciens résultats.
+
+VALIDATION
+Les tests de présentation ne remplacent pas les parcours réels Supabase/E2E.
+Le gate complet existant reste inchangé. Une future validation visuelle humaine
+reste nécessaire pour les nouvelles pages codées. Aucun PASS global Nutrition,
+Progression, migration, accessibilité intégrale ou offline n'est revendiqué ici.
