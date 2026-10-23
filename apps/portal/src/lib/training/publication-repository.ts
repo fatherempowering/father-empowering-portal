@@ -1,6 +1,6 @@
 import "server-only";
 import { requireCoachVerified } from "@/lib/auth/actor";
-import { requireOwnClientAccess } from "@/lib/auth/own-client-access";
+import { getStaffPersonalProfile, requireOwnClientAccess } from "@/lib/auth/own-client-access";
 import { M1ContractError, uuidSchema } from "@/lib/contracts/m1";
 import { publicationClientsSchema, publicationSchema, publicationResponseSchema, publishProgramRequestSchema, type PublishProgramRequest } from "@/lib/contracts/training-publication";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -13,11 +13,17 @@ export function publicationError(error: { message: string } | null) {
   return programRepositoryError(error);
 }
 export async function listTrainingRecipients(page: number) {
-  await requireCoachVerified();
+  const { profile } = await getStaffPersonalProfile();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc("list_training_recipients", { p_page: page });
   if (error) throw publicationError(error);
-  return publicationClientsSchema.parse(data);
+  const recipients = publicationClientsSchema.parse(data);
+  return {
+    ...recipients,
+    // Only label recipients already authorized by the existing RPC. This flag
+    // never adds a recipient or grants publication access.
+    clients: recipients.clients.map((client) => ({ ...client, isOwnProfile: client.id === profile?.id })),
+  };
 }
 async function readCurrent(organizationId: string, clientId: string) {
   const supabase = await createServerSupabaseClient();

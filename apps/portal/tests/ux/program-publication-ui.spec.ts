@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import type { PublishProgramRequest } from "../../src/lib/contracts/training-publication";
-async function prepare(page:Page,state="") {
-  await page.goto(`/?screen=program-builder&state=${state}`);
+async function prepare(page:Page,state="",navigate=true) {
+  if (navigate) await page.goto(`/?screen=program-builder&state=${state}`);
   await page.getByRole("button",{name:"Ajouter une séance",exact:true}).click();
   await page.getByRole("button",{name:"Ajouter un bloc",exact:true}).click();
   await page.getByRole("button",{name:"Ajouter Dumbbell Press",exact:true}).click();
@@ -17,6 +17,21 @@ test("publication names the chosen Client and requires confirmation",async({page
   await expect(page.getByText("Programme publié. Le client peut maintenant le consulter dans son portail.")).toBeVisible();
   expect(confirmation).toContain("Client Test"); expect(confirmation).toContain("immédiatement visible");
   await expect(page.getByRole("button",{name:"Publier pour ce client",exact:true})).toBeDisabled();
+});
+test("personal recipient remains unambiguous after reload and in confirmation",async({page})=>{
+  await prepare(page,"same-name-clients");
+  const selector = page.getByRole("combobox",{name:"Client destinataire",exact:true});
+  await expect(selector.getByRole("option",{name:"Maxime Bourdon",exact:true})).toHaveCount(1);
+  await expect(selector.getByRole("option",{name:"Maxime Bourdon — Mon profil personnel",exact:true})).toHaveCount(1);
+  await page.reload();
+  await prepare(page,"same-name-clients",false);
+  await selector.selectOption({label:"Maxime Bourdon — Mon profil personnel"});
+  let confirmation="";
+  page.once("dialog",async dialog=>{confirmation=dialog.message();await dialog.dismiss();});
+  await page.getByRole("button",{name:"Publier pour ce client",exact:true}).click();
+  expect(confirmation).toContain("pour Maxime Bourdon — Mon profil personnel ?");
+  expect(await page.evaluate(()=>(window as unknown as {__publicationRequests:PublishProgramRequest[]}).__publicationRequests)).toEqual([]);
+  for(const width of [390,320]) {await page.setViewportSize({width,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);}
 });
 test("incomplete and unsaved work cannot be published",async({page})=>{
   await page.goto("/?screen=program-builder");

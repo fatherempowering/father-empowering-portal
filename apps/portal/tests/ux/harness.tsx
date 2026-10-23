@@ -518,7 +518,12 @@ window.fetch = async (url, init) => {
     const items = [...workoutRecords.values()].map(compactWorkout);
     return reply({ data: { items: items.slice(page * 20, page * 20 + 20), total: items.length, page, pageSize: 20 } });
   }
-  if (path.startsWith("/api/v1/coach/programs/recipients")) return reply({data:{clients:[{id:recipientId,name:"Client Test"}],total:1,page:0}});
+  if (path.startsWith("/api/v1/coach/programs/recipients")) {
+    const clients = scenario === "same-name-clients"
+      ? [{id:"19100000-0000-4000-8000-000000000006",name:"Maxime Bourdon",isOwnProfile:false},{id:recipientId,name:"Maxime Bourdon",isOwnProfile:true}]
+      : [{id:recipientId,name:"Client Test"}];
+    return reply({data:{clients,total:clients.length,page:0}});
+  }
   if (path === "/api/v1/coach/programs/publish") {
     const input = JSON.parse(String(init?.body)) as PublishProgramRequest; publicationRequests.push(input);
     if (scenario === "publication-conflict") return reply({error:{code:"VERSION_CONFLICT"}},409);
@@ -821,8 +826,13 @@ window.fetch = async (url, init) => {
     }
     return reply({ data: { assessment: assessmentSnapshot() } });
   }
-  if (path.endsWith("/coach/clients") && !init?.method)
-    return reply({ data: { clients: scenario === "empty" ? [] : records } });
+  if (path.endsWith("/coach/clients") && !init?.method) {
+    const clients = scenario === "same-name-clients" ? [false,true].map((isOwnProfile,index)=>({
+      ...records[0],id:index ? "personal" : "ordinary",firstName:"Maxime",lastName:"Bourdon",
+      email:index ? "owner@example.test" : "other@example.test",status:"ACTIVE",invitation:null,isOwnProfile,
+    })) : scenario === "empty" ? [] : records;
+    return reply({ data: { clients } });
+  }
   if (path.endsWith("/coach/clients") && init?.method === "POST") {
     const values = JSON.parse(String(init.body));
     const record = {

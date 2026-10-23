@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Feedback, Loading } from "@/components/fe/feedback";
+import { coachClientLabel } from "@/lib/clients/client-label";
 import type { ProgramSnapshot } from "@/lib/contracts/training-drafts";
 import { publicationClientsSchema, publicationResponseSchema, publishableProgramSchema,
   type PublicationClients, type ProgramPublication, type PublishProgramRequest } from "@/lib/contracts/training-publication";
@@ -57,7 +58,8 @@ export function ProgramPublish({ snapshot, disabled, lock }: {
   async function publish() {
     if (busy.current || (!pending.current && (!ready || disabled || !complete))) return;
     if (!pending.current) {
-      const name = clients?.clients.find((client) => client.id === clientId)?.name;
+      const recipient = clients?.clients.find((client) => client.id === clientId);
+      const name = recipient && coachClientLabel(recipient.name, recipient.isOwnProfile);
       if (!name || !window.confirm(`Publier « ${snapshot.document.title.fr || snapshot.document.title.en} » pour ${name} ? Ce plan sera immédiatement visible dans son portail.${current ? " Son programme actuel sera remplacé; la version précédente sera conservée." : ""}`)) return;
       pending.current = { clientId, programId: snapshot.id, draftVersion: snapshot.version,
         expectedPublicationId: current?.id ?? null, clientMutationId: crypto.randomUUID() };
@@ -89,7 +91,7 @@ export function ProgramPublish({ snapshot, disabled, lock }: {
     {clients ? <>
       <label>Client destinataire<select value={clientId} disabled={sending || uncertain || disabled} onChange={(e) => setClientId(e.target.value)}>
         <option value="">Choisir un client actif</option>
-        {clients.clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
+        {clients.clients.map((client) => <option key={client.id} value={client.id}>{coachClientLabel(client.name, client.isOwnProfile)}</option>)}
       </select></label>
       {!clients.total ? <p>Aucun client actif assigné n’est disponible.</p> : null}
       <button className="fe-button" type="button" disabled={sending || uncertain || !page} onClick={() => { setClientId(""); setPage(page-1); }}>Clients précédents</button>

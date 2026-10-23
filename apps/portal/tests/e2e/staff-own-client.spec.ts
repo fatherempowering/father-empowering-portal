@@ -182,6 +182,34 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
   await expect(page.getByRole("heading", { name: /semaine zéro/i })).toBeVisible();
   expect(coachOtpRequests).toBe(otpRequestsAfterLogin);
 
+  // Explicit local fixture assignment, not a permission change or automatic
+  // side effect of personal profile creation. Both records deliberately share a name.
+  const fixture = createM1AdminClient(environment);
+  const assignments = await fixture.from("coach_client_assignments").insert(
+    [ownClientId, normalClient.clientId].map(clientId => ({
+      organization_id:owner.organizationId,coach_user_id:owner.userId,client_id:clientId,
+      status:"ACTIVE",is_primary:true,created_by:owner.userId,
+    })),
+  );
+  expect(assignments.error).toBeNull();
+  await page.goto(`${environment.appUrl}/coach`);
+  for (let attempt=0;attempt<2;attempt++) {
+    await expect(page.getByText("Max Personnel — Mon profil personnel",{exact:true})).toBeVisible();
+    await expect(page.getByText("Max Personnel",{exact:true})).toBeVisible();
+    const recipients = await context.request.get(`${environment.appUrl}/api/v1/coach/programs/recipients?page=0`);
+    expect(recipients.status()).toBe(200);
+    const recipientBody = await recipients.json() as {data:{clients:Array<{id:string;name:string;isOwnProfile:boolean}>}};
+    expect(recipientBody.data.clients).toEqual(expect.arrayContaining([
+      {id:ownClientId,name:"Max Personnel",isOwnProfile:true},
+      {id:normalClient.clientId,name:"Max Personnel",isOwnProfile:false},
+    ]));
+    expect(recipientBody.data.clients).toHaveLength(2);
+    if(attempt===0) await page.reload();
+  }
+  expect(coachOtpRequests).toBe(otpRequestsAfterLogin);
+  await page.getByRole("link",{name:/mon portail personnel/i}).click();
+  await expect(page).toHaveURL(/\/client(?:\?.*)?$/);
+
   await page.getByRole("button", { name: /se déconnecter/i }).click();
   await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
   const signedOutClient = await context.request.get(
@@ -279,8 +307,8 @@ async function seedNormalClient(staff: SeededStaff): Promise<SeededClient> {
       organization_id: staff.organizationId,
       auth_user_id: created.data.user.id,
       email,
-      first_name: "Normal",
-      last_name: "Client",
+      first_name: "Max",
+      last_name: "Personnel",
       locale: "fr-CA",
       time_zone: "America/Montreal",
       status: "ACTIVE",
