@@ -1,0 +1,55 @@
+{
+  "version": "fe-program-pilot.1",
+  "sourceCatalogVersion": "3.1.0-pilot.1",
+  "scope": "15 generic exercises: Coach selection, draft week, publication and Client results in isolated staging",
+  "productDecision": {
+    "exerciseId": "DB_034",
+    "decision": "Count repetitions per arm, not alternating pairs",
+    "authorizedBy": "Max",
+    "date": "2026-10-23",
+    "sourcePreserved": true,
+    "instructionApprovalImplied": false
+  },
+  "entry": "/coach/programs → séance → bloc → Choisir parmi les 15 exercices pilotes",
+  "api": "GET /api/v1/coach/exercise-pilot and POST /api/v1/coach/exercise-pilot/select",
+  "authorization": "Existing verified Coach/organization guards and same-origin; authenticated RPC only in Coach HTTP requests",
+  "storage": "Fixed private SQL catalogue, idempotent per-organization materialization and immutable optional program snapshot",
+  "search": "FR/EN names and aliases, source ID, muscle intent, equipment; stabilizers opt-in",
+  "clientPreview": "Actual assigned Client publication; source review is not a clinical approval",
+  "invariants": [
+    "Original source DRAFT/PENDING review preserved; staging test permission is not clinical approval",
+    "Fifteen generic records only; named machine substitutions remain unavailable including RS-2700 mismatch",
+    "Full bilingual3-step instructions frozen with source/integration version",
+    "SQL rejects missing/forged/cross-org metadata; only explicitly allowlisted test Clients may receive pilot publications",
+    "Non-pilot publications/results stay compatible; published snapshots and completed results immutable",
+    "No fake media or raw source in browser bundles",
+    "Other985exercises not imported or deleted",
+    "Auth, role assignments and existing RLS policies unchanged"
+  ],
+  "responsibilities": {
+    "1": "Coordinator: data projection, versioned contract, guarded API, search, integration",
+    "2": "Coach library pilot panel, search, filtering, accessible detail navigation",
+    "3": "Read-only bilingual instruction preview, real guard tests, prepared authenticated E2E",
+    "4": "Independent source, security and desktop/mobile review"
+  },
+  "nextGates": [
+    "Complete exact-SHA isolated CI: migrations,pgTAP/RLS,HTTP,Mailpit/Playwright including pilot journey",
+    "Independent Agent4 finalreview",
+    "Verify Preview target:null exactSHA and fixedSupabase staging project before real testing",
+    "Actual Coach→Client staging test and complete AccessPack; no Production/Legacy"
+  ],
+  "operationalActivation": {
+    "default": "OFF; private organization and recipient allowlists empty",
+    "organizationTable": "app_private.training_pilot_organizations",
+    "clientTable": "app_private.training_pilot_clients",
+    "provisioning": "service_role-only provision_training_pilot_test_access; operator must pin staging project bukpbotkicqzgnzqlszk or disposable loopback CI",
+    "production": "No activation, migration, data or deployment authorized"
+  },
+  "measurements": {
+    "perArm": "DB_034 per arm; no division",
+    "duration": "BW_049 seconds",
+    "distance": "DB_045 metres plus mandatory actual external weights/units in text; no inferred total mass",
+    "configuration": "Band/unknown machine basis: repetitions, mandatory actual setup text and numeric load null",
+    "targets": "Coach supplies duration/distance/configuration target before publication"
+  }
+}

@@ -7,6 +7,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { programRepositoryError } from "./program-repository";
 
 export function publicationError(error: { message: string } | null) {
+  if (error?.message === "FE_PILOT_RECIPIENT_DISABLED") return new M1ContractError("VALIDATION_FAILED", "Ce lot pilote est réservé aux comptes clients autorisés pour le test staging.", 400);
   if (error?.message === "FE_INVALID_TRAINING_PUBLICATION") return new M1ContractError("VALIDATION_FAILED", "Complete the program before publishing", 400);
   if (error?.message === "FE_ALREADY_PUBLISHED") return new M1ContractError("VERSION_CONFLICT", "This draft version was already published", 409);
   return programRepositoryError(error);

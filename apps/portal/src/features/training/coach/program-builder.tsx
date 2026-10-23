@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { requestCoachLogout } from "@/features/coach/auth/request-coach-logout";
@@ -8,6 +8,9 @@ import { programListSchema, programSnapshotSchema, saveProgramRequestSchema, typ
 import { addLibraryExercise, compactUniformSets, draftWarnings, duplicateWeek, moveItem, newBlock, newProgram, newSession } from "@/lib/training/program-editor";
 import styles from "./program-builder.module.css";
 import { ProgramPublish } from "./program-publish";
+import { PilotSelectionDialog } from "./pilot-selection-dialog";
+import type { PilotProgramExercise } from "@/lib/contracts/training-pilot";
+import { PublishedExerciseGuidance } from "@/features/training/shared/published-exercise-guidance";
 
 type Text = { fr: string; en: string };
 function TextPair({ label, value, change }: { label: string; value: Text; change: (value: Text) => void }) {
@@ -17,14 +20,18 @@ function authRedirect(response: Response) {
   if (response.status !== 401 && response.status !== 403) return false;
   window.location.replace(response.status === 401 ? "/login" : "/verify-email"); return true;
 }
-function PrescriptionFields({ value, change, prefix = "" }: { value: Omit<DraftExercise["prescription"], "sets" | "prescribedSets">; change: (value: Omit<DraftExercise["prescription"], "sets" | "prescribedSets">) => void; prefix?: string }) {
+function PrescriptionFields({ value, change, prefix = "", pilot }: { value: Omit<DraftExercise["prescription"], "sets" | "prescribedSets">; change: (value: Omit<DraftExercise["prescription"], "sets" | "prescribedSets">) => void; prefix?: string; pilot?: PilotProgramExercise }) {
+  const unitId = useId();
+  const measure = pilot?.performance.measure;
+  const targetLabel = measure === "duration" ? "Durée cible (secondes)" : measure === "distance" ? "Distance cible (mètres)" : value.unit === "configuration" ? "Configuration cible" : "Charge cible";
+  const units = { lb: "lb", min: "min", sec: "secondes", distance: "mètres", level: "niveau", configuration: "configuration — sans conversion en poids" };
   return <div className={styles.fields}>
-    <label>{prefix}Répétitions<input maxLength={40} value={value.reps} onChange={(e) => change({ ...value, reps: e.target.value })} /></label>
+    <label>{prefix}{measure && measure !== "repetitions" ? "Passages par série" : "Répétitions"}<input maxLength={40} value={value.reps} onChange={(e) => change({ ...value, reps: e.target.value })} /></label>
     <label>{prefix}RIR cible<input type="number" min={0} max={10} step={1} value={Number.isFinite(value.targetRir) ? value.targetRir : ""} onChange={(e) => change({ ...value, targetRir: e.target.valueAsNumber })} /></label>
     <label>{prefix}Repos (secondes)<input type="number" min={0} max={3600} step={1} value={Number.isFinite(value.restSeconds) ? value.restSeconds : ""} onChange={(e) => change({ ...value, restSeconds: e.target.valueAsNumber })} /></label>
     <label>{prefix}Tempo<input maxLength={40} value={value.tempo} onChange={(e) => change({ ...value, tempo: e.target.value })} /></label>
-    <label>{prefix}Charge cible<input maxLength={120} value={value.loadTarget} onChange={(e) => change({ ...value, loadTarget: e.target.value })} /></label>
-    <label>{prefix}Unité<select value={value.unit} onChange={(e) => change({ ...value, unit: e.target.value as typeof value.unit })}>{TRAINING_UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}</select></label>
+    <label>{prefix}{targetLabel}<input maxLength={120} value={value.loadTarget} onChange={(e) => change({ ...value, loadTarget: e.target.value })} /></label>
+    <div className={styles.unitField}><label htmlFor={unitId}>{prefix}Unité</label><select id={unitId} value={value.unit} disabled={Boolean(pilot)} onChange={(e) => change({ ...value, unit: e.target.value as typeof value.unit })}>{TRAINING_UNITS.filter((unit) => unit !== "configuration" || pilot).map((unit) => <option key={unit} value={unit}>{pilot ? units[unit] : unit}</option>)}</select></div>
   </div>;
 }
 function ExercisePicker({ add }: { add: (exercise: ExerciseSnapshot) => void }) {
@@ -62,11 +69,19 @@ export function ProgramBuilder() {
   const [dirty, setDirty] = useState(false); const [saving, setSaving] = useState(false); const [opening, setOpening] = useState(false);
   const [uncertain, setUncertain] = useState(false); const [conflict, setConflict] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [pilotTarget, setPilotTarget] = useState<{ week: number; session: string; block: string } | null>(null);
+  const pilotButton = useRef<HTMLButtonElement | null>(null);
+  const wasChoosingPilot = useRef(false);
   const [error, setError] = useState<string | null>(null); const [success, setSuccess] = useState<string | null>(null);
   const pending = useRef<SaveProgramRequest | null>(null); const busy = useRef(false);
   const locked = saving || opening || uncertain || conflict || publishing;
   const week = document.weeks[weekIndex]; const session = week.sessions[sessionIndex];
   const warnings = draftWarnings(document);
+
+  useEffect(() => {
+    if (wasChoosingPilot.current && !pilotTarget) pilotButton.current?.focus();
+    wasChoosingPilot.current = Boolean(pilotTarget);
+  }, [pilotTarget]);
 
   useEffect(() => {
     const controller = new AbortController(); let active = true;
@@ -189,15 +204,31 @@ export function ProgramBuilder() {
                 const update=(edit:(copy:DraftExercise)=>void) => editSession((s) => edit(s.blocks[b].exercises[e]));
                 const { sets: _sets, prescribedSets: _details, ...common }=p; void _sets; void _details;
                 return <article className={styles.exercise} key={exercise.id} aria-label={`Exercice ${e+1}`}>
-                  <h4>{exercise.name}</h4><TextPair label="Consigne de l’exercice" value={exercise.cue} change={(value) => update((x) => { x.cue=value; })} />
+                  <h4>{exercise.pilot?.name.fr ?? exercise.name}</h4>
+                  {exercise.pilot ? <div className={styles.pilotSnapshot}>
+                    <p className={styles.note}>Exercice pilote · test staging · {exercise.pilot.sourceId} · version {exercise.pilot.sourceVersion}</p>
+                    <p>{exercise.pilot.performance.counting.fr}</p>
+                    <p>{exercise.pilot.performance.load.fr}</p>
+                    <details><summary>Lire les consignes complètes conservées avec ce programme</summary>
+                      {(["fr", "en"] as const).map((locale) => <section key={locale} lang={locale}>
+                        <h5>{exercise.pilot!.name[locale]} · {locale === "fr" ? "Français" : "English"}</h5>
+                        <PublishedExerciseGuidance exercise={exercise} french={locale === "fr"} coach />
+                      </section>)}
+                    </details>
+                    {p.unit === "sec" || p.unit === "distance" || p.unit === "configuration" ? <p className={styles.note}>Choisis {p.unit === "sec" ? "la durée cible en secondes" : p.unit === "distance" ? "la distance cible en mètres" : "la configuration à utiliser"} avant de publier. Aucun objectif n’est inventé pour ton client.</p> : null}
+                  </div> : null}
+                  <TextPair label="Consigne de l’exercice" value={exercise.cue} change={(value) => update((x) => { x.cue=value; })} />
                   <label>Nombre de séries<input type="number" min={1} max={20} value={Number.isFinite(p.sets) ? p.sets : ""} onChange={(event) => { const count=event.target.valueAsNumber; if(p.prescribedSets && count<p.sets && !window.confirm("Réduire le nombre de séries retire les prescriptions des dernières séries. Continuer ?")) return; update((x) => { x.prescription.sets=count; if(x.prescription.prescribedSets && Number.isInteger(count) && count>=1 && count<=20) x.prescription.prescribedSets=Array.from({length:count},(_,i)=> x.prescription.prescribedSets?.[i] ?? {...common}); }); }} /></label>
-                  <PrescriptionFields value={common} change={(value) => update((x) => { x.prescription={...x.prescription,...value}; })} />
+                  <PrescriptionFields value={common} pilot={exercise.pilot} change={(value) => update((x) => { x.prescription={...x.prescription,...value}; })} />
                   <label className={styles.check}><input type="checkbox" checked={Boolean(p.prescribedSets)} disabled={!Number.isInteger(p.sets) || p.sets<1 || p.sets>20} onChange={(event) => { if(!event.target.checked && !window.confirm("Utiliser la prescription commune pour toutes les séries ?")) return; update((x) => { if(event.target.checked) x.prescription.prescribedSets=Array.from({length:p.sets},()=>({...common})); else delete x.prescription.prescribedSets; }); }} />Prescriptions différentes selon la série</label>
-                  {p.prescribedSets?.map((set,i) => <div key={i}><h5>Série {i+1}</h5><PrescriptionFields prefix={`Série ${i+1} · `} value={set} change={(value) => update((x) => { x.prescription.prescribedSets![i]=value; })} /></div>)}
+                  {p.prescribedSets?.map((set,i) => <div key={i}><h5>Série {i+1}</h5><PrescriptionFields prefix={`Série ${i+1} · `} value={set} pilot={exercise.pilot} change={(value) => update((x) => { x.prescription.prescribedSets![i]=value; })} /></div>)}
                   <div className={styles.actions}>{([-1,1] as const).map((direction) => <button className="fe-button" type="button" key={direction} disabled={e+direction<0 || e+direction>=block.exercises.length} onClick={() => editSession((s) => { s.blocks[b].exercises=moveItem(s.blocks[b].exercises,e,direction); })}>{direction===-1 ? "Monter l’exercice" : "Descendre l’exercice"}</button>)}<button className="fe-button" type="button" onClick={() => { if(window.confirm("Retirer cet exercice de la séance ? La bibliothèque reste intacte.")) editSession((s) => { s.blocks[b].exercises.splice(e,1); }); }}>Retirer l’exercice</button></div>
                 </article>;
               })}
-              {block.exercises.length<30 ? <ExercisePicker key={block.id} add={(exercise) => editSession((s) => { s.blocks[b].exercises.push(addLibraryExercise(exercise)); })} /> : <p>Limite de 30 exercices dans ce bloc.</p>}
+              {block.exercises.length<30 ? <>
+                <button className="fe-button" type="button" onClick={(event) => { pilotButton.current = event.currentTarget; setPilotTarget({ week: week.number, session: session.id, block: block.id }); }}>Choisir parmi les 15 exercices pilotes</button>
+                <ExercisePicker key={block.id} add={(exercise) => editSession((s) => { s.blocks[b].exercises.push(addLibraryExercise(exercise)); })} />
+              </> : <p>Limite de 30 exercices dans ce bloc.</p>}
             </section>)}
             {session && session.type!=="complete-rest" ? <button className="fe-button" type="button" disabled={session.blocks.length>=20} onClick={() => editSession((s) => { s.blocks.push(newBlock()); })}>Ajouter un bloc</button> : null}
           </fieldset>
@@ -212,5 +243,13 @@ export function ProgramBuilder() {
         </section>
       </div>
     </div>
+    {pilotTarget ? <PilotSelectionDialog onClose={() => setPilotTarget(null)} onAdd={(exercise) => {
+      if (locked) return;
+      change((copy) => {
+        const target = copy.weeks.find((w) => w.number === pilotTarget.week)?.sessions.find((s) => s.id === pilotTarget.session)?.blocks.find((b) => b.id === pilotTarget.block);
+        if (target && target.exercises.length < 30) target.exercises.push(addLibraryExercise(exercise));
+      });
+      setPilotTarget(null);
+    }} /> : null}
   </AppShell>;
 }
