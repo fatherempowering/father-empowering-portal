@@ -162,7 +162,7 @@ begin
      for pr in select e->'prescription' union all select value from jsonb_array_elements(coalesce(e#>'{prescription,prescribedSets}','[]'::jsonb)) loop
        if pr->>'unit'<>x.default_unit then return false; end if;
      end loop;
-   elsif e#>>'{prescription,unit}'='configuration' or exists(select 1 from jsonb_array_elements(coalesce(e#>'{prescription,prescribedSets}','[]'::jsonb)) pr where pr->>'unit'='configuration') then return false;
+   elsif e#>>'{prescription,unit}'='configuration' or exists(select 1 from jsonb_array_elements(coalesce(e#>'{prescription,prescribedSets}','[]'::jsonb)) as prescribed(value) where prescribed.value->>'unit'='configuration') then return false;
    end if;
  end loop;
  return true;

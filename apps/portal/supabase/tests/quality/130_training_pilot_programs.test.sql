@@ -73,7 +73,7 @@ select throws_ok('select pg_temp.pick()','P0001','FE_PILOT_DISABLED','verified C
 select throws_ok($$insert into app_private.training_pilot_organizations values('2f000000-0000-4000-8000-000000000001')$$,'42501',null,'Coach cannot self-enable the pilot');
 reset role;
 set local role service_role;
-insert into app_private.training_pilot_organizations values('2f000000-0000-4000-8000-000000000001');
+select public.provision_training_pilot_test_access('2f000000-0000-4000-8000-000000000001');
 reset role;
 set local role authenticated;
 select pg_temp.become(1,'otp');
@@ -140,7 +140,7 @@ select throws_ok($$select pg_temp.save(jsonb_set(pg_temp.document('DB_045'),'{we
 select throws_ok('select pg_temp.publish()','P0001','FE_PILOT_RECIPIENT_DISABLED','assigned active Client is still denied before test-recipient approval');
 reset role;
 set local role service_role;
-insert into app_private.training_pilot_clients values('2f000000-0000-4000-8000-000000000001','5f000000-0000-4000-8000-000000000005');
+select public.provision_training_pilot_test_access('2f000000-0000-4000-8000-000000000001','5f000000-0000-4000-8000-000000000005');
 reset role;
 set local role authenticated;
 select pg_temp.become(2);
@@ -202,9 +202,11 @@ select throws_ok($$update public.training_exercises set pilot=null where id=pg_t
 select throws_ok($$update public.training_program_publications set document='{}' where id=pg_temp.publication_id()$$,'P0001','FE_IMMUTABLE_PUBLICATION','published pilot history remains immutable');
 set local role service_role;
 select is((select count(*) from public.outbox_events where organization_id='2f000000-0000-4000-8000-000000000001'),0::bigint,'selection and publication do not emit unsolicited email');
+reset role;
+-- Private-table cleanup is performed by the disposable SQL fixture owner,
+-- never by widening schema access for the application service or browser roles.
 delete from app_private.training_pilot_clients where client_id='5f000000-0000-4000-8000-000000000005';
 delete from app_private.training_pilot_organizations where organization_id='2f000000-0000-4000-8000-000000000001';
-reset role;
 set local role authenticated;
 select pg_temp.become(1);
 select throws_ok('select pg_temp.pick()','P0001','FE_PILOT_DISABLED','receipt replay cannot bypass disabled pilot organization');
