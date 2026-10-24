@@ -33,7 +33,7 @@ export const workoutSetResultSchema = workoutSetInputSchema.extend({
   if (set.status === "DONE") {
     if (set.unit === "configuration"
       ? set.load !== null || set.reps === null || !set.details?.trim()
-      : set.load === null || (set.unit === "lb" && set.reps === null)) {
+      : set.load === null || ((set.unit === "lb" || set.unit === "kg") && set.reps === null)) {
       context.addIssue({ code: "custom", message: "Completed set measurements are required" });
     }
     return;

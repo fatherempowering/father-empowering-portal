@@ -5,9 +5,12 @@ import { coachClientLabel } from "@/lib/clients/client-label";
 import type { ProgramSnapshot } from "@/lib/contracts/training-drafts";
 import { publicationClientsSchema, publicationResponseSchema, publishableProgramSchema,
   type PublicationClients, type ProgramPublication, type PublishProgramRequest } from "@/lib/contracts/training-publication";
+import { programIssues, type ProgramIssue } from "@/lib/training/program-issues";
+import { useProgramConfirmation } from "./program-confirmation";
+import styles from "./program-builder.module.css";
 
-export function ProgramPublish({ snapshot, disabled, lock }: {
-  snapshot: ProgramSnapshot; disabled: boolean; lock: (locked: boolean) => void;
+export function ProgramPublish({ snapshot, disabled, lock, onIssue }: {
+  snapshot: ProgramSnapshot; disabled: boolean; lock: (locked: boolean) => void; onIssue: (issue: ProgramIssue) => void;
 }) {
   const [clients, setClients] = useState<PublicationClients | null>(null);
   const [page, setPage] = useState(0); const [retry, setRetry] = useState(0);
@@ -18,7 +21,10 @@ export function ProgramPublish({ snapshot, disabled, lock }: {
   const [error, setError] = useState<string | null>(null); const [success, setSuccess] = useState(false);
   const pending = useRef<PublishProgramRequest | null>(null);
   const busy = useRef(false);
-  const complete = publishableProgramSchema.safeParse(snapshot.document).success;
+  const { confirm, confirmation } = useProgramConfirmation();
+  const issues = programIssues(snapshot.document, "publish");
+  const complete = publishableProgramSchema.safeParse(snapshot.document).success && issues.length === 0;
+  const containsPilot = snapshot.document.weeks.some((week) => week.sessions.some((session) => session.blocks.some((block) => block.exercises.some((exercise) => Boolean(exercise.pilot)))));
   function auth(response: Response) {
     if (![401,403].includes(response.status)) return false;
     window.location.replace(response.status === 401 ? "/login" : "/verify-email"); return true;
@@ -60,7 +66,7 @@ export function ProgramPublish({ snapshot, disabled, lock }: {
     if (!pending.current) {
       const recipient = clients?.clients.find((client) => client.id === clientId);
       const name = recipient && coachClientLabel(recipient.name, recipient.isOwnProfile);
-      if (!name || !window.confirm(`Publier « ${snapshot.document.title.fr || snapshot.document.title.en} » pour ${name} ? Ce plan sera immédiatement visible dans son portail.${current ? " Son programme actuel sera remplacé; la version précédente sera conservée." : ""}`)) return;
+      if (!name || !await confirm(`Publier « ${snapshot.document.title.fr || snapshot.document.title.en} » pour ${name} ? Ce plan sera immédiatement visible dans son portail.${current ? " Son programme actuel sera remplacé; la version précédente sera conservée." : ""}`, "Confirmer la publication", "Publier ce programme")) return;
       pending.current = { clientId, programId: snapshot.id, draftVersion: snapshot.version,
         expectedPublicationId: current?.id ?? null, clientMutationId: crypto.randomUUID() };
     }
@@ -70,8 +76,16 @@ export function ProgramPublish({ snapshot, disabled, lock }: {
       const response = await fetch("/api/v1/coach/programs/publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(pending.current), signal: controller.signal });
       if (auth(response)) return;
       if ([400,404,409].includes(response.status)) {
+        const body: unknown = await response.json().catch(() => null);
+        const code = body && typeof body === "object" && "error" in body && body.error && typeof body.error === "object" && "code" in body.error ? body.error.code : null;
         pending.current = null; setUncertain(false); lock(false); setReady(false);
-        setError("Publication refusée : plan incomplet, accès modifié ou version déjà changée. Recharge l’état avant de reprendre; rien n’a été écrasé."); return;
+        setError(code === "PILOT_RECIPIENT_DISABLED" ? "Publication refusée : ce destinataire n’est pas autorisé pour le lot pilote staging. Choisis un compte test autorisé ou retire les exercices pilotes. Rien n’a été publié."
+          : code === "PROGRAM_INCOMPLETE" ? "Publication refusée : des éléments du programme restent à compléter. Utilise les liens de correction, puis enregistre le brouillon."
+          : code === "ALREADY_PUBLISHED" ? "Cette version est déjà publiée. Recharge l’état pour retrouver sa confirmation."
+          : code === "NOT_FOUND" ? "Publication refusée : ce destinataire ou ce brouillon n’est plus accessible. Recharge les clients et le brouillon avant de reprendre."
+          : code === "VERSION_CONFLICT" ? "Publication refusée : le brouillon ou le programme actuel a changé. Recharge son état avant de reprendre ; rien n’a été écrasé."
+          : code === "VALIDATION_FAILED" ? "Publication refusée : une valeur ou un exercice n’est plus valide. Vérifie les éléments du brouillon avant de reprendre."
+          : "Publication refusée. Recharge l’état du programme avant de reprendre."); return;
       }
       if (!response.ok) throw new Error("PUBLISH");
       const value = publicationResponseSchema.parse((await response.json()).data).program;
@@ -86,6 +100,8 @@ export function ProgramPublish({ snapshot, disabled, lock }: {
     <p>Seule la version enregistrée est publiée. Tes prochaines modifications resteront en brouillon.</p>
     {disabled && !uncertain && !sending ? <p>Enregistre tes modifications avant de publier.</p> : null}
     {!complete ? <p>Complète chaque semaine, le titre des séances et les groupes d’exercices avant de publier.</p> : null}
+    {!disabled && issues.length ? <div><button className={styles.issueSummary} type="button" onClick={() => onIssue(issues[0])}>{issues.length} élément(s) à compléter · Aller au premier</button><details><summary>{issues.length} élément(s) à compléter — sauvegarde autorisée</summary><ul className={styles.warning}>{issues.map((issue,index) => <li key={index}><button type="button" className={styles.issueLink} onClick={() => onIssue(issue)}>{issue.message}</button></li>)}</ul></details></div> : null}
+    {containsPilot ? <p className={styles.note}>Ce programme contient des exercices pilotes. Il est réservé aux comptes de test autorisés dans le staging ; la publication reste bloquée pour les autres destinataires.</p> : null}
     {error ? <Feedback>{error}</Feedback> : null}
     {success ? <Feedback tone="success">Programme publié. Le client peut maintenant le consulter dans son portail.</Feedback> : null}
     {clients ? <>
@@ -103,5 +119,6 @@ export function ProgramPublish({ snapshot, disabled, lock }: {
       <button className="fe-button" type="button" disabled={sending || uncertain} onClick={() => setRetry(retry+1)}>Recharger l’état de publication</button>
       <button className="fe-button fe-button-primary" type="button" disabled={sending || (!uncertain && (disabled || !ready || !complete || alreadyPublished))} onClick={() => void publish()}>{sending ? "Publication…" : uncertain ? "Réessayer la même publication" : "Publier pour ce client"}</button>
     </div>
+    {confirmation}
   </section>;
 }

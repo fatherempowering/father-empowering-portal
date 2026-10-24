@@ -21,8 +21,9 @@ describe("Training foundation contracts", () => {
   it.each(["", " ", "x".repeat(161)])("rejects invalid names (%s)", (name) => {
     expect(exerciseDefinitionSchema.safeParse({ ...exercise, name }).success).toBe(false);
   });
-  it("does not silently add kg or accept excessive instructions", () => {
-    expect(exerciseDefinitionSchema.safeParse({ ...exercise, defaultUnit: "kg" }).success).toBe(false);
+  it("supports explicit kg without converting values or accepting excessive instructions", () => {
+    expect(exerciseDefinitionSchema.parse({ ...exercise, defaultUnit: "kg" }).defaultUnit).toBe("kg");
+    expect(trainingPrescriptionSchema.parse({ ...base, sets: 3, unit: "kg", loadTarget: "25" }).loadTarget).toBe("25");
     expect(exerciseDefinitionSchema.safeParse({ ...exercise, cue: { fr: "x".repeat(301), en: "" } }).success).toBe(false);
   });
   it("requires retry identity and exact version semantics", () => {

@@ -39,8 +39,14 @@ export function validatePilotPrescription(exercise: {
 }, context: z.RefinementCtx) {
   const prescriptions = [exercise.prescription, ...(exercise.prescription.prescribedSets ?? [])];
   if (prescriptions.some((prescription) => exercise.pilot
-    ? prescription.unit !== pilotDefaultUnit(exercise.pilot)
+    ? !pilotAllowedUnits(exercise.pilot).includes(prescription.unit as ReturnType<typeof pilotAllowedUnits>[number])
     : prescription.unit === "configuration")) {
     context.addIssue({ code: "custom", message: "Measurement unit must match the exercise snapshot", path: ["prescription", "unit"] });
   }
+}
+
+export function pilotAllowedUnits(pilot: PilotProgramExercise): ("lb" | "kg" | "sec" | "distance" | "configuration")[] {
+  const unit = pilotDefaultUnit(pilot);
+  return unit === "lb" && ["per_implement", "total_external_mass", "displayed_stack_setting"].includes(pilot.performance.loadEntryBasis)
+    ? ["lb", "kg"] : [unit];
 }

@@ -302,7 +302,7 @@ export function ClientWorkout() {
         `Indique la distance en mètres et les charges transportées avec leurs unités pour la série ${invalidDone.setNumber}.`,
         `Enter the distance in metres and carried weights with their units for set ${invalidDone.setNumber}.`,
       );
-      return invalidDone.unit === "lb"
+      return invalidDone.unit === "lb" || invalidDone.unit === "kg"
         ? t(
             `Indique les répétitions et la charge pour la série ${invalidDone.setNumber}.`,
             `Enter reps and load for set ${invalidDone.setNumber}.`,
@@ -857,7 +857,7 @@ function WorkoutSetRow({
       </label>
       <div className={styles.resultFields}>
         <label>
-          {repetitionLabel(exercise, french)} {item.unit === "lb" || item.unit === "configuration" ? "*" : `(${t("facultatif", "optional")})`}
+          {repetitionLabel(exercise, french)} {["lb", "kg", "configuration"].includes(item.unit) ? "*" : `(${t("facultatif", "optional")})`}
           <input
             aria-label={`${repetitionLabel(exercise, french)} · ${prefix}`}
             type="number"

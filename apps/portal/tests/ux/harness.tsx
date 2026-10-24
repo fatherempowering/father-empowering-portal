@@ -187,6 +187,7 @@ Object.assign(window, { __exerciseRequests: exerciseRequests });
 let exerciseResponseLost = false;
 const programRecords = new Map<string, ProgramSnapshot>();
 const programReceipts = new Map<string, ProgramSnapshot>();
+const programVersionRecords = new Map<string, ProgramSnapshot[]>();
 const programRequests: SaveProgramRequest[] = [];
 Object.assign(window, { __programRequests: programRequests });
 let programResponseLost = false;
@@ -527,6 +528,7 @@ window.fetch = async (url, init) => {
   if (path === "/api/v1/coach/programs/publish") {
     const input = JSON.parse(String(init?.body)) as PublishProgramRequest; publicationRequests.push(input);
     if (scenario === "publication-conflict") return reply({error:{code:"VERSION_CONFLICT"}},409);
+    if (scenario === "publication-pilot-recipient-disabled") return reply({error:{code:"PILOT_RECIPIENT_DISABLED",message:"Untrusted server detail must not appear"}},400);
     let result = publicationReceipts.get(input.clientMutationId);
     if (!result) {
       const draft = programRecords.get(input.programId)!;
@@ -534,6 +536,7 @@ window.fetch = async (url, init) => {
       publicationReceipts.set(input.clientMutationId,result); publication=result;
     }
     if (scenario === "publication-response-lost" && !publicationResponseLost) { publicationResponseLost=true; throw new TypeError("Confirmation lost"); }
+    if (scenario === "publication-service-unavailable" && !publicationResponseLost) { publicationResponseLost=true; return reply({error:{code:"TEMPORARILY_UNAVAILABLE"}},503); }
     return reply({data:{program:result}});
   }
   if (path === "/api/v1/client/program" || (path.startsWith("/api/v1/coach/clients/") && path.endsWith("/program"))) {
@@ -550,11 +553,26 @@ window.fetch = async (url, init) => {
       if (!result) {
         result = { id: input.id ?? crypto.randomUUID(), document: input.document, version: input.expectedVersion + 1, createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString() };
         programRecords.set(result.id, result); programReceipts.set(input.clientMutationId, result);
+        programVersionRecords.set(result.id, [...(programVersionRecords.get(result.id) ?? []), structuredClone(result)]);
       }
       if (scenario === "program-response-lost" && !programResponseLost) { programResponseLost = true; throw new TypeError("Response lost after commit"); }
       return reply({ data: { program: result } });
     }
-    const id = new URL(path, window.location.origin).pathname.split("/")[5];
+    const parts = new URL(path, window.location.origin).pathname.split("/");
+    const id = parts[5];
+    if (parts[6] === "history") {
+      const versions = programVersionRecords.get(id) ?? [];
+      if (parts[7]) {
+        const version = versions.find(item => item.version === Number(parts[7]));
+        if (scenario === "history-read-delayed") await new Promise<void>((resolve, reject) => {
+          Object.assign(window, { __releaseProgramHistory: resolve });
+          init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
+        });
+        return version ? reply({data:{program:version}}) : reply({error:{code:"NOT_FOUND"}},404);
+      }
+      const page = Number(parsedPath.searchParams.get("page") ?? 0);
+      return reply({data:{items:[...versions].reverse().slice(page*20,page*20+20).map(item => ({version:item.version,updatedAt:item.updatedAt})),total:versions.length,page,pageSize:20}});
+    }
     if (id) return programRecords.has(id) ? reply({ data: { program: programRecords.get(id) } }) : reply({ error: { code: "NOT_FOUND" } }, 404);
     return reply({ data: { items: [...programRecords.values()].map((p) => ({ id: p.id, title: p.document.title, version: p.version, weekCount: p.document.weeks.length, updatedAt: p.updatedAt })), total: programRecords.size, page: 0, pageSize: 20 } });
   }

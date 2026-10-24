@@ -45,6 +45,9 @@ describe("publication repository", () => {
   it("maps only exact safe database errors", () => {
     expect(publicationError({message:"FE_ALREADY_PUBLISHED"}).status).toBe(409);
     expect(publicationError({message:"FE_INVALID_TRAINING_PUBLICATION"}).status).toBe(400);
+    expect(publicationError({message:"FE_INVALID_TRAINING_PUBLICATION"}).code).toBe("PROGRAM_INCOMPLETE");
+    expect(publicationError({message:"FE_ALREADY_PUBLISHED"}).code).toBe("ALREADY_PUBLISHED");
+    expect(publicationError({message:"FE_PILOT_RECIPIENT_DISABLED"}).code).toBe("PILOT_RECIPIENT_DISABLED");
     expect(publicationError({message:"private FE_NOT_FOUND"}).status).toBe(503);
   });
   it("distinguishes empty history from lost publication access", async() => {

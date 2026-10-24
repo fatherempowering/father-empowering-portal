@@ -3,8 +3,8 @@ import { z } from "zod";
 import { uuidSchema } from "@/lib/contracts/m1";
 import { pilotProgramExerciseSchema, validatePilotPrescription } from "./training-pilot";
 
-// Preserve the Legacy units. Adding kg/conversions is a separate product change.
-export const TRAINING_UNITS = ["lb", "min", "sec", "distance", "level", "configuration"] as const;
+// Units are explicit prescriptions, never silently converted on language change.
+export const TRAINING_UNITS = ["lb", "kg", "min", "sec", "distance", "level", "configuration"] as const;
 export const trainingUnitSchema = z.enum(TRAINING_UNITS);
 export const trainingTextSchema = z.object({
   fr: z.string().trim().max(300),

@@ -1,5 +1,6 @@
 import { exercisePilotListSchema, exercisePilotQuerySchema, type ExercisePilotQuery, type PilotExercise } from "@/lib/contracts/exercise-pilot";
 import type sourceShape from "./source.json";
+import { canonicalExerciseSearch, isUpperBodySearch, normalizeExerciseSearch, splitExerciseSearch, UPPER_BODY_MUSCLES } from "./search-aliases";
 
 // Pure projection/search only. The source itself is loaded by the guarded server
 // repository, never by a production Client Component.
@@ -84,15 +85,18 @@ export function buildPilotCatalog(source: PilotSource) {
 }
 
 export function normalizePilotSearch(value: string) {
-  return value.normalize("NFKD").toLowerCase().replace(/\p{M}/gu, "").replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
+  return normalizeExerciseSearch(value);
 }
 const stopwords = new Set("a an the with of on au aux avec de des du en le la les pour sur un une et".split(" "));
 
 export function queryPilotCatalog(source: PilotSource, input: ExercisePilotQuery) {
   const filters = exercisePilotQuerySchema.parse(input);
   const catalog = buildPilotCatalog(source);
-  const query = normalizePilotSearch(filters.query);
-  let targets: string[] | null = null;
+  const search = splitExerciseSearch(filters.query);
+  const query = search.query;
+  const equipment = filters.equipment || search.equipment;
+  if (filters.equipment && search.equipment && filters.equipment !== search.equipment) return exercisePilotListSchema.parse({ ...catalog, items: [], total: 0 });
+  let targets: string[] | null = isUpperBodySearch(query) ? [...UPPER_BODY_MUSCLES] : null;
   let coverage: string[][] | undefined;
   for (const concept of source.dictionary.anatomy_concepts) {
     if ([...Object.values(concept.labels), ...concept.anatomical_aliases.fr, ...concept.anatomical_aliases.en].some((term) => normalizePilotSearch(term) === query)) { targets = [concept.id]; break; }
@@ -107,7 +111,7 @@ export function queryPilotCatalog(source: PilotSource, input: ExercisePilotQuery
   const words = query.split(" ").filter((word) => word && !stopwords.has(word));
   const scored: { item: PilotExercise; score: number }[] = [];
   for (const item of catalog.items) {
-    if (filters.equipment && item.equipment.id !== filters.equipment) continue;
+    if (equipment && item.equipment.id !== equipment) continue;
     if (!query) { scored.push({ item, score: 0 }); continue; }
     const compactId = filters.query.trim().replace(/_/g, "").toUpperCase();
     if (/^[A-Z]{2}\d{3}$/.test(compactId) && item.id.replace("_", "") === compactId) { scored.push({ item, score: 1000 }); continue; }
@@ -123,7 +127,7 @@ export function queryPilotCatalog(source: PilotSource, input: ExercisePilotQuery
       if (!words.length) continue;
       const raw = source.exercises.find((exercise) => exercise.id === item.id)!;
       const fields = [raw.id, ...Object.values(raw.name), ...raw.aliases.fr, ...raw.aliases.en, ...raw.aliases.legacy_unclassified, ...Object.values(raw.equipment.labels), ...Object.values(raw.movement_family.labels), raw.movement_family.specific_family_fr];
-      const tokens = new Set(normalizePilotSearch(fields.join(" ")).split(" "));
+      const tokens = new Set(canonicalExerciseSearch(fields.join(" ")).split(" "));
       if (!words.every((word) => tokens.has(word))) continue;
       scored.push({ item, score: Object.values(item.name).some((name) => normalizePilotSearch(name) === query) ? 80 : 20 });
     }

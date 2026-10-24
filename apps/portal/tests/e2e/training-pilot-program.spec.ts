@@ -90,10 +90,10 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     await page.getByRole("button", { name: "Ajouter une séance", exact: true }).click();
     await page.getByLabel("Titre de la séance · français", { exact: true }).fill("Séance des quinze exercices");
     await page.getByRole("button", { name: "Ajouter un bloc", exact: true }).click();
-    await page.getByRole("button", { name: "Choisir parmi les 15 exercices pilotes", exact: true }).click();
-    const picker = page.getByRole("dialog", { name: "Choisir un exercice pilote", exact: true });
-    await picker.getByLabel("Nom, muscle ou identifiant", { exact: true }).fill("DB_034");
-    await picker.getByRole("button", { name: "Rechercher dans le pilote", exact: true }).click();
+    await page.getByRole("button", { name: "Ajouter un exercice", exact: true }).click();
+    const picker = page.getByRole("dialog", { name: "Choisir un exercice", exact: true });
+    await picker.getByRole("searchbox", { name: "Rechercher un exercice", exact: true }).fill("DB_034");
+    await picker.getByRole("button", { name: "Rechercher", exact: true }).click();
     await picker.getByRole("button", { name: "Consulter Curl alterné avec haltères", exact: true }).click();
     await picker.getByRole("button", { name: "Ajouter Curl alterné avec haltères à la séance", exact: true }).click();
     await expect(picker).toHaveCount(0);
@@ -140,8 +140,8 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     await expect(page.getByRole("article", { name: /^Exercice \d+$/ })).toHaveCount(15);
     await page.getByRole("combobox", { name: "Client destinataire", exact: true }).selectOption({ label: "Client Pilote" });
     await expect(page.getByText("Ce client n’a pas encore de programme publié.", { exact: true })).toBeVisible();
-    page.once("dialog", (dialog) => dialog.accept());
     await page.getByRole("button", { name: "Publier pour ce client", exact: true }).click();
+    await page.getByRole("dialog", { name: "Publier ce programme", exact: true }).getByRole("button", { name: "Confirmer la publication", exact: true }).click();
     await expect(page.getByText("Programme publié. Le client peut maintenant le consulter dans son portail.", { exact: true })).toBeVisible();
 
     const publicationRead = await clientContext.request.get(`${environment.appUrl}/api/v1/client/program`);

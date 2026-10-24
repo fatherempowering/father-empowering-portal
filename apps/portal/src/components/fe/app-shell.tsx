@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Brand } from "./brand";
 import { Icon } from "./icon";
 import { usePortalAccess } from "./portal-access-context";
+import { selectNumericInputOnFocus } from "./select-numeric-input";
 
 export function AppShell({
   children,
@@ -182,7 +183,7 @@ export function AppShell({
             <Icon name={open ? "close" : "menu"} />
           </button>
         </header>
-        <main className="fe-main" id="main-content">
+        <main className="fe-main" id="main-content" onFocusCapture={selectNumericInputOnFocus}>
           {children}
         </main>
       </div>

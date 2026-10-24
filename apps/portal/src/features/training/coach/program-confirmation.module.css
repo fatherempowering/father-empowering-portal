@@ -1,0 +1,2 @@
+.actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:.75rem;padding:1.25rem;border-top:1px solid var(--fe-line)}
+.actions button{max-width:100%;white-space:normal}

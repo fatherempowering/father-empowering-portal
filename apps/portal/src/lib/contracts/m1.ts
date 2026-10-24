@@ -153,6 +153,9 @@ export const m1ErrorCodeSchema = z.enum([
   "DUPLICATE",
   "RATE_LIMITED",
   "TEMPORARILY_UNAVAILABLE",
+  "PILOT_RECIPIENT_DISABLED",
+  "PROGRAM_INCOMPLETE",
+  "ALREADY_PUBLISHED",
 ]);
 export type M1ErrorCode = z.infer<typeof m1ErrorCodeSchema>;
 

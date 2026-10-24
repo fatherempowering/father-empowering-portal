@@ -4,6 +4,15 @@ import { clearSetMeasurements, completedMeasurementMissing, detailsLabel, measur
 import { pilotResultExercise, pilotResultSet } from "./pilot-result-fixture";
 
 describe("pilot workout measurements", () => {
+  it("labels kg honestly, requires reps and preserves its numeric value without conversion", () => {
+    const exercise = pilotResultExercise();
+    exercise.prescription.unit = "kg";
+    const result = { ...pilotResultSet(exercise), load: 12.5 };
+    expect(measurementLabel("kg", true, exercise)).toBe("Charge (kg)");
+    expect(completedMeasurementMissing(exercise, result)).toBe(false);
+    expect(completedMeasurementMissing(exercise, { ...result, reps: null })).toBe(true);
+    expect(stripDerivedSet(result).load).toBe(12.5);
+  });
   it("keeps every per-arm result unchanged when constructing a save", () => {
     const exercise = pilotResultExercise();
     const result = pilotResultSet(exercise);

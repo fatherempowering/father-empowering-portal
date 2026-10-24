@@ -19,6 +19,7 @@ export function repetitionLabel(exercise: DraftExercise, french: boolean) {
 export function measurementLabel(unit: SetWithUnit["unit"], french: boolean, exercise?: DraftExercise) {
   const labels = {
     lb: french ? "Charge (lb)" : "Load (lb)",
+    kg: french ? "Charge (kg)" : "Load (kg)",
     min: french ? "Durée (min)" : "Duration (min)",
     sec: french ? "Durée (sec)" : "Duration (sec)",
     distance: exercise?.pilot ? "Distance (m)" : "Distance",
@@ -41,7 +42,7 @@ export function detailsLabel(exercise: DraftExercise, unit: SetWithUnit["unit"],
 export function completedMeasurementMissing(exercise: DraftExercise, set: SetWithUnit) {
   if (set.status !== "DONE") return false;
   if (set.unit === "configuration") return set.load !== null || set.reps === null || !set.details?.trim();
-  return set.load === null || (set.unit === "lb" && set.reps === null) ||
+  return set.load === null || (["lb", "kg"].includes(set.unit) && set.reps === null) ||
     (needsMeasurementDetails(exercise, set.unit) && !set.details?.trim());
 }
 

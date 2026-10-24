@@ -115,9 +115,12 @@ export function ExercisePilot({ onSelect, selectionBusy = false }: {
               <h3>{exercise.name[language]}</h3>
               <p>{exercise.equipment.labels[language]} · <span className={styles.source}>{exercise.id}</span></p>
               <p className={styles.note}>{muscleNames(exercise.muscles.primary)}</p>
-              <button className="fe-button" type="button" aria-controls={`${instanceId}-detail`}
+              <div className={styles.resultActions}><button className="fe-button" type="button" aria-controls={`${instanceId}-detail`}
                 ref={(element) => { resultButtons.current[exercise.id] = element; }}
                 aria-pressed={selected?.id === exercise.id} onClick={() => setSelected(exercise)}>Consulter {exercise.name[language]}</button>
+              {onSelect ? <button className="fe-button fe-button-primary" type="button" disabled={selectionBusy}
+                onClick={() => onSelect(exercise)}>{selectionBusy ? "Préparation…" : `Choisir ${exercise.name[language]}`}</button> : null}
+              </div>
             </li>)}
           </ul>}
         </div>

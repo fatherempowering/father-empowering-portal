@@ -4,7 +4,7 @@ import { getM1TestEnvironment, seedStaffIdentity } from "../harness/m1-local-sup
 import { extractActivation, extractSixDigitOtp, waitForMail } from "../harness/mailpit";
 const environment=getM1TestEnvironment();
 test("Coach builds, publishes and preserves an immutable plan visible to the OTP Client",async({page,browser})=>{
-  test.setTimeout(150_000);
+  test.setTimeout(180_000);
   const password="Draft-local-test-only!123";
   const coach=await seedStaffIdentity(environment,{email:`program.e2e.${randomUUID()}@example.test`,password,role:"COACH"});
   await page.goto(`${environment.appUrl}/coach/programs`);await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
@@ -27,7 +27,8 @@ test("Coach builds, publishes and preserves an immutable plan visible to the OTP
   await page.getByRole("link",{name:"Programmes",exact:true}).click();
   await page.getByLabel("Titre du programme · français").fill("Phase force");await page.getByRole("button",{name:"Ajouter une séance",exact:true}).click();
   await page.getByLabel("Titre de la séance · français").fill("Séance A");await page.getByRole("button",{name:"Ajouter un bloc",exact:true}).click();
-  await page.getByRole("button",{name:"Ajouter Dumbbell Press",exact:true}).click();await page.getByLabel("Charge cible",{exact:true}).fill("40 lb");
+  await page.getByRole("button",{name:"Ajouter un exercice",exact:true}).click();
+  await page.getByRole("dialog",{name:"Choisir un exercice",exact:true}).getByRole("button",{name:"Choisir Dumbbell Press",exact:true}).click();await page.getByLabel("Charge cible",{exact:true}).fill("40 lb");
   await page.getByRole("button",{name:"Dupliquer cette semaine",exact:true}).click();
   await page.getByRole("button",{name:"Enregistrer le brouillon",exact:true}).click();await expect(page.getByText("Brouillon enregistré. Aucun client ne voit ces modifications.")).toBeVisible();
   await page.reload();await page.getByRole("button",{name:"Ouvrir Phase force",exact:true}).click();
@@ -38,8 +39,8 @@ test("Coach builds, publishes and preserves an immutable plan visible to the OTP
   await page.getByRole("button",{name:"Semaine 2",exact:true}).click();await expect(page.getByLabel("Charge cible",{exact:true})).toHaveValue("45 lb");
   await page.getByRole("combobox",{name:"Client destinataire",exact:true}).selectOption({label:"Client Programme"});
   await expect(page.getByText("Ce client n’a pas encore de programme publié.")).toBeVisible();
-  page.on("dialog",dialog=>dialog.accept());
   await page.getByRole("button",{name:"Publier pour ce client",exact:true}).click();
+  await page.getByRole("dialog", {name:"Publier ce programme",exact:true}).getByRole("button", {name:"Confirmer la publication",exact:true}).click();
   await expect(page.getByText("Programme publié. Le client peut maintenant le consulter dans son portail.")).toBeVisible();
   await clientPage.reload();await clientPage.getByRole("link",{name:"Voir mon programme",exact:true}).click();
   await expect(clientPage.getByRole("heading",{name:"Phase force",exact:true})).toBeVisible();
@@ -84,6 +85,7 @@ test("Coach builds, publishes and preserves an immutable plan visible to the OTP
   await page.getByRole("button",{name:"Enregistrer le brouillon",exact:true}).click();await expect(page.getByText("Brouillon enregistré · version 4.")).toBeVisible();
   await page.getByRole("combobox",{name:"Client destinataire",exact:true}).selectOption({label:"Client Programme"});
   await page.getByRole("button",{name:"Publier pour ce client",exact:true}).click();
+  await page.getByRole("dialog", {name:"Publier ce programme",exact:true}).getByRole("button", {name:"Confirmer la publication",exact:true}).click();
   await expect(page.getByText("Programme publié. Le client peut maintenant le consulter dans son portail.")).toBeVisible();
   await clientPage.reload();await expect(clientPage.getByLabel("Charge (lb) · Dumbbell Press · série 1",{exact:true})).toHaveValue("40");
   for(const number of [2,3]){
@@ -112,6 +114,39 @@ test("Coach builds, publishes and preserves an immutable plan visible to the OTP
   await expect(page.getByText(/Note du client :.*Résultat synthétique E2E après republication/)).toBeVisible();
   await expect(page.getByText(/Série 4.*36 lb/)).toBeVisible();
   await page.goto(`${environment.appUrl}/coach/programs`);
+  await page.getByRole("button",{name:"Ouvrir Phase force",exact:true}).click();
+  const programList=await page.request.get(`${environment.appUrl}/api/v1/coach/programs`);expect(programList.status()).toBe(200);
+  const programId=(await programList.json()).data.items.find((item:{title:{fr:string}})=>item.title.fr==="Phase force").id;
+  const versions=await page.request.get(`${environment.appUrl}/api/v1/coach/programs/${programId}/history`);expect(versions.status()).toBe(200);
+  expect(versions.headers()["cache-control"]).toContain("no-store");
+  expect((await versions.json()).data.items.map((item:{version:number})=>item.version)).toEqual([4,3,2,1]);
+  const oldVersion=await page.request.get(`${environment.appUrl}/api/v1/coach/programs/${programId}/history/1`);expect(oldVersion.status()).toBe(200);
+  expect((await oldVersion.json()).data.program.document.weeks[0].sessions[0].blocks[0].exercises[0].prescription.loadTarget).toBe("40 lb");
+  expect((await context.request.get(`${environment.appUrl}/api/v1/coach/programs/${programId}/history`)).status()).toBe(403);
+  expect((await context.request.get(`${environment.appUrl}/api/v1/coach/programs/${programId}/history/1`)).status()).toBe(403);
+  await page.getByRole("button",{name:"Reprendre la version 1",exact:true}).click();
+  await page.getByRole("dialog",{name:"Reprendre une sauvegarde",exact:true}).getByRole("button",{name:"Reprendre la version 1",exact:true}).click();
+  await expect(page.getByLabel("Charge cible",{exact:true})).toHaveValue("40 lb");
+  await expect(page.getByRole("button",{name:"Version 4 actuelle",exact:true})).toBeDisabled();
+  await page.getByRole("combobox",{name:"Unité",exact:true}).selectOption("kg");
+  await page.getByLabel("Charge cible",{exact:true}).fill("17.5");
+  await page.getByRole("button",{name:"Enregistrer le brouillon",exact:true}).click();
+  await expect(page.getByText("Brouillon enregistré · version 5.")).toBeVisible();
+  await page.getByRole("combobox",{name:"Client destinataire",exact:true}).selectOption({label:"Client Programme"});
+  await page.getByRole("button",{name:"Publier pour ce client",exact:true}).click();
+  await page.getByRole("dialog",{name:"Publier ce programme",exact:true}).getByRole("button",{name:"Confirmer la publication",exact:true}).click();
+  await expect(page.getByText("Programme publié. Le client peut maintenant le consulter dans son portail.")).toBeVisible();
+  await clientPage.goto(`${environment.appUrl}/client/program`);
+  await clientPage.getByRole("link",{name:"Ouvrir la séance",exact:true}).first().click();
+  await clientPage.getByRole("button",{name:"Commencer la séance",exact:true}).click();
+  const kgSet=clientPage.getByRole("region",{name:"Dumbbell Press · série 1",exact:true});
+  await kgSet.getByRole("combobox",{name:"Statut de la série",exact:true}).selectOption("DONE");
+  await kgSet.getByLabel("Répétitions · Dumbbell Press · série 1",{exact:true}).fill("8");
+  await kgSet.getByLabel("Charge (kg) · Dumbbell Press · série 1",{exact:true}).fill("17.5");
+  await clientPage.getByRole("button",{name:"Enregistrer les résultats",exact:true}).click();
+  await expect(clientPage.getByText("Résultats enregistrés.",{exact:true})).toBeVisible();
+  await clientPage.reload();await expect(clientPage.getByLabel("Charge (kg) · Dumbbell Press · série 1",{exact:true})).toHaveValue("17.5");
+  await clientPage.goto(workoutUrl);await expect(clientPage.getByLabel("Charge (lb) · Dumbbell Press · série 1",{exact:true})).toHaveValue("40");
   await clientPage.getByRole("button",{name:"Se déconnecter",exact:true}).click();await expect(clientPage).toHaveURL(/\/client-login$/);
   await clientPage.goto(`${environment.appUrl}/client/program`);await expect(clientPage).toHaveURL(/\/client-login$/);await context.close();
   await page.getByRole("button",{name:"Se déconnecter",exact:true}).click();await expect(page).toHaveURL(/\/login(?:\?.*)?$/);

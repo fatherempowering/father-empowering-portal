@@ -12,7 +12,7 @@ import styles from "./exercise-library.module.css";
 import { ExercisePilot } from "./exercise-pilot";
 
 const EMPTY: ExerciseDefinition = { name: "", equipment: "", cue: { fr: "", en: "" }, defaultUnit: "lb", archived: false };
-const UNIT_LABELS = { lb: "Livres (lb)", min: "Minutes", sec: "Secondes", distance: "Distance", level: "Niveau", configuration: "Configuration (sans conversion en poids)" };
+const UNIT_LABELS = { lb: "Livres (lb)", kg: "Kilogrammes (kg)", min: "Minutes", sec: "Secondes", distance: "Distance", level: "Niveau", configuration: "Configuration (sans conversion en poids)" };
 type ListState = { kind: "loading" } | { kind: "error" } | { kind: "ready"; value: ExerciseList };
 
 function handleAuth(response: Response) {
