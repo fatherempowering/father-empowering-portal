@@ -1,5 +1,6 @@
 import type { ExerciseSnapshot } from "@/lib/contracts/training";
 import type { DraftBlock, DraftExercise, DraftSession, ProgramEditor } from "@/lib/contracts/training-drafts";
+import { pilotDefaultUnit } from "@/lib/contracts/training-pilot";
 
 const text = (fr = "", en = "") => ({ fr, en });
 export function newProgram(): ProgramEditor {
@@ -14,7 +15,9 @@ export function newBlock(): DraftBlock {
 }
 export function addLibraryExercise(exercise: ExerciseSnapshot): DraftExercise {
   return { id: crypto.randomUUID(), libraryExerciseId: exercise.id, name: exercise.name, cue: structuredClone(exercise.cue), media: null,
-    prescription: { sets: 3, reps: "8-10", targetRir: 2, restSeconds: 90, tempo: "", loadTarget: "", unit: exercise.defaultUnit } };
+    ...(exercise.pilot ? { pilot: structuredClone(exercise.pilot) } : {}),
+    prescription: { sets: 3, reps: exercise.pilot && exercise.pilot.performance.measure !== "repetitions" ? "1" : "8-10",
+      targetRir: 2, restSeconds: 90, tempo: "", loadTarget: "", unit: exercise.pilot ? pilotDefaultUnit(exercise.pilot) : exercise.defaultUnit } };
 }
 export function duplicateWeek(program: ProgramEditor, index: number): ProgramEditor {
   if (program.weeks.length >= 52 || !program.weeks[index]) return program;
@@ -44,6 +47,14 @@ export function draftWarnings(program: ProgramEditor): string[] {
         if (!block.exercises.length) warnings.push(`${label}, bloc ${b + 1} : aucun exercice.`);
         if ((block.mode === "superset" && block.exercises.length !== 2) || (block.mode === "finisher" && block.exercises.length < 2)) warnings.push(`${label}, bloc ${b + 1} : groupe incomplet.`);
         if (block.mode !== "standard" && block.exercises.some((e) => e.prescription.sets !== block.exercises[0]?.prescription.sets)) warnings.push(`${label}, bloc ${b + 1} : harmonise le nombre de séries par tour.`);
+        for (const exercise of block.exercises) {
+          if (!exercise.pilot) continue;
+          const unit = pilotDefaultUnit(exercise.pilot);
+          if (["sec", "distance", "configuration"].includes(unit) &&
+              [exercise.prescription, ...(exercise.prescription.prescribedSets ?? [])].some((set) => !set.loadTarget.trim())) {
+            warnings.push(`${label}, ${exercise.pilot.name.fr} : précise ${unit === "sec" ? "la durée cible en secondes" : unit === "distance" ? "la distance cible en mètres" : "la configuration cible"} avant publication.`);
+          }
+        }
       }
     }
   }

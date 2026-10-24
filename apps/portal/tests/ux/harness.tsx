@@ -10,6 +10,12 @@ import { ClientOnboarding } from "../../src/features/client/onboarding/client-on
 import { ClientWeekZero } from "../../src/features/client/week-zero/client-week-zero";
 import { PersonalPortalSetup } from "../../src/features/coach/personal-portal/personal-portal-setup";
 import { ExerciseLibrary } from "../../src/features/training/coach/exercise-library";
+import { ExercisePilot } from "../../src/features/training/coach/exercise-pilot";
+import { exercisePilotQuerySchema } from "../../src/lib/contracts/exercise-pilot";
+import { selectPilotExerciseRequestSchema, pilotDefaultUnit } from "../../src/lib/contracts/training-pilot";
+import { queryPilotCatalog } from "../../src/lib/training/pilot/model";
+import { buildPilotProgramSnapshots } from "../../src/lib/training/pilot/program-snapshot";
+import pilotSource from "../../src/lib/training/pilot/source.json";
 import { ProgramBuilder } from "../../src/features/training/coach/program-builder";
 import { ClientProgram } from "../../src/features/training/client/client-program";
 import { ClientWorkout } from "../../src/features/training/client/client-workout";
@@ -181,6 +187,7 @@ Object.assign(window, { __exerciseRequests: exerciseRequests });
 let exerciseResponseLost = false;
 const programRecords = new Map<string, ProgramSnapshot>();
 const programReceipts = new Map<string, ProgramSnapshot>();
+const programVersionRecords = new Map<string, ProgramSnapshot[]>();
 const programRequests: SaveProgramRequest[] = [];
 Object.assign(window, { __programRequests: programRequests });
 let programResponseLost = false;
@@ -328,6 +335,7 @@ function wireWorkout(workout: WorkoutSnapshot): WorkoutWireSnapshot {
 
 const workoutScreen = harnessParameters.get("screen");
 const needsWorkoutPublication = scenario === "program-published"
+  || scenario.startsWith("pilot-program")
   || scenario.startsWith("workout-")
   || scenario.startsWith("coach-workout-")
   || workoutScreen === "client-workout"
@@ -340,6 +348,31 @@ if (needsWorkoutPublication) {
       ? uppercaseWorkoutSessionId
       : workoutSessionId,
   );
+  if (scenario.startsWith("pilot-program")) {
+    const pilotBlock = publication.document.weeks[0].sessions[0].blocks[0];
+    pilotBlock.exercises = buildPilotProgramSnapshots(pilotSource).map((pilot, index) => {
+      const item = addLibraryExercise({
+        id: `19400000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+        name: pilot.name.en, equipment: pilot.equipment.labels.fr, cue: { fr: "", en: "" }, defaultUnit: pilotDefaultUnit(pilot),
+        archived: false, version: 1, createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString(), canEdit: false, pilot,
+      });
+      item.id = `19500000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
+      item.prescription.sets = 2;
+      item.prescription.loadTarget = item.prescription.unit === "configuration" ? "Réglage de test décrit par le coach" : item.prescription.unit === "sec" ? "30" : item.prescription.unit === "distance" ? "20" : "25";
+      return item;
+    });
+    if (scenario === "pilot-program-completed") {
+      const record = makeWorkout(publication, "COMPLETED");
+      record.sets = pilotBlock.exercises.flatMap((item) => Array.from({ length: item.prescription.sets }, (_, index) => ({
+        exerciseId: item.id, setNumber: index + 1, status: "DONE" as const,
+        reps: item.pilot?.performance.measure === "repetitions" ? 8 : null,
+        load: item.prescription.unit === "configuration" ? null : item.prescription.unit === "sec" ? 30 : item.prescription.unit === "distance" ? 20 : 25,
+        rir: null, kind: "PRESCRIBED" as const, unit: item.prescription.unit,
+        ...(["configuration", "distance"].includes(item.prescription.unit) ? { details: item.prescription.unit === "distance" ? "25 lb par haltère" : "Configuration réellement utilisée, test" } : {}),
+      })));
+      workoutRecords.set(workoutKey(record.publicationId, record.weekNumber, record.sessionId), record);
+    }
+  }
   workoutPublications.set(publication.id, publication);
   if (["workout-in-progress", "workout-response-lost", "workout-conflict", "workout-dirty", "workout-uppercase-session", "coach-workout-pending"].includes(scenario)) {
     const record = makeWorkout(publication, "IN_PROGRESS");
@@ -359,8 +392,41 @@ if (needsWorkoutPublication) {
 if (harnessParameters.get("screen") === "program-builder") {
   exerciseRecords.push({ id: "19000000-0000-4000-8000-000000000010", name: "Dumbbell Press", equipment: "Dumbbells", cue: { fr: "Contrôle", en: "Control" }, defaultUnit: "lb", archived: false, version: 1, createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString(), canEdit: true });
 }
+let pilotAttempts = 0;
+let pilotSelectionLost = false;
+const pilotSelectionRequests: unknown[] = [];
+const pilotSelections = new Map<string, ExerciseSnapshot>();
+Object.assign(window, { __pilotSelectionRequests: pilotSelectionRequests });
 window.fetch = async (url, init) => {
   const path = String(url);
+  const pilotPath = new URL(path, window.location.origin);
+  if (pilotPath.pathname === "/api/v1/coach/exercise-pilot") {
+    pilotAttempts++;
+    if (scenario === "pilot-load-error" || (scenario === "pilot-response-recovery" && pilotAttempts === 1)) return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
+    if (scenario === "pilot-malformed") return reply({ data: { items: [] } });
+    if (scenario === "pilot-unauthenticated") return reply({ error: { code: "UNAUTHENTICATED" } }, 401);
+    if (scenario === "pilot-forbidden") return reply({ error: { code: "FORBIDDEN" } }, 403);
+    const query = exercisePilotQuerySchema.parse(Object.fromEntries(pilotPath.searchParams));
+    return reply({ data: queryPilotCatalog(pilotSource, query) });
+  }
+  if (pilotPath.pathname === "/api/v1/coach/exercise-pilot/select") {
+    const input = selectPilotExerciseRequestSchema.parse(JSON.parse(String(init?.body)));
+    pilotSelectionRequests.push(input);
+    if (scenario === "pilot-select-disabled") return reply({ error: { code: "TEMPORARILY_UNAVAILABLE" } }, 503);
+    const pilot = buildPilotProgramSnapshots(pilotSource).find((item) => item.sourceId === input.sourceId && item.sourceVersion === input.sourceVersion);
+    if (!pilot) return reply({ error: { code: "NOT_FOUND" } }, 404);
+    const key = `${pilot.sourceId}@${pilot.sourceVersion}`;
+    let exercise = pilotSelections.get(key);
+    if (!exercise) {
+      exercise = { id: crypto.randomUUID(), name: pilot.name.en, equipment: pilot.equipment.labels.fr,
+        cue: { fr: "", en: "" }, defaultUnit: pilotDefaultUnit(pilot), archived: false, version: 1,
+        createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString(), canEdit: false, pilot };
+      pilotSelections.set(key, exercise); exerciseRecords.push(exercise);
+    }
+    if (scenario === "pilot-select-response-lost" && !pilotSelectionLost) { pilotSelectionLost = true; throw new TypeError("Synthetic lost selection confirmation"); }
+    if (scenario === "pilot-select-mismatch") return reply({ data: { exercise: { ...exercise, pilot: { ...pilot, sourceId: input.sourceId === "DB_001" ? "DB_034" : "DB_001" } } } });
+    return reply({ data: { exercise } });
+  }
   const parsedPath = new URL(path, window.location.origin);
   if (path === "/api/v1/auth/client-logout" && ["client-logout-network-error", "onboarding-load-logout-error"].includes(scenario)) throw new TypeError("Synthetic network failure");
   if (path === "/api/v1/client/onboarding" && scenario === "onboarding-load-logout-error") {
@@ -453,10 +519,16 @@ window.fetch = async (url, init) => {
     const items = [...workoutRecords.values()].map(compactWorkout);
     return reply({ data: { items: items.slice(page * 20, page * 20 + 20), total: items.length, page, pageSize: 20 } });
   }
-  if (path.startsWith("/api/v1/coach/programs/recipients")) return reply({data:{clients:[{id:recipientId,name:"Client Test"}],total:1,page:0}});
+  if (path.startsWith("/api/v1/coach/programs/recipients")) {
+    const clients = scenario === "same-name-clients"
+      ? [{id:"19100000-0000-4000-8000-000000000006",name:"Maxime Bourdon",isOwnProfile:false},{id:recipientId,name:"Maxime Bourdon",isOwnProfile:true}]
+      : [{id:recipientId,name:"Client Test"}];
+    return reply({data:{clients,total:clients.length,page:0}});
+  }
   if (path === "/api/v1/coach/programs/publish") {
     const input = JSON.parse(String(init?.body)) as PublishProgramRequest; publicationRequests.push(input);
     if (scenario === "publication-conflict") return reply({error:{code:"VERSION_CONFLICT"}},409);
+    if (scenario === "publication-pilot-recipient-disabled") return reply({error:{code:"PILOT_RECIPIENT_DISABLED",message:"Untrusted server detail must not appear"}},400);
     let result = publicationReceipts.get(input.clientMutationId);
     if (!result) {
       const draft = programRecords.get(input.programId)!;
@@ -464,6 +536,7 @@ window.fetch = async (url, init) => {
       publicationReceipts.set(input.clientMutationId,result); publication=result;
     }
     if (scenario === "publication-response-lost" && !publicationResponseLost) { publicationResponseLost=true; throw new TypeError("Confirmation lost"); }
+    if (scenario === "publication-service-unavailable" && !publicationResponseLost) { publicationResponseLost=true; return reply({error:{code:"TEMPORARILY_UNAVAILABLE"}},503); }
     return reply({data:{program:result}});
   }
   if (path === "/api/v1/client/program" || (path.startsWith("/api/v1/coach/clients/") && path.endsWith("/program"))) {
@@ -480,11 +553,26 @@ window.fetch = async (url, init) => {
       if (!result) {
         result = { id: input.id ?? crypto.randomUUID(), document: input.document, version: input.expectedVersion + 1, createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString() };
         programRecords.set(result.id, result); programReceipts.set(input.clientMutationId, result);
+        programVersionRecords.set(result.id, [...(programVersionRecords.get(result.id) ?? []), structuredClone(result)]);
       }
       if (scenario === "program-response-lost" && !programResponseLost) { programResponseLost = true; throw new TypeError("Response lost after commit"); }
       return reply({ data: { program: result } });
     }
-    const id = new URL(path, window.location.origin).pathname.split("/")[5];
+    const parts = new URL(path, window.location.origin).pathname.split("/");
+    const id = parts[5];
+    if (parts[6] === "history") {
+      const versions = programVersionRecords.get(id) ?? [];
+      if (parts[7]) {
+        const version = versions.find(item => item.version === Number(parts[7]));
+        if (scenario === "history-read-delayed") await new Promise<void>((resolve, reject) => {
+          Object.assign(window, { __releaseProgramHistory: resolve });
+          init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
+        });
+        return version ? reply({data:{program:version}}) : reply({error:{code:"NOT_FOUND"}},404);
+      }
+      const page = Number(parsedPath.searchParams.get("page") ?? 0);
+      return reply({data:{items:[...versions].reverse().slice(page*20,page*20+20).map(item => ({version:item.version,updatedAt:item.updatedAt})),total:versions.length,page,pageSize:20}});
+    }
     if (id) return programRecords.has(id) ? reply({ data: { program: programRecords.get(id) } }) : reply({ error: { code: "NOT_FOUND" } }, 404);
     return reply({ data: { items: [...programRecords.values()].map((p) => ({ id: p.id, title: p.document.title, version: p.version, weekCount: p.document.weeks.length, updatedAt: p.updatedAt })), total: programRecords.size, page: 0, pageSize: 20 } });
   }
@@ -756,8 +844,13 @@ window.fetch = async (url, init) => {
     }
     return reply({ data: { assessment: assessmentSnapshot() } });
   }
-  if (path.endsWith("/coach/clients") && !init?.method)
-    return reply({ data: { clients: scenario === "empty" ? [] : records } });
+  if (path.endsWith("/coach/clients") && !init?.method) {
+    const clients = scenario === "same-name-clients" ? [false,true].map((isOwnProfile,index)=>({
+      ...records[0],id:index ? "personal" : "ordinary",firstName:"Maxime",lastName:"Bourdon",
+      email:index ? "owner@example.test" : "other@example.test",status:"ACTIVE",invitation:null,isOwnProfile,
+    })) : scenario === "empty" ? [] : records;
+    return reply({ data: { clients } });
+  }
   if (path.endsWith("/coach/clients") && init?.method === "POST") {
     const values = JSON.parse(String(init.body));
     const record = {
@@ -897,6 +990,7 @@ function Harness() {
   const [view, setView] = useState(initialView ?? "coach");
   const [key, setKey] = useState(0);
   if (view === "exercise-library") return <ExerciseLibrary />;
+  if (view === "exercise-pilot") return <main style={{ padding: "1rem" }}><ExercisePilot /></main>;
   if (view === "program-builder") return <ProgramBuilder />;
   if (view === "client-program") return <ClientProgram />;
   if (view === "client-workout") return <ClientWorkout />;

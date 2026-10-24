@@ -1,22 +1,29 @@
 import "server-only";
 import { requireCoachVerified } from "@/lib/auth/actor";
-import { requireOwnClientAccess } from "@/lib/auth/own-client-access";
+import { getStaffPersonalProfile, requireOwnClientAccess } from "@/lib/auth/own-client-access";
 import { M1ContractError, uuidSchema } from "@/lib/contracts/m1";
 import { publicationClientsSchema, publicationSchema, publicationResponseSchema, publishProgramRequestSchema, type PublishProgramRequest } from "@/lib/contracts/training-publication";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { programRepositoryError } from "./program-repository";
 
 export function publicationError(error: { message: string } | null) {
-  if (error?.message === "FE_INVALID_TRAINING_PUBLICATION") return new M1ContractError("VALIDATION_FAILED", "Complete the program before publishing", 400);
-  if (error?.message === "FE_ALREADY_PUBLISHED") return new M1ContractError("VERSION_CONFLICT", "This draft version was already published", 409);
+  if (error?.message === "FE_PILOT_RECIPIENT_DISABLED") return new M1ContractError("PILOT_RECIPIENT_DISABLED", "Ce destinataire n’est pas autorisé pour les exercices pilotes de ce test staging. Choisis un compte de test autorisé; le brouillon est conservé.", 400);
+  if (error?.message === "FE_INVALID_TRAINING_PUBLICATION") return new M1ContractError("PROGRAM_INCOMPLETE", "Complète les éléments signalés dans le programme avant de publier.", 400);
+  if (error?.message === "FE_ALREADY_PUBLISHED") return new M1ContractError("ALREADY_PUBLISHED", "Cette version est déjà publiée pour ce client.", 409);
   return programRepositoryError(error);
 }
 export async function listTrainingRecipients(page: number) {
-  await requireCoachVerified();
+  const { profile } = await getStaffPersonalProfile();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc("list_training_recipients", { p_page: page });
   if (error) throw publicationError(error);
-  return publicationClientsSchema.parse(data);
+  const recipients = publicationClientsSchema.parse(data);
+  return {
+    ...recipients,
+    // Only label recipients already authorized by the existing RPC. This flag
+    // never adds a recipient or grants publication access.
+    clients: recipients.clients.map((client) => ({ ...client, isOwnProfile: client.id === profile?.id })),
+  };
 }
 async function readCurrent(organizationId: string, clientId: string) {
   const supabase = await createServerSupabaseClient();

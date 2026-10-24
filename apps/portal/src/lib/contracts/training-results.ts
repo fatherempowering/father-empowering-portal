@@ -18,6 +18,9 @@ export const workoutSetInputSchema = z.object({
     "Load supports at most six decimal places",
   ),
   rir: z.number().int().min(0).max(10).nullable(),
+  // Optional for historical measurements; configuration and carry guidance are
+  // validated against the immutable publication, never a browser-supplied unit.
+  details: z.string().trim().max(500).nullable().optional(),
 }).strict();
 export type WorkoutSetInput = z.infer<typeof workoutSetInputSchema>;
 
@@ -28,12 +31,14 @@ export const workoutSetResultSchema = workoutSetInputSchema.extend({
   unit: trainingUnitSchema,
 }).strict().superRefine((set, context) => {
   if (set.status === "DONE") {
-    if (set.load === null || (set.unit === "lb" && set.reps === null)) {
+    if (set.unit === "configuration"
+      ? set.load !== null || set.reps === null || !set.details?.trim()
+      : set.load === null || ((set.unit === "lb" || set.unit === "kg") && set.reps === null)) {
       context.addIssue({ code: "custom", message: "Completed set measurements are required" });
     }
     return;
   }
-  if (set.reps !== null || set.load !== null || set.rir !== null) {
+  if (set.reps !== null || set.load !== null || set.rir !== null || set.details != null) {
     context.addIssue({ code: "custom", message: "Pending or skipped sets cannot contain measurements" });
   }
 });
@@ -58,10 +63,12 @@ export const saveWorkoutRequestSchema = z.object({
       context.addIssue({ code: "custom", message: "A completed workout cannot contain pending sets", path: ["sets", index, "status"] });
     }
     if (set.status === "DONE") {
-      if (set.load === null) {
+      // Configuration-only results have no numeric resistance. The RPC checks
+      // that this alternative really belongs to a configuration prescription.
+      if (set.load === null && (set.reps === null || !set.details?.trim())) {
         context.addIssue({ code: "custom", message: "A completed set requires a measured value", path: ["sets", index, "load"] });
       }
-    } else if (set.reps !== null || set.load !== null || set.rir !== null) {
+    } else if (set.reps !== null || set.load !== null || set.rir !== null || set.details != null) {
       context.addIssue({ code: "custom", message: "Pending or skipped sets cannot contain measurements", path: ["sets", index] });
     }
   }
@@ -110,7 +117,10 @@ export type WorkoutWireSnapshot = z.infer<typeof workoutWireSnapshotSchema>;
 export const workoutSnapshotSchema = z.object({
   ...workoutSnapshotWireFields,
   session: draftSessionSchema,
-}).strict().superRefine(validateCompletionTimestamp);
+}).strict().superRefine((workout, context) => {
+  validateCompletionTimestamp(workout, context);
+  validateFrozenMeasurements(workout.session, workout.sets, context);
+});
 export type WorkoutSnapshot = z.infer<typeof workoutSnapshotSchema>;
 
 export const workoutSessionWireSchema = z.object({
@@ -125,7 +135,9 @@ export const workoutSessionWireSchema = z.object({
       response.workout.publicationRevision !== response.publication.revision ||
       JSON.stringify(response.workout.programTitle) !== JSON.stringify(response.publication.document.title)) {
     context.addIssue({ code: "custom", message: "Workout and publication do not match", path: ["workout"] });
+    return;
   }
+  validateFrozenMeasurements(session, response.workout.sets, context);
 });
 export type WorkoutSessionWire = z.infer<typeof workoutSessionWireSchema>;
 type WorkoutSessionResponseValue = {
@@ -134,6 +146,27 @@ type WorkoutSessionResponseValue = {
 };
 function sameUuid(left: string, right: string) {
   return left.toLowerCase() === right.toLowerCase();
+}
+function validateFrozenMeasurements(
+  session: z.infer<typeof draftSessionSchema>,
+  sets: WorkoutSetResult[],
+  context: z.RefinementCtx,
+) {
+  const exercises = session.blocks.flatMap((block) => block.exercises);
+  sets.forEach((set, index) => {
+    const exercise = exercises.find((candidate) => sameUuid(candidate.id, set.exerciseId));
+    if (!exercise) {
+      context.addIssue({ code: "custom", message: "Set exercise does not belong to the publication", path: ["sets", index] });
+      return;
+    }
+    const expectedUnit = set.setNumber <= exercise.prescription.sets
+      ? exercise.prescription.prescribedSets?.[set.setNumber - 1]?.unit ?? exercise.prescription.unit
+      : exercise.prescription.unit;
+    if (set.unit !== expectedUnit || (set.status === "DONE" && set.unit === "distance" &&
+        exercise.pilot?.performance.measure === "distance" && !set.details?.trim())) {
+      context.addIssue({ code: "custom", message: "Measurements do not match the frozen exercise convention", path: ["sets", index] });
+    }
+  });
 }
 export const workoutSessionResponseSchema = workoutSessionWireSchema.transform((response): WorkoutSessionResponseValue => {
   if (!response.workout) return { workout: null, publication: response.publication };
