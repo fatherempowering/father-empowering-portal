@@ -581,6 +581,7 @@ export function ClientWorkout() {
       current="program"
       locale={french ? "fr" : "en"}
       documentNavigation
+      legacyClient
       accountAction={
         <button className="fe-button" type="button" disabled={signingOut || busy} onClick={() => void logout()}>
           {signingOut ? t("Déconnexion…", "Signing out…") : t("Se déconnecter", "Sign out")}
@@ -591,8 +592,7 @@ export function ClientWorkout() {
         <div className={styles.heading}>
           <div>
             <a className={styles.back} href={programHref}>← {t("Mon programme", "My program")}</a>
-            <p className="fe-kicker">TRAINING · {t("RÉSULTATS", "RESULTS")}</p>
-            <h1 className="fe-title">{t("Ma séance.", "My workout.")}</h1>
+            <h1 className={styles.pageTitle}>{t("Ma séance.", "My workout.")}</h1>
           </div>
           <button className="fe-button" type="button" onClick={() => setFrench(!french)}>
             {french ? "English" : "Français"}
@@ -627,23 +627,23 @@ export function ClientWorkout() {
             </button>
           </>
         ) : (
-          <>
+          <div className={styles.guidedShell}>
             <WorkoutHeading
               french={french}
-              publication={publication}
-              selector={selector!}
               session={session}
               workout={workout}
+              view={guideView}
+              progress={progress}
+              units={units}
+              activeUnit={selectedUnit}
             />
-
-            <div className={styles.guidedProgress}>
-              <div><span>{t("Progression enregistrée", "Saved progress")}</span><strong>{progress.resolved} / {progress.total} {t("séries", "sets")}</strong></div>
-              <progress aria-label={t("Séries enregistrées", "Saved sets")} max={Math.max(1, progress.total)} value={progress.resolved} />
-            </div>
-
+            <div className={styles.guidedBody}>
+            {guideView === "overview" || guideView === "plan" ? <div className={styles.planContext}>
+              <p>{localized(publication.document.title, french)} · {t("Semaine", "Week")} {selector!.weekNumber}</p>
+              {localized(session.warmup, french) ? <p>{localized(session.warmup, french)}</p> : null}
+            </div> : null}
             {guideView === "overview" ? (
               <section className={styles.startPanel} aria-labelledby="start-workout-title">
-                <p className={styles.eyebrow}>{t("TA SÉANCE, UN MOUVEMENT À LA FOIS", "YOUR WORKOUT, ONE MOVEMENT AT A TIME")}</p>
                 <h2 id="start-workout-title" tabIndex={-1} data-guide-focus="" className={styles.focusAnchor}>{t("Le plan de ta séance", "Your workout plan")}</h2>
                 <GuidedPlanRows units={units.slice(0, 3)} savedSets={savedSets} french={french} />
                 {units.length > 3 ? <button type="button" className="fe-button" onClick={() => openGuidePage("plan")}>
@@ -695,21 +695,21 @@ export function ClientWorkout() {
               <button className="fe-button fe-button-primary" type="button" onClick={() => setGuideView(guideReturnView.current)}>{t("Retour à la séance", "Back to workout")}</button>
             </section> : null}
 
-            {guideView === "run" && selectedUnit && selectedStep ? <section className={styles.guidedRun} aria-labelledby="guided-current-title">
+            {guideView === "run" && selectedUnit && selectedStep ? <section className={styles.guidedRun} aria-labelledby={restDeadline !== null ? undefined : "guided-current-title"}>
               <div className={styles.guidedRunHeading}>
                 <div>
-                  <p className={styles.eyebrow}>{localized(selectedUnit.block.label, french) || t("Entraînement en cours", "Workout in progress")}</p>
-                  <h2 id="guided-current-title" tabIndex={-1} data-guide-focus={restDeadline === null ? "" : undefined} className={styles.focusAnchor}>{selectedUnit.grouped ? selectedUnit.block.mode.toUpperCase() : publishedExerciseName(selectedUnit.exercises[0], french)}</h2>
-                  <p>{t("Étape", "Stage")} {units.indexOf(selectedUnit) + 1} / {units.length} · {selectedStep.extra ? t("Série extra", "Extra set") : selectedUnit.grouped ? t("Tour", "Round") : t("Série", "Set")} {selectedStep.round}{!selectedStep.extra ? ` / ${selectedUnit.steps.filter((step) => !step.extra).length}` : ""}</p>
+                  <p className={styles.runCount}>{selectedStep.extra ? t("Série extra", "Extra set") : selectedUnit.grouped ? t("Tour", "Round") : t("Série", "Set")} {selectedStep.round}{!selectedStep.extra ? ` / ${selectedUnit.steps.filter((step) => !step.extra).length}` : ""}</p>
+                  <p className={styles.runDetail}>{t("Étape", "Stage")} {units.indexOf(selectedUnit) + 1} / {units.length} · {localized(selectedUnit.block.label, french)}</p>
                 </div>
                 <button className="fe-button" type="button" onClick={() => openGuidePage("plan")}>{t("Liste des exercices", "Exercise list")}</button>
               </div>
               {restDeadline !== null ? <GuidedRestTimer deadline={restDeadline} french={french} onContinue={() => setRestDeadline(null)} /> : <>
                 <div className={styles.mediaSpace} aria-label={t("Repère de mouvement", "Movement reference")}>
-                  <span aria-hidden="true">FE</span>
-                  <p>{t("Ta technique d’abord.", "Technique comes first.")}</p>
+                  <span aria-hidden="true">—</span>
+                  <p>{t("Image de l’exercice", "Exercise image")}</p>
                   <small>{t("Aucun média n’est associé à ce mouvement pour le moment. Les consignes sont ci-dessous.", "No media is attached to this movement yet. Guidance is below.")}</small>
                 </div>
+                <h2 id="guided-current-title" tabIndex={-1} data-guide-focus="" className={`${styles.exerciseName} ${styles.focusAnchor}`}>{selectedUnit.grouped ? selectedUnit.block.mode.toUpperCase() : publishedExerciseName(selectedUnit.exercises[0], french)}</h2>
                 {selectedUnit.grouped ? <p className={styles.groupInstruction}>{t("Effectue les mouvements de ce tour dans l’ordre. Le repos commence seulement après validation du tour.", "Complete this round’s movements in order. Rest starts only after you validate the round.")} {t("Repos entre les tours", "Rest between rounds")} : {selectedUnit.block.restSeconds} s.</p> : null}
                 {selectedStep.members.map(({ exercise, setNumber }) => {
                   const item = sets.find((candidate) => guidedSetKey(candidate) === guidedSetKey({ exerciseId: exercise.id, setNumber }));
@@ -848,7 +848,8 @@ export function ClientWorkout() {
                 )}
               </Feedback>
             ) : null}
-          </>
+            </div>
+          </div>
         )}
       </div>
     </AppShell>
@@ -863,8 +864,9 @@ function GuidedPlanRows({ units, savedSets, french }: { units: GuidedUnit[]; sav
       <div>
         <strong>{unit.grouped ? localized(unit.block.label, french) || unit.block.mode : publishedExerciseName(unit.exercises[0], french)}</strong>
         <p>{unit.grouped ? `${unit.block.mode.toUpperCase()} · ${unit.steps.filter((step) => !step.extra).length} ${french ? "tours" : "rounds"}` : `${unit.exercises[0].prescription.sets} ${french ? "séries" : "sets"}`}{complete ? ` · ${french ? "enregistré" : "saved"}` : ""}</p>
-        {unit.grouped ? <ul>{unit.exercises.map((exercise) => <li key={exercise.id}>{publishedExerciseName(exercise, french)} · {exercise.prescription.sets} {french ? "séries" : "sets"}</li>)}</ul> : <p><PrescriptionText exercise={unit.exercises[0]} value={unit.exercises[0].prescription} french={french} /></p>}
+        {unit.grouped ? <ul>{unit.exercises.map((exercise) => <li key={exercise.id}>{publishedExerciseName(exercise, french)} · {exercise.prescription.sets} {french ? "séries" : "sets"}</li>)}</ul> : <p>{unit.exercises[0].prescription.reps} {prescriptionRepetitionsLabel(unit.exercises[0], french).toLowerCase()}</p>}
       </div>
+      <span className={styles.planLoad}>{unit.grouped ? "—" : prescriptionTarget(unit.exercises[0].prescription, unit.exercises[0])}</span>
     </li>;
   })}</ol>;
 }
@@ -891,25 +893,36 @@ function GuidedRestTimer({ deadline, french, onContinue }: { deadline: number; f
 
 function WorkoutHeading({
   french,
-  publication,
-  selector,
   session,
   workout,
+  view,
+  progress,
+  units,
+  activeUnit,
 }: {
   french: boolean;
-  publication: ProgramPublication;
-  selector: WorkoutSelector;
   session: DraftSession;
   workout: WorkoutSnapshot | null;
+  view: GuideView;
+  progress: { resolved: number; total: number };
+  units: GuidedUnit[];
+  activeUnit: GuidedUnit | undefined;
 }) {
+  const running = view === "run" && activeUnit;
+  const exerciseCount = units.reduce((total, unit) => total + unit.exercises.length, 0);
+  const exercisePosition = activeUnit ? units.slice(0, units.indexOf(activeUnit)).reduce((total, unit) => total + unit.exercises.length, 0) + 1 : 1;
+  const title = running ? localized(activeUnit.block.label, french) || localized(session.title, french) : localized(session.title, french);
+  const meta = running
+    ? `${french ? "Exercice" : "Exercise"} ${exercisePosition}${activeUnit.exercises.length > 1 ? `–${exercisePosition + activeUnit.exercises.length - 1}` : ""} / ${exerciseCount}`
+    : `${exerciseCount} ${french ? "exercices" : "exercises"}`;
   return (
     <header className={styles.workoutHeading}>
       <div>
         <p className={styles.eyebrow}>
-          {localized(publication.document.title, french)} · {french ? "Semaine" : "Week"} {selector.weekNumber}
+          {view === "run" ? french ? "ENTRAÎNEMENT EN COURS" : "NOW TRAINING" : workout?.status === "COMPLETED" ? french ? "ENTRAÎNEMENT TERMINÉ" : "WORKOUT COMPLETE" : french ? "SÉANCE DU JOUR" : "TODAY’S SESSION"}
         </p>
-        <h2>{localized(session.title, french)}</h2>
-        <p>{localized(session.warmup, french)}</p>
+        <h2>{title}</h2>
+        <p className={styles.heroMeta}>{meta}</p>
       </div>
       <span className={styles.status} data-status={workout?.status ?? "NOT_STARTED"}>
         {!workout
@@ -924,6 +937,10 @@ function WorkoutHeading({
               ? "En cours"
               : "In progress"}
       </span>
+      <div className={styles.guidedProgress}>
+        <div><span>{french ? "Progression enregistrée" : "Saved progress"}</span><strong>{progress.resolved} / {progress.total} {french ? "séries" : "sets"}</strong></div>
+        <progress aria-label={french ? "Séries enregistrées" : "Saved sets"} max={Math.max(1, progress.total)} value={progress.resolved} />
+      </div>
     </header>
   );
 }
@@ -1047,11 +1064,21 @@ function WorkoutSetRow({
   const prefix = `${publishedExerciseName(exercise, french)} · ${t("série", "set")} ${item.setNumber}`;
   const resultDisabled = !editable || (guided ? item.status === "SKIPPED" : item.status !== "DONE");
   return (
+    <>
+    {guided && prescription ? <div className={styles.prescriptionGrid} role="table" aria-label={t("Prescription", "Prescription")}>
+      <div className={styles.prescriptionHead} role="row">
+        <div role="columnheader">{t("Séries", "Sets")}</div><div role="columnheader">{prescriptionRepetitionsLabel(exercise, french)}</div><div role="columnheader">{t("Cible", "Target")}</div><div role="columnheader">{t("Repos", "Rest")}</div>
+      </div>
+      <div className={styles.prescriptionValues} role="row">
+        <div role="cell">{exercise.prescription.sets}</div><div role="cell">{prescription.reps}</div><div role="cell">{prescriptionTarget(prescription, exercise)}</div><div role="cell">{prescription.restSeconds} s</div>
+      </div>
+      <p className={styles.prescriptionExtra}>RIR {prescription.targetRir}{prescription.tempo ? ` · ${t("Tempo", "Tempo")} ${prescription.tempo}` : ""}</p>
+    </div> : null}
     <section className={styles.setCard} data-kind={item.kind} aria-label={prefix}>
       <div className={styles.setHeading}>
         <div>
-          <h4>{t("Série", "Set")} {item.setNumber}</h4>
-          <span>{item.kind === "EXTRA" ? t("Extra", "Extra") : t("Prescrite", "Prescribed")}</span>
+          <h4>{guided ? t("Résultat réel", "Actual result") : `${t("Série", "Set")} ${item.setNumber}`}</h4>
+          <span>{guided ? `${t("Série", "Set")} ${item.setNumber} · ` : ""}{item.kind === "EXTRA" ? t("Extra", "Extra") : t("Prescrite", "Prescribed")}</span>
         </div>
         {item.kind === "EXTRA" && editable ? (
           <button className="fe-text-button fe-text-danger" type="button" onClick={remove}>
@@ -1059,7 +1086,7 @@ function WorkoutSetRow({
           </button>
         ) : null}
       </div>
-      {prescription ? (
+      {!guided && prescription ? (
         <p className={styles.prescription} id={`prescription-${item.exerciseId}-${item.setNumber}`}>
           <strong>{t("Prescription", "Prescription")} :</strong>{" "}
           <PrescriptionText value={prescription} french={french} exercise={exercise} />
@@ -1079,24 +1106,7 @@ function WorkoutSetRow({
         </select>
       </label>}
       <div className={styles.resultFields}>
-        <label>
-          {repetitionLabel(exercise, french)} {["lb", "kg", "configuration"].includes(item.unit) ? "*" : `(${t("facultatif", "optional")})`}
-          <input
-            aria-label={`${repetitionLabel(exercise, french)} · ${prefix}`}
-            type="number"
-            min={0}
-            max={10_000}
-            step={1}
-            inputMode="numeric"
-            value={item.reps ?? ""}
-            disabled={resultDisabled}
-            onChange={(event) => {
-              const reps = numberOrNull(event.currentTarget.valueAsNumber);
-              update((current) => ({ ...current, reps }));
-            }}
-          />
-        </label>
-        {item.unit !== "configuration" ? <label>
+        {item.unit !== "configuration" ? <label className={styles.measureField}>
           {measurementLabel(item.unit, french, exercise)} *
           <input
             aria-label={`${measurementLabel(item.unit, french, exercise)} · ${prefix}`}
@@ -1113,16 +1123,24 @@ function WorkoutSetRow({
             }}
           />
         </label> : null}
-        {needsMeasurementDetails(exercise, item.unit) ? <label>
-          {detailsLabel(exercise, item.unit, french)} *
+        <label className={styles.repsField}>
+          {repetitionLabel(exercise, french)} {["lb", "kg", "configuration"].includes(item.unit) ? "*" : `(${t("facultatif", "optional")})`}
           <input
-            aria-label={`${detailsLabel(exercise, item.unit, french)} · ${prefix}`}
-            type="text" maxLength={500} value={item.details ?? ""} disabled={resultDisabled}
-            placeholder={detailsPlaceholder(exercise, item.unit, french)}
-            onChange={(event) => update((current) => ({ ...current, details: event.target.value }))}
+            aria-label={`${repetitionLabel(exercise, french)} · ${prefix}`}
+            type="number"
+            min={0}
+            max={10_000}
+            step={1}
+            inputMode="numeric"
+            value={item.reps ?? ""}
+            disabled={resultDisabled}
+            onChange={(event) => {
+              const reps = numberOrNull(event.currentTarget.valueAsNumber);
+              update((current) => ({ ...current, reps }));
+            }}
           />
-        </label> : null}
-        <label>
+        </label>
+        <label className={styles.rirField}>
           RIR ({t("facultatif", "optional")})
           <input
             aria-label={`RIR · ${prefix}`}
@@ -1139,8 +1157,18 @@ function WorkoutSetRow({
             }}
           />
         </label>
+        {needsMeasurementDetails(exercise, item.unit) ? <label className={styles.detailsField}>
+          {detailsLabel(exercise, item.unit, french)} *
+          <input
+            aria-label={`${detailsLabel(exercise, item.unit, french)} · ${prefix}`}
+            type="text" maxLength={500} value={item.details ?? ""} disabled={resultDisabled}
+            placeholder={detailsPlaceholder(exercise, item.unit, french)}
+            onChange={(event) => update((current) => ({ ...current, details: event.target.value }))}
+          />
+        </label> : null}
       </div>
     </section>
+    </>
   );
 }
 
@@ -1172,15 +1200,29 @@ function PrescriptionText({
   french: boolean;
   exercise: DraftExercise;
 }) {
-  const measure = exercise.pilot?.performance.measure;
-  const timed = measure === "duration" || measure === "distance";
-  const unit = value.unit === "configuration" ? "" : value.unit === "distance" && exercise.pilot ? "m" : value.unit;
   return (
     <>
-      {value.reps} {timed ? (french ? "passage(s)" : "round(s)") : repetitionLabel(exercise, french).toLowerCase()} · {value.loadTarget || "—"} {unit} · RIR {value.targetRir} ·{" "}
+      {value.reps} {prescriptionRepetitionsLabel(exercise, french).toLowerCase()} · {prescriptionTarget(value, exercise)} · RIR {value.targetRir} ·{" "}
       {french ? "repos" : "rest"} {value.restSeconds} s{value.tempo ? ` · ${value.tempo}` : ""}
     </>
   );
+}
+
+function prescriptionRepetitionsLabel(exercise: DraftExercise, french: boolean) {
+  const measure = exercise.pilot?.performance.measure;
+  return measure === "duration" || measure === "distance"
+    ? french ? "Passage(s)" : "Round(s)"
+    : repetitionLabel(exercise, french);
+}
+
+// Presentation only: a coach may have included the prescribed unit in the
+// free-text target. Keep the frozen prescription intact without rendering it twice.
+function prescriptionTarget(value: Pick<DraftExercise["prescription"], "loadTarget" | "unit">, exercise: DraftExercise) {
+  const target = value.loadTarget?.trim() || "—";
+  const unit = value.unit === "configuration" ? "" : value.unit === "distance" && exercise.pilot ? "m" : value.unit;
+  if (!unit || target === "—") return target;
+  const suffix = unit === "lb" ? "lbs?" : unit;
+  return new RegExp(`(?:^|\\s|\\d)${suffix}$`, "i").test(target) ? target : `${target} ${unit}`;
 }
 
 function prescribedSets(session: DraftSession): EditableSet[] {

@@ -1,280 +1,68 @@
-.page {
-  display: grid;
-  gap: 1.25rem;
-  max-width: 70rem;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.homeProgram { display: grid; gap: 1rem; min-width: 0; max-width: 100%; }
+.page { min-width: 0; background: #f4f3ef; color: #1c1c1c; overflow-wrap: anywhere; padding-bottom: 24px; }
+.page h2, .page h3, .page h4 { margin: 0; }
+.page > button { margin: 16px 18px 0; }
+.page > p, .page > :global(.fe-feedback), .page > :global(.fe-loading) { margin: 18px; }
+.heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; background: #1c1c1c; color: #fff; border-bottom: 3px solid #c85a00; }
+.heading h1 { margin: 3px 0; font: 400 22px/1.2 "FE Display", sans-serif; letter-spacing: 1.5px; }
+.heading p { margin: 0; font-size: 11px; color: #aaa; }
+.heading .protocolLabel { text-transform: uppercase; letter-spacing: 3px; font-size: 9px; font-weight: 400; color: #aaa; }
+.headingTools { display: flex; align-items: center; gap: 14px; }
+.availability { font-size: 9px; letter-spacing: 1px; color: #e8761a; }
+.headingTools > button { min-height: 38px; background: #2c2c2c; border: 1px solid #555; color: #fff; font: 400 13px "FE Display", sans-serif; letter-spacing: 1px; padding: 8px 12px; }
+.trainingLayout { display: grid; align-items: start; gap: 16px; min-width: 0; }
+.trainingMain { min-width: 0; }
+.session { width: calc(100% - 28px); max-width: 620px; margin: 14px auto 22px; min-width: 0; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 4px 18px #0000000d; }
+.sessionHeading { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #1c1c1c; color: #fff; padding: 18px; border-bottom: 3px solid #c85a00; }
+.eyebrow { color: #c85a00; font: 400 12px "FE Display", sans-serif; letter-spacing: 1.5px; text-transform: uppercase; margin: 0 0 4px; }
+.sessionHeading .eyebrow { color: #e8761a; }
+.sessionHeading h2 { font: 400 30px/1.1 "FE Display", sans-serif; letter-spacing: 1px; }
+.sessionType { flex-shrink: 0; color: #bbb; font: 400 12px "FE Display", sans-serif; letter-spacing: 1px; }
+.sessionBody { display: grid; gap: 14px; padding: 22px 18px; }
+.sessionBody > p { margin: 0; font-size: 13px; color: #666; line-height: 1.6; }
+.sessionAction { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.sessionAction > a { flex: 1; min-height: 48px; border-radius: 10px; text-transform: uppercase; font: 400 19px "FE Display", sans-serif; letter-spacing: 1px; }
+.sessionAction > span { font-size: 13px; color: #287e40; }
+.sessionPlan { border-top: 1px solid #eee; }
+.sessionPlan summary { cursor: pointer; min-height: 44px; padding: 12px 0; font-size: 13px; font-weight: 600; }
+.sessionPlan[open] { display: grid; gap: 12px; }
+.sessionPlan summary:focus-visible { outline: 3px solid #c85a00; outline-offset: 2px; }
+.block { padding: 14px; border: 1px solid #e5e3dd; border-radius: 10px; background: #f8f7f3; min-width: 0; }
+.block h3 { font: 400 19px "FE Display", sans-serif; letter-spacing: 1px; }
+.exercise { padding: 12px 0; border-bottom: 1px solid #e5e3dd; }
+.exercise:last-child { border-bottom: 0; }
+.exercise h4 { font: 400 21px "FE Display", sans-serif; }
+.exercise p { font-size: 13px; line-height: 1.55; }
+.history { margin: 20px 14px 0; padding: 18px; border: 1px solid #e5e3dd; border-radius: 12px; background: #fff; min-width: 0; scroll-margin-top: 85px; }
+.historyHeading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.history h2 { font: 400 24px "FE Display", sans-serif; letter-spacing: 1px; scroll-margin-top: 85px; }
+.historyHeading > span, .historyIntro { color: #666; font-size: 13px; }
+.historyIntro { margin: 10px 0 16px; }
+.historyList { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.historyList li { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px; border: 1px solid #e5e3dd; border-radius: 10px; background: #faf9f6; }
+.historyRecord { display: grid; gap: 5px; min-width: 0; }
+.historyRecord > strong { font: 400 20px "FE Display", sans-serif; letter-spacing: .6px; }
+.historyMeta { color: #666; font-size: 14px; }
+.historyStatus { display: inline-flex; align-items: center; gap: 5px; justify-self: start; border-radius: 20px; padding: 4px 8px; background: #fff0df; color: #8b3f00; font-size: 12px; }
+.historyStatus[data-status="COMPLETED"] { background: #e6f3e9; color: #287e40; }
+.historyStatus svg { width: 14px; height: 14px; }
+.history :global(.fe-button) { min-height: 44px; white-space: normal; text-align: center; background: #fff; color: #1c1c1c; border-color: #d5d2c9; }
+.pagination { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; font-size: 13px; }
+.homeProgram { display: grid; gap: 12px; min-width: 0; max-width: 100%; }
 .homeProgram > a { justify-self: start; }
-.sessionPlan summary { cursor: pointer; min-height: 2.75rem; padding-block: .75rem; font-weight: 700; }
-.sessionPlan[open] { display: grid; gap: 1rem; }
-.sessionPlan summary:focus-visible { outline: 3px solid #b95000; outline-offset: 2px; }
-
-.page h2,
-.page h3,
-.page h4 {
-  margin: 0;
-}
-
-.page > button {
-  justify-self: start;
-}
-
-.heading,
-.sessionHeading,
-.historyHeading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.programSummary,
-.selector,
-.session,
-.history {
-  display: grid;
-  gap: 0.875rem;
-  padding: 1.25rem;
-  border: 1px solid var(--fe-line, #deddd7);
-  border-radius: 0.75rem;
-  background: var(--fe-paper, #fff);
-  min-width: 0;
-}
-
-.programSummary {
-  border-left: 4px solid var(--fe-orange, #b95000);
-}
-
-.eyebrow {
-  color: var(--fe-orange, #b95000);
-  font-size: 0.75rem;
-  font-weight: 750;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.selectorFields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.selectorFields label {
-  display: grid;
-  gap: 0.375rem;
-  min-width: 0;
-  font-size: 0.875rem;
-  font-weight: 650;
-}
-
-.selectorFields select {
-  width: 100%;
-  min-height: 3rem;
-  padding: 0.625rem 2.25rem 0.625rem 0.75rem;
-  border: 1px solid #929088;
-  border-radius: 0.5rem;
-  background: #fff;
-  color: var(--fe-ink, #1a1a1a);
-}
-
-.sessionType {
-  flex-shrink: 0;
-  padding: 0.35rem 0.625rem;
-  border-radius: 999px;
-  background: var(--fe-warning-bg, #fff2d6);
-  color: var(--fe-warning, #8a5200);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.block {
-  display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
-  border-left: 3px solid var(--fe-orange, #b95000);
-  background: #f8f7f3;
-}
-
-.exercise {
-  display: grid;
-  gap: 0.375rem;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--fe-line, #deddd7);
-}
-
-.exercise:last-child {
-  border-bottom: 0;
-}
-
-.exercise p {
-  line-height: 1.55;
-}
-
-.sessionAction {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  padding-top: 0.375rem;
-}
-
-.sessionAction p {
-  max-width: 34rem;
-  color: var(--fe-muted, #62615e);
-  font-size: 0.8125rem;
-}
-
-.history {
-  /* Lookbook V1.1: scoped to the existing history, not a global theme change. */
-  --fe-ink: #fff;
-  --fe-muted: #ced3d7;
-  --fe-line: #46515b;
-  --fe-paper: #1a2229;
-  --fe-orange: #ff7a1a;
-  color-scheme: dark;
-  color: var(--fe-ink);
-  background: #101416;
-  border-color: var(--fe-line);
-}
-
-.history h2 {
-  font: 400 clamp(1.75rem, 3vw, 2.25rem)/1.15 "FE Display", sans-serif;
-  letter-spacing: .025em;
-}
-
-.history .eyebrow { font-size: .875rem; }
-
-.historyIntro,
-.historyHeading > span {
-  color: var(--fe-muted, #62615e);
-  font-size: 0.875rem;
-}
-
-.historyIntro { font-size: 1rem; }
-
-.history :global(.fe-button) {
-  min-height: 2.75rem;
-  min-width: 2.75rem;
-  border-color: #ff7a1a;
-  background: transparent;
-  color: #ff7a1a;
-  text-align: center;
-  white-space: normal;
-}
-
-.history :global(.fe-button):hover:not(:disabled) { background: #30271f; }
-.history :focus-visible { outline: 3px solid #ff7a1a; outline-offset: 3px; }
-
-.historyList {
-  display: grid;
-  gap: 0.625rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.historyList li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.875rem;
-  border: 1px solid var(--fe-line, #deddd7);
-  border-radius: 0.5rem;
-  background: var(--fe-paper);
-}
-
-.historyRecord {
-  display: grid;
-  gap: .375rem;
-  min-width: 0;
-}
-
-.historyMeta {
-  color: var(--fe-muted, #62615e);
-  font-size: 0.875rem;
-}
-
-.historyStatus {
-  justify-self: start;
-  display: inline-flex;
-  align-items: center;
-  gap: .375rem;
-  padding: .25rem .625rem;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  font-size: .875rem;
-  font-weight: 650;
-  color: #ff7a1a;
-  background: #30271f;
-  white-space: nowrap;
-}
-
-.historyStatus svg { flex-shrink: 0; }
-
-.historyStatus[data-status="COMPLETED"] {
-  color: #60e88a;
-  background: #182e24;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 42rem) {
-  .heading,
-  .sessionHeading,
-  .historyHeading,
-  .historyList li {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .heading > button,
-  .historyList a {
-    align-self: flex-start;
-  }
-
-  .selectorFields {
-    grid-template-columns: 1fr;
-  }
-
-  .programSummary,
-  .selector,
-  .session,
-  .history {
-    padding: 1rem;
-  }
-
-  .block {
-    padding: 0.75rem;
-  }
-
-  /* Keep useful reading width when the user enlarges text independently. */
-  .history { padding: 16px; }
-  .historyList li { padding: 12px; }
-  .history :global(.fe-button) { padding-inline: 12px; }
-}
-
-@media (max-width: 22rem) {
-  .programSummary,
-  .selector,
-  .session,
-  .history {
-    padding: 0.75rem;
-  }
-
-  .sessionAction a,
-  .pagination button {
-    width: 100%;
-  }
-
-  .history { padding: 12px; }
+@media (min-width: 1024px) { .trainingLayout { grid-template-columns: minmax(0,1fr) 300px; gap: 4px; padding-right: 18px; } }
+@media (min-width: 1400px) { .trainingLayout { grid-template-columns: minmax(0,1fr) 340px; } }
+@media (min-width: 1700px) { .trainingLayout { grid-template-columns: minmax(0,1fr) 380px; } }
+@media (max-width: 759px) {
+  .heading { padding: 14px; }
+  .heading .protocolLabel { font-size: 12px; letter-spacing: 1.5px; }
+  .heading p { font-size: 13px; }
+  .headingTools { flex-direction: column; align-items: flex-end; max-width: 40%; gap: 8px; }
+  .availability { font-size: 12px; text-align: right; }
+  .sessionHeading { align-items: flex-start; }
+  .sessionHeading h2 { font-size: 26px; }
+  .sessionType { max-width: 32%; white-space: normal; }
+  .sessionBody { padding: 18px 14px; }
+  .historyHeading, .historyList li { align-items: stretch; flex-direction: column; }
+  .history { padding: 14px; }
+  .historyList a { align-self: flex-start; }
 }

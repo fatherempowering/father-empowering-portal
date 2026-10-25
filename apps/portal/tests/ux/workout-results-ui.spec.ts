@@ -270,7 +270,7 @@ test("program history keeps a completed previous publication readable without gu
   await expect(page.getByRole("link", { name: "Ouvrir la séance", exact: true })).toBeVisible();
 });
 
-test("lookbook history distinguishes saved work from completion and keeps the original publication", async ({ page }) => {
+test("Legacy history distinguishes saved work from completion and keeps the original publication", async ({ page }) => {
   await page.goto("/?screen=client-program&state=workout-history");
   const history = page.getByRole("region", { name: "Historique des séances", exact: true });
   await expect(history.getByText("1 séance enregistrée", { exact: true })).toBeVisible();
@@ -285,8 +285,8 @@ test("lookbook history distinguishes saved work from completion and keeps the or
   await result.focus();
   await expect(result).toBeFocused();
   expect(await result.evaluate(element => getComputedStyle(element).outlineStyle)).toBe("solid");
-  expect(await history.evaluate(element => getComputedStyle(element).backgroundColor)).toBe("rgb(16, 20, 22)");
-  expect(await history.locator('[data-status="COMPLETED"]').evaluate(element => getComputedStyle(element).color)).toBe("rgb(96, 232, 138)");
+  expect(await history.evaluate(element => getComputedStyle(element).backgroundColor)).toBe("rgb(255, 255, 255)");
+  expect(await history.locator('[data-status="COMPLETED"]').evaluate(element => getComputedStyle(element).color)).toBe("rgb(40, 126, 64)");
 
   await page.getByRole("button", { name: "English", exact: true }).click();
   const english = page.getByRole("region", { name: "Workout history", exact: true });
@@ -302,11 +302,11 @@ test("lookbook history distinguishes saved work from completion and keeps the or
   await expect(history.getByRole("link", { name: "Reprendre", exact: true })).toHaveAttribute(
     "href", `/client/workout?publicationId=${publicationId}&weekNumber=1&sessionId=${sessionId}`,
   );
-  expect(await history.locator('[data-status="IN_PROGRESS"]').evaluate(element => getComputedStyle(element).color)).toBe("rgb(255, 122, 26)");
+  expect(await history.locator('[data-status="IN_PROGRESS"]').evaluate(element => getComputedStyle(element).color)).toBe("rgb(139, 63, 0)");
   expect(await page.evaluate(() => (window as unknown as { __workoutRequests: SaveWorkoutRequest[] }).__workoutRequests)).toHaveLength(0);
 });
 
-test("lookbook history reflows at 390 and 320 px with legible labels, touch targets and enlarged text", async ({ page }, info) => {
+test("Legacy history reflows at 390 and 320 px with legible labels, touch targets and enlarged text", async ({ page }, info) => {
   await page.goto("/?screen=client-program&state=workout-history");
   const history = page.getByRole("region", { name: "Historique des séances", exact: true });
   await expect(history.getByText("Terminée", { exact: true })).toBeVisible();

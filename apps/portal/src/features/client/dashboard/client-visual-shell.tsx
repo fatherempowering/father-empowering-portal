@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode 
 import { Icon } from "@/components/fe/icon";
 import { usePortalAccess } from "@/components/fe/portal-access-context";
 import { selectNumericInputOnFocus } from "@/components/fe/select-numeric-input";
+import { LegacyClientHeader } from "@/components/fe/legacy-client-header";
 import styles from "./client-home-pilot.module.css";
 
 /** Shared presentation shell. Week Zero is the representative V1.1 checkpoint;
@@ -83,12 +84,14 @@ export function ClientVisualShell({ children, name, french, current, accountActi
       </div>
     </aside>
     <div className={styles.workspace} inert={open ? true : undefined}>
-      <header className={styles.topbar} data-pilot-topbar="">
-        <div className={styles.frameTitle}><strong>The Legacy Protocol</strong><span>{current === "home" ? "Shape your legacy." : french ? "Portail Legacy" : "Legacy portal"}</span></div>
+      {current === "home" ? <LegacyClientHeader french={french} name={name} active="home" menu={
+        <button className={styles.menuToggle} type="button" ref={toggle} aria-controls={menuId} aria-expanded={open} onClick={() => setOpen(true)}><Icon name="menu" /><span>Menu</span></button>
+      } /> : <header className={styles.topbar} data-pilot-topbar="">
+        <div className={styles.frameTitle}><strong>The Legacy Protocol</strong><span>{french ? "Portail Legacy" : "Legacy portal"}</span></div>
         <NavLink className={styles.mobileBrand} href="/" aria-label="Father Empowering"><img src="/icon-192.png" width="44" height="44" alt="" /><span>Father Empowering</span></NavLink>
         <span className={styles.topbarIdentity}><span aria-hidden="true">{initials}</span>{identity}</span>
         <button className={styles.menuToggle} type="button" ref={toggle} aria-controls={menuId} aria-expanded={open} onClick={() => setOpen(true)}><Icon name="menu" /><span>Menu</span></button>
-      </header>
+      </header>}
       <main className={styles.main} id="main-content" onFocusCapture={selectNumericInputOnFocus}>{children}</main>
     </div>
   </div>;

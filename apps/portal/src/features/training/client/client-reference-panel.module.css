@@ -1,0 +1,54 @@
+.panel {
+  min-width: 0;
+  padding-bottom: 8px;
+  color: #1c1c1c;
+  font-family: "FE Sans", "DM Sans", sans-serif;
+}
+
+.sectionDivider { display: flex; align-items: center; gap: 10px; margin: 16px 14px 0; }
+.sectionDivider > span { height: 1px; flex: 1; background: #e3e1dd; }
+.sectionDivider h2 { margin: 0; color: #76736e; font: 400 12px/1.2 "FE Display", "Bebas Neue", sans-serif; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
+.kpiGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 14px 0; }
+.kpiCard { min-width: 0; background: #fff; border: 1px solid #e3e1dd; border-radius: 12px; padding: 11px 12px; box-shadow: 0 2px 8px rgb(0 0 0 / 4%); }
+.kpiLabel { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; color: #76736e; font: 400 12px/1.2 "FE Display", "Bebas Neue", sans-serif; letter-spacing: 1.5px; text-transform: uppercase; }
+.kpiValue { color: #1c1c1c; font: 400 26px/1 "FE Display", "Bebas Neue", sans-serif; letter-spacing: 1px; }
+.kpiValue small { color: #76736e; font-size: 12px; }
+.checkinNote { margin: 8px 14px 0; color: #76736e; font-size: 11px; line-height: 1.5; }
+.card { margin: 14px 14px 0; overflow: hidden; border: 1px solid #e3e1dd; border-radius: 14px; background: #fff; box-shadow: 0 2px 8px rgb(0 0 0 / 4%); }
+.cardHeader { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-bottom: 1px solid #e3e1dd; background: #111; }
+.dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: #e8761a; }
+.cardHeader h2 { margin: 0; color: #fff; font: 400 15px/1.2 "FE Display", "Bebas Neue", sans-serif; letter-spacing: 2.5px; text-transform: uppercase; }
+.badge { margin-left: auto; color: rgb(255 255 255 / 60%); font: 400 11px/1.2 "FE Display", "Bebas Neue", sans-serif; letter-spacing: 1px; }
+.provenance { margin: 0; padding: 9px 16px; color: #76736e; background: #faf9f6; border-bottom: 1px solid #e3e1dd; font-size: 11px; line-height: 1.5; }
+.measurements { margin: 0; }
+.measurementRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 16px; border-bottom: 1px solid #e3e1dd; }
+.measurementRow:last-child { border-bottom: none; }
+.measurementRow dt { color: #55534f; font-size: 12px; overflow-wrap: anywhere; }
+.measurementRow dd { margin: 0; color: #1c1c1c; font-size: 12px; font-weight: 700; text-align: right; white-space: nowrap; }
+.measurementRow small { font-weight: 400; }
+.photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 12px 14px 14px; }
+.photo { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; overflow: hidden; aspect-ratio: 3 / 4; border: 1px dashed #d8d5cf; border-radius: 10px; background: #f5f4f1; }
+.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.photoIcon { color: #8a867e; font-size: 22px; }
+.photoLabel { margin-top: 5px; color: #76736e; font: 400 11px/1.2 "FE Display", "Bebas Neue", sans-serif; letter-spacing: 1.5px; text-transform: uppercase; }
+.photoState { max-width: 100%; margin-top: 4px; padding: 0 3px; color: #76736e; font-size: 9px; text-align: center; overflow-wrap: anywhere; }
+.photoCaption { position: absolute; right: 0; bottom: 0; left: 0; padding: 5px; background: rgb(17 17 17 / 75%); color: #fff; font: 400 11px/1.2 "FE Display", "Bebas Neue", sans-serif; letter-spacing: 1.5px; text-align: center; text-transform: uppercase; }
+.referenceLink { display: flex; align-items: center; min-height: 44px; padding: 8px 14px 12px; color: #97400b; font-size: 12px; font-weight: 600; text-underline-offset: 3px; }
+.state { margin: 0; padding: 12px 16px; color: #55534f; font-size: 12px; line-height: 1.5; }
+.state p { margin: 0 0 8px; }
+.state button { min-height: 44px; padding: 8px 12px; border: 1px solid #d8d5cf; border-radius: 8px; background: #fff; color: #97400b; cursor: pointer; font: inherit; font-weight: 600; }
+.state a { color: #97400b; }
+.state button:focus-visible, .referenceLink:focus-visible { outline: 3px solid #e8761a; outline-offset: 3px; }
+
+@media (max-width: 759px) {
+  .photoState, .provenance, .checkinNote, .measurementRow dt, .measurementRow dd,
+  .measurementRow small, .state, .referenceLink { font-size: 13px; }
+  .photoLabel, .photoCaption, .badge, .kpiLabel { font-size: 12px; }
+}
+
+@media (max-width: 380px) {
+  .card, .kpiGrid { margin-right: 10px; margin-left: 10px; }
+  .cardHeader { padding-right: 12px; padding-left: 12px; }
+  .cardHeader h2 { font-size: 14px; letter-spacing: 2px; }
+  .photos { gap: 6px; padding: 10px; }
+}

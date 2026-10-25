@@ -61,6 +61,25 @@ test("one set at a time, real results, rest then superset round, immutable final
   await page.screenshot({ path: info.outputPath("guided-completed.png"), fullPage: true });
 });
 
+test("rest timer exposes one named region in both languages and releases it on continue", async ({ page }) => {
+  await page.goto(url());
+  await page.getByRole("button", { name: "Commencer la séance", exact: true }).click();
+  await fillSet(page, "Dumbbell Press", 1);
+  await page.getByRole("button", { name: "Valider la série", exact: true }).click();
+  const rest = page.getByRole("region", { name: "Respire. Récupère.", exact: true });
+  await expect(rest).toHaveCount(1);
+  await expect(rest).toBeVisible();
+  await expect(rest.getByRole("heading", { name: "Respire. Récupère.", exact: true })).toBeFocused();
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  await expect(rest).toHaveCount(0);
+  const englishRest = page.getByRole("region", { name: "Breathe. Recover.", exact: true });
+  await expect(englishRest).toHaveCount(1);
+  await expect(englishRest).toBeVisible();
+  await englishRest.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(englishRest).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Dumbbell Press", exact: true })).toHaveCount(1);
+});
+
 test("guided response loss keeps progress unconfirmed and retries the identical command", async ({ page }) => {
   await page.goto(url("guided-response-lost"));
   await page.getByRole("button", { name: "Commencer la séance", exact: true }).click();
@@ -128,7 +147,7 @@ test("unvalidated guided input is protected on links and browser Back without be
   await expect(page.getByText("Résultats non enregistrés", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Revoir/modifier mes résultats", exact: true })).toBeDisabled();
   page.once("dialog", dialog => dialog.dismiss());
-  await page.locator('a[href^="/client/program?"]').click();
+  await page.getByRole("link", { name: "← Mon programme", exact: true }).click();
   await expect(setRow(page, "Dumbbell Press", 1).getByRole("spinbutton", { name: /^Charge/ })).toHaveValue("42.5");
   const currentUrl = page.url();
   const prompt = page.waitForEvent("dialog");
