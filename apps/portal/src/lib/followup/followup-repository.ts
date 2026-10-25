@@ -62,15 +62,21 @@ export async function mutateCoachNutrition(clientId: string, input: NutritionMut
 export async function readOwnCheckIns(page = 0) {
   if (!Number.isInteger(page) || page < 0 || page > 10000) throw new M1ContractError("VALIDATION_FAILED", "Invalid history page.", 400);
   const actor = await requireOwnClientAccess(); const db = await createServerSupabaseClient();
-  const [draftResult, historyResult] = await Promise.all([
+  const [draftResult, countResult] = await Promise.all([
     db.from("client_checkin_drafts").select("document,row_version,updated_at,active").eq("organization_id", actor.organizationId).eq("client_id", actor.ownClientId).maybeSingle(),
-    db.from("client_checkin_submissions").select("id,client_id,document,submitted_at", { count: "exact" }).eq("organization_id", actor.organizationId).eq("client_id", actor.ownClientId)
-      .order("observed_on", { ascending: false }).order("submitted_at", { ascending: false }).order("id", { ascending: true }).range(page * 50, page * 50 + 49),
+    db.from("client_checkin_submissions").select("id", { count: "exact", head: true }).eq("organization_id", actor.organizationId).eq("client_id", actor.ownClientId),
   ]);
-  if (draftResult.error || historyResult.error) throw followupError(draftResult.error ?? historyResult.error);
+  if (draftResult.error || countResult.error) throw followupError(draftResult.error ?? countResult.error);
+  const total = exactCount(countResult.count);
+  // PostgREST rejects an out-of-bounds range when an exact count is requested.
+  // Keep the authoritative count separate so an empty history page is not an outage.
+  const historyResult = page * 50 < total
+    ? await db.from("client_checkin_submissions").select("id,client_id,document,submitted_at").eq("organization_id", actor.organizationId).eq("client_id", actor.ownClientId)
+      .order("observed_on", { ascending: false }).order("submitted_at", { ascending: false }).order("id", { ascending: true }).range(page * 50, page * 50 + 49)
+    : { data: [], error: null };
+  if (historyResult.error) throw followupError(historyResult.error);
   const row = draftResult.data;
   const draft = row?.active ? checkInDraftSchema.parse({ version: row.row_version, document: row.document, updatedAt: row.updated_at }) : null;
-  const total = exactCount(historyResult.count);
   return checkInsResponseSchema.parse({ version: row?.row_version ?? 0, draft, history: (historyResult.data ?? []).map(submission), page, total, historyTruncated: total > (page + 1) * 50 });
 }
 export async function mutateOwnCheckIn(input: CheckInMutation) {

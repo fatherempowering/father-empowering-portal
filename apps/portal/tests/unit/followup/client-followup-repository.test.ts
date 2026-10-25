@@ -29,9 +29,36 @@ describe("Follow-up repository capabilities and truthful reads", () => {
   });
   it("keeps monotone draft version after submission and paginates rather than silently truncating", async () => {
     const draft = query({ data: { active: false, row_version: 4, document: emptyCheckInDocument("2026-01-01"), updated_at: date }, error: null });
-    const history = query({ data: [], error: null, count: 101 }); mock.from.mockReturnValueOnce(draft).mockReturnValueOnce(history);
+    const count = query({ data: null, error: null, count: 101 });
+    const history = query({ data: [], error: null }); mock.from.mockReturnValueOnce(draft).mockReturnValueOnce(count).mockReturnValueOnce(history);
     expect(await readOwnCheckIns(1)).toEqual({ draft: null, version: 4, history: [], historyTruncated: true, page: 1, total: 101 });
     expect(history.range).toHaveBeenCalledWith(50, 99); expect(history.order).toHaveBeenCalledWith("observed_on", { ascending: false });
+    expect(count.select).toHaveBeenCalledWith("id", { count: "exact", head: true });
+    expect(history.select).toHaveBeenCalledWith("id,client_id,document,submitted_at");
+    for (const source of [draft, count, history]) {
+      expect(source.eq).toHaveBeenCalledWith("client_id", clientId);
+      expect(source.eq).toHaveBeenCalledWith("organization_id", organizationId);
+    }
+  });
+  it.each([{ total: 0, page: 0 }, { total: 1, page: 1 }, { total: 50, page: 1 }])("returns an empty page without an out-of-bounds request: $total rows / page $page", async ({ total, page }) => {
+    const draft = query({ data: null, error: null }); const count = query({ data: null, error: null, count: total });
+    mock.from.mockReturnValueOnce(draft).mockReturnValueOnce(count);
+    expect(await readOwnCheckIns(page)).toEqual({ draft: null, version: 0, history: [], historyTruncated: false, page, total });
+    expect(mock.from).toHaveBeenCalledTimes(2); expect(count.range).not.toHaveBeenCalled();
+    expect(count.eq).toHaveBeenCalledWith("client_id", clientId); expect(count.eq).toHaveBeenCalledWith("organization_id", organizationId);
+  });
+  it.each([null, -1, 1.5, Number.NaN])("never invents an empty history when the count is invalid: %s", async countValue => {
+    mock.from.mockReturnValueOnce(query({ data: null, error: null })).mockReturnValueOnce(query({ count: countValue, error: null }));
+    await expect(readOwnCheckIns(1)).rejects.toMatchObject({ status: 503 });
+    expect(mock.from).toHaveBeenCalledTimes(2);
+  });
+  it.each(["draft", "count", "history"])("keeps a %s read failure fail-closed and sanitized", async failedSource => {
+    const failure = { message: "PRIVATE_PROVIDER_DETAIL" };
+    mock.from.mockReturnValueOnce(query({ data: null, error: failedSource === "draft" ? failure : null }))
+      .mockReturnValueOnce(query({ count: 51, error: failedSource === "count" ? failure : null }))
+      .mockReturnValueOnce(query({ data: null, error: failure }));
+    await expect(readOwnCheckIns(1)).rejects.toMatchObject({ status: 503, message: "Follow-up is temporarily unavailable." });
+    expect(mock.from).toHaveBeenCalledTimes(failedSource === "history" ? 3 : 2);
   });
   it("uses a guarded Coach RPC to distinguish inaccessible Client from empty history", async () => {
     mock.rpc.mockResolvedValueOnce({ data: { draft: null, publication: null, history: [], historyTruncated: false }, error: null });
