@@ -695,7 +695,7 @@ export function ClientWorkout() {
               <button className="fe-button fe-button-primary" type="button" onClick={() => setGuideView(guideReturnView.current)}>{t("Retour à la séance", "Back to workout")}</button>
             </section> : null}
 
-            {guideView === "run" && selectedUnit && selectedStep ? <section className={styles.guidedRun} aria-labelledby={restDeadline !== null ? "rest-timer-title" : "guided-current-title"}>
+            {guideView === "run" && selectedUnit && selectedStep ? <section className={styles.guidedRun} aria-labelledby={restDeadline !== null ? undefined : "guided-current-title"}>
               <div className={styles.guidedRunHeading}>
                 <div>
                   <p className={styles.runCount}>{selectedStep.extra ? t("Série extra", "Extra set") : selectedUnit.grouped ? t("Tour", "Round") : t("Série", "Set")} {selectedStep.round}{!selectedStep.extra ? ` / ${selectedUnit.steps.filter((step) => !step.extra).length}` : ""}</p>
