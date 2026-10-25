@@ -31,7 +31,9 @@ select ('b1540000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'b1530000-0000-4
  'Synthetic','Followup','ACTIVE','b1510000-0000-4000-8000-000000000005' from unnest(array[1,2,7])n;
 insert into public.coach_client_assignments(organization_id,client_id,coach_user_id,status,created_by)
 values('b1530000-0000-4000-8000-000000000001','b1540000-0000-4000-8000-000000000001',
- 'b1510000-0000-4000-8000-000000000003','ACTIVE','b1510000-0000-4000-8000-000000000005');
+ 'b1510000-0000-4000-8000-000000000003','ACTIVE','b1510000-0000-4000-8000-000000000005'),
+ ('b1530000-0000-4000-8000-000000000001','b1540000-0000-4000-8000-000000000002',
+ 'b1510000-0000-4000-8000-000000000005','ACTIVE','b1510000-0000-4000-8000-000000000005');
 
 create function pg_temp.followup_actor(n integer,verified boolean default true) returns void language plpgsql as $$
 begin

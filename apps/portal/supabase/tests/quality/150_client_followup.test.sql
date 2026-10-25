@@ -1,10 +1,10 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select no_plan();
-select has_table('public','nutrition_plan_drafts');
-select has_table('public','nutrition_plan_publications');
-select has_table('public','client_checkin_drafts');
-select has_table('public','client_checkin_submissions');
+select has_table('public','nutrition_plan_drafts','nutrition drafts table exists');
+select has_table('public','nutrition_plan_publications','nutrition publications table exists');
+select has_table('public','client_checkin_drafts','private check-in drafts table exists');
+select has_table('public','client_checkin_submissions','submitted check-ins table exists');
 select ok((select bool_and(relrowsecurity and relforcerowsecurity) from pg_class where oid in ('public.nutrition_plan_drafts'::regclass,'public.nutrition_plan_publications'::regclass,'public.client_checkin_drafts'::regclass,'public.client_checkin_submissions'::regclass)),'all follow-up tables force RLS');
 select ok(not has_table_privilege('authenticated','public.nutrition_plan_drafts','INSERT,UPDATE,DELETE'),'no direct nutrition draft writes');
 select ok(not has_table_privilege('authenticated','public.nutrition_plan_publications','INSERT,UPDATE,DELETE'),'no direct publication writes');
