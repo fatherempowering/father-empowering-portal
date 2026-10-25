@@ -35,6 +35,7 @@ async function loadResponse<T>(
   parse: (value: unknown) => T,
 ): Promise<T> {
   const response = await fetch(url, { cache: "no-store", signal });
+  if (signal.aborted) throw new DOMException("Aborted", "AbortError");
   if (response.status === 401 || response.status === 403) {
     window.location.replace("/client-login");
     throw new Error("AUTH");

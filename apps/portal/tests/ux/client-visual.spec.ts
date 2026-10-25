@@ -1,4 +1,80 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function delayedLogoutRead(page: Page, readPath: string, status: number, destination: "/login" | "/client-login", failLogout = false) {
+  await page.addInitScript(({ readPath, status, destination, failLogout }) => {
+    const state = { held: false, reads: 0, logouts: 0, release: () => {} };
+    (window as unknown as { __logoutRace: typeof state }).__logoutRace = state;
+    const wrap = (transport: typeof fetch): typeof fetch => async (input, init) => {
+      const path = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url, location.origin).pathname;
+      if (path === "/api/v1/auth/client-logout") {
+        state.logouts += 1;
+        if (failLogout && state.logouts === 1) throw new TypeError("Synthetic transport failure");
+        const response = new Response(JSON.stringify({ data: { redirectTo: destination } }), { status: 200, headers: { "content-type": "application/json" } });
+        response.json = async () => {
+          // Release the stale read after the awaited logout body resumes its navigation.
+          queueMicrotask(() => queueMicrotask(() => state.release()));
+          return { data: { redirectTo: destination } };
+        };
+        return response;
+      }
+      if (path === readPath && ++state.reads === 1) {
+        state.held = true;
+        // Deliberately deliver even after abort: stale callbacks must not redirect.
+        return new Promise<Response>(resolve => { state.release = () => resolve(new Response("{}", { status })); });
+      }
+      return transport(input, init);
+    };
+    let transport = wrap(window.fetch.bind(window));
+    Object.defineProperty(window, "fetch", { configurable: true, get: () => transport, set: (next: typeof fetch) => { transport = wrap(next); } });
+  }, { readPath, status, destination, failLogout });
+  await page.goto(`/?screen=${destination === "/login" ? "client-v2-staff" : "client-v2"}&state=onboarding-not-started`);
+  await page.waitForFunction(() => (window as unknown as { __logoutRace: { held: boolean } }).__logoutRace.held);
+}
+
+async function clickClientSignOut(page: Page) {
+  const menu = page.getByRole("button", { name: "Menu", exact: true });
+  if (await menu.isVisible()) await menu.click();
+  await page.getByRole("button", { name: "Se déconnecter", exact: true }).click({ noWaitAfter: true });
+}
+
+for (const readPath of ["/api/v1/client/me", "/api/v1/client/program"]) for (const status of [401, 403]) {
+  test(`active ${status} from ${readPath} still requires Client Auth without logout`, async ({ page }) => {
+    await delayedLogoutRead(page, readPath, status, "/login");
+    await page.evaluate(() => (window as unknown as { __logoutRace: { release(): void } }).__logoutRace.release());
+    await expect(page).toHaveURL(/\/client-login$/);
+  });
+  test(`logout keeps server destination despite late ${status} from ${readPath}`, async ({ page }) => {
+    let releaseNavigation = () => {};
+    const navigationHeld = new Promise<void>(resolve => { releaseNavigation = resolve; });
+    await page.route("**/login", async route => { await navigationHeld; await route.fulfill({ status: 200, contentType: "text/html", body: "<h1>Coach login</h1>" }).catch(() => {}); });
+    await delayedLogoutRead(page, readPath, status, "/login");
+    const wrongDestinations: string[] = [];
+    page.on("request", request => { if (new URL(request.url()).pathname === "/client-login") wrongDestinations.push(request.url()); });
+    const loginRequest = page.waitForRequest(request => new URL(request.url()).pathname === "/login");
+    await clickClientSignOut(page); await loginRequest;
+    releaseNavigation();
+    await expect(page).toHaveURL(/\/login$/);
+    expect(wrongDestinations).toEqual([]);
+  });
+}
+
+for (const readPath of ["/api/v1/client/me", "/api/v1/client/program"]) test(`failed logout resumes reads and ignores cancelled response from ${readPath}`, async ({ page }) => {
+  await delayedLogoutRead(page, readPath, 401, "/login", true);
+  await clickClientSignOut(page);
+  await expect(page.getByRole("alert")).toContainText(/déconnecter|déconnexion/i);
+  await page.waitForFunction(() => (window as unknown as { __logoutRace: { reads: number } }).__logoutRace.reads > 1);
+  await page.evaluate(() => (window as unknown as { __logoutRace: { release(): void } }).__logoutRace.release());
+  await expect(page.locator('[data-pilot-state="ready"]')).toBeVisible();
+  await expect(page).toHaveURL(/screen=client-v2-staff/);
+  await clickClientSignOut(page);
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test("normal Client logout keeps the client-login destination", async ({ page }) => {
+  await delayedLogoutRead(page, "/api/v1/client/me", 401, "/client-login");
+  await clickClientSignOut(page);
+  await expect(page).toHaveURL(/\/client-login$/);
+});
 
 for (const language of ["fr", "en"] as const) {
   test(`submitted questionnaire shows the ${language} video slot, not another summary`, async ({ page }, info) => {

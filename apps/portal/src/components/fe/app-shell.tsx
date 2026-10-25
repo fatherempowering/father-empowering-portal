@@ -23,7 +23,7 @@ export function AppShell({
   space: "coach" | "client";
   name?: string;
   locale?: "fr" | "en";
-  current?: "clients" | "exercises" | "programs" | "program" | "personal" | "home" | "today" | "onboarding" | "week-zero";
+  current?: "clients" | "exercises" | "programs" | "program" | "personal" | "home" | "today" | "onboarding" | "week-zero" | "nutrition" | "check-in" | "progression";
   accountAction?: ReactNode;
   /** Forms may use full navigation so their beforeunload protection also covers sidebar links. */
   documentNavigation?: boolean;
@@ -70,6 +70,9 @@ export function AppShell({
             document: true,
           },
           { href: "/client/program", label: french ? "Mon programme" : "My program", icon: "today" as const, id: "program" as const },
+          { href: "/client/nutrition", label: "Nutrition", icon: "today" as const, id: "nutrition" as const },
+          { href: "/client/check-in", label: "Check-in", icon: "check" as const, id: "check-in" as const },
+          { href: "/client/progression", label: french ? "Progression" : "Progress", icon: "today" as const, id: "progression" as const },
           {
             href: "/client/week-zero",
             label: french ? "Semaine zéro" : "Week Zero",
@@ -150,7 +153,7 @@ export function AppShell({
         </div>
       </aside>
       <div className={`fe-workspace ${legacyClient && space === "client" ? legacyStyles.frame : ""}`}>
-        {legacyClient && space === "client" ? <LegacyClientHeader french={french} name={name} active={current === "home" ? "home" : "training"} menu={
+        {legacyClient && space === "client" ? <LegacyClientHeader french={french} name={name} active={current === "home" || current === "nutrition" || current === "check-in" || current === "progression" ? current : "training"} menu={
           <button className="fe-menu-button" type="button" ref={toggle} aria-controls={navId} aria-expanded={open} aria-label={french ? open ? "Fermer le menu" : "Ouvrir le menu" : open ? "Close menu" : "Open menu"} onClick={() => setOpen(!open)}><Icon name={open ? "close" : "menu"} /></button>
         } /> : <header className="fe-topbar">
           <div className="fe-breadcrumb">

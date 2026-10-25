@@ -27,7 +27,7 @@ describe("Legacy Client reference sidebar", () => {
     const html = render(fixture());
     expect(html.match(/data-testid="reference-checkin-kpi"/g)).toHaveLength(6);
     const lastCheckin = html.slice(0, html.indexOf("Mensurations de départ"));
-    expect(lastCheckin).toContain("Aucun check-in enregistré");
+    expect(lastCheckin).toContain("Chargement du dernier check-in");
     expect(lastCheckin).not.toContain("185");
     for (const label of ["Poids", "Sommeil", "Énergie", "Stress", "Courbatures", "Cardio"]) expect(lastCheckin).toContain(label);
     expect(html).toContain("Semaine zéro · brouillon enregistré");

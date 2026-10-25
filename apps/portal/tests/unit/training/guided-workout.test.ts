@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildGuidedUnits, firstPendingGuidedStep, guidedProgress, isGuidedStepSaved, restSecondsRemaining } from "@/features/training/client/guided-workout";
+import { buildGuidedUnits, firstPendingGuidedStep, guidedProgress, isGuidedStepSaved, restSecondsRemaining, restRingPercent } from "@/features/training/client/guided-workout";
 import type { DraftBlock, DraftSession } from "@/lib/contracts/training-drafts";
 import type { WorkoutSetResult } from "@/lib/contracts/training-results";
 import { pilotResultExercise, pilotResultSet } from "./pilot-result-fixture";
@@ -106,5 +106,14 @@ describe("Legacy guided workout derived from immutable session and saved results
     expect(restSecondsRemaining(100_000, 40_000)).toBe(60);
     expect(restSecondsRemaining(100_000, 99_200)).toBe(1);
     expect(restSecondsRemaining(100_000, 130_000)).toBe(0);
+  });
+
+  it("shrinks the green ring against the original duration, clamps it and catches up after backgrounding", () => {
+    expect(restRingPercent(100_000, 40_000, 60)).toBe(100);
+    expect(restRingPercent(100_000, 70_000, 60)).toBe(50);
+    expect(restRingPercent(100_000, 99_500, 60)).toBeCloseTo(0.8333, 3);
+    expect(restRingPercent(100_000, 130_000, 60)).toBe(0);
+    expect(restRingPercent(100_000, 0, 60)).toBe(100);
+    for (const duration of [0, -1, NaN, Infinity]) expect(restRingPercent(100_000, 40_000, duration)).toBe(0);
   });
 });

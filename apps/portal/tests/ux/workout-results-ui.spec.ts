@@ -353,12 +353,16 @@ test("Legacy history reflows at 390 and 320 px with legible labels, touch target
   await page.locator("[data-workout-history]").screenshot({ path: info.outputPath("history-en-320-text-200.png") });
 });
 
-test("empty history does not invent progress or expose future destinations", async ({ page }) => {
+test("empty history does not invent progress and keeps the available follow-up routes accessible", async ({ page }) => {
   await page.goto("/?screen=client-program&state=program-published");
   const history = page.getByRole("region", { name: "Historique des séances", exact: true });
   await expect(history.getByText("Aucune séance enregistrée pour le moment.", { exact: true })).toBeVisible();
   await expect(history.locator('[data-status], progress, [role="progressbar"], canvas')).toHaveCount(0);
-  await expect(page.locator('a[href^="/client/nutrition"], a[href^="/client/progression"], a[href^="/client/history"]')).toHaveCount(0);
+  const navigation = page.getByRole("navigation", { name: "Navigation du portail", exact: true });
+  for (const [label, route] of [["Nutrition", "nutrition"], ["Check-in", "check-in"], ["Progression", "progression"]]) {
+    await expect(navigation.getByRole("link", { name: label, exact: true })).toHaveAttribute("href", `/client/${route}?language=fr`);
+  }
+  await expect(page.locator('a[href^="/client/history"]')).toHaveCount(0);
 });
 
 test("workout load failure is recoverable and never masquerades as an empty result", async ({ page }) => {

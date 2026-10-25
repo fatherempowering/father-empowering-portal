@@ -75,6 +75,7 @@ test("left and right measurements expose keyboard-accessible instructions and pr
   await page.goto("/?screen=client-week-zero");
   await expect(page.getByText(/Tes photos restent privées/)).toHaveCount(0);
   await openStep(page, /3\. Mesures/);
+  await expect(page.getByRole("heading", { name: "Tes mesures", exact: true })).toBeFocused();
   for (const label of [/Bras gauche fléchi/, /Bras droit fléchi/, /Mollet gauche/, /Mollet droit/]) {
     await expect(page.getByRole("spinbutton", { name: label })).toBeVisible();
   }

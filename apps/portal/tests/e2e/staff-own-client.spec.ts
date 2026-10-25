@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page, type Response as BrowserResponse } from "@playwright/test";
 
 import { EMPTY_INITIAL_ASSESSMENT_RESPONSES } from "@/lib/contracts/week-zero";
 import {
@@ -215,8 +215,40 @@ test("Les profils personnels existants restent isolés sans raccourci Client dan
   await page.goto(`${environment.appUrl}/client`);
   await expect(page).toHaveURL(/\/client(?:\?.*)?$/);
 
-  await page.getByRole("button", { name: /se déconnecter/i }).click();
-  await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
+  // Keep concurrent reads running: waiting for them here could hide a logout race.
+  // Only fixed local paths, HTTP statuses and allowlisted destinations are recorded.
+  const logoutReads = new Set(["/api/v1/client/me", "/api/v1/client/program", "/api/v1/client/onboarding"]);
+  const logoutDiagnostic: {
+    status: number | null;
+    redirectTo: "/login" | "/client-login" | "ABSENT" | "OTHER" | "UNREADABLE" | "NO_RESPONSE";
+    reads: Array<{ path: string; status: number }>;
+  } = { status: null, redirectTo: "NO_RESPONSE", reads: [] };
+  const observeRead = (response: BrowserResponse) => {
+    const url = new URL(response.url());
+    if (url.origin === environment.appUrl && logoutReads.has(url.pathname) && logoutDiagnostic.reads.length < 12) {
+      logoutDiagnostic.reads.push({ path: url.pathname, status: response.status() });
+    }
+  };
+  page.on("response", observeRead);
+  const observeLogout = page.waitForResponse(response => {
+    const url = new URL(response.url());
+    return url.origin === environment.appUrl && url.pathname === "/api/v1/auth/client-logout" && response.request().method() === "POST";
+  }, { timeout: 10_000 }).then(async response => {
+    logoutDiagnostic.status = response.status();
+    try {
+      const payload = await response.json();
+      const destination: unknown = payload?.data?.redirectTo;
+      logoutDiagnostic.redirectTo = destination === "/login" || destination === "/client-login" ? destination : destination == null ? "ABSENT" : "OTHER";
+    } catch { logoutDiagnostic.redirectTo = "UNREADABLE"; }
+  }).catch(() => { /* NO_RESPONSE is deliberately independent of the raw error. */ });
+  try {
+    await page.getByRole("button", { name: /se déconnecter/i }).click();
+    await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
+  } finally {
+    page.off("response", observeRead);
+    await observeLogout;
+    console.info("M1 logout diagnostic", JSON.stringify(logoutDiagnostic));
+  }
   const signedOutClient = await context.request.get(
     `${environment.appUrl}/api/v1/client/me`,
   );
