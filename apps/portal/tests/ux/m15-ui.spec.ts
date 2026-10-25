@@ -281,7 +281,8 @@ test("personal portal navigation is staff-only across Coach and Client shells", 
   if (await coachMenu.isVisible()) await coachMenu.click();
   await expect(
     page.getByRole("link", { name: "Mon portail personnel" }),
-  ).toHaveAttribute("href", "/coach/personal");
+  ).toHaveCount(0);
+  await expect(page.locator('nav a[href="/client"]')).toHaveCount(0);
 });
 
 test("personal portal setup sends the strict intent and follows the safe success destination", async ({

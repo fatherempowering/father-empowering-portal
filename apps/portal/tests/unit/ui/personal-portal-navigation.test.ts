@@ -68,13 +68,16 @@ describe("Coach personal portal navigation", () => {
     expect(markup).toContain("Portail Coach");
   });
 
-  it("exposes the personal portal from Coach without creating it", () => {
+  it.each(["fr", "en"] as const)("keeps the %s Coach navigation separate from personal Client access", (locale) => {
     const markup = renderToStaticMarkup(
-      React.createElement(TestAppShell, { space: "coach" }, "Coach"),
+      React.createElement(TestAppShell, { space: "coach", locale }, "Coach"),
     );
 
-    expect(markup).toContain('href="/coach/personal"');
-    expect(markup).toContain("Mon portail personnel");
+    expect(markup).not.toContain('href="/coach/personal"');
+    expect(markup).not.toContain('href="/client"');
+    expect(markup).not.toContain("Mon portail personnel");
+    expect(markup).toContain('href="/coach/exercises"');
+    expect(markup).toContain('href="/coach/programs"');
   });
 
   it("renders explicit activation defaults and preserves the old test Client", () => {

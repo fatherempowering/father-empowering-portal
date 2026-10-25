@@ -34,7 +34,7 @@ test.beforeAll(async () => {
   normalClient = await seedNormalClient(owner);
 });
 
-test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async ({
+test("Les profils personnels existants restent isolés sans raccourci Client dans la navigation Coach", async ({
   browser,
 }) => {
   const context = await browser.newContext();
@@ -54,7 +54,10 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
   const otpRequestsAfterLogin = coachOtpRequests;
   expect(otpRequestsAfterLogin).toBeGreaterThan(0);
 
-  await page.getByRole("link", { name: /mon portail personnel/i }).click();
+  await expect(page.getByRole("link", { name: /mon portail personnel/i })).toHaveCount(0);
+  // Compatibility and isolation are still tested; this legacy entry is no
+  // longer offered in the Coach navigation. Existing identities are retained.
+  await page.goto(`${environment.appUrl}/coach/personal`);
   await expect(page).toHaveURL(/\/coach\/personal$/);
   await expect(
     page.getByRole("heading", { name: /portail personnel/i }),
@@ -170,7 +173,8 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
   await page.getByRole("link", { name: /^portail coach$/i }).click();
   await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
   await expect(page.getByRole("heading", { name: /^clients$/i })).toBeVisible();
-  await page.getByRole("link", { name: /mon portail personnel/i }).click();
+  await expect(page.getByRole("link", { name: /mon portail personnel/i })).toHaveCount(0);
+  await page.goto(`${environment.appUrl}/client`);
   await expect(page).toHaveURL(/\/client(?:\?.*)?$/);
   expect(coachOtpRequests).toBe(otpRequestsAfterLogin);
 
@@ -207,7 +211,8 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
     if(attempt===0) await page.reload();
   }
   expect(coachOtpRequests).toBe(otpRequestsAfterLogin);
-  await page.getByRole("link",{name:/mon portail personnel/i}).click();
+  await expect(page.getByRole("link",{name:/mon portail personnel/i})).toHaveCount(0);
+  await page.goto(`${environment.appUrl}/client`);
   await expect(page).toHaveURL(/\/client(?:\?.*)?$/);
 
   await page.getByRole("button", { name: /se déconnecter/i }).click();
