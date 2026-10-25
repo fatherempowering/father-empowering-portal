@@ -6,6 +6,8 @@ import { Brand } from "./brand";
 import { Icon } from "./icon";
 import { usePortalAccess } from "./portal-access-context";
 import { selectNumericInputOnFocus } from "./select-numeric-input";
+import { LegacyClientHeader } from "./legacy-client-header";
+import legacyStyles from "./legacy-client-header.module.css";
 
 export function AppShell({
   children,
@@ -15,6 +17,7 @@ export function AppShell({
   current = space === "coach" ? "clients" : "home",
   accountAction,
   documentNavigation = false,
+  legacyClient = false,
 }: {
   children: ReactNode;
   space: "coach" | "client";
@@ -24,6 +27,7 @@ export function AppShell({
   accountAction?: ReactNode;
   /** Forms may use full navigation so their beforeunload protection also covers sidebar links. */
   documentNavigation?: boolean;
+  legacyClient?: boolean;
 }) {
   const { isStaff } = usePortalAccess();
   const [open, setOpen] = useState(false);
@@ -145,8 +149,10 @@ export function AppShell({
           ) : null}
         </div>
       </aside>
-      <div className="fe-workspace">
-        <header className="fe-topbar">
+      <div className={`fe-workspace ${legacyClient && space === "client" ? legacyStyles.frame : ""}`}>
+        {legacyClient && space === "client" ? <LegacyClientHeader french={french} name={name} active={current === "home" ? "home" : "training"} menu={
+          <button className="fe-menu-button" type="button" ref={toggle} aria-controls={navId} aria-expanded={open} aria-label={french ? open ? "Fermer le menu" : "Ouvrir le menu" : open ? "Close menu" : "Open menu"} onClick={() => setOpen(!open)}><Icon name={open ? "close" : "menu"} /></button>
+        } /> : <header className="fe-topbar">
           <div className="fe-breadcrumb">
             <span>{spaceLabel}</span>
             <span aria-hidden="true">/</span>
@@ -175,7 +181,7 @@ export function AppShell({
           >
             <Icon name={open ? "close" : "menu"} />
           </button>
-        </header>
+        </header>}
         <main className="fe-main" id="main-content" onFocusCapture={selectNumericInputOnFocus}>
           {children}
         </main>

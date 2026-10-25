@@ -1,507 +1,166 @@
+/* Guided-session presentation from the original portal (index.html).
+   Bebas Neue / DM Sans are served locally under the existing FE font aliases. */
 .page {
+  --legacy-card: #fff;
+  --legacy-card2: #f8f7f3;
+  --legacy-black: #1c1c1c;
+  --legacy-orange: #c85a00;
+  --legacy-txt: #1c1c1c;
+  --legacy-txt2: #444;
+  --legacy-txt3: #6b6b6b;
+  --legacy-line: rgba(0, 0, 0, .07);
+  --guided-green: #2f8f46;
+  --fe-orange: var(--legacy-orange);
   display: grid;
-  gap: 1.25rem;
-  width: min(100%, 74rem);
+  gap: 14px;
   min-width: 0;
+  margin: 14px;
+  color: var(--legacy-txt);
+  font-family: "FE Sans", "DM Sans", sans-serif;
+  font-size: 15px;
+  line-height: normal;
   overflow-wrap: anywhere;
 }
+.page h2, .page h3, .page h4, .page p { margin: 0; }
+.focusAnchor { scroll-margin-top: 6.5rem; }
+.focusAnchor:focus-visible { outline: 2px solid var(--legacy-orange); outline-offset: 4px; border-radius: 3px; }
+.heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.back { font-size: 13px; color: var(--legacy-txt2); font-weight: 700; }
+.pageTitle { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.guidedShell { min-width: 0; background: var(--legacy-card); border: 1px solid var(--legacy-line); border-radius: 18px; overflow: hidden; box-shadow: 0 2px 12px rgba(0, 0, 0, .07); }
+.guidedBody { display: grid; gap: 16px; padding: 16px; min-width: 0; }
+.workoutHeading { padding: 18px; background: var(--legacy-black); color: #fff; border-bottom: 3px solid var(--legacy-orange); }
+.eyebrow { color: var(--legacy-orange); font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 12px; font-weight: 400; letter-spacing: 2.2px; }
+.workoutHeading h2 { margin-top: 5px; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 30px; font-weight: 400; letter-spacing: 1.5px; line-height: 1.05; color: #fff; }
+.workoutHeading .heroMeta { margin-top: 7px; color: rgba(255, 255, 255, .68); font-size: 13px; line-height: 1.5; }
+.status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.guidedProgress { margin-top: 14px; }
+.guidedProgress > div { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.guidedProgress strong { font-weight: 400; }
+.guidedProgress progress { display: block; appearance: none; width: 100%; height: 6px; border: 0; border-radius: 999px; overflow: hidden; background: rgba(255, 255, 255, .14); accent-color: var(--guided-green); }
+.guidedProgress progress::-webkit-progress-bar { background: rgba(255, 255, 255, .14); }
+.guidedProgress progress::-webkit-progress-value { background: var(--guided-green); }
+.guidedProgress progress::-moz-progress-bar { background: var(--guided-green); }
 
-.page h2,
-.page h3,
-.page h4 {
-  margin: 0;
-}
-
-.focusAnchor {
-  /* Keep the new stage/error below the shell's sticky navigation. */
-  scroll-margin-top: 6.5rem;
-}
-
-.focusAnchor:focus-visible {
-  outline: 2px solid #a7470d;
-  outline-offset: .35rem;
-  border-radius: .2rem;
-}
-
-.page[data-guided-running] .heading {
-  gap: .5rem;
-}
-
-.page[data-guided-running] .heading h1 {
-  font-size: 1.5rem;
-  line-height: 1.15;
-}
-
-.page[data-guided-running] .heading .back {
-  margin-bottom: .35rem;
-}
-
-.page[data-guided-running] .workoutHeading {
-  padding: .875rem 1rem;
-  gap: .5rem;
-}
-
-.page[data-guided-running] .workoutHeading h2 {
-  font-size: 1.25rem;
-}
-
-.page[data-guided-running] .workoutHeading p {
-  margin: 0;
-}
-
-.heading,
-.workoutHeading,
-.blockHeading,
-.exerciseHeading,
-.setHeading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.back {
-  display: inline-block;
-  margin-bottom: 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 650;
-}
-
-.workoutHeading,
-.startPanel,
-.restPanel,
-.notePanel,
-.actions {
-  display: grid;
-  gap: 0.875rem;
-  padding: 1.25rem;
-  border: 1px solid var(--fe-line, #deddd7);
-  border-radius: 0.75rem;
-  background: var(--fe-paper, #fff);
-}
-
-.workoutHeading {
-  border-left: 4px solid var(--fe-orange, #b95000);
-  background: #171817;
-  color: #f6f3ec;
-  padding: clamp(1.25rem, 3vw, 2rem);
-}
-
-.workoutHeading .eyebrow {
-  color: #ff9b50;
-}
-
-.workoutHeading h2 {
-  color: #fff;
-  font-size: clamp(1.55rem, 3vw, 2.4rem);
-  text-transform: uppercase;
-}
-
-.guidedProgress {
-  display: grid;
-  gap: .5rem;
-}
-
-.guidedProgress > div {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: .5rem;
-  font-size: .8125rem;
-}
-
-.guidedProgress progress {
-  display: block;
-  width: 100%;
-  height: .6rem;
-  border: 0;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #deddd7;
-  accent-color: #c45613;
-}
-
-.guidedProgress progress::-webkit-progress-bar { background: #deddd7; }
-.guidedProgress progress::-webkit-progress-value { background: #c45613; }
-.guidedProgress progress::-moz-progress-bar { background: #c45613; }
-
-.planRows {
-  display: grid;
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.planRows > li {
-  display: grid;
-  grid-template-columns: 2.8rem minmax(0, 1fr);
-  align-items: start;
-  gap: .875rem;
-  padding: 1rem 0;
-  border-bottom: 1px solid #deddd7;
-}
-
+.page :global(.fe-button) { border: 1px solid var(--legacy-line); background: var(--legacy-card2); color: var(--legacy-txt2); border-radius: 11px; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 1.4px; line-height: 1.3; padding: 12px 14px; min-height: 44px; }
+.page :global(.fe-button-primary) { width: 100%; border: 0; border-radius: 13px; background: var(--legacy-orange); color: #fff; font-size: 18px; letter-spacing: 2px; padding: 17px 14px; margin-top: 14px; }
+.page :global(.fe-button):disabled { cursor: not-allowed; opacity: .55; }
+.page :global(.fe-button):focus-visible, .page :global(.fe-text-button):focus-visible { outline: 2px solid var(--legacy-orange); outline-offset: 3px; }
+.page :global(.fe-text-button) { color: var(--legacy-orange); font-size: 12px; }
+.startPanel { min-width: 0; }
+.planContext { display: grid; gap: 5px; color: var(--legacy-txt3); font-size: 12px; line-height: 1.5; }
+.startPanel h2 { margin-bottom: 10px; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 2px; color: var(--legacy-orange); }
+.startPanel > p { margin: 10px 0; font-size: 13px; line-height: 1.5; color: var(--legacy-txt3); }
+.startPanel > button { width: 100%; margin-top: 10px; }
+.planRows { margin: 0; padding: 0; list-style: none; background: var(--legacy-card2); border: 1px solid var(--legacy-line); border-radius: 14px; overflow: hidden; }
+.planRows > li { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid var(--legacy-line); }
 .planRows > li:last-child { border-bottom: 0; }
-.planRows p { margin: .35rem 0 0; font-size: .875rem; color: #595b55; }
-.planRows strong { font-size: 1.0625rem; }
-.planRows ul { margin-top: .5rem; padding-left: 1.2rem; font-size: .875rem; }
+.planNumber { text-align: center; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 18px; color: var(--legacy-orange); }
+.planRows strong { font-size: 14px; font-weight: 700; line-height: 1.25; color: var(--legacy-txt); }
+.planRows p, .planRows ul { margin-top: 3px; font-size: 12px; color: var(--legacy-txt3); line-height: 1.35; }
+.planRows ul { margin-bottom: 0; padding-left: 16px; }
+.planLoad { max-width: 105px; font-size: 13px; font-weight: 700; color: var(--legacy-txt2); text-align: right; }
+.guidedRun, .guidedMovement { min-width: 0; }
+.guidedRunHeading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.guidedRunHeading > div { min-width: 0; }
+.guidedRunHeading > button { min-width: 148px; white-space: nowrap; flex-shrink: 0; }
+.runCount { font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 13px; letter-spacing: 1.8px; color: var(--legacy-txt3); }
+.page .runDetail { margin-top: 4px; font-size: 11px; color: var(--legacy-txt3); }
+.mediaSpace { min-height: 152px; border-radius: 15px; border: 1px solid var(--legacy-line); background: linear-gradient(145deg, var(--legacy-black), #2b2b2b); display: grid; align-content: center; justify-items: center; gap: 8px; overflow: hidden; text-align: center; padding: 16px; color: rgba(255, 255, 255, .72); font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 12px; letter-spacing: 1.7px; }
+.mediaSpace > span { width: 48px; height: 48px; border: 2px solid var(--guided-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--guided-green); font-size: 21px; }
+.mediaSpace small { max-width: 330px; font-family: "FE Sans", "DM Sans", sans-serif; font-size: 11px; line-height: 1.4; letter-spacing: 0; }
+.page .exerciseName { margin-top: 16px; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 30px; font-weight: 400; letter-spacing: 1.3px; line-height: 1.05; color: var(--legacy-txt); }
+.guidedMovement { margin-top: 14px; }
+.guidedMovement > h3 { margin-bottom: 8px; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 23px; font-weight: 400; letter-spacing: 1.2px; }
+.guidedMovement > p { margin: 8px 0; font-size: 13px; line-height: 1.45; color: var(--legacy-txt3); }
+.guidedMovement > section[lang] { font-size: 13px; line-height: 1.45; }
+.groupInstruction { margin-top: 12px !important; padding: 12px; border-left: 3px solid var(--legacy-orange); background: var(--legacy-card2); font-size: 13px; line-height: 1.45; }
+.prescriptionGrid { margin-top: 14px; }
+.prescriptionHead, .prescriptionValues { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch; }
+.prescriptionHead { background: var(--legacy-black); border-radius: 11px 11px 0 0; overflow: hidden; }
+.prescriptionHead > div { padding: 9px 3px 8px; border-right: 1px solid rgba(255, 255, 255, .12); font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 12px; letter-spacing: 1.05px; line-height: 1.1; color: #fff; text-align: center; }
+.prescriptionHead > div:last-child { border-right: 0; }
+.prescriptionValues { gap: 8px; padding-top: 8px; }
+.prescriptionValues > div { min-height: 54px; background: var(--legacy-card2); border: 1px solid var(--legacy-line); border-radius: 11px; padding: 8px 4px; display: flex; align-items: center; justify-content: center; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 20px; line-height: 1.08; color: var(--legacy-txt); text-align: center; }
+.page .prescriptionExtra { margin-top: 7px; color: var(--legacy-txt3); font-size: 12px; }
+.setCard { min-width: 0; background: var(--legacy-card2); border: 1px solid var(--legacy-line); border-radius: 15px; padding: 14px; margin-top: 14px; }
+.setCard[data-kind="EXTRA"] { border-style: dashed; border-color: var(--legacy-orange); }
+.setHeading, .setHeading > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.setHeading > div { flex: 1; }
+.setHeading h4 { color: var(--legacy-orange); font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 18px; font-weight: 400; letter-spacing: 1.5px; }
+.setHeading span { color: var(--legacy-txt); font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 14px; letter-spacing: 1.5px; }
+.guidedSetState { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; }
+.guidedSetState p { font-size: 12px; color: var(--legacy-txt3); line-height: 1.4; flex: 1; }
+.guidedSetState button { min-height: 44px; flex-shrink: 0; }
+.resultFields { display: grid; grid-template-columns: 1.15fr 1fr .8fr; gap: 8px; margin-top: 12px; }
+.resultFields label { display: flex; flex-direction: column; gap: 7px; min-width: 0; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 12px; font-weight: 400; letter-spacing: 1.05px; line-height: 1.1; color: var(--legacy-txt2); }
+.measureField { order: 0; }
+.repsField { order: 1; }
+.rirField { order: 2; }
+.detailsField { order: 3; grid-column: 1 / -1; }
+.resultFields input, .statusField select { width: 100%; height: 52px; min-width: 0; margin-top: auto; border: 1.5px solid var(--legacy-line); border-radius: 10px; background: var(--legacy-card); color: var(--legacy-txt); font-family: "FE Sans", "DM Sans", sans-serif; font-size: 18px; font-weight: 700; text-align: center; padding: 0 7px; outline: none; }
+.resultFields input:focus, .statusField select:focus { border-color: var(--guided-green); outline: 2px solid var(--guided-green); outline-offset: 1px; }
+.resultFields input:disabled, .statusField select:disabled { color: var(--legacy-txt3); background: #efeee9; }
+.detailsField input { text-align: left; font-size: 15px; }
+.page .validateButton { background: var(--legacy-black); }
+.confirmedSet { padding: 10px; color: #2a7a3b !important; background: rgba(47, 143, 70, .08); border-radius: 10px; }
+.secondaryActions { display: grid; gap: 10px; }
+.secondaryActions > button { width: 100%; }
+.notePanel { width: min(76%, 330px); margin: 13px auto 0; text-align: left; }
+.notePanel h2 { margin-bottom: 6px; text-align: center; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 1.5px; color: var(--legacy-txt2); }
+.notePanel label { display: grid; gap: 6px; font-size: 11px; line-height: 1.4; color: var(--legacy-txt3); }
+.notePanel textarea { width: 100%; min-height: 54px; border: 1.5px solid var(--legacy-line); border-radius: 11px; background: var(--legacy-card2); color: var(--legacy-txt); font: 15px/1.4 "FE Sans", "DM Sans", sans-serif; padding: 10px 12px; resize: vertical; }
+.notePanel textarea:focus-visible { outline: 2px solid var(--guided-green); outline-offset: 2px; }
+.notePanel > span { display: block; margin-top: 4px; text-align: right; font-size: 11px; color: var(--legacy-txt3); }
+.actions { text-align: center; }
+.actions > p { font-size: 12px; color: var(--legacy-txt3); line-height: 1.5; }
+.actionButtons { display: grid; gap: 10px; margin-top: 12px; }
+.actionButtons :global(.fe-button-primary) { background: var(--guided-green); }
+.restTimer, .completePanel { display: grid; justify-items: center; gap: 14px; min-width: 0; text-align: center; }
+.restTimer { padding: 16px 0; }
+.restPanel { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--legacy-line); border-radius: 14px; background: var(--legacy-card2); font-size: 13px; line-height: 1.5; }
+.restPanel h2 { font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 23px; font-weight: 400; letter-spacing: 1.2px; }
+.restTimer h3, .completePanel h2 { font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 30px; font-weight: 400; letter-spacing: 1.5px; line-height: 1.05; }
+.restTimer p, .completePanel p { font-size: 13px; color: var(--legacy-txt3); line-height: 1.5; }
+.timerDigits { font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 64px; font-weight: 400; letter-spacing: 2px; line-height: 1; color: var(--guided-green); font-variant-numeric: tabular-nums; }
+.completeMark { width: 70px; height: 70px; border-radius: 50%; background: rgba(47, 143, 70, .12); color: var(--guided-green); display: flex; align-items: center; justify-content: center; font-size: 35px; margin: 5px auto 0; }
+.nextMovement { width: 100%; margin-top: 2px; background: var(--legacy-black); border-left: 4px solid var(--legacy-orange); border-radius: 14px; padding: 12px; color: #fff; text-align: left; }
+.nextMovement > span { display: block; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 15px; font-weight: 400; letter-spacing: 1.7px; }
+.nextMovement > strong { display: block; margin-top: 5px; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 23px; font-weight: 400; letter-spacing: 1.2px; }
+.extraActions { display: grid; width: 100%; gap: 10px; }
+.summaryStats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.summaryStats > div { display: grid; gap: 5px; padding: 12px 4px; background: var(--legacy-card2); border: 1px solid var(--legacy-line); border-radius: 11px; }
+.summaryStats strong { font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 44px; font-weight: 400; line-height: 1; letter-spacing: 2px; color: var(--guided-green); }
+.summaryStats span { font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 11px; letter-spacing: 1.6px; color: var(--legacy-txt3); }
+.summaryNote { display: grid; gap: 8px; text-align: left; width: 100%; white-space: pre-wrap; }
+.summaryNote h3 { font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 18px; font-weight: 400; }
 
-.planNumber {
-  display: grid;
-  place-items: center;
-  width: 2.8rem;
-  height: 2.8rem;
-  background: #20221e;
-  color: #fff;
-  border-radius: .4rem;
-  font-weight: 800;
+/* Detailed editable records keep the existing result semantics. */
+.blocks, .block, .exercise, .setList { display: grid; gap: 14px; min-width: 0; }
+.block { padding: 14px; border: 1px solid var(--legacy-line); border-radius: 14px; background: var(--legacy-card2); }
+.blockHeading, .exerciseHeading { display: flex; justify-content: space-between; gap: 10px; }
+.blockHeading h3, .exerciseHeading h4 { font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 23px; font-weight: 400; letter-spacing: 1.2px; }
+.blockHeading > span, .exerciseHeading > span { font-size: 12px; color: var(--legacy-txt3); }
+.exercise { padding: 12px; border: 1px solid var(--legacy-line); border-radius: 11px; background: var(--legacy-card); }
+.exercise > button { justify-self: start; }
+.prescription { margin: 10px 0 !important; padding: 10px; background: var(--legacy-card); border-radius: 10px; font-size: 13px; line-height: 1.5; }
+.prescriptionList { margin: 0; padding: 0; list-style: none; }
+.prescriptionList li { display: grid; grid-template-columns: 65px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--legacy-line); font-size: 13px; }
+.prescriptionList li:last-child { border: 0; }
+.statusField { display: grid; gap: 7px; margin-top: 10px; max-width: 240px; font-size: 12px; color: var(--legacy-txt2); }
+
+@media (min-width: 760px) {
+  .page { width: calc(100% - 36px); max-width: 620px; margin: 18px auto; }
+  .mediaSpace { min-height: 220px; }
 }
-
-.guidedRun,
-.guidedMovement {
-  display: grid;
-  gap: 1rem;
-  min-width: 0;
-}
-
-.guidedRun {
-  padding: clamp(1rem, 3vw, 1.75rem);
-  background: #fffdf8;
-  border: 1px solid #d4d2c9;
-  border-radius: .75rem;
-}
-
-.guidedRunHeading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.guidedRunHeading > div { flex: 1 1 14rem; min-width: 0; }
-.guidedRunHeading p { margin: .4rem 0; }
-.guidedRunHeading h2 { font-size: clamp(1.45rem, 3vw, 2.2rem); }
-
-.mediaSpace {
-  display: grid;
-  align-content: center;
-  justify-items: center;
-  min-height: clamp(9rem, 22vw, 15rem);
-  padding: 1.5rem;
-  gap: .4rem;
-  text-align: center;
-  border: 1px solid #e0dfd7;
-  border-radius: .6rem;
-  background: #eeeee8;
-  color: #55564e;
-}
-
-.mediaSpace > span { color: #73766a; font-weight: 900; font-size: 2rem; letter-spacing: -.15rem; }
-.mediaSpace p { font-weight: 750; margin: 0; }
-.mediaSpace small { max-width: 35rem; line-height: 1.5; }
-.groupInstruction { padding: 1rem; border-left: .25rem solid #ca5e18; background: #fff2df; }
-.guidedSetState { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
-.guidedSetState p { flex: 1 1 14rem; margin: 0; font-size: .875rem; }
-.guidedSetState button { min-height: 2.75rem; }
-.validateButton { width: 100%; min-height: 3.25rem; font-size: 1.0625rem; }
-.confirmedSet { padding: .75rem; color: #245f3b; background: #e8f4e9; }
-
-.restTimer,
-.completePanel {
-  display: grid;
-  justify-items: center;
-  gap: 1rem;
-  min-width: 0;
-  padding: clamp(1.25rem, 4vw, 2.5rem);
-  border-radius: .75rem;
-  border: 1px solid #d4d2c9;
-  background: #fffdf8;
-  text-align: center;
-}
-
-.restTimer { background: #1b201c; color: #f6f3ec; }
-.restTimer .eyebrow { color: #a7d5a6; }
-.restTimer h3 { color: #fff; }
-.timerDigits { font-size: clamp(3.25rem, 10vw, 6rem); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.completeMark { display: grid; place-items: center; width: 4rem; height: 4rem; border-radius: 50%; background: #e8f4e9; color: #246b45; font-size: 2.5rem; }
-.completePanel h2 { font-size: clamp(1.5rem, 3vw, 2rem); }
-.completePanel p { margin: 0; max-width: 44rem; }
-.nextMovement { display: grid; gap: .5rem; width: 100%; padding: 1rem; background: #f0eee7; border-radius: .5rem; }
-.nextMovement > span { color: #7a380b; font-size: .75rem; font-weight: 800; letter-spacing: .08em; }
-.nextMovement > strong { font-size: 1.2rem; }
-.extraActions,
-.secondaryActions { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
-.summaryStats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; width: 100%; }
-.summaryStats > div { display: grid; gap: .5rem; padding: 1rem .5rem; background: #f1efe7; border-radius: .5rem; }
-.summaryStats strong { font-size: 2rem; font-variant-numeric: tabular-nums; }
-.summaryStats span { font-size: .8125rem; }
-.summaryNote { display: grid; gap: .75rem; text-align: left; width: 100%; white-space: pre-wrap; }
-
-.workoutHeading > div {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.eyebrow {
-  color: var(--fe-orange, #b95000);
-  font-size: 0.75rem;
-  font-weight: 750;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.status {
-  flex-shrink: 0;
-  padding: 0.375rem 0.625rem;
-  border-radius: 999px;
-  background: var(--fe-warning-bg, #fff2d6);
-  color: var(--fe-warning, #8a5200);
-  font-size: 0.75rem;
-  font-weight: 750;
-  text-transform: uppercase;
-}
-
-.status[data-status="COMPLETED"] {
-  background: var(--fe-success-bg, #edf6f0);
-  color: var(--fe-success, #246b45);
-}
-
-.status[data-status="NOT_STARTED"] {
-  background: #efeee9;
-  color: var(--fe-muted, #62615e);
-}
-
-.startPanel > button {
-  justify-self: start;
-}
-
-.blocks {
-  display: grid;
-  gap: 1rem;
-}
-
-.block {
-  display: grid;
-  gap: 1rem;
-  padding: 1.25rem;
-  border: 1px solid var(--fe-line, #deddd7);
-  border-radius: 0.75rem;
-  background: #f8f7f3;
-}
-
-.blockHeading > span,
-.exerciseHeading > span {
-  flex-shrink: 0;
-  color: var(--fe-muted, #62615e);
-  font-size: 0.8125rem;
-}
-
-.exercise {
-  display: grid;
-  gap: 0.875rem;
-  min-width: 0;
-  padding: 1rem;
-  border: 1px solid var(--fe-line, #deddd7);
-  border-radius: 0.625rem;
-  background: #fff;
-}
-
-.exercise > button {
-  justify-self: start;
-}
-
-.exerciseHeading > div {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.setList {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.setCard {
-  display: grid;
-  gap: 0.75rem;
-  min-width: 0;
-  padding: 0.875rem;
-  border: 1px solid #ceccc4;
-  border-radius: 0.5rem;
-  background: #fbfaf7;
-}
-
-.setCard[data-kind="EXTRA"] {
-  border-style: dashed;
-  border-color: var(--fe-orange, #b95000);
-}
-
-.setHeading > div {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.setHeading span {
-  color: var(--fe-muted, #62615e);
-  font-size: 0.75rem;
-  font-weight: 650;
-  text-transform: uppercase;
-}
-
-.prescription {
-  padding: 0.625rem;
-  border-radius: 0.375rem;
-  background: #efeee9;
-  font-size: 0.875rem;
-}
-
-.statusField,
-.resultFields label,
-.notePanel label {
-  display: grid;
-  gap: 0.375rem;
-  min-width: 0;
-  font-size: 0.8125rem;
-  font-weight: 650;
-}
-
-.statusField {
-  max-width: 18rem;
-}
-
-.statusField select,
-.resultFields input,
-.notePanel textarea {
-  width: 100%;
-  min-height: 2.75rem;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid #929088;
-  border-radius: 0.5rem;
-  background: #fff;
-  color: var(--fe-ink, #1a1a1a);
-  font: inherit;
-  font-size: 1rem;
-  font-weight: 400;
-}
-
-.statusField select:disabled,
-.resultFields input:disabled,
-.notePanel textarea:disabled {
-  background: #efeee9;
-  color: var(--fe-muted, #62615e);
-}
-
-.resultFields {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.prescriptionList {
-  display: grid;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.prescriptionList li {
-  display: grid;
-  grid-template-columns: minmax(5rem, 0.25fr) minmax(0, 1fr);
-  gap: 0.75rem;
-  padding: 0.625rem 0;
-  border-bottom: 1px solid var(--fe-line, #deddd7);
-}
-
-.prescriptionList li:last-child {
-  border-bottom: 0;
-}
-
-.notePanel textarea {
-  min-height: 8rem;
-  resize: vertical;
-}
-
-.notePanel > span {
-  justify-self: end;
-  color: var(--fe-muted, #62615e);
-  font-size: 0.75rem;
-}
-
-.actions > p {
-  color: var(--fe-muted, #62615e);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.actionButtons {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 48rem) {
-  .resultFields {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 42rem) {
-  .heading,
-  .workoutHeading,
-  .blockHeading,
-  .exerciseHeading {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .heading > button,
-  .status,
-  .blockHeading > span,
-  .exerciseHeading > span {
-    align-self: flex-start;
-  }
-
-  .workoutHeading,
-  .startPanel,
-  .restPanel,
-  .notePanel,
-  .actions,
-  .block {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 22rem) {
-  .resultFields,
-  .summaryStats {
-    grid-template-columns: 1fr;
-  }
-  .workoutHeading,
-  .startPanel,
-  .restPanel,
-  .notePanel,
-  .actions,
-  .block,
-  .exercise,
-  .setCard {
-    padding: 0.75rem;
-  }
-
-  .setHeading {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .setHeading > button,
-  .actionButtons button,
-  .startPanel > button {
-    width: 100%;
-  }
-
-  .prescriptionList li {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 380px) {
+  .page { margin: 10px; }
+  .guidedBody { padding: 13px; }
+  .workoutHeading h2, .page .exerciseName { font-size: 26px; }
+  .resultFields { gap: 6px; }
+  .resultFields input { font-size: 15px; padding: 0 4px; }
+  .guidedRunHeading > button { min-width: 136px; font-size: 12px; padding: 11px 10px; }
+  .guidedSetState { flex-wrap: wrap; }
+  .setHeading > div, .blockHeading, .exerciseHeading { flex-wrap: wrap; }
+  .planLoad { max-width: 76px; }
 }

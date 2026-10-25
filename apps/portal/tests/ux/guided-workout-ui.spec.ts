@@ -128,7 +128,7 @@ test("unvalidated guided input is protected on links and browser Back without be
   await expect(page.getByText("Résultats non enregistrés", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Revoir/modifier mes résultats", exact: true })).toBeDisabled();
   page.once("dialog", dialog => dialog.dismiss());
-  await page.locator('a[href^="/client/program?"]').click();
+  await page.getByRole("link", { name: "← Mon programme", exact: true }).click();
   await expect(setRow(page, "Dumbbell Press", 1).getByRole("spinbutton", { name: /^Charge/ })).toHaveValue("42.5");
   const currentUrl = page.url();
   const prompt = page.waitForEvent("dialog");

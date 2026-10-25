@@ -107,7 +107,7 @@ test("landing keeps focus visible and reflows at 200% on 320px", async ({
   );
 });
 
-test("Client V2 pilot preserves the dark FE composition without invented program data", async ({
+test("Client home preserves its approved welcome and sidebar with the restored Legacy navigation", async ({
   page,
 }) => {
   for (const viewport of [
@@ -144,7 +144,8 @@ test("Client V2 pilot preserves the dark FE composition without invented program
     ).toBe(true);
 
     const topbarHeight =
-      (await page.locator("[data-pilot-topbar]").boundingBox())?.height ?? 0;
+      (await page.locator("[data-legacy-client-header]").boundingBox())?.height ?? 0;
+    await expect(page.locator("[data-legacy-client-tabs]")).toBeVisible();
     if (viewport.width > 672) {
       const sidebarWidth =
         (await page.locator("[data-pilot-sidebar]").boundingBox())?.width ?? 0;
@@ -154,8 +155,8 @@ test("Client V2 pilot preserves the dark FE composition without invented program
       expect(sidebarWidth).toBeLessThanOrEqual(
         viewport.width > 1024 ? 216 : 176,
       );
-      expect(topbarHeight).toBeGreaterThanOrEqual(80);
-      expect(topbarHeight).toBeLessThanOrEqual(96);
+      expect(topbarHeight).toBeGreaterThanOrEqual(106);
+      expect(topbarHeight).toBeLessThanOrEqual(140);
     } else {
       await expect(page.locator("[data-pilot-sidebar]")).toBeHidden();
       expect(topbarHeight).toBeGreaterThanOrEqual(76);

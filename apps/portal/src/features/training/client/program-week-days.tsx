@@ -43,12 +43,13 @@ function dayLabel(session: Session, french: boolean) {
   return days[session.schedule.day - 1];
 }
 
-export function ProgramWeekDays({ program, week, session, french, choose }: {
+export function ProgramWeekDays({ program, week, session, french, choose, part = "all" }: {
   program: ProgramPublication;
   week: Week;
   session?: Session;
   french: boolean;
   choose(weekNumber: number, sessionId?: string): void;
+  part?: "all" | "weeks" | "days";
 }) {
   const weeksRef = useRef<HTMLDivElement>(null);
   const daysRef = useRef<HTMLDivElement>(null);
@@ -64,34 +65,32 @@ export function ProgramWeekDays({ program, week, session, french, choose }: {
       else if (activeBox.right > railBox.right) rail.scrollLeft += activeBox.right - railBox.right;
     }
   }, [week.number, session?.id]);
+  const calendarDays = french ? ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"] : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const renderSession = (item: Session) => <button key={item.id} type="button" className={styles.day} aria-pressed={item.id === session?.id} onClick={() => choose(week.number, item.id)}>
+    <small>{dayLabel(item, french)}{item.schedule.mode === "suggested" ? (french ? " · suggéré" : " · suggested") : ""}</small>
+    <strong>{label(item.title, french)}</strong>
+    <span>{item.type === "complete-rest" ? (french ? "Repos complet" : "Complete rest") : item.required ? (french ? "Séance prévue" : "Planned session") : (french ? "Optionnelle" : "Optional")}</span>
+  </button>;
   return (
     <div className={styles.navigation}>
-      <div className={styles.heading}>
-        <h3>{french ? "Tes semaines" : "Your weeks"}</h3>
-        {program.document.weeks.length > 1 ? <span>{french ? "Fais défiler →" : "Scroll →"}</span> : null}
-      </div>
-      <div ref={weeksRef} className={styles.rail} role="group" aria-label={french ? "Semaines du programme" : "Program weeks"}>
-        {program.document.weeks.map((item) => (
-          <button key={item.number} type="button" className={styles.week} aria-pressed={item.number === week.number} onClick={() => choose(item.number, item.sessions[0]?.id)}>
+      {part !== "days" ? <div ref={weeksRef} className={`${styles.rail} ${styles.weeks}`} role="group" aria-label={french ? "Semaines du programme" : "Program weeks"}>
+        <a className={styles.week} href="/client/week-zero"><strong>{french ? "Semaine" : "Week"} 0</strong><span>{french ? "Mon point de départ" : "My starting point"}</span><small>{french ? "Ouvrir" : "Open"}</small></a>
+        {Array.from({ length: Math.max(14, ...program.document.weeks.map((item) => item.number)) }, (_, index) => index + 1).map((number) => {
+          const item = program.document.weeks.find((candidate) => candidate.number === number);
+          return item ? <button key={number} type="button" className={styles.week} aria-pressed={item.number === week.number} onClick={() => choose(item.number, item.sessions[0]?.id)}>
             <strong>{french ? "Semaine" : "Week"} {item.number}</strong>
             <span>{label(item.objective, french) || (french ? "Ton entraînement" : "Your training")}</span>
             <small>{item.sessions.length} {french ? "séance(s) prévues" : "planned session(s)"}</small>
-          </button>
-        ))}
-      </div>
-      <div className={styles.heading}>
-        <h3>{french ? "Tes journées" : "Your days"}</h3>
-        {week.sessions.length > 1 ? <span>{french ? "Fais défiler →" : "Scroll →"}</span> : null}
-      </div>
-      <div ref={daysRef} className={styles.rail} role="group" aria-label={french ? `Séances de la semaine ${week.number}` : `Week ${week.number} sessions`}>
-        {week.sessions.map((item) => (
-          <button key={item.id} type="button" className={styles.day} aria-pressed={item.id === session?.id} onClick={() => choose(week.number, item.id)}>
-            <small>{dayLabel(item, french)}{item.schedule.mode === "suggested" ? (french ? " · suggéré" : " · suggested") : ""}</small>
-            <strong>{label(item.title, french)}</strong>
-            <span>{item.type === "complete-rest" ? (french ? "Repos complet" : "Complete rest") : item.required ? (french ? "Séance prévue" : "Planned session") : (french ? "Optionnelle" : "Optional")}</span>
-          </button>
-        ))}
-      </div>
+          </button> : <div key={number} className={styles.week} aria-disabled="true"><strong>{french ? "Semaine" : "Week"} {number}</strong><span>{french ? "À venir" : "Coming next"}</span><small>{french ? "Non publiée" : "Not published"}</small></div>;
+        })}
+      </div> : null}
+      {part !== "weeks" ? <div ref={daysRef} className={`${styles.rail} ${styles.days}`} role="group" aria-label={french ? `Séances de la semaine ${week.number}` : `Week ${week.number} sessions`}>
+        {calendarDays.flatMap((day, index) => {
+          const planned = week.sessions.filter((item) => item.schedule.mode !== "flexible" && item.schedule.day === index + 1);
+          return planned.length ? planned.map(renderSession) : [<div key={`empty-${index}`} className={styles.day} data-empty-day=""><small>{day}</small><strong>{french ? "Non planifié" : "Not scheduled"}</strong><span>{french ? "Aucune séance prévue" : "No session scheduled"}</span></div>];
+        })}
+        {week.sessions.filter((item) => item.schedule.mode === "flexible" || item.schedule.day === null).map(renderSession)}
+      </div> : null}
     </div>
   );
 }

@@ -69,3 +69,47 @@ test("a previous publication selection cannot open a different current program b
   await expect(page.getByRole("group", { name: "Semaines du programme", exact: true }).getByRole("button", { name: /^Semaine 1 / })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("link", { name: "Ouvrir la séance", exact: true })).toHaveAttribute("href", new RegExp(`publicationId=${publicationId}&weekNumber=1&`));
 });
+
+test("Legacy layout keeps six top tabs, Week Zero to 14, seven weekdays and private references", async ({ page }, info) => {
+  await page.goto("/?screen=client-program&state=legacy-navigation&language=en");
+  const tabs = page.getByRole("navigation", { name: "Portal navigation", exact: true });
+  await expect(tabs.getByRole("link", { name: "Home", exact: true })).toHaveAttribute("href", "/client?language=en");
+  await expect(tabs.getByRole("link", { name: "Training", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(tabs.getByRole("link", { name: "History", exact: true })).toHaveAttribute("href", "/client/program?language=en#workout-history-title");
+  for (const label of ["Nutrition", "Check-in", "Progression"]) {
+    await expect(tabs.getByRole("button", { name: new RegExp(label) })).toBeDisabled();
+  }
+  const weeks = page.getByRole("group", { name: "Program weeks", exact: true });
+  await expect(weeks.getByRole("link", { name: /^Week 0 / })).toHaveAttribute("href", "/client/week-zero");
+  await expect(weeks.locator('[aria-disabled="true"]').filter({ hasText: "Week 14" })).toContainText("Not published");
+  const days = page.getByRole("group", { name: "Week 1 sessions", exact: true });
+  for (const day of ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]) {
+    await expect(days.getByText(new RegExp(`^${day}( · suggested)?$`)).first()).toBeAttached();
+  }
+  await expect(page.getByTestId("client-reference-panel")).toBeVisible();
+  await expect(page.getByTestId("reference-checkin-kpi")).toHaveCount(6);
+  await expect(page.getByTestId("reference-checkin-kpi").first()).toContainText("—");
+  for (const width of [1773, 1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 988 });
+    await page.evaluate(() => document.fonts.ready);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+    expect(await page.locator('[data-legacy-week-header]').evaluate(element => getComputedStyle(element).backgroundColor)).toBe("rgb(28, 28, 28)");
+    expect(await weeks.getByRole("button", { name: /^Week 1 / }).evaluate(element => getComputedStyle(element).backgroundColor)).toBe("rgb(200, 90, 0)");
+    expect(await page.locator('article[aria-labelledby^="session-"]').evaluate(element => element.getBoundingClientRect().width)).toBeLessThanOrEqual(620);
+    if (width >= 1024) {
+      const layout = page.locator('[data-legacy-training-layout]');
+      const references = (await page.getByTestId("client-reference-panel").boundingBox())!;
+      const session = (await page.locator('article[aria-labelledby^="session-"]').boundingBox())!;
+      expect(references.x).toBeGreaterThan(session.x + session.width);
+      await expect(layout).toBeVisible();
+    }
+    await page.screenshot({ path: info.outputPath(`legacy-training-${width}.png`) });
+  }
+});
+
+test("the top History link opens the saved history rather than leaving the Client at the top", async ({ page }) => {
+  await page.goto("/client");
+  await page.getByRole("navigation", { name: "Navigation du portail", exact: true }).getByRole("link", { name: "Historique", exact: true }).click();
+  await expect(page).toHaveURL(/\/client\/program\?language=fr#workout-history-title$/);
+  await expect(page.getByRole("heading", { name: "Historique des séances", exact: true })).toBeInViewport();
+});

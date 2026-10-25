@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
@@ -24,6 +24,8 @@ import {
 
 import styles from "./client-program.module.css";
 import { ProgramWeekDays, useProgramSelection } from "./program-week-days";
+import { ClientReferencePanel } from "./client-reference-panel";
+import { ClientTrainingMetrics } from "./client-training-metrics";
 
 const REQUEST_TIMEOUT_MS = 8_000;
 
@@ -164,10 +166,21 @@ export function ClientProgram() {
   const [french, setFrench] = useState(true);
   const [logoutError, setLogoutError] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const historyEntryHandled = useRef(false);
   const status = useSelectedWorkoutStatus(program?.id, week?.number, session?.id);
   useEffect(() => {
     setFrench(new URLSearchParams(window.location.search).get("language") !== "en");
   }, []);
+  useEffect(() => {
+    // The History destination is inserted after the authenticated read finishes.
+    // Honor its anchor once, without moving a reader on background refreshes.
+    if (loading || failed || historyEntryHandled.current || window.location.hash !== "#workout-history-title") return;
+    const heading = document.getElementById("workout-history-title");
+    if (!heading) return;
+    historyEntryHandled.current = true;
+    heading.scrollIntoView({ block: "start" });
+    heading.focus({ preventScroll: true });
+  }, [loading, failed]);
 
   async function logout() {
     setSigningOut(true);
@@ -182,6 +195,7 @@ export function ClientProgram() {
     <AppShell
       space="client"
       current="program"
+      legacyClient
       locale={french ? "fr" : "en"}
       accountAction={
         <button
@@ -195,18 +209,18 @@ export function ClientProgram() {
       }
     >
       <div className={styles.page}>
-        <div className={styles.heading}>
+        <div className={styles.heading} data-legacy-week-header="">
           <div>
-            <p className="fe-kicker">{loading || failed
-              ? "TRAINING"
-              : program
-                ? `TRAINING · ${french ? "PROGRAMME DISPONIBLE" : "PROGRAM AVAILABLE"}`
-                : french ? "PROGRAMME EN PRÉPARATION" : "PROGRAM IN PREPARATION"}</p>
-            <h1 className="fe-title">{french ? "Mon programme." : "My program."}</h1>
+            {program ? <h2 className={styles.protocolLabel} aria-label={localized(program.document.title, french)}>Client Protocol — {localized(program.document.title, french)}</h2> : <p className={styles.protocolLabel}>Legacy Protocol</p>}
+            <h1>{week ? `${french ? "Semaine" : "Week"} ${week.number}` : french ? "Mon programme" : "My program"}</h1>
+            <p>{week ? (french ? "Choisis ta semaine, puis ta séance." : "Choose your week, then your session.") : french ? "Ton entraînement, une séance à la fois." : "Your training, one session at a time."}</p>
           </div>
+          <div className={styles.headingTools}>
+          {!loading && !failed ? <span className={styles.availability}>{program ? (french ? "TRAINING · PROGRAMME DISPONIBLE" : "TRAINING · PROGRAM AVAILABLE") : french ? "PROGRAMME EN PRÉPARATION" : "PROGRAM IN PREPARATION"}</span> : null}
           <button className="fe-button" type="button" onClick={() => setFrench(!french)}>
             {french ? "English" : "Français"}
           </button>
+          </div>
         </div>
 
         {logoutError ? (
@@ -233,23 +247,10 @@ export function ClientProgram() {
           </p>
         ) : (
           <>
-            <section className={styles.programSummary} aria-labelledby="program-title">
-              <p className={styles.eyebrow}>{french ? "PROGRAMME ACTUEL" : "CURRENT PROGRAM"}</p>
-              <h2 id="program-title">{localized(program.document.title, french)}</h2>
-              <p>
-                {french ? "Publication" : "Publication"} {program.revision} · {program.document.weeks.length}{" "}
-                {french ? "semaine(s)" : "week(s)"}
-              </p>
-              <p>
-                {french ? "Choisis ta semaine, puis ta séance." : "Choose your week, then your session."}
-              </p>
-            </section>
-
-            <section className={styles.selector} aria-labelledby="session-selector-title">
-              <h2 id="session-selector-title">{french ? "Choisir une séance" : "Choose a session"}</h2>
-              {week ? <ProgramWeekDays program={program} week={week} session={session} french={french} choose={choose} /> : null}
-            </section>
-
+            {week ? <ProgramWeekDays program={program} week={week} session={session} french={french} choose={choose} part="weeks" /> : null}
+            <div className={styles.trainingLayout} data-legacy-training-layout="">
+            <div className={styles.trainingMain}>
+            {week ? <ProgramWeekDays program={program} week={week} session={session} french={french} choose={choose} part="days" /> : null}
             {week && session ? (
               <SessionPreview
                 french={french}
@@ -265,13 +266,16 @@ export function ClientProgram() {
                   : "This published week contains no session."}
               </Feedback>
             )}
-
+            {week ? <ClientTrainingMetrics program={program} week={week} french={french} /> : null}
             <WorkoutHistory
               french={french}
               history={history}
               page={historyPage}
               setPage={setHistoryPage}
             />
+            </div>
+            <ClientReferencePanel french={french} />
+            </div>
           </>
         )}
         {!loading ? (
@@ -361,6 +365,7 @@ function SessionPreview({
         </div>
         <span className={styles.sessionType}>{sessionType(session.type, french)}</span>
       </div>
+      <div className={styles.sessionBody}>
       <p>
         {session.required
           ? french
@@ -404,6 +409,7 @@ function SessionPreview({
         </section>
       ))}
       </details> : null}
+      </div>
     </article>
   );
 }
@@ -425,7 +431,7 @@ function WorkoutHistory({
       <div className={styles.historyHeading}>
         <div>
           <p className={styles.eyebrow}>{french ? "TON PARCOURS" : "YOUR JOURNEY"}</p>
-          <h2 id="workout-history-title">{french ? "Historique des séances" : "Workout history"}</h2>
+          <h2 id="workout-history-title" tabIndex={-1}>{french ? "Historique des séances" : "Workout history"}</h2>
         </div>
         {history && history.total > 0 ? (
           <span>{history.total} {french
