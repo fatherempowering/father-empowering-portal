@@ -44,7 +44,7 @@ export function ClientHomePilot({ dashboard, failed, signingOut, signOutError, o
       {failed ? <section className={styles.errorPanel}>
         <div role="alert"><h2>{t("Ton portail est indisponible pour le moment", "Your portal is temporarily unavailable")}</h2><p>{t("On n’arrive pas à ouvrir cette page. Vérifie ta connexion, puis réessaie.", "We couldn’t open this page. Check your connection, then try again.")}</p></div>
         <button className="fe-button fe-button-primary" type="button" onClick={onRetry}>{t("Réessayer", "Try again")}</button>
-      </section> : !dashboard ? <div className={styles.loadingStatus} role="status">{t("Ton portail s’ouvre…", "Opening your portal…")}</div> : <div className={styles.contentGrid}>
+      </section> : !dashboard || signingOut ? <div className={styles.loadingStatus} role="status">{signingOut ? t("Déconnexion…", "Signing out…") : t("Ton portail s’ouvre…", "Opening your portal…")}</div> : <div className={styles.contentGrid}>
         <div className={styles.tasks}>
           <section className={styles.primaryPanel} data-pilot-primary="" aria-label={t("Ta prochaine étape", "Your next step")}>
             <p className={styles.panelEyebrow}>{t("Ta prochaine étape", "Your next step")}</p>

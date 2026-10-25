@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
@@ -29,6 +29,7 @@ export function ClientDashboard({
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [signingOut, setSigningOut] = useState(false);
+  const signingOutRef = useRef(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const retry = useCallback(() => {
     setFailed(false);
@@ -36,15 +37,18 @@ export function ClientDashboard({
   }, []);
 
   useEffect(() => {
+    if (signingOut) return;
     const controller = new AbortController();
     let mounted = true;
     const timeout = window.setTimeout(() => controller.abort(), loadTimeoutMs);
+    setFailed(false);
     async function load() {
       try {
         const response = await fetch("/api/v1/client/me", {
           cache: "no-store",
           signal: controller.signal,
         });
+        if (!mounted || controller.signal.aborted || signingOutRef.current) return;
         if (response.status === 401 || response.status === 403) {
           window.location.replace("/client-login");
           return;
@@ -53,9 +57,10 @@ export function ClientDashboard({
         const payload = (await response.json()) as {
           client: ClientDashboardData;
         };
+        if (!mounted || controller.signal.aborted || signingOutRef.current) return;
         setDashboard(payload.client);
       } catch {
-        if (mounted) setFailed(true);
+        if (mounted && !signingOutRef.current) setFailed(true);
       } finally {
         window.clearTimeout(timeout);
       }
@@ -66,9 +71,11 @@ export function ClientDashboard({
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [attempt, loadTimeoutMs]);
+  }, [attempt, loadTimeoutMs, signingOut]);
 
   async function signOut() {
+    if (signingOutRef.current) return;
+    signingOutRef.current = true;
     setSigningOut(true);
     setSignOutError(null);
     const responseReceived = await requestClientLogout((destination) => {
@@ -82,6 +89,7 @@ export function ClientDashboard({
         ? clientPortalCopy(dashboard).signOutError
         : "Impossible de te déconnecter. Réessaie.",
     );
+    signingOutRef.current = false;
     setSigningOut(false);
   }
 
@@ -129,8 +137,8 @@ export function ClientDashboard({
             Réessayer
           </button>
         </>
-      ) : !dashboard ? (
-        <Loading>{"Ton portail s’ouvre…"}</Loading>
+      ) : !dashboard || signingOut ? (
+        <Loading>{signingOut ? (copy?.signingOut ?? "Déconnexion…") : "Ton portail s’ouvre…"}</Loading>
       ) : (
         <ClientPortalView dashboard={dashboard} view={view} />
       )}
