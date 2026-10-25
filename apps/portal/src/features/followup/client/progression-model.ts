@@ -9,11 +9,15 @@ export const MEASUREMENT_LABELS: Record<MeasurementKey, [string, string]> = {
 export type MeasurementObservation = { id: string; recordedAt: string; submittedAt: string; source: "WEEK_ZERO" | "CHECK_IN"; measurements: CheckInMeasurements };
 export function progressionObservations(data: ClientProgression): MeasurementObservation[] {
   return [
-    ...(data.baseline ? [{ id: "week-zero", recordedAt: data.baseline.recordedAt, submittedAt: data.baseline.recordedAt, source: "WEEK_ZERO" as const, measurements: data.baseline.measurements }] : []),
+    // Week Zero has a submission timestamp, not an observation time. Use its UTC calendar day.
+    ...(data.baseline ? [{ id: "week-zero", recordedAt: new Date(data.baseline.recordedAt).toISOString().slice(0, 10), submittedAt: data.baseline.recordedAt, source: "WEEK_ZERO" as const, measurements: data.baseline.measurements }] : []),
     ...data.checkIns.map(item => ({ id: item.id, recordedAt: item.document.observedOn, submittedAt: item.submittedAt, source: "CHECK_IN" as const, measurements: item.document.measurements })),
   ].sort((a, b) => observationTime(a.recordedAt) - observationTime(b.recordedAt) || Date.parse(a.submittedAt) - Date.parse(b.submittedAt) || a.id.localeCompare(b.id));
 }
-export function observationTime(value: string) { return Date.parse(value.length === 10 ? `${value}T12:00:00Z` : value); }
+export function observationTime(value: string) {
+  const date = new Date(value);
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12);
+}
 export function toDisplayMeasurement(value: number, key: MeasurementKey, metric: boolean) { return metric ? key === "bodyWeightLb" ? value * 0.45359237 : value * 2.54 : value; }
 export function fromDisplayMeasurement(value: number, key: MeasurementKey, metric: boolean) {
   return Number((metric ? key === "bodyWeightLb" ? value / 0.45359237 : value / 2.54 : value).toFixed(6));
