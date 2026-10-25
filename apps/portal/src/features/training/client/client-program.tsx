@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
 import { PublishedExerciseGuidance } from "@/features/training/shared/published-exercise-guidance";
 import { publishedExerciseName, repetitionLabel } from "@/lib/training/workout-presentation";
+import { programSelectionQuery } from "@/lib/training/program-navigation";
 import type { DraftExercise } from "@/lib/contracts/training-drafts";
 import {
   publicationResponseSchema,
@@ -15,11 +16,13 @@ import {
 } from "@/lib/contracts/training-publication";
 import {
   workoutListSchema,
+  workoutSessionResponseSchema,
   type WorkoutList,
   type WorkoutListItem,
 } from "@/lib/contracts/training-results";
 
 import styles from "./client-program.module.css";
+import { ProgramWeekDays, useProgramSelection } from "./program-week-days";
 
 const REQUEST_TIMEOUT_MS = 8_000;
 
@@ -110,8 +113,10 @@ function useProgram(page: number, includeHistory = true) {
 
 export function ClientProgramAction({ french = true }: { french?: boolean }) {
   const { program, loading, failed, retry } = useProgram(0, false);
+  const { week, session, choose } = useProgramSelection(program);
+  const query = program && week ? programSelectionQuery(program.id, week.number, session?.id).toString() : "";
   return (
-    <section aria-label={french ? "Ton programme" : "Your program"}>
+    <section className={styles.homeProgram} aria-label={french ? "Ton programme" : "Your program"}>
       {loading ? (
         <Loading>
           {french ? "Vérification de ton programme…" : "Checking your program…"}
@@ -130,12 +135,13 @@ export function ClientProgramAction({ french = true }: { french?: boolean }) {
       ) : program ? (
         <>
           <h2>{localized(program.document.title, french)}</h2>
-          <p>
-            {french
-              ? "Ton coach a publié ton plan. Choisis une semaine et une séance pour saisir tes résultats."
-              : "Your coach published your plan. Choose a week and a session to enter your results."}
-          </p>
-          <Link className="fe-button fe-button-primary" href="/client/program">
+          {week ? <ProgramWeekDays program={program} week={week} session={session} french={french} choose={choose} /> : null}
+          {session ? (
+            <a className="fe-button fe-button-primary" data-document-navigation="" href={`/client/workout?${query}&language=${french ? "fr" : "en"}`}>
+              {french ? "Ouvrir" : "Open"} · {localized(session.title, french)}
+            </a>
+          ) : null}
+          <Link className="fe-button" href={`/client/program?${query}&language=${french ? "fr" : "en"}`}>
             {french ? "Voir mon programme" : "View my program"}
           </Link>
         </>
@@ -153,26 +159,14 @@ export function ClientProgramAction({ french = true }: { french?: boolean }) {
 export function ClientProgram() {
   const [historyPage, setHistoryPage] = useState(0);
   const { program, history, loading, failed, retry } = useProgram(historyPage);
-  const [weekIndex, setWeekIndex] = useState(0);
-  const [sessionIndex, setSessionIndex] = useState(0);
+  const { week, session, choose } = useProgramSelection(program);
   const [french, setFrench] = useState(true);
   const [logoutError, setLogoutError] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const week = program?.document.weeks[Math.min(weekIndex, program.document.weeks.length - 1)];
-  const session = week?.sessions[Math.min(sessionIndex, Math.max(0, week.sessions.length - 1))];
-
-  useEffect(() => setSessionIndex(0), [weekIndex]);
-
-  const matchingWorkout = useMemo(
-    () =>
-      history?.items.find(
-        (item) =>
-          item.publicationId === program?.id &&
-          item.weekNumber === week?.number &&
-          item.sessionId.toLowerCase() === session?.id.toLowerCase(),
-      ) ?? null,
-    [history, program?.id, session?.id, week?.number],
-  );
+  const status = useSelectedWorkoutStatus(program?.id, week?.number, session?.id);
+  useEffect(() => {
+    setFrench(new URLSearchParams(window.location.search).get("language") !== "en");
+  }, []);
 
   async function logout() {
     setSigningOut(true);
@@ -242,42 +236,13 @@ export function ClientProgram() {
                 {french ? "semaine(s)" : "week(s)"}
               </p>
               <p>
-                {french
-                  ? "Aucune date n’est choisie automatiquement. Sélectionne la semaine et la séance que tu veux réellement exécuter."
-                  : "No date is selected automatically. Choose the week and session you actually want to perform."}
+                {french ? "Choisis ta semaine, puis ta séance." : "Choose your week, then your session."}
               </p>
             </section>
 
             <section className={styles.selector} aria-labelledby="session-selector-title">
               <h2 id="session-selector-title">{french ? "Choisir une séance" : "Choose a session"}</h2>
-              <div className={styles.selectorFields}>
-                <label>
-                  {french ? "Semaine" : "Week"}
-                  <select
-                    value={weekIndex}
-                    onChange={(event) => setWeekIndex(Number(event.target.value))}
-                  >
-                    {program.document.weeks.map((item, index) => (
-                      <option key={item.number} value={index}>
-                        {french ? "Semaine" : "Week"} {item.number} · {localized(item.objective, french)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  {french ? "Séance" : "Session"}
-                  <select
-                    value={sessionIndex}
-                    onChange={(event) => setSessionIndex(Number(event.target.value))}
-                  >
-                    {week?.sessions.map((item, index) => (
-                      <option key={item.id} value={index}>
-                        {localized(item.title, french)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+              {week ? <ProgramWeekDays program={program} week={week} session={session} french={french} choose={choose} /> : null}
             </section>
 
             {week && session ? (
@@ -286,7 +251,7 @@ export function ClientProgram() {
                 program={program}
                 weekNumber={week.number}
                 session={session}
-                workout={matchingWorkout}
+                status={status}
               />
             ) : (
               <Feedback>
@@ -314,26 +279,62 @@ export function ClientProgram() {
   );
 }
 
+function useSelectedWorkoutStatus(publicationId?: string, weekNumber?: number, sessionId?: string) {
+  const query = publicationId && weekNumber && sessionId
+    ? programSelectionQuery(publicationId, weekNumber, sessionId).toString() : "";
+  const [known, setKnown] = useState<{ query: string; status: WorkoutListItem["status"] | null } | null>(null);
+  useEffect(() => {
+    if (!query) return;
+    let active = true;
+    let controller: AbortController | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = async () => {
+      controller?.abort();
+      clearTimeout(timer);
+      const request = new AbortController();
+      controller = request;
+      timer = setTimeout(() => request.abort(), REQUEST_TIMEOUT_MS);
+      try {
+        // Never infer "not started" from a paginated history page.
+        const response = await loadResponse(`/api/v1/client/workouts/session?${query}`, request.signal, (value) => workoutSessionResponseSchema.parse(value));
+        if (response.publication.id.toLowerCase() !== publicationId?.toLowerCase()) throw new Error("MISMATCH");
+        if (response.workout && (response.workout.weekNumber !== weekNumber || response.workout.sessionId.toLowerCase() !== sessionId?.toLowerCase())) throw new Error("MISMATCH");
+        if (active && controller === request) setKnown({ query, status: response.workout?.status ?? null });
+      } catch {
+        if (active && controller === request) setKnown({ query, status: null });
+      } finally {
+        if (controller === request) clearTimeout(timer);
+      }
+    };
+    const refresh = () => { if (document.visibilityState === "visible") void load(); };
+    void load();
+    document.addEventListener("visibilitychange", refresh);
+    return () => { active = false; controller?.abort(); clearTimeout(timer); document.removeEventListener("visibilitychange", refresh); };
+  }, [publicationId, query, sessionId, weekNumber]);
+  return known?.query === query ? known.status : null;
+}
+
 function SessionPreview({
   french,
   program,
   weekNumber,
   session,
-  workout,
+  status,
 }: {
   french: boolean;
   program: ProgramPublication;
   weekNumber: number;
   session: ProgramPublication["document"]["weeks"][number]["sessions"][number];
-  workout: WorkoutListItem | null;
+  status: WorkoutListItem["status"] | null;
 }) {
   const query = new URLSearchParams({
     publicationId: program.id,
     weekNumber: String(weekNumber),
     sessionId: session.id,
   });
-  const action = workout
-    ? workout.status === "COMPLETED"
+  if (!french) query.set("language", "en");
+  const action = status
+    ? status === "COMPLETED"
       ? french
         ? "Voir le résultat"
         : "View result"
@@ -367,6 +368,14 @@ function SessionPreview({
       </p>
       {session.warmup.fr || session.warmup.en ? <p>{localized(session.warmup, french)}</p> : null}
       {session.type === "complete-rest" ? <p>{french ? "Repos complet" : "Complete rest"}</p> : null}
+      <div className={styles.sessionAction}>
+        <a className="fe-button fe-button-primary" data-document-navigation="" href={`/client/workout?${query.toString()}`}>
+          {action}
+        </a>
+        {status ? <span>{status === "COMPLETED" ? (french ? "Terminée" : "Completed") : (french ? "En cours" : "In progress")}</span> : null}
+      </div>
+      {session.blocks.length > 0 ? <details className={styles.sessionPlan}>
+      <summary>{french ? "Voir le plan de la séance" : "View session plan"}</summary>
       {session.blocks.map((block) => (
         <section className={styles.block} key={block.id}>
           <h3>{localized(block.label, french) || (french ? "Bloc" : "Block")}</h3>
@@ -389,22 +398,7 @@ function SessionPreview({
           ))}
         </section>
       ))}
-      <div className={styles.sessionAction}>
-        <a
-          className="fe-button fe-button-primary"
-          data-document-navigation=""
-          href={`/client/workout?${query.toString()}`}
-        >
-          {action}
-        </a>
-        {!workout ? (
-          <p>
-            {french
-              ? "La page suivante vérifiera le statut réel avant de créer une séance."
-              : "The next page verifies the actual status before creating a workout."}
-          </p>
-        ) : null}
-      </div>
+      </details> : null}
     </article>
   );
 }
@@ -442,6 +436,7 @@ function WorkoutHistory({
               weekNumber: String(item.weekNumber),
               sessionId: item.sessionId,
             });
+            if (!french) query.set("language", "en");
             return (
               <li key={item.id}>
                 <div>

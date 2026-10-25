@@ -71,7 +71,15 @@ let records = [
   },
 }));
 const harnessParameters = new URLSearchParams(window.location.search);
-let scenario = harnessParameters.get("state") ?? "normal";
+// Local presentation only: let the real Client links open the matching screen.
+// Fixtures remain in memory and reset on page reload; no hosted data is read.
+const clientRouteScreens: Record<string, string> = {
+  "/client": "client-v2",
+  "/client/program": "client-program",
+  "/client/workout": "client-workout",
+};
+const harnessScreen = harnessParameters.get("screen") ?? clientRouteScreens[window.location.pathname];
+let scenario = harnessParameters.get("state") ?? (clientRouteScreens[window.location.pathname] ? "legacy-navigation" : "normal");
 let message = "";
 let clientRequestAttempts = 0;
 let failedSaveMutationId: string | null = null;
@@ -333,8 +341,10 @@ function wireWorkout(workout: WorkoutSnapshot): WorkoutWireSnapshot {
   };
 }
 
-const workoutScreen = harnessParameters.get("screen");
+const workoutScreen = harnessScreen;
 const needsWorkoutPublication = scenario === "program-published"
+  || scenario.startsWith("legacy-")
+  || scenario.startsWith("guided-")
   || scenario.startsWith("pilot-program")
   || scenario.startsWith("workout-")
   || scenario.startsWith("coach-workout-")
@@ -348,6 +358,66 @@ if (needsWorkoutPublication) {
       ? uppercaseWorkoutSessionId
       : workoutSessionId,
   );
+  if (scenario.startsWith("legacy-")) {
+    const template = structuredClone(publication.document.weeks[0]);
+    publication.document.weeks = Array.from({ length: 6 }, (_, weekIndex) => {
+      const week = structuredClone(template);
+      week.number = weekIndex + 1;
+      week.sessions = Array.from({ length: weekIndex === 5 ? 1 : 5 }, (_, index) => {
+        const session = structuredClone(template.sessions[0]);
+        session.id = index === 0 ? workoutSessionId : `19600000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
+        if (index > 0) {
+          session.blocks[0].id = `19600000-0000-4000-8000-${String(index + 100).padStart(12, "0")}`;
+          session.blocks[0].exercises[0].id = `19600000-0000-4000-8000-${String(index + 200).padStart(12, "0")}`;
+        }
+        session.title = { fr: ["Haut du corps", "Mobilité", "Jambes", "Marche libre", "Récupération"][index], en: ["Upper body", "Mobility", "Legs", "Free walk", "Recovery"][index] };
+        session.schedule = index === 3 ? { mode: "flexible", day: null } : { mode: index === 2 ? "suggested" : "fixed", day: index < 2 ? 1 : index + 1 };
+        session.required = index !== 3;
+        if (index === 4) { session.type = "complete-rest"; session.blocks = []; }
+        return session;
+      });
+      return week;
+    });
+    if (scenario === "legacy-history") {
+      for (let index = 0; index < 21; index += 1) {
+        const old = makePublication(`19700000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`, 1);
+        workoutPublications.set(old.id, old);
+        const record = makeWorkout(old, "COMPLETED");
+        record.id = `19800000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
+        workoutRecords.set(workoutKey(record.publicationId, record.weekNumber, record.sessionId), record);
+      }
+      const current = makeWorkout(publication, "IN_PROGRESS");
+      workoutRecords.set(workoutKey(current.publicationId, current.weekNumber, current.sessionId), current);
+    }
+  }
+  if (scenario.startsWith("guided-")) {
+    const session = publication.document.weeks[0].sessions[0];
+    const standard = session.blocks[0];
+    standard.exercises[0].prescription.restSeconds = 1;
+    const superset = structuredClone(standard);
+    superset.id = "19600000-0000-4000-8000-000000000101";
+    superset.mode = "superset";
+    superset.label = { fr: "Duo tirage", en: "Pull duo" };
+    superset.restSeconds = 0;
+    superset.exercises = ["Cable Row", "Band Pull-apart"].map((name, index) => {
+      const exercise = structuredClone(standard.exercises[0]);
+      exercise.id = `19600000-0000-4000-8000-${String(201 + index).padStart(12, "0")}`;
+      exercise.name = name;
+      exercise.prescription.sets = 1;
+      exercise.prescription.restSeconds = 30;
+      return exercise;
+    });
+    session.blocks.push(superset);
+    if (scenario === "guided-partial") {
+      const record = makeWorkout(publication, "IN_PROGRESS");
+      record.sets[1] = { ...record.sets[0], setNumber: 2 };
+      record.sets.push(...superset.exercises.map((exercise, index) => ({
+        exerciseId: exercise.id, setNumber: 1, status: index === 0 ? "DONE" as const : "PENDING" as const,
+        reps: index === 0 ? 8 : null, load: index === 0 ? 30 : null, rir: null, kind: "PRESCRIBED" as const, unit: "lb" as const,
+      })));
+      workoutRecords.set(workoutKey(record.publicationId, record.weekNumber, record.sessionId), record);
+    }
+  }
   if (scenario.startsWith("pilot-program")) {
     const pilotBlock = publication.document.weeks[0].sessions[0].blocks[0];
     pilotBlock.exercises = buildPilotProgramSnapshots(pilotSource).map((pilot, index) => {
@@ -490,7 +560,7 @@ window.fetch = async (url, init) => {
       workoutReceipts.set(input.clientMutationId, saved);
       workoutRecords.set(workoutKey(input.publicationId, input.weekNumber, input.sessionId), saved);
     }
-    if (scenario === "workout-response-lost" && !workoutResponseLost) {
+    if ((scenario === "workout-response-lost" || (scenario === "guided-response-lost" && workoutRequests.length === 2)) && !workoutResponseLost) {
       workoutResponseLost = true;
       throw new TypeError("Workout confirmation lost after commit");
     }
@@ -986,7 +1056,7 @@ function CodeExercise() {
   );
 }
 function Harness() {
-  const initialView = harnessParameters.get("screen");
+  const initialView = harnessScreen;
   const [view, setView] = useState(initialView ?? "coach");
   const [key, setKey] = useState(0);
   if (view === "exercise-library") return <ExerciseLibrary />;

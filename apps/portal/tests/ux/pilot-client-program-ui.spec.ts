@@ -9,6 +9,7 @@ function firstSet(exercise: Locator) { return exercise.getByRole("region", { nam
 
 test("Client receives the 15 frozen pilot exercises with complete bilingual instructions", async ({ page }) => {
   await page.goto("/?screen=client-program&state=pilot-program");
+  await page.getByText("Voir le plan de la séance", { exact: true }).click();
   await expect(page.getByRole("heading", { name: "Curl alterné avec haltères", exact: true })).toBeVisible();
   await expect(page.getByText("Exercice pilote · test staging.", { exact: false })).toHaveCount(15);
   const curl = page.getByRole("heading", { name: "Curl alterné avec haltères", exact: true }).locator("..");
@@ -27,6 +28,7 @@ test("Client receives the 15 frozen pilot exercises with complete bilingual inst
 test("Client records per-arm reps, carry weights, duration and band setup without invented resistance", async ({ page }) => {
   await page.goto(workoutUrl);
   await page.getByRole("button", { name: "Commencer la séance", exact: true }).click();
+  await page.getByRole("button", { name: "Revoir/modifier mes résultats", exact: true }).click();
   const curl = firstSet(page.getByRole("article", { name: "Curl alterné avec haltères", exact: true }));
   await curl.getByRole("combobox").selectOption("DONE");
   await curl.getByRole("spinbutton", { name: /^Répétitions par bras/ }).fill("8");
@@ -68,6 +70,7 @@ test("Client records per-arm reps, carry weights, duration and band setup withou
 test("completed pilot history retains setup details and instructions without editable results", async ({ page }) => {
   await page.goto(workoutUrl.replace("state=pilot-program", "state=pilot-program-completed"));
   await expect(page.getByText("Terminée", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Consulter mes résultats", exact: true }).click();
   const band = firstSet(page.getByRole("article", { name: "Pallof press debout avec bande", exact: true }));
   await expect(band.getByRole("textbox", { name: /^Configuration utilisée/ })).toBeDisabled();
   await expect(band.getByRole("textbox", { name: /^Configuration utilisée/ })).not.toHaveValue("");

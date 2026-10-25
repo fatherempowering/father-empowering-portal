@@ -22,12 +22,17 @@ function workoutSet(page: Page, setNumber: number) {
   return page.getByRole("region", { name: `Dumbbell Press · série ${setNumber}`, exact: true });
 }
 
-test("program uses explicit week and session selectors before opening the authoritative workout", async ({ page }) => {
+async function reviewResults(page: Page) {
+  await page.getByRole("button", { name: "Revoir/modifier mes résultats", exact: true }).click();
+}
+
+test("program uses explicit week and session rails before opening the authoritative workout", async ({ page }) => {
   await page.goto("/?screen=client-program&state=program-published");
   await expect(page.getByRole("heading", { name: "Phase force", exact: true })).toBeVisible();
-  await expect(page.getByRole("combobox", { name: "Semaine", exact: true })).toHaveValue("0");
-  await expect(page.getByRole("combobox", { name: "Séance", exact: true })).toHaveValue("0");
-  await expect(page.getByText(/Aucune date n’est choisie automatiquement/)).toBeVisible();
+  await expect(page.getByRole("group", { name: "Semaines du programme", exact: true }).getByRole("button", { pressed: true })).toContainText("Semaine 1");
+  await expect(page.getByRole("group", { name: "Séances de la semaine 1", exact: true }).getByRole("button", { pressed: true })).toContainText("Séance A");
+  await expect(page.getByText("Choisis ta semaine, puis ta séance.", { exact: true })).toBeVisible();
+  await page.getByText("Voir le plan de la séance", { exact: true }).click();
   await expect(page.locator("p").filter({ hasText: "Série 1" })).toContainText("40");
   const open = page.getByRole("link", { name: "Ouvrir la séance", exact: true });
   await expect(open).toHaveAttribute("data-document-navigation", "");
@@ -35,6 +40,10 @@ test("program uses explicit week and session selectors before opening the author
     "href",
     `/client/workout?publicationId=${publicationId}&weekNumber=1&sessionId=${sessionId}`,
   );
+  const requests = await page.evaluate(
+    () => (window as unknown as { __workoutRequests: SaveWorkoutRequest[] }).__workoutRequests,
+  );
+  expect(requests).toHaveLength(0);
 });
 
 test("Client starts explicitly, records real sets and extras, saves, then confirms immutable completion", async ({ page }) => {
@@ -44,6 +53,7 @@ test("Client starts explicitly, records real sets and extras, saves, then confir
   await expect(page.getByText(/aucun résultat n’est prérempli/i)).toBeVisible();
   await page.getByRole("button", { name: "Commencer la séance", exact: true }).click();
   await expect(page.getByText("Séance commencée. Tu peux maintenant saisir tes résultats.")).toBeVisible();
+  await reviewResults(page);
 
   const first = workoutSet(page, 1);
   await first.getByRole("combobox", { name: "Statut de la série", exact: true }).selectOption("DONE");
@@ -95,6 +105,7 @@ test("real browser back cancellation preserves unsaved workout values", async ({
   await page.goto("/?screen=client-program&state=program-published");
   await page.goto(workoutUrl("workout-new"));
   await page.getByRole("button", { name: "Commencer la séance", exact: true }).click();
+  await reviewResults(page);
   const first = workoutSet(page, 1);
   await first.getByRole("combobox", { name: "Statut de la série", exact: true }).selectOption("DONE");
   await first.getByRole("spinbutton", { name: /^Répétitions/ }).fill("8");
@@ -112,6 +123,7 @@ test("real browser back cancellation preserves unsaved workout values", async ({
 
 test("lost response locks entries and retries the identical command and idempotency key", async ({ page }) => {
   await page.goto(workoutUrl("workout-response-lost"));
+  await reviewResults(page);
   await page.getByLabel(/Contexte utile pour ton suivi/).fill("Saisie à confirmer.");
   await page.getByRole("button", { name: "Enregistrer les résultats", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("reste à vérifier");
@@ -127,6 +139,7 @@ test("lost response locks entries and retries the identical command and idempote
 
 test("version conflict retains visible input until an explicit server reload", async ({ page }) => {
   await page.goto(workoutUrl("workout-conflict"));
+  await reviewResults(page);
   const note = page.getByLabel(/Contexte utile pour ton suivi/);
   await note.fill("Ne pas perdre cette saisie.");
   await page.getByRole("button", { name: "Enregistrer les résultats", exact: true }).click();
@@ -135,6 +148,7 @@ test("version conflict retains visible input until an explicit server reload", a
   await expect(note).toBeDisabled();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Recharger la version enregistrée", exact: true }).click();
+  await reviewResults(page);
   await expect(note).toHaveValue("");
 });
 
@@ -153,6 +167,7 @@ for (const sample of [
 ]) {
   test(`invalid numeric boundary ${sample.value} is rejected without issuing a save`, async ({ page }) => {
     await page.goto(workoutUrl("workout-in-progress"));
+    await reviewResults(page);
     const first = workoutSet(page, 1);
     await first.getByRole("spinbutton", { name: sample.field }).fill(sample.value);
     await page.getByRole("button", { name: "Enregistrer les résultats", exact: true }).click();
@@ -166,6 +181,7 @@ for (const sample of [
 
 test("a load with exactly six decimal places remains valid", async ({ page }) => {
   await page.goto(workoutUrl("workout-in-progress"));
+  await reviewResults(page);
   const first = workoutSet(page, 1);
   await first.getByRole("spinbutton", { name: /^Charge \(lb\)/ }).fill("1.000001");
   await page.getByRole("button", { name: "Enregistrer les résultats", exact: true }).click();
@@ -188,6 +204,7 @@ test("mixed-case session UUIDs match history, start and saved workout responses"
   await page.goto(workoutUrl("workout-uppercase-session-new", uppercaseSessionId));
   await page.getByRole("button", { name: "Commencer la séance", exact: true }).click();
   await expect(page.getByText("Séance commencée. Tu peux maintenant saisir tes résultats.")).toBeVisible();
+  await reviewResults(page);
   const note = page.getByLabel(/Contexte utile pour ton suivi/);
   await note.fill("UUID de séance mixte confirmé.");
   await page.getByRole("button", { name: "Enregistrer les résultats", exact: true }).click();
@@ -195,6 +212,7 @@ test("mixed-case session UUIDs match history, start and saved workout responses"
 
   await page.goto(workoutUrl("workout-uppercase-session", uppercaseSessionId));
   await expect(page.getByText("En cours", { exact: true })).toBeVisible();
+  await reviewResults(page);
   await expect(
     workoutSet(page, 1).getByRole("spinbutton", { name: /^Charge \(lb\)/ }),
   ).toHaveValue("40");
@@ -202,6 +220,7 @@ test("mixed-case session UUIDs match history, start and saved workout responses"
 
 test("dirty results survive visibility events and block sidebar or back navigation", async ({ page }) => {
   await page.goto(workoutUrl("workout-dirty"));
+  await reviewResults(page);
   const note = page.getByLabel(/Contexte utile pour ton suivi/);
   await note.fill("Résultat non enregistré.");
   await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
@@ -211,7 +230,7 @@ test("dirty results survive visibility events and block sidebar or back navigati
     protectedNavigation = dialog.type() === "confirm";
     await dialog.dismiss();
   });
-  await page.locator('a[href="/client/program"]:visible').first().click();
+  await page.locator('a[href^="/client/program"]:visible').first().click();
   expect(protectedNavigation).toBe(true);
   await expect(page).toHaveURL(/screen=client-workout/);
   await expect(note).toHaveValue("Résultat non enregistré.");
@@ -221,6 +240,7 @@ test("completed workout is read-only, bilingual and reflows on narrow screens", 
   await page.goto(workoutUrl("workout-completed"));
   await expect(page.getByText("Terminée", { exact: true })).toBeVisible();
   await expect(page.getByText(/résultats conservés en lecture seule/i)).toBeVisible();
+  await page.getByRole("button", { name: "Consulter mes résultats", exact: true }).click();
   await expect(page.getByLabel(/Contexte utile pour ton suivi/)).toBeDisabled();
   await expect(workoutSet(page, 1).getByLabel("Statut de la série")).toBeDisabled();
   await page.getByRole("button", { name: "English", exact: true }).click();

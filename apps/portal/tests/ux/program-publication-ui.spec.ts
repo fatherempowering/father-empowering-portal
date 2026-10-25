@@ -90,6 +90,7 @@ test("pilot restriction names the recipient limitation without exposing raw serv
 test("Client reads the published prescription in French and English on narrow screens",async({page})=>{
   await page.goto("/?screen=client-program&state=program-published");
   await expect(page.getByRole("heading",{name:"Phase force",exact:true})).toBeVisible();
+  await page.getByText("Voir le plan de la séance", { exact: true }).click();
   await expect(page.getByRole("heading",{name:"Dumbbell Press",exact:true})).toBeVisible();
   await expect(page.locator("p").filter({hasText:"Série 1"})).toContainText("40 (lb)");
   await expect(page.getByRole("link",{name:"Ouvrir la séance",exact:true})).toBeVisible();

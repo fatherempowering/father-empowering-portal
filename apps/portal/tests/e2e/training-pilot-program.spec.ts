@@ -151,6 +151,9 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     expect(publication!.document).toEqual(document);
     await clientPage.goto(`${environment.appUrl}/client/program`);
     await expect(clientPage.getByRole("heading", { name: "Semaine pilote E2E", exact: true })).toBeVisible();
+    await expect(clientPage.getByRole("group", { name: "Semaines du programme", exact: true }).getByRole("button", { pressed: true })).toContainText("Semaine 1");
+    await expect(clientPage.getByRole("group", { name: "Séances de la semaine 1", exact: true }).getByRole("button", { pressed: true })).toContainText("Séance des quinze exercices");
+    await clientPage.getByText("Voir le plan de la séance", { exact: true }).click();
     await expect(clientPage.getByRole("region", { name: "Consignes de l’exercice", exact: true })).toHaveCount(15);
     for (const exercise of document.weeks[0].sessions[0].blocks[0].exercises) {
       const card = clientPage.getByRole("heading", { name: exercise.pilot!.name.fr, exact: true }).locator("..");
@@ -165,6 +168,7 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     await clientPage.getByRole("link", { name: "Ouvrir la séance", exact: true }).click();
     await clientPage.getByRole("button", { name: "Commencer la séance", exact: true }).click();
     await expect(clientPage.getByText("Séance commencée. Tu peux maintenant saisir tes résultats.", { exact: true })).toBeVisible();
+    await clientPage.getByRole("button", { name: "Revoir/modifier mes résultats", exact: true }).click();
 
     const curl = firstSet(clientPage, "Curl alterné avec haltères");
     await curl.getByRole("combobox").selectOption("DONE");
@@ -200,6 +204,7 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     await clientPage.close();
     clientPage = await clientContext.newPage();
     await clientPage.goto(workoutUrl);
+    await clientPage.getByRole("button", { name: "Revoir/modifier mes résultats", exact: true }).click();
     await expect(firstSet(clientPage, "Curl alterné avec haltères").getByRole("spinbutton", { name: /^Répétitions par bras/ })).toHaveValue("8");
     await expect(firstSet(clientPage, "Marche du fermier avec haltères").getByRole("textbox", { name: /^Charges transportées et unités/ })).toHaveValue("2 haltères de 20 lb");
     await expect(firstSet(clientPage, "Pallof press debout avec bande").getByRole("textbox", { name: /^Configuration utilisée/ })).toHaveValue("Bande rouge, ancrage poitrine");

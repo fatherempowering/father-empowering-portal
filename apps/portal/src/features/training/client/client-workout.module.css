@@ -12,6 +12,43 @@
   margin: 0;
 }
 
+.focusAnchor {
+  /* Keep the new stage/error below the shell's sticky navigation. */
+  scroll-margin-top: 6.5rem;
+}
+
+.focusAnchor:focus-visible {
+  outline: 2px solid #a7470d;
+  outline-offset: .35rem;
+  border-radius: .2rem;
+}
+
+.page[data-guided-running] .heading {
+  gap: .5rem;
+}
+
+.page[data-guided-running] .heading h1 {
+  font-size: 1.5rem;
+  line-height: 1.15;
+}
+
+.page[data-guided-running] .heading .back {
+  margin-bottom: .35rem;
+}
+
+.page[data-guided-running] .workoutHeading {
+  padding: .875rem 1rem;
+  gap: .5rem;
+}
+
+.page[data-guided-running] .workoutHeading h2 {
+  font-size: 1.25rem;
+}
+
+.page[data-guided-running] .workoutHeading p {
+  margin: 0;
+}
+
 .heading,
 .workoutHeading,
 .blockHeading,
@@ -45,7 +82,162 @@
 
 .workoutHeading {
   border-left: 4px solid var(--fe-orange, #b95000);
+  background: #171817;
+  color: #f6f3ec;
+  padding: clamp(1.25rem, 3vw, 2rem);
 }
+
+.workoutHeading .eyebrow {
+  color: #ff9b50;
+}
+
+.workoutHeading h2 {
+  color: #fff;
+  font-size: clamp(1.55rem, 3vw, 2.4rem);
+  text-transform: uppercase;
+}
+
+.guidedProgress {
+  display: grid;
+  gap: .5rem;
+}
+
+.guidedProgress > div {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem;
+  font-size: .8125rem;
+}
+
+.guidedProgress progress {
+  display: block;
+  width: 100%;
+  height: .6rem;
+  border: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #deddd7;
+  accent-color: #c45613;
+}
+
+.guidedProgress progress::-webkit-progress-bar { background: #deddd7; }
+.guidedProgress progress::-webkit-progress-value { background: #c45613; }
+.guidedProgress progress::-moz-progress-bar { background: #c45613; }
+
+.planRows {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.planRows > li {
+  display: grid;
+  grid-template-columns: 2.8rem minmax(0, 1fr);
+  align-items: start;
+  gap: .875rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #deddd7;
+}
+
+.planRows > li:last-child { border-bottom: 0; }
+.planRows p { margin: .35rem 0 0; font-size: .875rem; color: #595b55; }
+.planRows strong { font-size: 1.0625rem; }
+.planRows ul { margin-top: .5rem; padding-left: 1.2rem; font-size: .875rem; }
+
+.planNumber {
+  display: grid;
+  place-items: center;
+  width: 2.8rem;
+  height: 2.8rem;
+  background: #20221e;
+  color: #fff;
+  border-radius: .4rem;
+  font-weight: 800;
+}
+
+.guidedRun,
+.guidedMovement {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.guidedRun {
+  padding: clamp(1rem, 3vw, 1.75rem);
+  background: #fffdf8;
+  border: 1px solid #d4d2c9;
+  border-radius: .75rem;
+}
+
+.guidedRunHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.guidedRunHeading > div { flex: 1 1 14rem; min-width: 0; }
+.guidedRunHeading p { margin: .4rem 0; }
+.guidedRunHeading h2 { font-size: clamp(1.45rem, 3vw, 2.2rem); }
+
+.mediaSpace {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  min-height: clamp(9rem, 22vw, 15rem);
+  padding: 1.5rem;
+  gap: .4rem;
+  text-align: center;
+  border: 1px solid #e0dfd7;
+  border-radius: .6rem;
+  background: #eeeee8;
+  color: #55564e;
+}
+
+.mediaSpace > span { color: #73766a; font-weight: 900; font-size: 2rem; letter-spacing: -.15rem; }
+.mediaSpace p { font-weight: 750; margin: 0; }
+.mediaSpace small { max-width: 35rem; line-height: 1.5; }
+.groupInstruction { padding: 1rem; border-left: .25rem solid #ca5e18; background: #fff2df; }
+.guidedSetState { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
+.guidedSetState p { flex: 1 1 14rem; margin: 0; font-size: .875rem; }
+.guidedSetState button { min-height: 2.75rem; }
+.validateButton { width: 100%; min-height: 3.25rem; font-size: 1.0625rem; }
+.confirmedSet { padding: .75rem; color: #245f3b; background: #e8f4e9; }
+
+.restTimer,
+.completePanel {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  min-width: 0;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border-radius: .75rem;
+  border: 1px solid #d4d2c9;
+  background: #fffdf8;
+  text-align: center;
+}
+
+.restTimer { background: #1b201c; color: #f6f3ec; }
+.restTimer .eyebrow { color: #a7d5a6; }
+.restTimer h3 { color: #fff; }
+.timerDigits { font-size: clamp(3.25rem, 10vw, 6rem); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.completeMark { display: grid; place-items: center; width: 4rem; height: 4rem; border-radius: 50%; background: #e8f4e9; color: #246b45; font-size: 2.5rem; }
+.completePanel h2 { font-size: clamp(1.5rem, 3vw, 2rem); }
+.completePanel p { margin: 0; max-width: 44rem; }
+.nextMovement { display: grid; gap: .5rem; width: 100%; padding: 1rem; background: #f0eee7; border-radius: .5rem; }
+.nextMovement > span { color: #7a380b; font-size: .75rem; font-weight: 800; letter-spacing: .08em; }
+.nextMovement > strong { font-size: 1.2rem; }
+.extraActions,
+.secondaryActions { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
+.summaryStats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; width: 100%; }
+.summaryStats > div { display: grid; gap: .5rem; padding: 1rem .5rem; background: #f1efe7; border-radius: .5rem; }
+.summaryStats strong { font-size: 2rem; font-variant-numeric: tabular-nums; }
+.summaryStats span { font-size: .8125rem; }
+.summaryNote { display: grid; gap: .75rem; text-align: left; width: 100%; white-space: pre-wrap; }
 
 .workoutHeading > div {
   display: grid;
@@ -252,7 +444,7 @@
 
 @media (max-width: 48rem) {
   .resultFields {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -283,6 +475,10 @@
 }
 
 @media (max-width: 22rem) {
+  .resultFields,
+  .summaryStats {
+    grid-template-columns: 1fr;
+  }
   .workoutHeading,
   .startPanel,
   .restPanel,

@@ -14,6 +14,8 @@ const { build } = viteRequire("esbuild");
 const here = dirname(fileURLToPath(import.meta.url));
 const app = resolve(here, "../..");
 const output = resolve(app, "../../test-results/ux-preview");
+const port = process.env.FE_UX_PORT ?? "3016";
+if (!/^\d+$/.test(port) || Number(port) < 1024 || Number(port) > 65535) throw new Error("Invalid isolated UI port");
 await mkdir(output, { recursive: true });
 await build({
   entryPoints: [resolve(here, "harness.tsx")],
@@ -43,7 +45,7 @@ const types = {
   ".woff2": "font/woff2",
 };
 createServer(async (req, res) => {
-  const url = new URL(req.url, "http://127.0.0.1:3016");
+  const url = new URL(req.url, `http://127.0.0.1:${port}`);
   const path = decodeURIComponent(url.pathname);
   const root =
     path.startsWith("/brand/") ||
@@ -71,6 +73,6 @@ createServer(async (req, res) => {
     res.writeHead(404);
     res.end();
   }
-}).listen(3016, "127.0.0.1", () =>
-  console.log("Isolated UI harness: http://127.0.0.1:3016"),
+}).listen(Number(port), "127.0.0.1", () =>
+  console.log(`Isolated UI harness: http://127.0.0.1:${port}`),
 );

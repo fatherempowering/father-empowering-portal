@@ -121,7 +121,7 @@ for (const language of ["fr", "en"] as const) {
 
 test("published program is retained and never contradicted by Week Zero copy", async ({ page }) => {
   await page.goto("/?screen=client-v2&state=program-published");
-  await expect(page.getByRole("link", { name: "Voir mon programme", exact: true })).toHaveAttribute("href", "/client/program");
+  await expect(page.getByRole("link", { name: "Voir mon programme", exact: true })).toHaveAttribute("href", "/client/program?publicationId=19200000-0000-4000-8000-000000000001&weekNumber=1&sessionId=19200000-0000-4000-8000-000000000004&language=fr");
   await expect(page.getByRole("heading", { name: "Semaine zéro transmise", exact: true })).toBeVisible();
   await expect(page.getByText(/programme n’est pas encore disponible|dans cette version/)).toHaveCount(0);
 });

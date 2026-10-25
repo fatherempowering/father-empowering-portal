@@ -6,6 +6,12 @@
   overflow-wrap: anywhere;
 }
 
+.homeProgram { display: grid; gap: 1rem; min-width: 0; max-width: 100%; }
+.homeProgram > a { justify-self: start; }
+.sessionPlan summary { cursor: pointer; min-height: 2.75rem; padding-block: .75rem; font-weight: 700; }
+.sessionPlan[open] { display: grid; gap: 1rem; }
+.sessionPlan summary:focus-visible { outline: 3px solid #b95000; outline-offset: 2px; }
+
 .page h2,
 .page h3,
 .page h4 {
@@ -35,6 +41,7 @@
   border: 1px solid var(--fe-line, #deddd7);
   border-radius: 0.75rem;
   background: var(--fe-paper, #fff);
+  min-width: 0;
 }
 
 .programSummary {
