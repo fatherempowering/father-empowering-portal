@@ -1141,9 +1141,15 @@ body:has([data-fe-public-landing]) > .fe-skip-link {
   }
   .fe-mobile-brand {
     display: block;
+    min-width: 0;
+  }
+  .fe-mobile-brand .fe-brand-compact {
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
   }
   .fe-menu-button {
     display: inline-flex;
+    flex-shrink: 0;
     width: 2.75rem;
     height: 2.75rem;
     align-items: center;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { programEditorSchema, saveProgramRequestSchema } from "@/lib/contracts/training-drafts";
-import { addLibraryExercise, compactUniformSets, draftWarnings, duplicateWeek, moveItem, newBlock, newProgram, newSession } from "@/lib/training/program-editor";
+import { addLibraryExercise, compactUniformSets, copyWeekToWeeks, planWeekCopy, weekHasContent, draftWarnings, duplicateWeek, moveItem, newBlock, newProgram, newSession } from "@/lib/training/program-editor";
 import { pilotProgramExerciseSchema } from "@/lib/contracts/training-pilot";
 import { buildPilotCatalog } from "@/lib/training/pilot/model";
 import source from "@/lib/training/pilot/source.json";
@@ -87,6 +87,86 @@ describe("Program editor contract", () => {
     expect(p.weeks).toHaveLength(1); expect(duplicated.weeks[0].sessions[0].blocks[0].exercises[0].prescription.loadTarget).toBe("");
     expect(duplicated.weeks[0].sessions[0].id).toBe(duplicated.weeks[1].sessions[0].id);
     expect(programEditorSchema.safeParse(duplicated).success).toBe(true);
+  });
+  it("copies a full week to weeks 2–10 with independent nested prescriptions and stable identities", () => {
+    const p = complete();
+    const source = p.weeks[0];
+    source.objective = { fr: "Force", en: "Strength" };
+    source.sessions[0].schedule = { mode: "fixed", day: 2 };
+    source.sessions[0].warmup = { fr: "Préparation", en: "Warmup" };
+    source.sessions[0].blocks[0].mode = "finisher";
+    const prescription = source.sessions[0].blocks[0].exercises[0].prescription;
+    const { sets, ...common } = prescription;
+    prescription.prescribedSets = Array.from({ length: sets }, (_, i) => ({ ...common, reps: String(8 + i) }));
+    const before = structuredClone(p);
+    const result = copyWeekToWeeks(p, 0, Array.from({ length: 9 }, (_, i) => i + 2));
+    expect(result.weeks).toHaveLength(10);
+    expect(result.weeks.map((week) => week.number)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    for (const week of result.weeks) expect({ ...week, number: 1 }).toEqual(source);
+    const fifth = result.weeks[4];
+    fifth.objective.fr = "Allégée";
+    fifth.sessions[0].schedule.day = 4;
+    fifth.sessions[0].blocks[0].exercises[0].prescription.prescribedSets![1].reps = "5";
+    expect(result.weeks[0]).toEqual(before.weeks[0]);
+    expect(result.weeks[1].sessions).toEqual(before.weeks[0].sessions);
+    expect(p).toEqual(before);
+    expect(programEditorSchema.safeParse(result).success).toBe(true);
+  });
+  it("copies only selected destinations without moving existing weeks, and creates honest empty gaps", () => {
+    const p = duplicateWeek(complete(), 0);
+    p.weeks[1].objective.fr = "À conserver";
+    const plan = planWeekCopy(p, 0, [5, 3, 5]);
+    expect(plan).toEqual({ targets: [3, 5], replacements: [], added: [3, 4, 5], empty: [4] });
+    const result = copyWeekToWeeks(p, 0, [5, 3, 5]);
+    expect(result.weeks[1]).toEqual(p.weeks[1]);
+    expect(result.weeks[3]).toEqual({ number: 4, objective: { fr: "", en: "" }, sessions: [] });
+    expect(result.weeks[2].sessions).toEqual(p.weeks[0].sessions);
+    expect(result.weeks[4].sessions).toEqual(p.weeks[0].sessions);
+    expect(draftWarnings(result)).toContain("Semaine 4 : aucune séance ajoutée.");
+    expect(programEditorSchema.safeParse(result).success).toBe(true);
+  });
+  it("requires explicit replacement approval for sessions or either language of an objective", () => {
+    const p = copyWeekToWeeks(complete(), 0, [2, 3, 4]);
+    p.weeks[1].sessions = []; p.weeks[1].objective.en = "Keep this";
+    p.weeks[2].sessions = []; p.weeks[2].objective.fr = "À préserver";
+    const before = structuredClone(p);
+    expect(planWeekCopy(p, 3, [1, 2, 3]).replacements).toEqual([1, 2, 3]);
+    expect(() => copyWeekToWeeks(p, 3, [1, 2, 3])).toThrow("WEEK_REPLACEMENT_REQUIRES_CONFIRMATION");
+    expect(p).toEqual(before);
+    const result = copyWeekToWeeks(p, 3, [1, 2, 3], true);
+    expect(result.weeks[3]).toEqual(p.weeks[3]);
+    for (const week of result.weeks.slice(0, 3)) expect(week.sessions).toEqual(p.weeks[3].sessions);
+  });
+  it("fills an existing empty week without replacement approval", () => {
+    const p = complete();
+    p.weeks.push({ number: 2, objective: { fr: " ", en: "" }, sessions: [] });
+    expect(weekHasContent(p.weeks[1])).toBe(false);
+    expect(copyWeekToWeeks(p, 0, [2]).weeks[1].sessions).toEqual(p.weeks[0].sessions);
+  });
+  it.each([[], [0], [53], [1], [2.5], [NaN], [Infinity], [2, 53]].map((targets) => ({ targets })))("rejects invalid destinations $targets without partial mutation", ({ targets }) => {
+    const p = complete(); const before = structuredClone(p);
+    expect(() => copyWeekToWeeks(p, 0, targets)).toThrow("INVALID_WEEK_SELECTION");
+    expect(p).toEqual(before);
+  });
+  it.each([-1, 0.5, 1, NaN])("rejects invalid source index %s", (source) => {
+    expect(() => copyWeekToWeeks(complete(), source, [2])).toThrow("INVALID_WEEK_SELECTION");
+  });
+  it("allows destination 52 and replacement within a 52-week program without growing it", () => {
+    const p = copyWeekToWeeks(complete(), 0, [52]);
+    expect(p.weeks).toHaveLength(52);
+    const result = copyWeekToWeeks(p, 51, [1], true);
+    expect(result.weeks).toHaveLength(52);
+    expect(programEditorSchema.safeParse(result).success).toBe(true);
+  });
+  it("rejects oversized copies atomically using the existing draft size limit", () => {
+    const p = complete();
+    const block = p.weeks[0].sessions[0].blocks[0];
+    for (let i = 0; i < 29; i++) block.exercises.push(addLibraryExercise(library));
+    for (const exercise of block.exercises) exercise.cue = { fr: "f".repeat(300), en: "e".repeat(300) };
+    expect(programEditorSchema.safeParse(p).success).toBe(true);
+    const before = structuredClone(p);
+    expect(() => copyWeekToWeeks(p, 0, Array.from({ length: 51 }, (_, i) => i + 2))).toThrow("PROGRAM_TOO_LARGE");
+    expect(p).toEqual(before);
   });
   it("rejects duplicate IDs within a week and nonconsecutive weeks", () => {
     const p=complete(); p.weeks[0].sessions.push(structuredClone(p.weeks[0].sessions[0]));

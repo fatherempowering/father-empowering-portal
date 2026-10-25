@@ -6,7 +6,7 @@ import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
 import { PublishedExerciseGuidance } from "@/features/training/shared/published-exercise-guidance";
-import { clearSetMeasurements, completedMeasurementMissing, detailsLabel, measurementLabel, needsMeasurementDetails, publishedExerciseName, repetitionLabel, stripDerivedSet } from "@/lib/training/workout-presentation";
+import { clearSetMeasurements, completedMeasurementMissing, detailsLabel, detailsPlaceholder, measurementLabel, needsMeasurementDetails, publishedExerciseName, repetitionLabel, stripDerivedSet } from "@/lib/training/workout-presentation";
 import type { DraftExercise, DraftSession } from "@/lib/contracts/training-drafts";
 import {
   publicationResponseSchema,
@@ -336,10 +336,12 @@ export function ClientWorkout() {
         `Indique les répétitions et décris la configuration utilisée pour la série ${invalidDone.setNumber}. Aucune résistance en livres n’est déduite.`,
         `Enter reps and describe the setup used for set ${invalidDone.setNumber}. No resistance in pounds is inferred.`,
       );
-      if (invalidDone.unit === "distance") return t(
-        `Indique la distance en mètres et les charges transportées avec leurs unités pour la série ${invalidDone.setNumber}.`,
-        `Enter the distance in metres and carried weights with their units for set ${invalidDone.setNumber}.`,
-      );
+      if (invalidDone.unit === "distance") {
+        const exercise = exercises.find(item => item.id === invalidDone.exerciseId);
+        const detail = exercise ? detailsLabel(exercise, invalidDone.unit, french).toLowerCase() : t("le contexte du parcours", "the route context");
+        return t(`Indique la distance en mètres et complète « ${detail} » pour la série ${invalidDone.setNumber}.`,
+          `Enter the distance in metres and complete “${detail}” for set ${invalidDone.setNumber}.`);
+      }
       return invalidDone.unit === "lb" || invalidDone.unit === "kg"
         ? t(
             `Indique les répétitions et la charge pour la série ${invalidDone.setNumber}.`,
@@ -1116,7 +1118,7 @@ function WorkoutSetRow({
           <input
             aria-label={`${detailsLabel(exercise, item.unit, french)} · ${prefix}`}
             type="text" maxLength={500} value={item.details ?? ""} disabled={resultDisabled}
-            placeholder={item.unit === "distance" ? t("Ex. 2 haltères de 20 lb", "E.g. 2 dumbbells of 20 lb") : t("Bande et montage, ou machine et réglage affiché", "Band and setup, or machine and displayed setting")}
+            placeholder={detailsPlaceholder(exercise, item.unit, french)}
             onChange={(event) => update((current) => ({ ...current, details: event.target.value }))}
           />
         </label> : null}

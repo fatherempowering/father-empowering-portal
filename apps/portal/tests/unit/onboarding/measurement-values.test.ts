@@ -39,15 +39,17 @@ describe("onboarding measurement wheels and backward-compatible answers", () => 
   });
   it("includes men who are not fathers while preserving the existing question key", () => {
     const question = ONBOARDING_QUESTIONS.find((question) => question.key === "fatherVision");
-    expect(question?.label.fr).toBe("Quel homme veux-tu devenir et quel père, si applicable ?");
-    expect(question?.label.en).toContain("if applicable");
+    expect(question?.label.fr).toBe("Quel homme veux-tu devenir ? Si tu es père, quel exemple veux-tu donner à tes enfants ?");
+    expect(question?.label.en).toContain("If you’re a father");
     expect(question?.required).toBe(true);
   });
   it("localizes only recognized measurement/no-equipment answers, never free text", () => {
+    expect(NO_EQUIPMENT_ANSWER).toBe("Non applicable — aucun équipement à la maison.");
+    expect(displayOnboardingText("availableEquipment", NO_EQUIPMENT_ANSWER, true)).toBe("Aucun équipement à la maison.");
     expect(displayOnboardingText("height", "5 ft 10 in", true)).toBe("5 pi 10 po");
     expect(displayOnboardingText("currentBodyweight", "84.5 kg", true)).toBe("84,5 kg");
     expect(displayOnboardingText("height", "5 ft 10 in", false)).toBe("5 ft 10 in");
-    expect(displayOnboardingText("availableEquipment", NO_EQUIPMENT_ANSWER, false)).toBe("Not applicable — no equipment at home.");
+    expect(displayOnboardingText("availableEquipment", NO_EQUIPMENT_ANSWER, false)).toBe("No equipment at home.");
     expect(displayOnboardingText("availableEquipment", "Description personnelle", false)).toBe("Description personnelle");
   });
 });

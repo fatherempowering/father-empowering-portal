@@ -1,8 +1,10 @@
 import "server-only";
 import source from "./source.json";
-import { queryPilotCatalog } from "./model";
+import catalogue from "./catalogue-source.json";
+import { buildCatalogueIndex, queryCatalogue } from "./catalogue";
 import type { ExercisePilotQuery } from "@/lib/contracts/exercise-pilot";
 
+const index = buildCatalogueIndex(catalogue, source);
 export function readPilotCatalog(input: ExercisePilotQuery) {
-  return queryPilotCatalog(source, input);
+  return queryCatalogue(index, input);
 }

@@ -47,6 +47,13 @@ const types = {
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${port}`);
   const path = decodeURIComponent(url.pathname);
+  // Presentation fixture only. Storage/API authorization has its own real gate.
+  if (path.startsWith("/api/v1/") && path.endsWith("/week-zero/photos")) {
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jO/8AAAAASUVORK5CYII=", "base64");
+    res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "no-store" });
+    res.end(png);
+    return;
+  }
   const root =
     path.startsWith("/brand/") ||
     path.startsWith("/fonts/") ||

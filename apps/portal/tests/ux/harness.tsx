@@ -8,12 +8,15 @@ import { ClientLoginCard } from "../../src/features/client/auth/client-login-car
 import { CoachEmailVerificationCard } from "../../src/features/coach/auth/coach-email-verification-card";
 import { ClientOnboarding } from "../../src/features/client/onboarding/client-onboarding";
 import { ClientWeekZero } from "../../src/features/client/week-zero/client-week-zero";
+import { CoachWeekZeroAcquisition } from "../../src/features/coach/components/coach-week-zero-acquisition";
+import { createAcquisitionFixture } from "./week-zero-fixture";
 import { PersonalPortalSetup } from "../../src/features/coach/personal-portal/personal-portal-setup";
 import { ExerciseLibrary } from "../../src/features/training/coach/exercise-library";
 import { ExercisePilot } from "../../src/features/training/coach/exercise-pilot";
 import { exercisePilotQuerySchema } from "../../src/lib/contracts/exercise-pilot";
 import { selectPilotExerciseRequestSchema, pilotDefaultUnit } from "../../src/lib/contracts/training-pilot";
 import { queryPilotCatalog } from "../../src/lib/training/pilot/model";
+import { catalogueFixture } from "./catalogue-fixture";
 import { buildPilotProgramSnapshots } from "../../src/lib/training/pilot/program-snapshot";
 import pilotSource from "../../src/lib/training/pilot/source.json";
 import { ProgramBuilder } from "../../src/features/training/coach/program-builder";
@@ -467,7 +470,10 @@ let pilotSelectionLost = false;
 const pilotSelectionRequests: unknown[] = [];
 const pilotSelections = new Map<string, ExerciseSnapshot>();
 Object.assign(window, { __pilotSelectionRequests: pilotSelectionRequests });
+let handleAcquisition = createAcquisitionFixture();
 window.fetch = async (url, init) => {
+  const acquisitionReply = await handleAcquisition(String(url), init, scenario);
+  if (acquisitionReply) return acquisitionReply;
   const path = String(url);
   const pilotPath = new URL(path, window.location.origin);
   if (pilotPath.pathname === "/api/v1/coach/exercise-pilot") {
@@ -477,6 +483,7 @@ window.fetch = async (url, init) => {
     if (scenario === "pilot-unauthenticated") return reply({ error: { code: "UNAUTHENTICATED" } }, 401);
     if (scenario === "pilot-forbidden") return reply({ error: { code: "FORBIDDEN" } }, 403);
     const query = exercisePilotQuerySchema.parse(Object.fromEntries(pilotPath.searchParams));
+    if (scenario === "catalogue-pagination") return reply({ data: catalogueFixture(query) });
     return reply({ data: queryPilotCatalog(pilotSource, query) });
   }
   if (pilotPath.pathname === "/api/v1/coach/exercise-pilot/select") {
@@ -669,7 +676,8 @@ window.fetch = async (url, init) => {
     const query = new URL(path, window.location.origin).searchParams;
     const filtered = exerciseRecords.filter((item) => item.archived === (query.get("archived") === "true") &&
       item.name.toLowerCase().includes((query.get("query") ?? "").toLowerCase()));
-    return reply({ data: { items: filtered, total: filtered.length, page: 0, pageSize: 50 } });
+    const page = Number(query.get("page") ?? 0);
+    return reply({ data: { items: filtered.slice(page * 50, page * 50 + 50), total: filtered.length, page, pageSize: 50 } });
   }
   if (scenario === "network") throw new TypeError("Network unavailable");
   if (
@@ -904,7 +912,7 @@ window.fetch = async (url, init) => {
     if (scenario === "assessment-draft") {
       return reply({ data: { assessment: assessmentSnapshot("DRAFT") } });
     }
-    if (scenario === "assessment-submitted" || scenario === "program-published") {
+    if (scenario === "assessment-submitted" || scenario === "legacy-assessment-submitted" || scenario === "program-published") {
       return reply({ data: { assessment: assessmentSnapshot("SUBMITTED") } });
     }
     if (scenario === "assessment-conflict" && assessmentConflictOccurred) {
@@ -1084,6 +1092,9 @@ function Harness() {
   if (view === "client-week-zero") {
     return <ClientWeekZero />;
   }
+  if (view === "coach-week-zero") {
+    return <AppShell space="coach" current="clients"><CoachWeekZeroAcquisition clientId="76000000-0000-4000-8000-000000000010" timezone="America/Toronto" /></AppShell>;
+  }
   if (view === "client-onboarding") {
     return <ClientOnboarding reviewSubmittedResponses={harnessParameters.get("view") === "responses"} />;
   }
@@ -1142,6 +1153,7 @@ function Harness() {
               clientRequestAttempts = 0;
               failedSaveMutationId = null;
               assessmentConflictOccurred = false;
+              handleAcquisition = createAcquisitionFixture();
               failedOnboardingMutationId = null;
               onboardingConflictOccurred = false;
               failedPersonalPortalMutationId = null;

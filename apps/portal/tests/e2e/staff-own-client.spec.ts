@@ -77,9 +77,9 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
   expect(creation.status()).toBe(201);
 
   await expect(page).toHaveURL(/\/client(?:\?.*)?$/);
-  await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ton parcours commence ici." })).toBeVisible();
   await expectSessionCookies(context);
-  await expect(page.getByRole("link", { name: /^espace coach$/i })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: /^portail coach$/i })).toHaveAttribute(
     "href",
     "/coach",
   );
@@ -167,7 +167,7 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
   expect(ownResponses).not.toContain(normalClient.email);
   expect(ownResponses).not.toContain(normalClient.clientId);
 
-  await page.getByRole("link", { name: /^espace coach$/i }).click();
+  await page.getByRole("link", { name: /^portail coach$/i }).click();
   await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
   await expect(page.getByRole("heading", { name: /^clients$/i })).toBeVisible();
   await page.getByRole("link", { name: /mon portail personnel/i }).click();
@@ -255,8 +255,8 @@ test("le Client normal garde son OTP et ne reçoit aucun switch Staff", async ({
   await codeInput.fill(extractSixDigitOtp(otpMail));
   await page.getByRole("button", { name: /ouvrir mon portail/i }).click();
   await expect(page).toHaveURL(/\/client(?:\?.*)?$/);
-  await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
-  await expect(page.getByRole("link", { name: /^espace coach$/i })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Ton parcours commence ici." })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^portail coach$/i })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /mon portail personnel/i })).toHaveCount(0);
 
   const own = await context.request.get(`${environment.appUrl}/api/v1/client/me`);

@@ -6,6 +6,7 @@ import { programSnapshotSchema } from "../../src/lib/contracts/training-drafts";
 import { publicationResponseSchema } from "../../src/lib/contracts/training-publication";
 import { workoutSessionResponseSchema } from "../../src/lib/contracts/training-results";
 import { addLibraryExercise } from "../../src/lib/training/program-editor";
+import { PILOT_IDS } from "../../src/lib/training/pilot/model";
 import { createM1AdminClient, getM1TestEnvironment, seedStaffIdentity } from "../harness/m1-local-supabase";
 import { extractActivation, extractSixDigitOtp, waitForMail } from "../harness/mailpit";
 
@@ -26,7 +27,7 @@ function firstSet(page: Page, name: string): Locator {
   return page.getByRole("article", { name, exact: true }).getByRole("region", { name: / · série 1$/ });
 }
 
-test("verified Coach selects fifteen pilots, publishes to an OTP Client and persists honest exercise results", async ({ page, browser }) => {
+test("verified Coach preserves fifteen pilots, adds catalogue mobility, publishes to an OTP Client and persists honest results", async ({ page, browser }) => {
   test.setTimeout(240_000);
   const password = "Pilot-local-test-only!123";
   const coach = await seedStaffIdentity(environment, {
@@ -88,7 +89,7 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     await page.goto(`${environment.appUrl}/coach/programs`);
     await page.getByLabel("Titre du programme · français", { exact: true }).fill("Semaine pilote E2E");
     await page.getByRole("button", { name: "Ajouter une séance", exact: true }).click();
-    await page.getByLabel("Titre de la séance · français", { exact: true }).fill("Séance des quinze exercices");
+    await page.getByLabel("Titre de la séance · français", { exact: true }).fill("Séance pilote et mobilité");
     await page.getByRole("button", { name: "Ajouter un bloc", exact: true }).click();
     await page.getByRole("button", { name: "Ajouter un exercice", exact: true }).click();
     const picker = page.getByRole("dialog", { name: "Choisir un exercice", exact: true });
@@ -112,8 +113,22 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     const catalogueResponse = await page.request.get(`${environment.appUrl}/api/v1/coach/exercise-pilot`);
     expect(catalogueResponse.status()).toBe(200);
     const catalogue = exercisePilotListSchema.parse((await catalogueResponse.json()).data);
-    expect(catalogue.items).toHaveLength(15);
-    for (const source of catalogue.items.filter((exercise) => exercise.id !== "DB_034")) {
+    expect(catalogue.items).toHaveLength(50);
+    expect(catalogue.total).toBe(1186);
+    expect(catalogue.pagination).toEqual({ offset: 0, limit: 50, hasMore: true });
+    const deniedAmbiguous = await page.request.post(`${environment.appUrl}/api/v1/coach/exercise-pilot/select`, {
+      headers: originHeaders, data: { sourceId: "DB_002", sourceVersion: "1.2.0", clientMutationId: randomUUID() },
+    });
+    expect(deniedAmbiguous.status()).toBe(400);
+    let mobilityName = "";
+    for (const sourceId of [...PILOT_IDS.filter(id => id !== "DB_034"), "MO_001"]) {
+      const searchResponse = await page.request.get(`${environment.appUrl}/api/v1/coach/exercise-pilot?query=${sourceId}`);
+      expect(searchResponse.status()).toBe(200);
+      const matches = exercisePilotListSchema.parse((await searchResponse.json()).data);
+      expect(matches.items).toHaveLength(1);
+      const source = matches.items[0];
+      expect(source.id).toBe(sourceId);
+      expect(source.selection).toEqual({ canSelect: true, reason: null });
       const selection = await page.request.post(`${environment.appUrl}/api/v1/coach/exercise-pilot/select`, {
         headers: originHeaders, data: { sourceId: source.id, sourceVersion: source.sourceVersion, clientMutationId: randomUUID() },
       });
@@ -121,6 +136,11 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
       const exercise = exerciseSnapshotSchema.parse((await selection.json()).data.exercise);
       expect(exercise.canEdit).toBe(false);
       expect(exercise.pilot?.sourceId).toBe(source.id);
+      if (sourceId === "MO_001") {
+        mobilityName = source.name.fr;
+        expect(exercise.pilot?.sourceCatalogVersion).toBe("4.0.0-unified.1");
+        expect(exercise.defaultUnit).toBe("sec");
+      } else expect(exercise.pilot?.sourceCatalogVersion).toBe("3.1.0-pilot.1");
       const movement = addLibraryExercise(exercise);
       movement.prescription.sets = 1;
       movement.prescription.reps = ["sec", "distance"].includes(exercise.defaultUnit) ? "1" : "8";
@@ -137,7 +157,7 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     expect(completed.document).toEqual(document);
     await page.reload();
     await page.getByRole("button", { name: "Ouvrir Semaine pilote E2E", exact: true }).click();
-    await expect(page.getByRole("article", { name: /^Exercice \d+$/ })).toHaveCount(15);
+    await expect(page.getByRole("article", { name: /^Exercice \d+$/ })).toHaveCount(16);
     await page.getByRole("combobox", { name: "Client destinataire", exact: true }).selectOption({ label: "Client Pilote" });
     await expect(page.getByText("Ce client n’a pas encore de programme publié.", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Publier pour ce client", exact: true }).click();
@@ -152,9 +172,9 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     await clientPage.goto(`${environment.appUrl}/client/program`);
     await expect(clientPage.getByRole("heading", { name: "Semaine pilote E2E", exact: true })).toBeVisible();
     await expect(clientPage.getByRole("group", { name: "Semaines du programme", exact: true }).getByRole("button", { pressed: true })).toContainText("Semaine 1");
-    await expect(clientPage.getByRole("group", { name: "Séances de la semaine 1", exact: true }).getByRole("button", { pressed: true })).toContainText("Séance des quinze exercices");
+    await expect(clientPage.getByRole("group", { name: "Séances de la semaine 1", exact: true }).getByRole("button", { pressed: true })).toContainText("Séance pilote et mobilité");
     await clientPage.getByText("Voir le plan de la séance", { exact: true }).click();
-    await expect(clientPage.getByRole("region", { name: "Consignes de l’exercice", exact: true })).toHaveCount(15);
+    await expect(clientPage.getByRole("region", { name: "Consignes de l’exercice", exact: true })).toHaveCount(16);
     for (const exercise of document.weeks[0].sessions[0].blocks[0].exercises) {
       const card = clientPage.getByRole("heading", { name: exercise.pilot!.name.fr, exact: true }).locator("..");
       await card.getByText("Voir les trois étapes du mouvement", { exact: true }).click();
@@ -186,6 +206,9 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     await band.getByRole("spinbutton", { name: /^Répétitions par côté/ }).fill("8");
     await band.getByRole("textbox", { name: /^Configuration utilisée/ }).fill("Bande rouge, ancrage poitrine");
     await expect(band.getByRole("spinbutton", { name: /^Charge/ })).toHaveCount(0);
+    const mobility = firstSet(clientPage, mobilityName);
+    await mobility.getByRole("combobox").selectOption("DONE");
+    await mobility.getByRole("spinbutton", { name: /^Durée \(sec\)/ }).fill("35");
     await clientPage.getByRole("button", { name: "Enregistrer les résultats", exact: true }).click();
     await expect(clientPage.getByText("Résultats enregistrés.", { exact: true })).toBeVisible();
     const workoutUrl = clientPage.url();
@@ -198,6 +221,7 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     expect(selected("DB_045")).toMatchObject({ reps: null, load: 20, unit: "distance", details: "2 haltères de 20 lb" });
     expect(selected("BW_049")).toMatchObject({ reps: null, load: 30, unit: "sec" });
     expect(selected("BA_027")).toMatchObject({ reps: 8, load: null, unit: "configuration", details: "Bande rouge, ancrage poitrine" });
+    expect(selected("MO_001")).toMatchObject({ reps: null, load: 35, unit: "sec" });
 
     let newOtpRequests = 0;
     clientContext.on("request", (request) => { if (request.url().includes("/client-otp/request")) newOtpRequests++; });
@@ -208,6 +232,7 @@ test("verified Coach selects fifteen pilots, publishes to an OTP Client and pers
     await expect(firstSet(clientPage, "Curl alterné avec haltères").getByRole("spinbutton", { name: /^Répétitions par bras/ })).toHaveValue("8");
     await expect(firstSet(clientPage, "Marche du fermier avec haltères").getByRole("textbox", { name: /^Charges transportées et unités/ })).toHaveValue("2 haltères de 20 lb");
     await expect(firstSet(clientPage, "Pallof press debout avec bande").getByRole("textbox", { name: /^Configuration utilisée/ })).toHaveValue("Bande rouge, ancrage poitrine");
+    await expect(firstSet(clientPage, mobilityName).getByRole("spinbutton", { name: /^Durée \(sec\)/ })).toHaveValue("35");
     expect(newOtpRequests).toBe(0);
     await page.goto(`${environment.appUrl}/coach/clients/${clientId}/workouts`);
     await page.getByRole("button", { name: "Voir la prescription et les résultats", exact: true }).click();

@@ -167,9 +167,17 @@ describe("pilot HTTP boundary using the real verified Coach guard", () => {
     expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("get_coach_email_verification_status");
   });
 
+  it("accepts bounded catalogue pagination only after the existing verified Coach guard", async () => {
+    const response = await route.GET(request("query=mobility&equipment=bodyweight&offset=50&limit=25"));
+    expect(response.status).toBe(200);
+    expect(mocks.readPilotCatalog).toHaveBeenCalledExactlyOnceWith({ query: "mobility", equipment: "bodyweight", stabilizers: "false", offset: 50, limit: 25 });
+    expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("get_coach_email_verification_status");
+  });
+
   it.each([
     "query=first&query=second", "equipment=dumbbell&equipment=barbell", "stabilizers=true&stabilizers=false",
     "unknown=value", "organizationId=forged", "page=0", "equipment=unknown", "stabilizers=1",
+    "offset=0&offset=50", "offset=-1", "offset=1.5", "offset=10001", "limit=0", "limit=51", "limit=true",
     `query=${"x".repeat(121)}`,
   ])("rejects ambiguous, unknown or oversized filters without reading the catalog: %s", async (query) => {
     const response = await route.GET(request(query));

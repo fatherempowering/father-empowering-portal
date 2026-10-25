@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
+import { Icon } from "@/components/fe/icon";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
 import { PublishedExerciseGuidance } from "@/features/training/shared/published-exercise-guidance";
 import { publishedExerciseName, repetitionLabel } from "@/lib/training/workout-presentation";
@@ -196,7 +197,11 @@ export function ClientProgram() {
       <div className={styles.page}>
         <div className={styles.heading}>
           <div>
-            <p className="fe-kicker">TRAINING · {french ? "PLAN PUBLIÉ" : "PUBLISHED PLAN"}</p>
+            <p className="fe-kicker">{loading || failed
+              ? "TRAINING"
+              : program
+                ? `TRAINING · ${french ? "PROGRAMME DISPONIBLE" : "PROGRAM AVAILABLE"}`
+                : french ? "PROGRAMME EN PRÉPARATION" : "PROGRAM IN PREPARATION"}</p>
             <h1 className="fe-title">{french ? "Mon programme." : "My program."}</h1>
           </div>
           <button className="fe-button" type="button" onClick={() => setFrench(!french)}>
@@ -416,16 +421,21 @@ function WorkoutHistory({
 }) {
   const pageCount = history ? Math.max(1, Math.ceil(history.total / history.pageSize)) : 1;
   return (
-    <section className={styles.history} aria-labelledby="workout-history-title">
+    <section className={styles.history} aria-labelledby="workout-history-title" data-workout-history="">
       <div className={styles.historyHeading}>
         <div>
-          <p className={styles.eyebrow}>{french ? "SUIVI" : "TRACKING"}</p>
+          <p className={styles.eyebrow}>{french ? "TON PARCOURS" : "YOUR JOURNEY"}</p>
           <h2 id="workout-history-title">{french ? "Historique des séances" : "Workout history"}</h2>
         </div>
         {history && history.total > 0 ? (
-          <span>{history.total} {french ? "séance(s)" : "workout(s)"}</span>
+          <span>{history.total} {french
+            ? history.total === 1 ? "séance enregistrée" : "séances enregistrées"
+            : history.total === 1 ? "saved workout" : "saved workouts"}</span>
         ) : null}
       </div>
+      <p className={styles.historyIntro}>{french
+        ? "Chaque séance laisse une trace. Retrouve tes résultats et la prescription suivie."
+        : "Every workout leaves a trace. Find your results and the prescription you followed."}</p>
       {!history || history.items.length === 0 ? (
         <p>{french ? "Aucune séance enregistrée pour le moment." : "No workout has been saved yet."}</p>
       ) : (
@@ -438,23 +448,34 @@ function WorkoutHistory({
             });
             if (!french) query.set("language", "en");
             return (
-              <li key={item.id}>
-                <div>
-                  <strong>{localized(item.session.title, french)}</strong>
-                  <span>
+              <li key={item.id} data-workout-status={item.status}>
+                <div className={styles.historyRecord}>
+                  <strong id={`history-session-${item.id}`}>{localized(item.session.title, french)}</strong>
+                  <span className={styles.historyMeta}>
                     {localized(item.programTitle, french)} · {french ? "Semaine" : "Week"} {item.weekNumber}
+                    {" · Publication "}{item.publicationRevision}
                   </span>
-                  <span>{formatDate(item.updatedAt, french)}</span>
+                  <span className={styles.historyMeta}>
+                    {french ? "Dernier enregistrement : " : "Last saved: "}
+                    <time dateTime={item.updatedAt}>{formatDate(item.updatedAt, french)}</time>
+                  </span>
+                  <span className={styles.historyStatus} data-status={item.status}>
+                    <Icon name={item.status === "COMPLETED" ? "check" : "clock"} />
+                    {item.status === "COMPLETED"
+                      ? french ? "Terminée" : "Completed"
+                      : french ? "En cours" : "In progress"}
+                  </span>
                 </div>
                 <a
                   className="fe-button"
                   data-document-navigation=""
+                  aria-describedby={`history-session-${item.id}`}
                   href={`/client/workout?${query.toString()}`}
                 >
                   {item.status === "COMPLETED"
                     ? french
-                      ? "Voir"
-                      : "View"
+                      ? "Voir le résultat"
+                      : "View result"
                     : french
                       ? "Reprendre"
                       : "Resume"}

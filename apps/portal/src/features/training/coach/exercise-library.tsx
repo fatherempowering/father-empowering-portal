@@ -141,7 +141,7 @@ export function ExerciseLibrary() {
           <p>Prépare les mouvements réutilisables dans tes futurs programmes. Aucune modification ici ne publie un programme chez un client.</p></div>
         <button className="fe-button fe-button-primary" type="button" disabled={saving || uncertain} onClick={() => edit(null)}>Nouvel exercice</button>
       </header>
-      <button className="fe-button" type="button" aria-expanded={showPilot} onClick={() => setShowPilot(!showPilot)}>{showPilot ? "Fermer le lot pilote" : "Explorer les 15 fiches pilotes"}</button>
+      <button className="fe-button" type="button" aria-expanded={showPilot} onClick={() => setShowPilot(!showPilot)}>{showPilot ? "Fermer le catalogue" : "Explorer le catalogue Legacy"}</button>
       {showPilot ? <ExercisePilot /> : null}
       <div className={styles.columns}>
         <section className={styles.panel} aria-label="Bibliothèque d’exercices">

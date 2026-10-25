@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { initialAssessmentSnapshotSchema, type InitialAssessmentStatus } from "@/lib/contracts/week-zero";
+import {
+  weekZeroAcquisitionSnapshotSchema,
+  type WeekZeroAcquisitionSnapshot,
+} from "@/lib/contracts/week-zero-acquisition";
 
 /** The next action comes from the saved assessment, never from account activation. */
 export function InitialAssessmentAction({ french, actionClassName = "fe-button fe-button-primary", hideProgramAvailability = false }: {
@@ -11,7 +14,7 @@ export function InitialAssessmentAction({ french, actionClassName = "fe-button f
   /** The visual Home reads the actual publication separately, never infers it from Week Zero. */
   hideProgramAvailability?: boolean;
 }) {
-  const [status, setStatus] = useState<InitialAssessmentStatus | null>(null);
+  const [status, setStatus] = useState<WeekZeroAcquisitionSnapshot["status"] | null>(null);
   const [failed, setFailed] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -21,7 +24,7 @@ export function InitialAssessmentAction({ french, actionClassName = "fe-button f
     const timeout = setTimeout(() => controller.abort(), 8_000);
     let active = true;
     setFailed(false); setStatus(null); setSessionExpired(false);
-    fetch("/api/v1/client/week-zero", { cache: "no-store", signal: controller.signal })
+    fetch("/api/v1/client/week-zero/acquisition", { cache: "no-store", signal: controller.signal })
       .then(async (r) => {
         if (r.status === 401 || r.status === 403) {
           if (active) setSessionExpired(true);
@@ -29,7 +32,7 @@ export function InitialAssessmentAction({ french, actionClassName = "fe-button f
         }
         if (!r.ok) throw new Error("Unavailable");
         const result = await r.json();
-        const snapshot = initialAssessmentSnapshotSchema.parse(result.data?.assessment);
+        const snapshot = weekZeroAcquisitionSnapshotSchema.parse(result.data?.acquisition);
         if (active) setStatus(snapshot.status);
       }).catch(() => { if (active) setFailed(true); })
       .finally(() => clearTimeout(timeout));
@@ -41,8 +44,8 @@ export function InitialAssessmentAction({ french, actionClassName = "fe-button f
     <Link className={actionClassName} href="/client-login">{t("Me reconnecter", "Sign in again")}</Link>
   </div>;
   if (failed) return <div role="alert">
-    <h2>{t("Ton bilan ne peut pas être chargé", "Your assessment could not be loaded")}</h2>
-    <p>{t("L’état de tes réponses n’a pas pu être vérifié. Réessaie pour retrouver ta prochaine étape.", "The status of your answers could not be checked. Retry to find your next step.")}</p>
+    <h2>{t("Ta semaine zéro est indisponible pour le moment", "Your Week Zero is temporarily unavailable")}</h2>
+    <p>{t("On n’a pas pu retrouver ta prochaine étape. Réessaie pour la consulter.", "We couldn’t find your next step. Try again to view it.")}</p>
     <button type="button" className={actionClassName} onClick={() => setAttempt((n) => n+1)}>{t("Réessayer", "Try again")}</button>
   </div>;
   if (!status) return <p role="status">{t("Chargement de ta prochaine étape…", "Loading your next step…")}</p>;
@@ -51,11 +54,11 @@ export function InitialAssessmentAction({ french, actionClassName = "fe-button f
     <h2>{sent ? t("Semaine zéro transmise", "Week Zero submitted") : t("Ta semaine zéro", "Your Week Zero")}</h2>
     <p>{sent
       ? hideProgramAvailability
-        ? t("Ton Coach peut consulter tes réponses dans ton dossier. Tu n’as rien à renvoyer.", "Your Coach can read your answers in your file. There is nothing to resend.")
-        : t("Ton Coach peut consulter tes réponses dans ton dossier. Tu n’as rien à renvoyer. Ton programme n’est pas encore disponible ici.", "Your Coach can read your answers in your file. There is nothing to resend. Your program is not available here yet.")
-      : t("Renseigne tes mesures, ta mobilité et tes disponibilités pour aider ton Coach à préparer la suite. Enregistre un brouillon, puis transmets-le quand tu es prêt.", "Share your measurements, mobility and availability to help your Coach plan the next steps. Save a draft, then submit it when you are ready.")}</p>
+        ? t("Ta semaine zéro est envoyée. Ton coach peut maintenant consulter tes réponses. Aucun nouvel envoi n’est nécessaire.", "Your Week Zero has been sent. Your coach can now review your answers. You don’t need to send it again.")
+        : t("Ta semaine zéro est envoyée. Ton coach peut maintenant consulter tes réponses. Tu n’as rien à renvoyer ; ton programme n’est pas encore disponible ici.", "Your Week Zero has been sent. Your coach can now review your answers. You don’t need to send it again; your program is not available here yet.")
+      : t("On pose les bases de ton programme. Commence par tes photos et tes mesures, puis suis les étapes pour les huit mouvements, le cardio Concept2 et ta mobilité. Enregistre ton brouillon ; tu enverras le tout à ton coach quand chaque élément sera renseigné.", "Let’s lay the groundwork for your program. Start with your photos and measurements, then follow the steps for the eight movements, Concept2 cardio and mobility. Save your draft; you’ll send everything to your coach once each item is filled in.")}</p>
     <Link className={actionClassName} href="/client/week-zero">{sent
       ? t("Consulter ma semaine zéro", "View my Week Zero")
-      : status === "DRAFT" ? t("Reprendre ma semaine zéro", "Continue my Week Zero") : t("Commencer ma semaine zéro", "Start my Week Zero")}</Link>
+      : status === "DRAFT" ? t("Reprendre ma semaine zéro", "Continue my Week Zero") : t("Commençons ma semaine zéro", "Start my Week Zero")}</Link>
   </div>;
 }

@@ -8,13 +8,13 @@ import { usePortalAccess } from "@/components/fe/portal-access-context";
 import { selectNumericInputOnFocus } from "@/components/fe/select-numeric-input";
 import styles from "./client-home-pilot.module.css";
 
-/** Presentation-only shell for the first visual checkpoint (Home + Onboarding).
- * Other screens deliberately keep their existing shell until Max validates it. */
+/** Shared presentation shell. Week Zero is the representative V1.1 checkpoint;
+ * other screens keep their existing presentation until visual validation. */
 export function ClientVisualShell({ children, name, french, current, accountAction, documentNavigation = false }: {
   children: ReactNode;
   name?: string;
   french: boolean;
-  current: "home" | "onboarding";
+  current: "home" | "onboarding" | "week-zero";
   accountAction: ReactNode;
   documentNavigation?: boolean;
 }) {
@@ -23,15 +23,15 @@ export function ClientVisualShell({ children, name, french, current, accountActi
   const menuId = useId();
   const menu = useRef<HTMLElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
-  const identity = name ?? (french ? "Espace Client" : "Client portal");
+  const identity = name ?? (french ? "Portail Legacy" : "Legacy portal");
   const initials = name?.trim().split(/\s+/).map((part) => part[0]).slice(0, 2).join("") || "FE";
   const NavLink = documentNavigation ? "a" : Link;
   const links = [
     { id: "home", href: "/client", label: french ? "Accueil" : "Home", icon: "home" as const },
     { id: "today", href: "/client/today", label: french ? "Aujourd’hui" : "Today", icon: "today" as const },
-    { id: "onboarding", href: "/client/onboarding?view=responses", label: french ? "Questionnaire d’accueil" : "Welcome questionnaire", icon: "check" as const },
+    { id: "onboarding", href: "/client/onboarding?view=responses", label: french ? "Mon questionnaire" : "My questionnaire", icon: "check" as const },
     { id: "week-zero", href: "/client/week-zero", label: french ? "Semaine zéro" : "Week Zero", icon: "check" as const },
-    { id: "program", href: "/client/program", label: french ? "Mon programme" : "My program", icon: "today" as const },
+    { id: "program", href: "/client/program", label: french ? "Mes entraînements" : "My workouts", icon: "today" as const },
   ];
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 64rem)");
@@ -73,8 +73,8 @@ export function ClientVisualShell({ children, name, french, current, accountActi
       <div className={styles.sidebarBottom}>
         <p className={styles.motto}>Shape<br />your legacy.</p>
         <p className={styles.accountLabel}>{french ? "Compte" : "Account"}</p>
-        <div className={styles.identity}><span aria-hidden="true">{initials}</span><div><strong>{identity}</strong><small>{french ? "Ton espace personnel" : "Your personal space"}</small></div></div>
-        {isStaff ? <a className={styles.navigationLink} href="/coach" onClick={() => setOpen(false)}><Icon name="users" />{french ? "Espace Coach" : "Coach portal"}</a> : null}
+        <div className={styles.identity}><span aria-hidden="true">{initials}</span><div><strong>{identity}</strong><small>{french ? "Ton portail Legacy" : "Your Legacy portal"}</small></div></div>
+        {isStaff ? <a className={styles.navigationLink} href="/coach" onClick={() => setOpen(false)}><Icon name="users" />{french ? "Portail Coach" : "Coach portal"}</a> : null}
         <div className={styles.accountAction} onClick={() => {
           // Logout errors are announced in the page; never leave that page inert
           // behind the mobile menu while waiting for the existing logout request.
@@ -84,7 +84,7 @@ export function ClientVisualShell({ children, name, french, current, accountActi
     </aside>
     <div className={styles.workspace} inert={open ? true : undefined}>
       <header className={styles.topbar} data-pilot-topbar="">
-        <div className={styles.frameTitle}><strong>The Legacy Protocol</strong><span>{current === "home" ? "Shape your legacy." : french ? "Espace Client" : "Client portal"}</span></div>
+        <div className={styles.frameTitle}><strong>The Legacy Protocol</strong><span>{current === "home" ? "Shape your legacy." : french ? "Portail Legacy" : "Legacy portal"}</span></div>
         <NavLink className={styles.mobileBrand} href="/" aria-label="Father Empowering"><img src="/icon-192.png" width="44" height="44" alt="" /><span>Father Empowering</span></NavLink>
         <span className={styles.topbarIdentity}><span aria-hidden="true">{initials}</span>{identity}</span>
         <button className={styles.menuToggle} type="button" ref={toggle} aria-controls={menuId} aria-expanded={open} onClick={() => setOpen(true)}><Icon name="menu" /><span>Menu</span></button>

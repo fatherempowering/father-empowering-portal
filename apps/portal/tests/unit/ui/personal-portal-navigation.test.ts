@@ -65,7 +65,7 @@ describe("Coach personal portal navigation", () => {
     );
 
     expect(markup).toContain('href="/coach"');
-    expect(markup).toContain("Espace Coach");
+    expect(markup).toContain("Portail Coach");
   });
 
   it("exposes the personal portal from Coach without creating it", () => {

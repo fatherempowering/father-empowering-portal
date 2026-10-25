@@ -261,12 +261,104 @@ test("program history keeps a completed previous publication readable without gu
   await expect(page.getByRole("heading", { name: "Phase force", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Historique des séances", exact: true })).toBeVisible();
   await expect(page.getByText(/Phase fondation · Semaine 1/)).toBeVisible();
-  const historical = page.getByRole("link", { name: "Voir", exact: true });
+  const historical = page.getByRole("region", { name: "Historique des séances", exact: true })
+    .getByRole("link", { name: "Voir le résultat", exact: true });
   await expect(historical).toHaveAttribute(
     "href",
     `/client/workout?publicationId=${previousPublicationId}&weekNumber=1&sessionId=${sessionId}`,
   );
   await expect(page.getByRole("link", { name: "Ouvrir la séance", exact: true })).toBeVisible();
+});
+
+test("lookbook history distinguishes saved work from completion and keeps the original publication", async ({ page }) => {
+  await page.goto("/?screen=client-program&state=workout-history");
+  const history = page.getByRole("region", { name: "Historique des séances", exact: true });
+  await expect(history.getByText("1 séance enregistrée", { exact: true })).toBeVisible();
+  await expect(history.getByText("Terminée", { exact: true })).toBeVisible();
+  await expect(history.getByText("En cours", { exact: true })).toHaveCount(0);
+  await expect(history.getByText("Phase fondation · Semaine 1 · Publication 1", { exact: true })).toBeVisible();
+  await expect(history.getByText(/Dernier enregistrement :/)).toBeVisible();
+  await expect(history.locator("time")).toHaveAttribute("datetime", /T.*Z$/);
+  const result = history.getByRole("link", { name: "Voir le résultat", exact: true });
+  await expect(result).toHaveAccessibleDescription("Séance A");
+  await expect(result).toHaveAttribute("data-document-navigation", "");
+  await result.focus();
+  await expect(result).toBeFocused();
+  expect(await result.evaluate(element => getComputedStyle(element).outlineStyle)).toBe("solid");
+  expect(await history.evaluate(element => getComputedStyle(element).backgroundColor)).toBe("rgb(16, 20, 22)");
+  expect(await history.locator('[data-status="COMPLETED"]').evaluate(element => getComputedStyle(element).color)).toBe("rgb(96, 232, 138)");
+
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  const english = page.getByRole("region", { name: "Workout history", exact: true });
+  await expect(english.getByText("Completed", { exact: true })).toBeVisible();
+  await expect(english.getByText("1 saved workout", { exact: true })).toBeVisible();
+  await expect(english.getByText("Foundation phase · Week 1 · Publication 1", { exact: true })).toBeVisible();
+  await expect(english.getByText(/Last saved:/)).toBeVisible();
+  await expect(english.getByRole("link", { name: "View result", exact: true })).toHaveAccessibleDescription("Session A");
+
+  await page.goto("/?screen=client-program&state=workout-in-progress");
+  await expect(history.getByText("En cours", { exact: true })).toBeVisible();
+  await expect(history.getByText("Terminée", { exact: true })).toHaveCount(0);
+  await expect(history.getByRole("link", { name: "Reprendre", exact: true })).toHaveAttribute(
+    "href", `/client/workout?publicationId=${publicationId}&weekNumber=1&sessionId=${sessionId}`,
+  );
+  expect(await history.locator('[data-status="IN_PROGRESS"]').evaluate(element => getComputedStyle(element).color)).toBe("rgb(255, 122, 26)");
+  expect(await page.evaluate(() => (window as unknown as { __workoutRequests: SaveWorkoutRequest[] }).__workoutRequests)).toHaveLength(0);
+});
+
+test("lookbook history reflows at 390 and 320 px with legible labels, touch targets and enlarged text", async ({ page }, info) => {
+  await page.goto("/?screen=client-program&state=workout-history");
+  const history = page.getByRole("region", { name: "Historique des séances", exact: true });
+  await expect(history.getByText("Terminée", { exact: true })).toBeVisible();
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const box = await history.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+    const link = await history.getByRole("link", { name: "Voir le résultat", exact: true }).boundingBox();
+    expect(link!.height).toBeGreaterThanOrEqual(44);
+    expect(link!.width).toBeGreaterThanOrEqual(44);
+    expect(await history.locator("time").evaluate(element => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(14);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+    await history.screenshot({ path: info.outputPath(`history-fr-${width}.png`) });
+  }
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  await expect(history.getByText("Terminée", { exact: true })).toBeVisible();
+  await history.screenshot({ path: info.outputPath("history-fr-320-text-200.png") });
+  const overflowing = await page.evaluate(() => Array.from(document.querySelectorAll("body *"))
+    .filter(element => { const r = element.getBoundingClientRect(); return r.width > 0 && r.left >= 0 && r.right > document.documentElement.clientWidth + 1; })
+    .map(element => ({ tag: element.tagName, className: element.className })));
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), JSON.stringify(overflowing)).toBe(true);
+  for (const language of ["fr", "en"]) {
+    if (language === "en") await page.getByRole("button", { name: "English", exact: true }).click();
+    const splitWords = await page.locator("[data-workout-history] h2, [data-workout-history] [data-status], [data-workout-history] a").evaluateAll(elements => {
+      const split: string[] = [];
+      for (const element of elements) {
+        const text = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        while (text.nextNode()) {
+          for (const match of (text.currentNode.textContent ?? "").matchAll(/\S+/g)) {
+            const range = document.createRange();
+            range.setStart(text.currentNode, match.index!);
+            range.setEnd(text.currentNode, match.index! + match[0].length);
+            if (range.getClientRects().length > 1) split.push(match[0]);
+          }
+        }
+      }
+      return split;
+    });
+    expect(splitWords, `${language}: headings, statuses and action words must not split at 200%`).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  }
+  await page.locator("[data-workout-history]").screenshot({ path: info.outputPath("history-en-320-text-200.png") });
+});
+
+test("empty history does not invent progress or expose future destinations", async ({ page }) => {
+  await page.goto("/?screen=client-program&state=program-published");
+  const history = page.getByRole("region", { name: "Historique des séances", exact: true });
+  await expect(history.getByText("Aucune séance enregistrée pour le moment.", { exact: true })).toBeVisible();
+  await expect(history.locator('[data-status], progress, [role="progressbar"], canvas')).toHaveCount(0);
+  await expect(page.locator('a[href^="/client/nutrition"], a[href^="/client/progression"], a[href^="/client/history"]')).toHaveCount(0);
 });
 
 test("workout load failure is recoverable and never masquerades as an empty result", async ({ page }) => {

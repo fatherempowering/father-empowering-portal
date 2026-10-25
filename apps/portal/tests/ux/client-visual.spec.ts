@@ -12,7 +12,7 @@ for (const language of ["fr", "en"] as const) {
       const video = completion.locator("[data-video-language]");
       await expect(video).toHaveAttribute("data-video-language", language);
       await expect(video).toContainText(language === "fr" ? "La vidéo en français sera disponible ici." : "The English video will be available here.");
-      const home = page.getByRole("link", { name: language === "fr" ? "Retour à la page d’accueil" : "Back to home", exact: true });
+      const home = page.getByRole("link", { name: language === "fr" ? "Retour à mon accueil" : "Back to my home", exact: true });
       await expect(home).toHaveAttribute("href", "/client");
       const area = (await video.boundingBox())!;
       expect((await home.boundingBox())!.y).toBeGreaterThanOrEqual(area.y + area.height);
@@ -27,9 +27,9 @@ for (const language of ["fr", "en"] as const) {
   test(`review before submission is preserved, but not repeated after sending in ${language}`, async ({ page }) => {
     // Even entering a draft from landmarks must advance after a real success.
     await page.goto(`/?screen=client-onboarding&state=onboarding-complete-draft&language=${language}&view=responses`);
-    await page.getByRole("button", { name: language === "fr" ? "Vérifier et transmettre" : "Review and submit", exact: true }).click();
+    await page.getByRole("button", { name: language === "fr" ? "Relire et envoyer" : "Review and send", exact: true }).click();
     await expect(page.locator("details")).toHaveCount(6);
-    const send = page.getByRole("button", { name: language === "fr" ? "Transmettre mon questionnaire" : "Submit my questionnaire", exact: true });
+    const send = page.getByRole("button", { name: language === "fr" ? "Envoyer mes réponses à Max" : "Send my answers to Max", exact: true });
     await expect(send).toBeEnabled();
     await send.click();
     await expect(page.locator("[data-onboarding-completion]")).toBeVisible();
@@ -42,12 +42,12 @@ for (const language of ["fr", "en"] as const) {
 
 test("a failed submission keeps the review and never displays successful completion", async ({ page }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-submit-error");
-  await page.getByRole("button", { name: "Vérifier et transmettre", exact: true }).click();
-  await page.getByRole("button", { name: "Transmettre mon questionnaire", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText("La confirmation n’a pas été reçue");
+  await page.getByRole("button", { name: "Relire et envoyer", exact: true }).click();
+  await page.getByRole("button", { name: "Envoyer mes réponses à Max", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("On n’a pas reçu la confirmation");
   await expect(page.locator("[data-onboarding-completion]")).toHaveCount(0);
   await expect(page.locator("details")).toHaveCount(6);
-  await expect(page.getByRole("button", { name: "Transmettre mon questionnaire", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Envoyer mes réponses à Max", exact: true })).toBeEnabled();
 });
 
 test("the next-step panel is prominent and questionnaire consultation stays in landmarks", async ({ page }) => {
@@ -58,16 +58,16 @@ test("the next-step panel is prominent and questionnaire consultation stays in l
   expect(await label.evaluate((element) => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(26);
   await expect(panel.getByRole("heading", { name: "Ta semaine zéro", exact: true })).toBeVisible();
   await expect(panel.locator('a[href*="/client/onboarding"]')).toHaveCount(0);
-  const landmarks = page.getByRole("region", { name: "Tes repères" });
-  await expect(landmarks.getByRole("link", { name: /Questionnaire d’accueil/ })).toHaveAttribute("href", "/client/onboarding?view=responses");
+  const landmarks = page.getByRole("region", { name: "Ton parcours" });
+  await expect(landmarks.getByRole("link", { name: /Mon questionnaire/ })).toHaveAttribute("href", "/client/onboarding?view=responses");
 });
 
 test("questionnaire consultation is explicit from the unchanged Client screens too", async ({ page }) => {
   for (const screen of ["client-today-staff", "client-week-zero", "client-program"]) {
     await page.goto("/?screen=" + screen);
-    const menu = page.getByRole("button", { name: "Ouvrir le menu", exact: true });
+    const menu = page.getByRole("button", { name: /^(Ouvrir le menu|Menu)$/ });
     if (await menu.isVisible()) await menu.click();
-    const questionnaire = page.getByRole("link", { name: "Questionnaire d’accueil", exact: true });
+    const questionnaire = page.getByRole("link", { name: /^(Mon questionnaire|Questionnaire d’accueil)$/, exact: true });
     await expect(questionnaire).toHaveAttribute("href", "/client/onboarding?view=responses");
   }
 });
@@ -77,7 +77,7 @@ for (const language of ["fr", "en"] as const) {
     for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }, { width: 320, height: 820 }]) {
       await page.setViewportSize(viewport);
       await page.goto(`/?screen=client-v2&state=onboarding-not-started&language=${language}`);
-      const start = page.getByRole("link", { name: language === "fr" ? "Compléter mon questionnaire d’accueil" : "Complete my welcome questionnaire", exact: true });
+      const start = page.getByRole("link", { name: language === "fr" ? "Commencer mon questionnaire" : "Start my questionnaire", exact: true });
       await expect(start).toHaveAttribute("href", "/client/onboarding");
       await expect(start).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
@@ -105,7 +105,7 @@ for (const language of ["fr", "en"] as const) {
       await page.screenshot({ path: info.outputPath(`questionnaire-edit-${language}-${viewport.width}.png`) });
       if (viewport.width < 1024) {
         await page.getByRole("combobox", { name: language === "fr" ? "Aller à une section" : "Go to a section" }).selectOption("1");
-        await expect(page.getByRole("heading", { name: language === "fr" ? "Objectifs et vision" : "Objectives & Vision", exact: true })).toBeFocused();
+        await expect(page.getByRole("heading", { name: language === "fr" ? "Le cap que tu veux te donner" : "The direction you want to take", exact: true })).toBeFocused();
       }
       await page.goto(`/?screen=client-onboarding&state=onboarding-submitted&language=${language}&view=responses`);
       await expect(page.locator("form")).toHaveCount(0);

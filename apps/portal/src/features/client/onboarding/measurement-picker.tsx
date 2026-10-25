@@ -46,9 +46,9 @@ export function MeasurementPicker({ kind, value, onChange, french, disabled }: {
     </div>}
     {manual && <label className={styles.field}>{t(`${label} avec unité`, `${label} with unit`)}<input type="text" maxLength={120} value={value ?? ""} placeholder={kind === "height" ? "180 cm / 5 ft 11 in" : "80 kg / 176 lb"} onChange={(event) => onChange(event.target.value.trim() ? event.target.value : null)} /></label>}
     <p className={styles.measurementValue} aria-live="polite">{value ? t("Réponse : ", "Answer: ") + display(value) : t("Aucune valeur choisie", "No value selected")}{parsed && parsed.unit !== unit ? ` ≈ ${display(formatMeasurement(converted!, kind, unit))}` : ""}</p>
-    {value && !parsed && <p>{t("Ta réponse existante est conservée telle quelle. Utilise les rouleaux seulement si tu veux la remplacer.", "Your existing answer is kept unchanged. Use the wheels only if you want to replace it.")}</p>}
-    <small>{t("Fais défiler les rouleaux, touche une valeur ou utilise les flèches du clavier.", "Scroll the wheels, tap a value or use the keyboard arrows.")}</small>
-    {rounded === null && (kind === "weight" || unit === "imperial") && <small>{t("Commence par le rouleau de gauche, puis précise celui de droite.", "Choose the left wheel first, then adjust the right one.")}</small>}
-    <button type="button" className={styles.questionLink} onClick={() => setManual((current) => !current)}>{manual ? t("Utiliser les rouleaux", "Use wheels") : t("Saisir autrement", "Enter another way")}</button>
+    {value && !parsed && <p>{t("Ta réponse actuelle est conservée. Change les valeurs seulement si tu veux la remplacer.", "Your current answer is kept. Change the values only if you want to replace it.")}</p>}
+    <small>{t("Fais défiler les nombres ou touche celui que tu veux. Au clavier, utilise les flèches.", "Scroll through the numbers or tap the one you want. On a keyboard, use the arrow keys.")}</small>
+    {rounded === null && (kind === "weight" || unit === "imperial") && <small>{t("Choisis d’abord le nombre à gauche, puis précise celui de droite.", "Choose the number on the left first, then adjust the one on the right.")}</small>}
+    <button type="button" className={styles.questionLink} onClick={() => setManual((current) => !current)}>{manual ? t("Choisir avec les nombres", "Choose from the numbers") : t("Écrire ma réponse", "Type my answer")}</button>
   </fieldset>;
 }

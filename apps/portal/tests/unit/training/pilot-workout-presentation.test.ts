@@ -1,9 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { workoutSetResultSchema, saveWorkoutRequestSchema } from "@/lib/contracts/training-results";
-import { clearSetMeasurements, completedMeasurementMissing, detailsLabel, measurementLabel, needsMeasurementDetails, publishedExerciseName, repetitionLabel, stripDerivedSet } from "@/lib/training/workout-presentation";
+import { clearSetMeasurements, completedMeasurementMissing, detailsLabel, detailsPlaceholder, measurementLabel, needsMeasurementDetails, publishedExerciseName, repetitionLabel, stripDerivedSet } from "@/lib/training/workout-presentation";
 import { pilotResultExercise, pilotResultSet } from "./pilot-result-fixture";
 
 describe("pilot workout measurements", () => {
+  it("does not request fictitious carried weights for band distance or unloaded running", () => {
+    const exercise = pilotResultExercise("DB_045");
+    exercise.pilot!.performance.loadEntryBasis = "band_configuration";
+    expect(detailsLabel(exercise, "distance", true)).toBe("Bande et montage utilisés");
+    expect(detailsPlaceholder(exercise, "distance", false)).toBe("E.g. blue band around the thighs");
+    exercise.pilot!.performance.loadEntryBasis = "not_applicable";
+    expect(detailsLabel(exercise, "distance", false)).toBe("Route context, no added load");
+    expect(detailsPlaceholder(exercise, "distance", true)).toContain("sans charge ajoutée");
+    const set = { ...pilotResultSet(exercise), unit: "distance" as const, reps: null, load: 100, details: "Course sans charge" };
+    expect(completedMeasurementMissing(exercise, set)).toBe(false);
+    expect(stripDerivedSet(set)).toMatchObject({ load: 100, details: "Course sans charge", reps: null });
+  });
   it("labels kg honestly, requires reps and preserves its numeric value without conversion", () => {
     const exercise = pilotResultExercise();
     exercise.prescription.unit = "kg";

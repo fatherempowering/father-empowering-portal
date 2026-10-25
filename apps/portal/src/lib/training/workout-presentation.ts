@@ -34,9 +34,22 @@ export function needsMeasurementDetails(exercise: DraftExercise, unit: SetWithUn
 }
 
 export function detailsLabel(exercise: DraftExercise, unit: SetWithUnit["unit"], french: boolean) {
+  if (unit === "distance" && exercise.pilot?.performance.loadEntryBasis === "band_configuration")
+    return french ? "Bande et montage utilisés" : "Band and setup used";
+  if (unit === "distance" && exercise.pilot?.performance.loadEntryBasis === "not_applicable")
+    return french ? "Contexte du parcours, sans charge" : "Route context, no added load";
   return unit === "distance" && exercise.pilot
     ? french ? "Charges transportées et unités" : "Carried weights and units"
     : french ? "Configuration utilisée" : "Setup used";
+}
+
+export function detailsPlaceholder(exercise: DraftExercise, unit: SetWithUnit["unit"], french: boolean) {
+  if (unit === "distance" && exercise.pilot?.performance.loadEntryBasis === "band_configuration")
+    return french ? "Ex. bande bleue autour des cuisses" : "E.g. blue band around the thighs";
+  if (unit === "distance" && exercise.pilot?.performance.loadEntryBasis === "not_applicable")
+    return french ? "Ex. course en extérieur, sans charge ajoutée" : "E.g. outdoor run, no added load";
+  if (unit === "distance") return french ? "Ex. 2 haltères de 20 lb" : "E.g. 2 dumbbells of 20 lb";
+  return french ? "Bande et montage, ou machine et réglage affiché" : "Band and setup, or machine and displayed setting";
 }
 
 export function completedMeasurementMissing(exercise: DraftExercise, set: SetWithUnit) {

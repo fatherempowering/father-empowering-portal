@@ -20,12 +20,12 @@ describe("Coach onboarding presentation", () => {
     expect(sections).toHaveLength(6);
     expect(sections.reduce((count, section) => count + section.items.length, 0)).toBe(64);
     expect(sections.map((section) => section.title)).toEqual([
-      "Informations personnelles",
-      "Objectifs et vision",
-      "Entraînement et équipement",
-      "Santé et récupération",
-      "Habitudes alimentaires",
-      "Soutien et engagement",
+      "Commençons par toi",
+      "Le cap que tu veux te donner",
+      "Tes entraînements et ton quotidien",
+      "Ton corps et ta récupération",
+      "Ton alimentation au quotidien",
+      "Avancer avec le bon soutien",
     ]);
   });
 
@@ -71,6 +71,6 @@ describe("Coach onboarding presentation", () => {
   it("localizes the new unit-bearing measurements and no-equipment answer without rewriting responses", () => {
     expect(displayOnboardingAnswer(question("height"), "5 ft 10 in", "fr")).toBe("5 pi 10 po");
     expect(displayOnboardingAnswer(question("currentBodyweight"), "84.5 kg", "fr")).toBe("84,5 kg");
-    expect(displayOnboardingAnswer(question("availableEquipment"), NO_EQUIPMENT_ANSWER, "en")).toBe("Not applicable — no equipment at home.");
+    expect(displayOnboardingAnswer(question("availableEquipment"), NO_EQUIPMENT_ANSWER, "en")).toBe("No equipment at home.");
   });
 });

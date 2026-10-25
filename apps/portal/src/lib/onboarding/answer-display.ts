@@ -5,7 +5,7 @@ export const NO_EQUIPMENT_ANSWER = "Non applicable — aucun équipement à la m
 
 export function displayOnboardingText(key: string, value: string, french: boolean): string {
   if (key === "availableEquipment" && value === NO_EQUIPMENT_ANSWER) {
-    return french ? NO_EQUIPMENT_ANSWER : "Not applicable — no equipment at home.";
+    return french ? "Aucun équipement à la maison." : "No equipment at home.";
   }
   if (!french || (key !== "height" && key !== "currentBodyweight")) return value;
   const kind = key === "height" ? "height" : "weight";

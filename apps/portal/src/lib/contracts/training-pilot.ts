@@ -7,13 +7,14 @@ import { uuidSchema } from "./m1";
 export const pilotProgramExerciseSchema = z.object({
   sourceId: pilotExerciseSchema.shape.id,
   sourceVersion: pilotExerciseSchema.shape.sourceVersion,
-  sourceCatalogVersion: z.literal("3.1.0-pilot.1"),
+  sourceCatalogVersion: z.enum(["3.1.0-pilot.1", "4.0.0-unified.1"]),
   integrationVersion: z.literal("fe-program-pilot.1"),
   usage: z.literal("STAGING_TEST"),
   name: pilotExerciseSchema.shape.name,
   equipment: pilotExerciseSchema.shape.equipment,
   instructions: pilotExerciseSchema.shape.instructions,
   performance: pilotExerciseSchema.shape.performance.extend({
+    measure: z.enum(["repetitions", "duration", "distance"]),
     loadEntryBasis: z.enum(["per_implement", "total_external_mass", "displayed_stack_setting", "band_configuration", "not_applicable", "to_confirm"]),
   }).strict(),
 }).strict();

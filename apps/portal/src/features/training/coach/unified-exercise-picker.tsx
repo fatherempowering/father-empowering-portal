@@ -10,9 +10,9 @@ import { librarySearchTerms, matchesLibraryEquipment, matchesLibrarySearch, spli
 import { PilotExercisePreview } from "@/features/training/shared/pilot-exercise-preview";
 import { usePilotSelection } from "./use-pilot-selection";
 import styles from "./unified-exercise-picker.module.css";
+import { CATALOGUE_EQUIPMENT_LABELS as equipmentLabels, catalogueSelectionMessage } from "./catalogue-presentation";
 
 type Result = { key: string; kind: "library"; exercise: ExerciseSnapshot } | { key: string; kind: "pilot"; exercise: PilotExercise };
-const equipmentLabels = { dumbbell: "Haltères", barbell: "Barre", cable: "Poulie", machine: "Machine", bodyweight: "Poids du corps", kettlebell: "Kettlebell", band: "Élastique" };
 
 export function mergeExerciseSearchResults(library: ExerciseSnapshot[], pilots: PilotExercise[]): Result[] {
   const matchingIds = new Set(pilots.map(item => item.id));
@@ -72,7 +72,7 @@ export function UnifiedExercisePicker({ onAdd, onClose }: {
       try {
         const terms = [...new Set(librarySearchTerms(filter.query))];
         const [pilotData, ...libraryData] = await Promise.all([
-          get(`/api/v1/coach/exercise-pilot?${new URLSearchParams({ query: filter.query, equipment: filter.equipment, stabilizers: "false" })}`),
+          get(`/api/v1/coach/exercise-pilot?${new URLSearchParams({ query: filter.query, equipment: filter.equipment, stabilizers: "false", offset: String(page * 50), limit: "50" })}`),
           ...terms.map(term => get(`/api/v1/coach/exercises?${new URLSearchParams({ query: term, page: String(page), archived: "false" })}`)),
         ]);
         const nextPilots = exercisePilotListSchema.parse(pilotData);
@@ -83,8 +83,9 @@ export function UnifiedExercisePicker({ onAdd, onClose }: {
           item.pilot || (matchesLibrarySearch(item.name, filter.query) && matchesLibraryEquipment(item.equipment, effectiveEquipment)));
         if (!active || controller.signal.aborted) return;
         setLibrary(previous => [...new Map([...(page ? previous : []), ...rows].map(item => [item.id, item])).values()]);
-        setPilots(nextPilots.items);
-        setHasMore(!conflictingEquipment && pages.some(value => (page + 1) * value.pageSize < value.total));
+        if (nextPilots.pagination && nextPilots.pagination.offset !== page * 50) throw new Error("CATALOGUE_PAGE_MISMATCH");
+        setPilots(previous => [...new Map([...(page ? previous : []), ...nextPilots.items].map(item => [item.id, item])).values()]);
+        setHasMore(!conflictingEquipment && (Boolean(nextPilots.pagination?.hasMore) || pages.some(value => (page + 1) * value.pageSize < value.total)));
       } catch { if (active) setFailed(true); }
       finally { clearTimeout(timeout); if (active) setLoading(false); }
     })();
@@ -94,14 +95,14 @@ export function UnifiedExercisePicker({ onAdd, onClose }: {
   function search(event: FormEvent) { event.preventDefault(); if (busy) return; setPage(0); setFilter({ query, equipment }); }
   function name(result: Result) { return result.kind === "pilot" ? result.exercise.name.fr : result.exercise.pilot?.name.fr ?? result.exercise.name; }
   function choose(result: Result) {
-    if (busy || loading || failed) return;
+    if (busy || loading || failed || (result.kind === "pilot" && result.exercise.selection?.canSelect === false)) return;
     if (result.kind === "pilot") void select(result.exercise);
     else if (result.exercise.pilot) void select({ id: result.exercise.pilot.sourceId, sourceVersion: result.exercise.pilot.sourceVersion });
     else onAdd(result.exercise);
   }
   const content = <>
     <header className="fe-dialog-header">
-      <div><h2 id={`${id}-title`}>Choisir un exercice</h2><p id={`${id}-description`}>Une recherche pour ta bibliothèque et les 15 exercices pilotes. Choisis un mouvement, puis règle sa prescription dans la séance.</p></div>
+      <div><h2 id={`${id}-title`}>Choisir un exercice</h2><p id={`${id}-description`}>Une recherche pour ta bibliothèque et le catalogue Legacy. Choisis un mouvement, puis règle sa prescription dans la séance.</p></div>
       {onClose ? <button type="button" className="fe-icon-button" aria-label="Fermer le choix d’exercice" disabled={busy} onClick={onClose}><Icon name="close" /></button> : null}
     </header>
     <div className={`fe-dialog-content ${styles.picker}`}>
@@ -112,14 +113,15 @@ export function UnifiedExercisePicker({ onAdd, onClose }: {
         </select></div>
         <button type="submit" className="fe-button fe-button-primary" disabled={busy}>Rechercher</button>
       </form>
-      <p className={styles.help}>Noms français et anglais. Les muscles du lot pilote sont indexés ; les exercices personnels sont retrouvés par leur nom et les familles de mouvements reconnues.</p>
+      <p className={styles.help}>Noms français et anglais. Les muscles du catalogue sont indexés ; les exercices personnels sont retrouvés par leur nom et les familles de mouvements reconnues.</p>
       {error ? <Feedback>{error}</Feedback> : null}
       {loading ? <Loading>Recherche des exercices…</Loading> : failed ? <div><Feedback>La recherche n’a pas pu être chargée complètement. Aucun exercice n’a été ajouté et ton brouillon est conservé.</Feedback><button type="button" className="fe-button" onClick={() => setAttempt(value => value + 1)}>Réessayer la recherche</button></div> : <>
         <p role="status">{results.length} exercice{results.length === 1 ? "" : "s"} affiché{results.length === 1 ? "" : "s"}{hasMore ? " · d’autres résultats sont disponibles" : ""}</p>
         {!results.length ? <p>Aucun exercice pour ces critères. Essaie un autre nom ou enlève le filtre d’équipement.</p> : <ul className={styles.results} aria-label="Résultats des exercices">
           {results.map(result => <li key={result.key}>
-            <div><h3>{name(result)}</h3><p>{result.kind === "pilot" ? `${result.exercise.equipment.labels.fr} · Pilote staging` : `${result.exercise.equipment || "Équipement non précisé"}${result.exercise.pilot ? " · Pilote staging" : " · Bibliothèque"}`}</p></div>
-            <div className={styles.actions}><button type="button" className="fe-button" disabled={busy} onClick={() => setSelected(result)}>Consulter {name(result)}</button><button type="button" className="fe-button fe-button-primary" disabled={busy} onClick={() => choose(result)}>{busy ? "Préparation…" : `Choisir ${name(result)}`}</button></div>
+            <div><h3>{name(result)}</h3><p>{result.kind === "pilot" ? `${result.exercise.equipment.labels.fr} · Catalogue staging` : `${result.exercise.equipment || "Équipement non précisé"}${result.exercise.pilot ? " · Catalogue staging" : " · Bibliothèque"}`}</p></div>
+            {result.kind === "pilot" && catalogueSelectionMessage(result.exercise) ? <p className={styles.help}>{catalogueSelectionMessage(result.exercise)}</p> : null}
+            <div className={styles.actions}><button type="button" className="fe-button" disabled={busy} onClick={() => setSelected(result)}>Consulter {name(result)}</button><button type="button" className="fe-button fe-button-primary" disabled={busy || (result.kind === "pilot" && result.exercise.selection?.canSelect === false)} onClick={() => choose(result)}>{busy ? "Préparation…" : `Choisir ${name(result)}`}</button></div>
           </li>)}
         </ul>}
         {hasMore ? <button type="button" className="fe-button" disabled={busy} onClick={() => setPage(value => value + 1)}>Afficher plus de résultats</button> : null}
@@ -129,7 +131,7 @@ export function UnifiedExercisePicker({ onAdd, onClose }: {
           {selected.kind === "pilot" && selected.exercise.machines.length ? <section aria-label="Modèles de machines à vérifier"><h4>Variantes de machines — non sélectionnables</h4><ul>
             {selected.exercise.machines.map(machine => <li key={machine.id}><strong>{machine.manufacturer} · {machine.name}</strong><p>{machine.warning.fr}</p><p>Non disponible pour prescription · {machine.modelId} · version {machine.modelVersion}</p></li>)}
           </ul></section> : null}
-          <button type="button" className="fe-button fe-button-primary" disabled={busy} onClick={() => choose(selected)}>{busy ? "Préparation…" : `Ajouter ${name(selected)} à la séance`}</button>
+          <button type="button" className="fe-button fe-button-primary" disabled={busy || (selected.kind === "pilot" && selected.exercise.selection?.canSelect === false)} onClick={() => choose(selected)}>{busy ? "Préparation…" : `Ajouter ${name(selected)} à la séance`}</button>
         </section> : null}
       </>}
     </div>

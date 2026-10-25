@@ -4,7 +4,7 @@ if (!/^\d+$/.test(port) || Number(port) < 1024 || Number(port) > 65535) throw ne
 const baseURL = `http://127.0.0.1:${port}`;
 export default defineConfig({
   testDir: ".",
-  testMatch: ["m15-ui.spec.ts", "training-ui.spec.ts", "program-builder-ui.spec.ts", "program-publication-ui.spec.ts", "client-visual.spec.ts", "workout-results-ui.spec.ts", "exercise-pilot-ui.spec.ts", "pilot-program-builder-ui.spec.ts", "pilot-client-program-ui.spec.ts", "unified-exercise-picker-ui.spec.ts", "legacy-client-navigation-ui.spec.ts", "guided-workout-ui.spec.ts"],
+  testMatch: ["m15-ui.spec.ts", "training-ui.spec.ts", "program-builder-ui.spec.ts", "program-publication-ui.spec.ts", "client-visual.spec.ts", "workout-results-ui.spec.ts", "exercise-pilot-ui.spec.ts", "catalogue-ui.spec.ts", "pilot-program-builder-ui.spec.ts", "pilot-client-program-ui.spec.ts", "unified-exercise-picker-ui.spec.ts", "legacy-client-navigation-ui.spec.ts", "guided-workout-ui.spec.ts", "esthetique-checkpoint-ui.spec.ts", "week-zero-acquisition-ui.spec.ts", "coach-week-zero-ui.spec.ts"],
   fullyParallel: true,
   retries: 0,
   reporter: [["list"]],
