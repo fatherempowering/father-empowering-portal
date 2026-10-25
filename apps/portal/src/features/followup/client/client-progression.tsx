@@ -3,23 +3,24 @@
 import { useEffect, useId, useState } from "react";
 import { progressionResponseSchema, type ClientProgression as ProgressionData } from "@/lib/contracts/client-followup";
 import { followupRequest } from "./followup-http";
-import { displayDate, FollowupFrame, FollowupLoadError, FollowupLoading, useFollowupLanguage } from "./followup-frame";
+import { displayDate, FollowupFrame, FollowupLoadError, FollowupLoading, useFollowupLanguage, useFollowupLifecycle } from "./followup-frame";
 import { MEASUREMENT_FIELDS, MEASUREMENT_LABELS, measuredValues, measurementUnit, progressionObservations, weightChartGeometry } from "./progression-model";
 import styles from "./followup.module.css";
 
 export function ClientProgression() {
   const { french, changeLanguage } = useFollowupLanguage();
+  const { pause, resume, signal } = useFollowupLifecycle();
   const t = (fr: string, en: string) => french ? fr : en;
   const [data, setData] = useState<ProgressionData | null>(null), [loading, setLoading] = useState(true), [failed, setFailed] = useState(false), [attempt, setAttempt] = useState(0), [metric, setMetric] = useState(false);
   const gradientId = `weight-${useId().replace(/:/g, "")}`;
-  useEffect(() => { let active = true; setLoading(true); setFailed(false); void followupRequest("/api/v1/client/progression", value => progressionResponseSchema.parse(value)).then(value => { if (active) setData(value); }).catch(() => { if (active) setFailed(true); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [attempt]);
+  useEffect(() => { let active = true; const requestSignal = signal(); setLoading(true); setFailed(false); void followupRequest("/api/v1/client/progression", value => progressionResponseSchema.parse(value), undefined, requestSignal).then(value => { if (active && !requestSignal.aborted) setData(value); }).catch(() => { if (active && !requestSignal.aborted) setFailed(true); }).finally(() => { if (active && !requestSignal.aborted) setLoading(false); }); return () => { active = false; }; }, [attempt, signal]);
   const observations = data ? progressionObservations(data) : [];
   const weights = measuredValues(observations, "bodyWeightLb", metric), geometry = weightChartGeometry(weights);
   const first = weights[0], last = weights.at(-1), unit = measurementUnit("bodyWeightLb", metric);
   const number = (value: number) => new Intl.NumberFormat(french ? "fr-CA" : "en-CA", { maximumFractionDigits: 2 }).format(value);
   const variation = first && last ? last.value - first.value : null;
   const refresh = <button type="button" className={styles.quietButton} disabled={loading} onClick={() => setAttempt(value => value + 1)}>{t("Actualiser mes progrès", "Refresh progress")}</button>;
-  return <FollowupFrame current="progression" title={t("Regarde le chemin parcouru.", "Look how far you’ve come.")} subtitle={t("Tes mesures et tes séances réellement terminées.", "Your measurements and workouts actually completed.")} french={french} changeLanguage={changeLanguage}>
+  return <FollowupFrame current="progression" title={t("Regarde le chemin parcouru.", "Look how far you’ve come.")} subtitle={t("Tes mesures et tes séances réellement terminées.", "Your measurements and workouts actually completed.")} french={french} changeLanguage={changeLanguage} onBeforeLogout={pause} onLogoutFailure={() => { resume(); setAttempt(value => value + 1); }}>
     {loading || failed || !data ? <div className={styles.toolbar}>{refresh}</div> : null}
     {loading ? <FollowupLoading french={french} /> : failed || !data ? <FollowupLoadError french={french} retry={() => setAttempt(value => value + 1)} /> : <>
       <section className={`${styles.panel} ${styles.completed}`} aria-labelledby="progress-completed"><div><p className={styles.kicker}>{t("Tes efforts comptent", "Your efforts count")}</p><h2 id="progress-completed"><strong>{data.completedWorkouts.total}</strong> {t("séances terminées", "completed workouts")}</h2><p>{t("Depuis le début de ton suivi.", "Since your follow-up began.")}</p></div><a className={styles.link} href={`/client/program?language=${french ? "fr" : "en"}#workout-history-title`}>{t("Voir mon historique", "View my history")} →</a></section>

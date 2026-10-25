@@ -34,4 +34,35 @@ describe("Client followup request boundaries", () => {
     await expect(followupRequest("/api/v1/client/check-ins", value => value, command)).rejects.toMatchObject({ status: "NETWORK", message: "NETWORK" });
     expect(fetcher.mock.calls[0][1]).toMatchObject({ method: "POST", body: JSON.stringify(command), headers: { "content-type": "application/json" } });
   });
+  it.each([401, 403])("cancels a stale read before a late %i can redirect", async status => {
+    const lifecycle = new AbortController(), replace = vi.fn();
+    let finish!: (response: Response) => void;
+    const fetcher = vi.fn(() => new Promise<Response>(resolve => { finish = resolve; }));
+    vi.stubGlobal("window", { location: { replace } }); vi.stubGlobal("fetch", fetcher);
+    const outcome = expect(followupRequest("/api/v1/client/nutrition", value => value, undefined, lifecycle.signal)).rejects.toMatchObject({ status: "CANCELLED" });
+    lifecycle.abort();
+    expect((fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].signal?.aborted).toBe(true);
+    finish(new Response("{}", { status })); await outcome;
+    expect(replace).not.toHaveBeenCalled();
+  });
+  it("does not abort a write transport but rejects its old-cycle confirmation", async () => {
+    const lifecycle = new AbortController(), parse = vi.fn(value => value);
+    let finish!: (response: Response) => void;
+    const fetcher = vi.fn(() => new Promise<Response>(resolve => { finish = resolve; })); vi.stubGlobal("fetch", fetcher);
+    const command = { action: "save", clientMutationId: "same-command" };
+    const outcome = expect(followupRequest("/api/v1/client/check-ins", parse, command, lifecycle.signal)).rejects.toMatchObject({ status: "CANCELLED" });
+    lifecycle.abort();
+    expect((fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].signal?.aborted).toBe(false);
+    finish(new Response(JSON.stringify({ data: { saved: true } }))); await outcome;
+    expect(parse).not.toHaveBeenCalled(); expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("does not accept a body that finishes after its page lifecycle ended", async () => {
+    const lifecycle = new AbortController(), parse = vi.fn(value => value);
+    let finish!: (value: unknown) => void;
+    const json = vi.fn(() => new Promise(resolve => { finish = resolve; }));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, json }));
+    const outcome = expect(followupRequest("/api/v1/client/progression", parse, undefined, lifecycle.signal)).rejects.toMatchObject({ status: "CANCELLED" });
+    await Promise.resolve(); lifecycle.abort(); finish({ data: { total: 2 } }); await outcome;
+    expect(parse).not.toHaveBeenCalled();
+  });
 });

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 import { checkInDocumentSchema, checkInsResponseSchema, emptyCheckInDocument, publishableCheckInDocumentSchema, type CheckInDocument, type CheckInMutation, type CheckInSubmission } from "@/lib/contracts/client-followup";
 import { FollowupHttpError, followupRequest } from "./followup-http";
-import { displayDate, FollowupFrame, FollowupLoadError, FollowupLoading, useFollowupLanguage } from "./followup-frame";
+import { displayDate, FollowupFrame, FollowupLoadError, FollowupLoading, useFollowupLanguage, useFollowupLifecycle } from "./followup-frame";
 import { fromDisplayMeasurement, MEASUREMENT_FIELDS, MEASUREMENT_LABELS, measurementUnit, toDisplayMeasurement, type MeasurementKey } from "./progression-model";
 import styles from "./followup.module.css";
 
@@ -21,6 +21,7 @@ const fingerprint = (document: CheckInDocument) => JSON.stringify(document);
 
 export function ClientCheckIn() {
   const { french, changeLanguage } = useFollowupLanguage();
+  const { pause, resume, signal } = useFollowupLifecycle();
   const t = (fr: string, en: string) => french ? fr : en;
   const [data, setData] = useState<CheckInsData | null>(null);
   const [document, setDocument] = useState<CheckInDocument>(() => emptyCheckInDocument(""));
@@ -34,14 +35,14 @@ export function ClientCheckIn() {
   const dirty = fingerprint(document) !== baseline;
   const locked = busy || state === "uncertain" || state === "conflict";
   useEffect(() => {
-    let active = true; setLoading(true); setFailed(false);
-    void followupRequest("/api/v1/client/check-ins?page=0", value => checkInsResponseSchema.parse(value)).then(result => {
-      if (!active) return;
+    let active = true; const requestSignal = signal(); setLoading(true); setFailed(false);
+    void followupRequest("/api/v1/client/check-ins?page=0", value => checkInsResponseSchema.parse(value), undefined, requestSignal).then(result => {
+      if (!active || requestSignal.aborted) return;
       const next = result.draft?.document ?? emptyCheckInDocument("");
       setData(result); setDocument(next); setBaseline(fingerprint(next)); setState(null); command.current = null;
-    }).catch(() => { if (active) setFailed(true); }).finally(() => { if (active) setLoading(false); });
+    }).catch(() => { if (active && !requestSignal.aborted) setFailed(true); }).finally(() => { if (active && !requestSignal.aborted) setLoading(false); });
     return () => { active = false; };
-  }, [attempt]);
+  }, [attempt, signal]);
   function fieldLabel(path: string) {
     if (path.startsWith("measurements.")) return MEASUREMENT_LABELS[path.slice(13) as MeasurementKey]?.[french ? 0 : 1] ?? t("Mesure", "Measurement");
     return labels[path as keyof typeof labels]?.[french ? 0 : 1] ?? t("Observation", "Observation");
@@ -55,7 +56,7 @@ export function ClientCheckIn() {
     update("measurements", { ...document.measurements, [key]: raw === "" ? null : fromDisplayMeasurement(Number(raw), key, metric) });
   }
   async function mutate(action: "save" | "submit", retry = false) {
-    if (!data || inFlight.current || historyBusy) return;
+    if (!data || inFlight.current || historyBusy || signal().aborted) return;
     if (!retry) {
       const parsed = (action === "submit" ? publishableCheckInDocumentSchema : checkInDocumentSchema).safeParse(document);
       if (!parsed.success) {
@@ -69,9 +70,11 @@ export function ClientCheckIn() {
     }
     const pending = command.current;
     if (!pending) return;
+    const requestSignal = signal();
     inFlight.current = true; setBusy(true); setIssues([]);
     try {
-      const result = await followupRequest("/api/v1/client/check-ins", value => checkInsResponseSchema.parse(value), pending);
+      const result = await followupRequest("/api/v1/client/check-ins", value => checkInsResponseSchema.parse(value), pending, requestSignal);
+      if (requestSignal.aborted) throw new FollowupHttpError("CANCELLED");
       if (pending.action === "save" && !result.draft) throw new FollowupHttpError("RESPONSE");
       if (pending.action === "submit" && result.draft) throw new FollowupHttpError("RESPONSE");
       const next = result.draft?.document ?? emptyCheckInDocument("");
@@ -84,14 +87,15 @@ export function ClientCheckIn() {
     } finally { inFlight.current = false; setBusy(false); }
   }
   async function historyPage(page: number) {
-    if (historyBusy || busy) return;
+    if (historyBusy || busy || signal().aborted) return;
+    const requestSignal = signal();
     setHistoryBusy(true); setHistoryFailed(false);
-    try { const next = await followupRequest(`/api/v1/client/check-ins?page=${page}`, value => checkInsResponseSchema.parse(value)); setData(previous => previous ? { ...previous, history: next.history, historyTruncated: next.historyTruncated, page: next.page, total: next.total } : next); setSubmission(null); }
+    try { const next = await followupRequest(`/api/v1/client/check-ins?page=${page}`, value => checkInsResponseSchema.parse(value), undefined, requestSignal); if (requestSignal.aborted) return; setData(previous => previous ? { ...previous, history: next.history, historyTruncated: next.historyTruncated, page: next.page, total: next.total } : next); setSubmission(null); }
     catch { setHistoryFailed(true); }
     finally { setHistoryBusy(false); }
   }
   const issueFor = (path: string) => issues.some(issue => issue.path === path);
-  return <FollowupFrame current="check-in" title={t("Fais le point.", "Check in with yourself.")} subtitle={t("Des observations simples, pour ajuster la suite avec ton coach.", "Simple observations to plan the next steps with your coach.")} french={french} changeLanguage={changeLanguage} dirty={dirty || state === "uncertain"}>
+  return <FollowupFrame current="check-in" title={t("Fais le point.", "Check in with yourself.")} subtitle={t("Des observations simples, pour ajuster la suite avec ton coach.", "Simple observations to plan the next steps with your coach.")} french={french} changeLanguage={changeLanguage} dirty={dirty || state === "uncertain"} onBeforeLogout={pause} onLogoutFailure={() => { resume(); if (!data && !dirty && !command.current && !inFlight.current) setAttempt(value => value + 1); else if (data) setLoading(false); }}>
     {loading ? <FollowupLoading french={french} /> : failed || !data ? <FollowupLoadError french={french} retry={() => setAttempt(value => value + 1)} /> : <>
       {state ? <div className={state === "saved" || state === "submitted" ? styles.success : styles.error} role={state === "saved" || state === "submitted" ? "status" : "alert"}>
         {state === "saved" ? t("Brouillon enregistré. Tu peux encore le modifier avant de le transmettre.", "Draft saved. You can still edit it before submitting.") : state === "submitted" ? t("Check-in transmis. Ton coach peut maintenant le consulter.", "Check-in submitted. Your coach can now read it.") : state === "uncertain" ? t("La confirmation n’est pas arrivée. Tes saisies restent ici. Réessaie la même opération pour vérifier, sans créer de doublon.", "Confirmation did not arrive. Your entries remain here. Retry the same operation to verify it without a duplicate.") : state === "conflict" ? t("Ce brouillon a changé ailleurs. Tes saisies sont préservées ici. Recharge la version enregistrée pour reprendre.", "This draft changed elsewhere. Your entries are preserved here. Reload the saved version to continue.") : t("Cette opération a été refusée. Vérifie les champs avant de réessayer; rien n’a été annoncé comme enregistré.", "This operation was refused. Check the fields before retrying; nothing has been marked as saved.")}

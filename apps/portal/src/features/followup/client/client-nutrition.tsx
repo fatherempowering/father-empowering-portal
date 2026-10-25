@@ -4,21 +4,22 @@ import { useEffect, useState } from "react";
 import type { z } from "zod";
 import { clientNutritionResponseSchema } from "@/lib/contracts/client-followup";
 import { followupRequest } from "./followup-http";
-import { displayDate, FollowupFrame, FollowupLoadError, FollowupLoading, localized, useFollowupLanguage } from "./followup-frame";
+import { displayDate, FollowupFrame, FollowupLoadError, FollowupLoading, localized, useFollowupLanguage, useFollowupLifecycle } from "./followup-frame";
 import styles from "./followup.module.css";
 
 export function ClientNutrition() {
   const { french, changeLanguage } = useFollowupLanguage();
+  const { pause, resume, signal } = useFollowupLifecycle();
   const t = (fr: string, en: string) => french ? fr : en;
   const [data, setData] = useState<z.infer<typeof clientNutritionResponseSchema> | null>(null);
   const [loading, setLoading] = useState(true), [failed, setFailed] = useState(false), [attempt, setAttempt] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [section, setSection] = useState<"meals" | "preparation" | "grocery">("meals");
   useEffect(() => {
-    let active = true; setLoading(true); setFailed(false);
-    void followupRequest("/api/v1/client/nutrition", value => clientNutritionResponseSchema.parse(value)).then(result => { if (active) setData(result); }).catch(() => { if (active) setFailed(true); }).finally(() => { if (active) setLoading(false); });
+    let active = true; const requestSignal = signal(); setLoading(true); setFailed(false);
+    void followupRequest("/api/v1/client/nutrition", value => clientNutritionResponseSchema.parse(value), undefined, requestSignal).then(result => { if (active && !requestSignal.aborted) setData(result); }).catch(() => { if (active && !requestSignal.aborted) setFailed(true); }).finally(() => { if (active && !requestSignal.aborted) setLoading(false); });
     return () => { active = false; };
-  }, [attempt]);
+  }, [attempt, signal]);
   const publications = data ? [data.publication, ...data.history].filter((item, index, items) => item !== null && items.findIndex(candidate => candidate?.id === item.id) === index) : [];
   const publication = publications.find(item => item?.id === selectedId) ?? publications[0];
   const document = publication?.document;
@@ -30,7 +31,7 @@ export function ClientNutrition() {
     { label: t("Glucides", "Carbohydrates"), value: document.targets.carbohydrateG, unit: "g" },
     { label: t("Lipides", "Fat"), value: document.targets.fatG, unit: "g" },
   ] : [];
-  return <FollowupFrame current="nutrition" title={t("Ton plan nutritionnel.", "Your nutrition plan.")} subtitle={t("Tes repas et les consignes de ton coach, au même endroit.", "Your meals and your coach’s guidance, in one place.")} french={french} changeLanguage={changeLanguage}>
+  return <FollowupFrame current="nutrition" title={t("Ton plan nutritionnel.", "Your nutrition plan.")} subtitle={t("Tes repas et les consignes de ton coach, au même endroit.", "Your meals and your coach’s guidance, in one place.")} french={french} changeLanguage={changeLanguage} onBeforeLogout={pause} onLogoutFailure={() => { resume(); setAttempt(value => value + 1); }}>
     {!document || loading || failed ? <div className={styles.toolbar}>{refresh}</div> : null}
     {loading ? <FollowupLoading french={french} /> : failed ? <FollowupLoadError french={french} retry={() => setAttempt(value => value + 1)} /> : !document || !publication ? <section className={styles.panel}><h2>{t("Ton plan est en préparation.", "Your plan is being prepared.")}</h2><p>{t("Ton coach n’a pas encore publié de plan nutritionnel. Tu le retrouveras ici dès qu’il sera disponible.", "Your coach has not published a nutrition plan yet. It will appear here when available.")}</p><a href="/client" className={styles.link}>{t("Retour à l’accueil", "Back to home")} →</a></section> : <>
       <div className={styles.toolbar}>

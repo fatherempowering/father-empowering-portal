@@ -1,5 +1,73 @@
 import { expect, test, type Page } from "@playwright/test";
 
+async function prepareFollowupLogout(page: Page, screen: string, status = 401, failLogout = false, destination = "/login", mutation = false) {
+  await page.addInitScript(({ status, failLogout, destination, mutation }) => {
+    const state = { held: false, attempts: 0, reads: 0, logouts: 0, release: () => {} };
+    (window as unknown as { __followupLogout: typeof state }).__followupLogout = state;
+    const wrap = (next: typeof fetch): typeof fetch => async (input, init) => {
+      const path = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url, location.origin).pathname;
+      if (path === "/api/v1/auth/client-logout") {
+        state.logouts += 1;
+        if (failLogout && state.logouts === 1) throw new TypeError("Synthetic transport failure");
+        const response = new Response(JSON.stringify({ data: { redirectTo: destination } }), { status: 200 });
+        response.json = async () => { queueMicrotask(() => queueMicrotask(() => state.release())); return { data: { redirectTo: destination } }; };
+        return response;
+      }
+      const scoped = ["/api/v1/client/nutrition", "/api/v1/client/check-ins", "/api/v1/client/progression"].includes(path);
+      if (scoped && init?.method !== "POST") state.reads += 1;
+      if (scoped && (mutation ? init?.method === "POST" : init?.method !== "POST") && ++state.attempts === 1) {
+        const committed = mutation ? await next(input, init) : null;
+        state.held = true;
+        return new Promise<Response>(resolve => { state.release = () => resolve(committed ?? new Response("{}", { status })); });
+      }
+      return next(input, init);
+    };
+    let transport = wrap(window.fetch.bind(window));
+    Object.defineProperty(window, "fetch", { configurable: true, get: () => transport, set: (next: typeof fetch) => { transport = wrap(next); } });
+  }, { status, failLogout, destination, mutation });
+  await page.goto(`/?screen=${screen}&state=followup-empty`);
+  if (!mutation) await page.waitForFunction(() => (window as unknown as { __followupLogout: { held: boolean } }).__followupLogout.held);
+}
+async function followupSignOut(page: Page) {
+  const menu = page.getByRole("button", { name: /^(Ouvrir le menu|Menu)$/ });
+  if (await menu.isVisible()) await menu.click();
+  await page.getByRole("button", { name: "Se déconnecter", exact: true }).click({ noWaitAfter: true });
+}
+for (const screen of ["client-nutrition", "client-progression", "client-check-in"]) for (const status of [401, 403]) {
+  test(`${screen} logout preserves server destination despite late ${status}`, async ({ page }) => {
+    let release = () => {};
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    await page.route("**/login", async route => { await gate; await route.fulfill({ body: "<h1>Coach login</h1>", contentType: "text/html" }).catch(() => {}); });
+    await prepareFollowupLogout(page, screen, status);
+    const wrong: string[] = [];
+    page.on("request", request => { if (new URL(request.url()).pathname === "/client-login") wrong.push(request.url()); });
+    const login = page.waitForRequest(request => new URL(request.url()).pathname === "/login");
+    await followupSignOut(page); await login; release();
+    await expect(page).toHaveURL(/\/login$/); expect(wrong).toEqual([]);
+  });
+  test(`${screen} active ${status} without logout still redirects to Client Auth`, async ({ page }) => {
+    await prepareFollowupLogout(page, screen, status);
+    await page.evaluate(() => (window as unknown as { __followupLogout: { release(): void } }).__followupLogout.release());
+    await expect(page).toHaveURL(/\/client-login$/);
+  });
+}
+for (const screen of ["client-nutrition", "client-progression", "client-check-in"]) {
+  test(`${screen} resumes reads after failed logout without accepting stale unauthorized data`, async ({ page }) => {
+    await prepareFollowupLogout(page, screen, 401, true);
+    await followupSignOut(page);
+    await expect(page.getByRole("alert")).toContainText("Déconnexion impossible");
+    await page.waitForFunction(() => (window as unknown as { __followupLogout: { attempts: number } }).__followupLogout.attempts > 1);
+    await page.evaluate(() => (window as unknown as { __followupLogout: { release(): void } }).__followupLogout.release());
+    await expect(page.getByText("Chargement de tes informations…", { exact: true })).toHaveCount(0);
+    await expect(page).toHaveURL(new RegExp(`screen=${screen}`));
+    await followupSignOut(page); await expect(page).toHaveURL(/\/login$/);
+  });
+  test(`${screen} preserves normal Client logout destination`, async ({ page }) => {
+    await prepareFollowupLogout(page, screen, 401, false, "/client-login");
+    await followupSignOut(page); await expect(page).toHaveURL(/\/client-login$/);
+  });
+}
+
 async function checkin(page: Page, state = "followup-empty") {
   await page.goto(`/?screen=client-check-in&state=${state}`);
   await expect(page.locator("#checkin-observedOn")).toBeVisible();
@@ -10,6 +78,82 @@ async function fillMinimum(page: Page) {
   await page.locator("#checkin-sleepHours").fill("7");
 }
 const commands = (page: Page) => page.evaluate(() => (window as unknown as { __followupCommands: { action: string; expectedVersion: number; clientMutationId: string; document?: { measurements: { bodyWeightLb: number; leftArmIn: number }; energy: number | null; sleepQuality: number | null } }[] }).__followupCommands);
+
+test("committed Check-in save after failed logout stays uncertain and retries only the identical command", async ({ page }) => {
+  await prepareFollowupLogout(page, "client-check-in", 401, true, "/login", true);
+  await expect(page.locator("#checkin-observedOn")).toBeVisible();
+  await fillMinimum(page);
+  await page.getByRole("button", { name: "Enregistrer le brouillon", exact: true }).click();
+  await page.waitForFunction(() => (window as unknown as { __followupLogout: { held: boolean } }).__followupLogout.held);
+  const first = await commands(page); expect(first).toHaveLength(1);
+  const reads = await page.evaluate(() => (window as unknown as { __followupLogout: { reads: number } }).__followupLogout.reads);
+  page.once("dialog", dialog => dialog.accept());
+  await followupSignOut(page);
+  await expect(page.getByText("Déconnexion impossible. Réessaie.", { exact: true })).toBeVisible();
+  await page.evaluate(() => (window as unknown as { __followupLogout: { release(): void } }).__followupLogout.release());
+  await expect(page.getByText("La confirmation n’est pas arrivée.", { exact: false })).toBeVisible();
+  await expect(page.locator("#checkin-measurements-bodyWeightLb")).toHaveValue("180");
+  await expect(page.locator("#checkin-measurements-bodyWeightLb")).toBeDisabled();
+  expect(await commands(page)).toEqual(first);
+  expect(await page.evaluate(() => (window as unknown as { __followupLogout: { reads: number } }).__followupLogout.reads)).toBe(reads);
+  await page.getByRole("button", { name: "Réessayer pour confirmer", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Brouillon enregistré");
+  const retried = await commands(page); expect(retried).toHaveLength(2); expect(retried[1]).toEqual(first[0]);
+  await expect(page.locator("#checkin-measurements-bodyWeightLb")).toHaveValue("180");
+});
+
+test("failed logout never reloads or clears unsaved Check-in input", async ({ page }) => {
+  await prepareFollowupLogout(page, "client-check-in", 401, true, "/login", true);
+  await expect(page.locator("#checkin-observedOn")).toBeVisible(); await fillMinimum(page);
+  const reads = await page.evaluate(() => (window as unknown as { __followupLogout: { reads: number } }).__followupLogout.reads);
+  page.once("dialog", dialog => dialog.accept()); await followupSignOut(page);
+  await expect(page.getByText("Déconnexion impossible. Réessaie.", { exact: true })).toBeVisible();
+  await expect(page.locator("#checkin-measurements-bodyWeightLb")).toHaveValue("180");
+  await expect(page.locator("#checkin-measurements-bodyWeightLb")).toBeEnabled();
+  expect(await commands(page)).toEqual([]);
+  expect(await page.evaluate(() => (window as unknown as { __followupLogout: { reads: number } }).__followupLogout.reads)).toBe(reads);
+  page.once("dialog", dialog => dialog.dismiss());
+  await page.getByRole("link", { name: /Retrouver mes repères/ }).click();
+  await expect(page).toHaveURL(/screen=client-check-in/);
+});
+
+test("cancelled dirty logout sends no request and accepted logout asks only once", async ({ page }) => {
+  await prepareFollowupLogout(page, "client-check-in", 401, false, "/login", true);
+  await expect(page.locator("#checkin-observedOn")).toBeVisible(); await fillMinimum(page);
+  page.once("dialog", dialog => dialog.dismiss()); await followupSignOut(page);
+  expect(await page.evaluate(() => (window as unknown as { __followupLogout: { logouts: number } }).__followupLogout.logouts)).toBe(0);
+  await expect(page.locator("#checkin-measurements-bodyWeightLb")).toHaveValue("180");
+  let confirmations = 0;
+  page.on("dialog", async dialog => { confirmations += 1; await dialog.accept(); });
+  await followupSignOut(page); await expect(page).toHaveURL(/\/login$/);
+  expect(confirmations).toBe(1);
+});
+
+test("cancelled reload after conflict returns to preserved Check-in data when logout fails", async ({ page }) => {
+  await checkin(page, "followup-conflict"); await fillMinimum(page);
+  await page.getByRole("button", { name: "Enregistrer le brouillon", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Ce brouillon a changé ailleurs");
+  await page.evaluate(() => {
+    const existing = window.fetch;
+    window.fetch = async (input, init) => {
+      const path = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url, location.origin).pathname;
+      if (path === "/api/v1/auth/client-logout") throw new TypeError("Synthetic transport failure");
+      if (path === "/api/v1/client/check-ins" && init?.method !== "POST") return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
+      });
+      return existing(input, init);
+    };
+  });
+  page.once("dialog", dialog => dialog.accept());
+  await page.getByRole("button", { name: "Recharger la version enregistrée", exact: true }).click();
+  await expect(page.getByText("Chargement de tes informations…", { exact: true })).toBeVisible();
+  page.once("dialog", dialog => dialog.accept()); await followupSignOut(page);
+  await expect(page.getByText("Déconnexion impossible. Réessaie.", { exact: true })).toBeVisible();
+  await expect(page.locator("#checkin-measurements-bodyWeightLb")).toBeVisible();
+  await expect(page.locator("#checkin-measurements-bodyWeightLb")).toHaveValue("180");
+  await expect(page.getByRole("button", { name: "Recharger la version enregistrée", exact: true })).toBeVisible();
+  expect((await commands(page)).map(item => item.action)).toEqual(["save"]);
+});
 
 test("Nutrition presents only prescribed content, versions and actual preparation", async ({ page }, info) => {
   await page.goto("/?screen=client-nutrition&state=followup-filled");

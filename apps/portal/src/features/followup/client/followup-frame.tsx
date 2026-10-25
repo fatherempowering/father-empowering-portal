@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AppShell } from "@/components/fe/app-shell";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
 import styles from "./followup.module.css";
@@ -17,18 +17,30 @@ export function useFollowupLanguage() {
   return { french, changeLanguage };
 }
 
-export function FollowupFrame({ current, title, subtitle, french, changeLanguage, children, dirty = false }: {
+export function useFollowupLifecycle() {
+  const controller = useRef<AbortController | null>(null);
+  if (!controller.current) controller.current = new AbortController();
+  const pause = useCallback(() => controller.current!.abort(), []);
+  const resume = useCallback(() => { controller.current = new AbortController(); }, []);
+  const signal = useCallback(() => controller.current!.signal, []);
+  useEffect(() => { if (controller.current!.signal.aborted) resume(); return pause; }, [pause, resume]);
+  return { pause, resume, signal };
+}
+
+export function FollowupFrame({ current, title, subtitle, french, changeLanguage, children, dirty = false, onBeforeLogout, onLogoutFailure }: {
   current: "nutrition" | "check-in" | "progression"; title: string; subtitle: string;
   french: boolean; changeLanguage(): void; children: ReactNode; dirty?: boolean;
+  onBeforeLogout(): void; onLogoutFailure(): void;
 }) {
   const [signingOut, setSigningOut] = useState(false);
+  const signingOutRef = useRef(false);
   const [logoutFailed, setLogoutFailed] = useState(false);
   const warning = french ? "Tes modifications ne sont pas encore enregistrées. Quitter cette page ?" : "Your changes have not been saved yet. Leave this page?";
   useEffect(() => {
     if (!dirty) return;
-    const beforeUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    const beforeUnload = (event: BeforeUnloadEvent) => { if (!signingOutRef.current) { event.preventDefault(); event.returnValue = ""; } };
     const followLink = (event: MouseEvent) => {
-      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      if (signingOutRef.current || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
       if (!link || link.target === "_blank" || link.hasAttribute("download") || link.getAttribute("href")?.startsWith("#")) return;
       if (!window.confirm(warning)) { event.preventDefault(); event.stopImmediatePropagation(); }
@@ -38,15 +50,17 @@ export function FollowupFrame({ current, title, subtitle, french, changeLanguage
     return () => { window.removeEventListener("beforeunload", beforeUnload); document.removeEventListener("click", followLink, true); };
   }, [dirty, warning]);
   async function logout() {
-    if (signingOut || (dirty && !window.confirm(warning))) return;
+    if (signingOutRef.current || (dirty && !window.confirm(warning))) return;
+    signingOutRef.current = true;
+    onBeforeLogout();
     setSigningOut(true); setLogoutFailed(false);
     const ok = await requestClientLogout(destination => window.location.replace(destination));
-    if (!ok) { setSigningOut(false); setLogoutFailed(true); }
+    if (!ok) { signingOutRef.current = false; onLogoutFailure(); setSigningOut(false); setLogoutFailed(true); }
   }
   return <AppShell space="client" current={current} locale={french ? "fr" : "en"} documentNavigation legacyClient accountAction={
     <button className="fe-button" type="button" disabled={signingOut} onClick={() => void logout()}>{signingOut ? french ? "Déconnexion…" : "Signing out…" : french ? "Se déconnecter" : "Sign out"}</button>
   }>
-    <div className={styles.page} lang={french ? "fr" : "en"} data-followup={current}>
+    <div className={styles.page} lang={french ? "fr" : "en"} data-followup={current} inert={signingOut}>
       <header className={styles.hero}>
         <div><p className={styles.kicker}>THE LEGACY PROTOCOL</p><h1>{title}</h1><p>{subtitle}</p></div>
         <button type="button" className={`${styles.quietButton} ${styles.languageButton}`} aria-label={french ? "English" : "Français"} onClick={changeLanguage}>{french ? "EN" : "FR"}</button>
