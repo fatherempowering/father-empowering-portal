@@ -1,0 +1,36 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select no_plan();
+select has_table('public','nutrition_plan_drafts');
+select has_table('public','nutrition_plan_publications');
+select has_table('public','client_checkin_drafts');
+select has_table('public','client_checkin_submissions');
+select ok((select bool_and(relrowsecurity and relforcerowsecurity) from pg_class where oid in ('public.nutrition_plan_drafts'::regclass,'public.nutrition_plan_publications'::regclass,'public.client_checkin_drafts'::regclass,'public.client_checkin_submissions'::regclass)),'all follow-up tables force RLS');
+select ok(not has_table_privilege('authenticated','public.nutrition_plan_drafts','INSERT,UPDATE,DELETE'),'no direct nutrition draft writes');
+select ok(not has_table_privilege('authenticated','public.nutrition_plan_publications','INSERT,UPDATE,DELETE'),'no direct publication writes');
+select ok(not has_table_privilege('authenticated','public.client_checkin_drafts','INSERT,UPDATE,DELETE'),'no direct check-in draft writes');
+select ok(not has_table_privilege('authenticated','public.client_checkin_submissions','INSERT,UPDATE,DELETE'),'no direct submission writes');
+select ok(not has_table_privilege('authenticated','app_private.followup_command_receipts','SELECT'),'private idempotency receipts');
+select ok(not has_function_privilege('anon','public.mutate_own_checkin(jsonb)','EXECUTE'),'anonymous cannot write check-ins');
+select ok(not has_function_privilege('anon','public.mutate_coach_nutrition(uuid,jsonb)','EXECUTE'),'anonymous cannot write nutrition');
+select ok(not has_function_privilege('anon','public.get_followup_for_coach(uuid,text,integer)','EXECUTE'),'anonymous cannot read coach follow-up');
+select ok(not app_private.checkin_document_valid('{}'::jsonb),'incomplete shape rejected');
+select ok(not app_private.nutrition_document_valid('{}'::jsonb),'incomplete nutrition shape rejected');
+select ok(app_private.followup_number_valid('null',1,10,true),'optional scores remain unknown');
+select ok(not app_private.followup_number_valid('0',1,10,true),'zero is not a score');
+select ok(not app_private.followup_number_valid('1.5',1,10,true),'scores are whole numbers');
+select ok(app_private.followup_number_valid('0',0,24),'zero sleep is a valid observation');
+select ok(not app_private.followup_number_valid('25',0,24),'sleep exceeds a day rejected');
+select ok(not app_private.followup_text_valid('{"fr":"x","en":"","extra":"injected"}'),'unrecognized nutrition text keys rejected');
+select ok(not app_private.followup_text_has_content(U&'\0009\000A\00A0\FEFF'),'tabs, newlines, NBSP and BOM cannot create visible text');
+select ok(app_private.followup_text_has_content(U&'\00A0Repas\0009'),'real text surrounded by Unicode whitespace remains meaningful');
+create function pg_temp.followup_150_nutrition() returns jsonb language sql immutable as $$
+ select '{"title":{"fr":"Plan","en":""},"targets":{"calories":null,"proteinG":null,"carbohydrateG":null,"fatG":null},"meals":[{"id":"b1500000-0000-4000-8000-000000000001","title":{"fr":"Repas","en":""},"portions":{"fr":"Portion prescrite","en":""},"notes":{"fr":"","en":""}}],"instructions":{"fr":"","en":""},"preparation":{"fr":"","en":""},"grocery":{"fr":"","en":""}}'::jsonb
+$$;
+select ok(app_private.nutrition_document_valid(pg_temp.followup_150_nutrition(),true),'meaningful nutrition document is publishable');
+select ok(not app_private.nutrition_document_valid(jsonb_set(pg_temp.followup_150_nutrition(),'{title,fr}',to_jsonb(U&'\0009\000A\00A0'::text)),true),'whitespace-only plan title cannot publish');
+select ok(not app_private.nutrition_document_valid(jsonb_set(pg_temp.followup_150_nutrition(),'{meals,0,title,fr}',to_jsonb(U&'\0009\000A\00A0'::text)),true),'whitespace-only meal title cannot publish');
+select ok(not app_private.nutrition_document_valid(jsonb_set(pg_temp.followup_150_nutrition(),'{meals,0,portions,fr}',to_jsonb(U&'\0009\000A\00A0'::text)),true),'whitespace-only portion cannot publish');
+select is((select count(*) from pg_trigger where not tgisinternal and tgname in ('nutrition_publication_immutable','checkin_submission_immutable')),2::bigint,'publications and submissions have immutable triggers');
+select * from finish();
+rollback;

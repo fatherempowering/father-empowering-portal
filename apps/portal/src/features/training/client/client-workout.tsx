@@ -25,7 +25,7 @@ import {
 } from "@/lib/contracts/training-results";
 
 import styles from "./client-workout.module.css";
-import { buildGuidedUnits, firstPendingGuidedStep, guidedProgress, guidedSetKey, isGuidedStepSaved, restSecondsRemaining, type GuidedUnit } from "./guided-workout";
+import { buildGuidedUnits, firstPendingGuidedStep, guidedProgress, guidedSetKey, isGuidedStepSaved, restSecondsRemaining, restRingPercent, type GuidedUnit } from "./guided-workout";
 
 const REQUEST_TIMEOUT_MS = 12_000;
 const MAX_EXTRA_SETS_PER_EXERCISE = 20;
@@ -87,6 +87,7 @@ export function ClientWorkout() {
   const [activeStepKey, setActiveStepKey] = useState<string | null>(null);
   const [finishedUnitKey, setFinishedUnitKey] = useState<string | null>(null);
   const [restDeadline, setRestDeadline] = useState<number | null>(null);
+  const [restDuration, setRestDuration] = useState(0);
   const [validationAttempt, setValidationAttempt] = useState(0);
   const guideRegion = useRef<HTMLDivElement | null>(null);
   const errorRegion = useRef<HTMLDivElement | null>(null);
@@ -476,6 +477,7 @@ export function ClientWorkout() {
           setGuideView(next ? "run" : "review");
         } else if (next?.unit.key === pendingTransition.unitKey) {
           setGuideView("run");
+          setRestDuration(pendingTransition.restSeconds);
           setRestDeadline(pendingTransition.restSeconds > 0 ? Date.now() + pendingTransition.restSeconds * 1000 : null);
         } else {
           setFinishedUnitKey(pendingTransition.unitKey);
@@ -703,7 +705,7 @@ export function ClientWorkout() {
                 </div>
                 <button className="fe-button" type="button" onClick={() => openGuidePage("plan")}>{t("Liste des exercices", "Exercise list")}</button>
               </div>
-              {restDeadline !== null ? <GuidedRestTimer deadline={restDeadline} french={french} onContinue={() => setRestDeadline(null)} /> : <>
+              {restDeadline !== null ? <GuidedRestTimer deadline={restDeadline} totalSeconds={restDuration} french={french} onContinue={() => setRestDeadline(null)} /> : <>
                 <div className={styles.mediaSpace} aria-label={t("Repère de mouvement", "Movement reference")}>
                   <span aria-hidden="true">—</span>
                   <p>{t("Image de l’exercice", "Exercise image")}</p>
@@ -871,7 +873,7 @@ function GuidedPlanRows({ units, savedSets, french }: { units: GuidedUnit[]; sav
   })}</ol>;
 }
 
-function GuidedRestTimer({ deadline, french, onContinue }: { deadline: number; french: boolean; onContinue(): void }) {
+function GuidedRestTimer({ deadline, totalSeconds, french, onContinue }: { deadline: number; totalSeconds: number; french: boolean; onContinue(): void }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 250);
@@ -880,11 +882,17 @@ function GuidedRestTimer({ deadline, french, onContinue }: { deadline: number; f
     return () => { window.clearInterval(timer); document.removeEventListener("visibilitychange", refresh); };
   }, []);
   const remaining = restSecondsRemaining(deadline, now);
+  const ring = restRingPercent(deadline, now, totalSeconds);
   return <section className={styles.restTimer} aria-labelledby="rest-timer-title">
     <p className={styles.eyebrow}>{french ? "SÉRIE ENREGISTRÉE" : "SET SAVED"}</p>
     <h3 id="rest-timer-title" tabIndex={-1} data-guide-focus="" className={styles.focusAnchor}>{french ? "Respire. Récupère." : "Breathe. Recover."}</h3>
-    <div className={styles.timerDigits} aria-label={french ? `${remaining} secondes de repos restantes` : `${remaining} seconds of rest remaining`}>
-      {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}
+    <div className={styles.timerDial} role="timer" aria-live="off" aria-label={french ? `${remaining} secondes de repos restantes` : `${remaining} seconds of rest remaining`}>
+      <svg className={styles.timerRing} viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+        <circle className={styles.timerTrack} cx="60" cy="60" r="54" />
+        <circle className={styles.timerArc} cx="60" cy="60" r="54" pathLength="100" strokeDasharray={`${ring} 100`} data-rest-ring={ring.toFixed(2)} />
+      </svg>
+      <span className={styles.timerDigits}>{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</span>
+      <span className={styles.timerCaption}>{french ? "REPOS" : "REST"}</span>
     </div>
     <p role="status">{remaining === 0 ? french ? "Repos terminé. Continue quand tu es prêt." : "Rest finished. Continue when you are ready." : french ? "Le prochain effort t’attend. Rien ne démarre automatiquement." : "Your next effort is waiting. Nothing starts automatically."}</p>
     <button className="fe-button fe-button-primary" type="button" onClick={onContinue}>{remaining ? french ? "Passer le repos" : "Skip rest" : french ? "Continuer" : "Continue"}</button>

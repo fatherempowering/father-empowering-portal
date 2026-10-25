@@ -10,6 +10,7 @@ import {
   type WeekZeroPhotoSlot,
 } from "@/lib/contracts/week-zero-acquisition";
 import styles from "./client-reference-panel.module.css";
+import { LatestCheckInPanel } from "./latest-checkin-panel";
 
 const REQUEST_TIMEOUT = 8_000;
 const MAX_PHOTO_BYTES = 4_194_304;
@@ -132,28 +133,11 @@ export function ClientReferencePanelContent({ french, snapshot, loading = false,
   onRetry: () => void; onAuthRequired: () => void;
 }) {
   const t = (fr: string, en: string) => french ? fr : en;
-  const kpis = [
-    { symbol: "⚖", label: t("Poids", "Bodyweight"), unit: "lb" },
-    { symbol: "☾", label: t("Sommeil", "Sleep"), unit: "" },
-    { symbol: "ϟ", label: t("Énergie", "Energy"), unit: "/10" },
-    { symbol: "◎", label: t("Stress", "Stress"), unit: "/10" },
-    { symbol: "✚", label: t("Courbatures", "Soreness"), unit: "/10" },
-    { symbol: "♡", label: "Cardio", unit: "min" },
-  ];
   const source = snapshot?.status === "DRAFT"
     ? t("Semaine zéro · brouillon enregistré", "Week Zero · saved draft")
     : t("Référence · Semaine zéro", "Reference · Week Zero");
   return <>
-    <section aria-label={t("Dernier check-in", "Last check-in")}>
-      <div className={styles.sectionDivider}><span /><h2>{t("Dernier check-in", "Last check-in")}</h2><span /></div>
-      <div className={styles.kpiGrid}>
-        {kpis.map(kpi => <div className={styles.kpiCard} key={kpi.label} data-testid="reference-checkin-kpi">
-          <div className={styles.kpiLabel}><span aria-hidden="true">{kpi.symbol}</span>{kpi.label}</div>
-          <div className={styles.kpiValue}>— {kpi.unit && <small>{kpi.unit}</small>}</div>
-        </div>)}
-      </div>
-      <p className={styles.checkinNote}>{t("Aucun check-in enregistré ici pour le moment.", "No check-in has been recorded here yet.")}</p>
-    </section>
+    <LatestCheckInPanel french={french} onAuthRequired={onAuthRequired} />
     <section className={styles.card} aria-label={t("Mensurations de départ", "Starting measurements")}>
       <div className={styles.cardHeader}><span className={styles.dot} /><h2>{t("Mensurations", "Measurements")}</h2><span className={styles.badge}>{t("PO", "IN")}</span></div>
       <p className={styles.provenance}>{source}</p>

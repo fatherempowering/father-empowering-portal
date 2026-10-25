@@ -1,0 +1,62 @@
+NUTRITION / CHECK-IN / PROGRESSION — CORE STAGING
+
+Mandat Max du 25 octobre 2026 : ouvrir les trois rubriques Client avec les
+fonctions Legacy et le design Nutrition/Progression Cavalier 5 approuvé, puis
+ajouter un anneau vert au repos guidé. Sidebar actuelle conservée.
+
+Routes Client : /client/nutrition, /client/check-in, /client/progression.
+Coach : /coach/clients/[clientId]/followup, depuis le dossier existant.
+Les gardes d’identité, la vérification Coach et les affectations existantes
+restent l’autorité. Aucun nouveau rôle, élargissement de permission existante,
+import Legacy ou accès Production.
+
+NUTRITION
+Un brouillon par dossier ; version attendue + clé de commande idempotente.
+Publication explicite, instantanée et immuable ; versions précédentes conservées.
+Titre et au moins un repas avec portions nécessaires à la publication.
+Une langue peut être renseignée ; repli explicite sur le texte disponible,
+sans service de traduction automatique. Les cibles sont facultatives et
+prescrites par le Coach, jamais calculées ni assimilées à de la consommation.
+Le plan reste courant jusqu’à sa prochaine publication. Aucun calendrier
+nutritionnel, multiplicateur familial, agrégation d’ingrédients ou supplément
+n’est déduit. Préparation et épicerie sont des consignes publiées ; aucun
+panier synchronisé ou suivi de repas consommés n’est prétendu.
+
+CHECK-IN
+Date d’observation explicite, poids et sommeil requis pour transmettre comme
+dans le formulaire Legacy. Mesures bilatérales et autres observations
+facultatives ; absence de valeur distincte de zéro. Saisie lb/in ou kg/cm,
+stockage canonique lb/in ; conversions exactes puis arrondi de présentation.
+Brouillon visible uniquement par son propriétaire ; check-ins transmis
+visibles par les personnes déjà autorisées au dossier. Aucun écrasement d’un
+check-in transmis. Version monotone après soumission, retries idempotents,
+écriture concurrente périmée refusée. Pas de déverrouillage automatique d’une
+semaine d’entraînement et aucune cadence/règle de programme inventée.
+Les photos privées de semaine zéro sont conservées comme références de départ.
+De nouvelles photos périodiques de check-in ne sont PAS livrées dans ce core :
+leur cycle d’acquisition/historique privé doit être traité séparément.
+
+PROGRESSION
+Sources : semaine zéro SUBMITTED, check-ins transmis, séances COMPLETED réelles.
+Une série EXTRA ne devient pas une séance ; un brouillon ou une séance en
+cours n’est pas comptabilisé comme une réalisation. Total depuis le début du
+suivi, sans faux dénominateur ni objectif implicite. Courbe sur dates réelles,
+tableau accessible, aucune courbe avec une seule valeur, variation neutre.
+La date WZ est celle de transmission, pas une date de mensuration certaine.
+Pas de score de santé, percentile, 1RM, projection ou objectif de poids.
+Limites de lecture signalées : 200 check-ins pour les courbes, 50 publications
+nutritionnelles récentes ; historique des check-ins paginé par 50.
+
+REPOS
+Anneau proportionnel à la durée d’origine et au deadline existant ; chiffres
+centrés, calcul rattrapant les retours d’onglet. Pas d’annonce chaque seconde,
+pas de démarrage automatique à zéro, aucun changement de prescription ou
+de sauvegarde des résultats. Pas de promesse de minuteur durable/offline.
+
+SECURITE / VERIFICATION
+Migration additive 202610250003, RLS sur les quatre nouvelles tables ; writes
+RPC seulement, validators SQL indépendants du navigateur, reçus privés et
+audit sans contenu nutritionnel/santé. Réponses privées no-store. Aucun
+service_role dans le parcours HTTP Coach/Client. Tests SQL, HTTP réels, E2E
+et UI ajoutés au gate existant ; tests de présentation seuls ne valent pas
+preuve de persistance. Livraison Preview uniquement après validation.

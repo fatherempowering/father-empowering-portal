@@ -123,6 +123,12 @@
 .restTimer h3, .completePanel h2 { font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 30px; font-weight: 400; letter-spacing: 1.5px; line-height: 1.05; }
 .restTimer p, .completePanel p { font-size: 13px; color: var(--legacy-txt3); line-height: 1.5; }
 .timerDigits { font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 64px; font-weight: 400; letter-spacing: 2px; line-height: 1; color: var(--guided-green); font-variant-numeric: tabular-nums; }
+.timerDial { position: relative; display: grid; align-content: center; justify-items: center; gap: 6px; width: min(220px, 100%); aspect-ratio: 1; }
+.timerRing { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.timerRing circle { fill: none; stroke-width: 5; }
+.timerTrack { stroke: var(--guided-green); opacity: .14; }
+.timerArc { stroke: var(--guided-green); stroke-linecap: butt; }
+.timerCaption { font: 600 12px/1.4 "FE Sans", "DM Sans", sans-serif; letter-spacing: 2px; color: var(--legacy-txt3); }
 .completeMark { width: 70px; height: 70px; border-radius: 50%; background: rgba(47, 143, 70, .12); color: var(--guided-green); display: flex; align-items: center; justify-content: center; font-size: 35px; margin: 5px auto 0; }
 .nextMovement { width: 100%; margin-top: 2px; background: var(--legacy-black); border-left: 4px solid var(--legacy-orange); border-radius: 14px; padding: 12px; color: #fff; text-align: left; }
 .nextMovement > span { display: block; font-family: "FE Display", "Bebas Neue", sans-serif; font-size: 15px; font-weight: 400; letter-spacing: 1.7px; }

@@ -76,8 +76,8 @@ test("Legacy layout keeps six top tabs, Week Zero to 14, seven weekdays and priv
   await expect(tabs.getByRole("link", { name: "Home", exact: true })).toHaveAttribute("href", "/client?language=en");
   await expect(tabs.getByRole("link", { name: "Training", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(tabs.getByRole("link", { name: "History", exact: true })).toHaveAttribute("href", "/client/program?language=en#workout-history-title");
-  for (const label of ["Nutrition", "Check-in", "Progression"]) {
-    await expect(tabs.getByRole("button", { name: new RegExp(label) })).toBeDisabled();
+  for (const [label, route] of [["Nutrition", "nutrition"], ["Check-in", "check-in"], ["Progression", "progression"]]) {
+    await expect(tabs.getByRole("link", { name: label, exact: true })).toHaveAttribute("href", `/client/${route}?language=en`);
   }
   const weeks = page.getByRole("group", { name: "Program weeks", exact: true });
   await expect(weeks.getByRole("link", { name: /^Week 0 / })).toHaveAttribute("href", "/client/week-zero");

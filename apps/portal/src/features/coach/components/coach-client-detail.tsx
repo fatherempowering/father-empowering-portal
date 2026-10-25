@@ -184,6 +184,9 @@ function ClientAssessment({ value }: { value: CoachClientWeekZero }) {
       <Link className="fe-button fe-button-primary" href={`/coach/clients/${encodeURIComponent(client.id)}/workouts`}>
         Voir les entraînements et résultats
       </Link>
+      <Link className="fe-button" href={`/coach/clients/${encodeURIComponent(client.id)}/followup`}>
+        Nutrition et check-ins
+      </Link>
       <CoachOnboardingDetail clientId={client.id} />
       <CoachWeekZeroAcquisition clientId={client.id} timezone={client.timezone} />
       {submitted && <details

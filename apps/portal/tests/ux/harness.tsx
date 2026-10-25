@@ -23,6 +23,8 @@ import { ProgramBuilder } from "../../src/features/training/coach/program-builde
 import { ClientProgram } from "../../src/features/training/client/client-program";
 import { ClientWorkout } from "../../src/features/training/client/client-workout";
 import { CoachWorkoutResults } from "../../src/features/training/coach/workout-results";
+import { CoachFollowup } from "../../src/features/followup/coach/coach-followup";
+import { setupFollowupHarness, ClientNutrition, ClientCheckIn, ClientProgression } from "./followup-harness";
 import { newProgram, newSession, newBlock, addLibraryExercise } from "../../src/lib/training/program-editor";
 import type { ProgramPublication, PublishProgramRequest } from "../../src/lib/contracts/training-publication";
 import type { ProgramSnapshot, SaveProgramRequest } from "../../src/lib/contracts/training-drafts";
@@ -80,6 +82,9 @@ const clientRouteScreens: Record<string, string> = {
   "/client": "client-v2",
   "/client/program": "client-program",
   "/client/workout": "client-workout",
+  "/client/nutrition": "client-nutrition",
+  "/client/check-in": "client-check-in",
+  "/client/progression": "client-progression",
 };
 const harnessScreen = harnessParameters.get("screen") ?? clientRouteScreens[window.location.pathname];
 let scenario = harnessParameters.get("state") ?? (clientRouteScreens[window.location.pathname] ? "legacy-navigation" : "normal");
@@ -396,7 +401,7 @@ if (needsWorkoutPublication) {
   if (scenario.startsWith("guided-")) {
     const session = publication.document.weeks[0].sessions[0];
     const standard = session.blocks[0];
-    standard.exercises[0].prescription.restSeconds = 1;
+    standard.exercises[0].prescription.restSeconds = scenario === "guided-rest-long" ? 60 : 1;
     const superset = structuredClone(standard);
     superset.id = "19600000-0000-4000-8000-000000000101";
     superset.mode = "superset";
@@ -1048,6 +1053,7 @@ window.fetch = async (url, init) => {
     });
   return reply({ data: {} });
 };
+window.fetch = setupFollowupHarness(() => scenario, window.fetch);
 function CodeExercise() {
   const [code, setCode] = useState("");
   return (
@@ -1072,6 +1078,10 @@ function Harness() {
   if (view === "program-builder") return <ProgramBuilder />;
   if (view === "client-program") return <ClientProgram />;
   if (view === "client-workout") return <ClientWorkout />;
+  if (view === "client-nutrition") return <ClientNutrition />;
+  if (view === "client-check-in") return <ClientCheckIn />;
+  if (view === "client-progression") return <ClientProgression />;
+  if (view === "coach-followup") return <CoachFollowup clientId="76000000-0000-4000-8000-000000000010" />;
   if (view === "coach-workouts") return <CoachWorkoutResults clientId={recipientId} />;
   if (view === "landing-en" || view === "landing-fr") {
     return <LandingPage locale={view === "landing-fr" ? "fr" : "en"} />;

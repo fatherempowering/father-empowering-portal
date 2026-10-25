@@ -80,6 +80,31 @@ test("rest timer exposes one named region in both languages and releases it on c
   await expect(page.getByRole("region", { name: "Dumbbell Press", exact: true })).toHaveCount(1);
 });
 
+test("green rest ring shrinks, catches up and never starts the next set automatically", async ({ page }, info) => {
+  await page.clock.install();
+  await page.goto(url("guided-rest-long"));
+  await page.getByRole("button", { name: "Commencer la séance", exact: true }).click();
+  await fillSet(page, "Dumbbell Press", 1);
+  await page.getByRole("button", { name: "Valider la série", exact: true }).click();
+  const timer = page.getByRole("timer");
+  await expect(timer).toBeVisible();
+  const start = Number(await timer.locator("[data-rest-ring]").getAttribute("data-rest-ring"));
+  expect(start).toBeGreaterThan(90);
+  await page.clock.fastForward(30_000);
+  const half = Number(await timer.locator("[data-rest-ring]").getAttribute("data-rest-ring"));
+  expect(half).toBeGreaterThan(40);
+  expect(half).toBeLessThanOrEqual(50);
+  await page.screenshot({ path: info.outputPath("green-rest-ring.png"), fullPage: true });
+  await page.clock.fastForward(40_000);
+  await expect(timer).toHaveText("0:00REPOS");
+  await expect(timer.locator("[data-rest-ring]")).toHaveAttribute("data-rest-ring", "0.00");
+  await expect(setRow(page, "Dumbbell Press", 2)).toHaveCount(0);
+  expect(await requests(page)).toHaveLength(2);
+  await page.getByRole("button", { name: "Continuer", exact: true }).click();
+  await expect(timer).toHaveCount(0);
+  await expect(setRow(page, "Dumbbell Press", 2)).toBeVisible();
+});
+
 test("guided response loss keeps progress unconfirmed and retries the identical command", async ({ page }) => {
   await page.goto(url("guided-response-lost"));
   await page.getByRole("button", { name: "Commencer la séance", exact: true }).click();

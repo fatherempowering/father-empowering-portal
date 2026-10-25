@@ -7,7 +7,7 @@ import styles from "./legacy-client-header.module.css";
 export function LegacyClientHeader({ french, name, active, menu }: {
   french: boolean;
   name?: string;
-  active: "home" | "training";
+  active: "home" | "training" | "nutrition" | "check-in" | "progression";
   menu?: ReactNode;
 }) {
   const [now, setNow] = useState<Date | null>(null);
@@ -22,7 +22,6 @@ export function LegacyClientHeader({ french, name, active, menu }: {
     return () => { clearInterval(timer); window.removeEventListener("online", connectivity); window.removeEventListener("offline", connectivity); };
   }, []);
   const language = french ? "fr" : "en";
-  const pending = french ? "Module pas encore disponible" : "Module not available yet";
   return <>
     <header className={styles.header} data-legacy-client-header="">
       <div className={styles.identity}>
@@ -39,9 +38,9 @@ export function LegacyClientHeader({ french, name, active, menu }: {
     <nav className={styles.navigation} aria-label={french ? "Navigation du portail" : "Portal navigation"} data-legacy-client-tabs="">
       <a href={`/client?language=${language}`} aria-current={active === "home" ? "page" : undefined}><span aria-hidden="true">⌂</span>{french ? "Accueil" : "Home"}</a>
       <a href={`/client/program?language=${language}`} aria-current={active === "training" ? "page" : undefined}><span aria-hidden="true">⚒</span>{french ? "Entraînement" : "Training"}</a>
-      <button type="button" disabled title={pending}><span aria-hidden="true">♨</span>Nutrition<small>{french ? "À venir" : "Coming soon"}</small></button>
-      <button type="button" disabled title={pending}><span aria-hidden="true">☷</span>Check-in<small>{french ? "À venir" : "Coming soon"}</small></button>
-      <button type="button" disabled title={pending}><span aria-hidden="true">▲</span>Progression<small>{french ? "À venir" : "Coming soon"}</small></button>
+      <a href={`/client/nutrition?language=${language}`} aria-current={active === "nutrition" ? "page" : undefined}><span aria-hidden="true">♨</span>Nutrition</a>
+      <a href={`/client/check-in?language=${language}`} aria-current={active === "check-in" ? "page" : undefined}><span aria-hidden="true">☷</span>Check-in</a>
+      <a href={`/client/progression?language=${language}`} aria-current={active === "progression" ? "page" : undefined}><span aria-hidden="true">▲</span>Progression</a>
       <a href={`/client/program?language=${language}#workout-history-title`}><span aria-hidden="true">↻</span>{french ? "Historique" : "History"}</a>
     </nav>
   </>;

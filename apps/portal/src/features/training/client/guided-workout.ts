@@ -78,3 +78,9 @@ export function guidedProgress(units: GuidedUnit[], saved: SetState[]) {
 export function restSecondsRemaining(deadline: number, now: number) {
   return Math.max(0, Math.ceil((deadline - now) / 1000));
 }
+
+/** Presentation only: the original prescribed duration remains the denominator. */
+export function restRingPercent(deadline: number, now: number, totalSeconds: number) {
+  if (!Number.isFinite(deadline) || !Number.isFinite(now) || !Number.isFinite(totalSeconds) || totalSeconds <= 0) return 0;
+  return Math.min(100, Math.max(0, ((deadline - now) / (totalSeconds * 1000)) * 100));
+}
