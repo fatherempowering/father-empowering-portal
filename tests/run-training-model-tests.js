@@ -43,6 +43,10 @@ function invalid(name, mutate, expected) {
 
 const valid = validateTrainingModel(example, { allowEmptyWeeks: false });
 assert('official-two-week-example-is-valid', valid.errors.length === 0, valid.errors.join(' | '));
+const unprescribedRirExample = clone(example);
+unprescribedRirExample.training.weeks.forEach((week) => { week.targetRir = null; });
+const validUnprescribedRir = validateTrainingModel(unprescribedRirExample, { allowEmptyWeeks: false });
+assert('explicit-null-week-rir-is-valid', validUnprescribedRir.errors.length === 0, validUnprescribedRir.errors.join(' | '));
 const supersetExample = clone(example);
 const supersetBlock = supersetExample.training.weeks[0].sessions['upper-a'].blocks[0];
 supersetBlock.mode = 'superset';
@@ -152,6 +156,8 @@ invalid('declared-total-weeks-is-blocked', (value) => { value.training.totalWeek
 invalid('client-results-in-prescription-are-blocked', (value) => { value.training.weeks[0].sessions['upper-a'].blocks[0].exercises[0].actualLoad = 150; }, 'actualLoad');
 invalid('non-sequential-weeks-are-blocked', (value) => { value.training.weeks[1].week = 3; }, 'sequential');
 invalid('invalid-week-rir-is-blocked', (value) => { value.training.weeks[0].targetRir = 8; }, 'targetRir');
+invalid('missing-week-rir-is-blocked', (value) => { delete value.training.weeks[0].targetRir; }, 'targetRir');
+invalid('string-week-rir-is-blocked', (value) => { value.training.weeks[0].targetRir = '0'; }, 'targetRir');
 invalid('flexible-session-cannot-impose-day', (value) => { value.training.sessionCatalog[4].schedule.suggestedDay = 'SAT'; }, 'flexible session');
 invalid('unknown-session-is-blocked', (value) => { value.training.weeks[0].sessions.unknown = { blocks: [] }; }, 'missing from sessionCatalog');
 invalid('legacy-block-names-are-blocked', (value) => { value.training.weeks[0].sessions['upper-a'].blocs = []; }, 'legacy blocs/exs');

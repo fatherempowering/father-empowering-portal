@@ -132,7 +132,7 @@ function validateTrainingModel(data, options = {}) {
     ['label', 'phase', 'objective', 'desc', 'msg'].forEach((field) => {
       if (week[field] != null) validateLocalizedText(week[field], `${weekLabel}.${field}`, errors, warnings, { requireBilingual: true });
     });
-    if (!Number.isInteger(week.targetRir) || week.targetRir < 0 || week.targetRir > 5) (allowLegacy ? warnings : errors).push(`${weekLabel}.targetRir must be an integer from 0 to 5.`);
+    if (week.targetRir !== null && (!Number.isInteger(week.targetRir) || week.targetRir < 0 || week.targetRir > 5)) (allowLegacy ? warnings : errors).push(`${weekLabel}.targetRir must be an integer from 0 to 5, or null when not prescribed.`);
     if (!isObject(week.sessions)) return errors.push(`${weekLabel}.sessions is required.`);
     Object.entries(week.sessions).forEach(([sessionId, session]) => {
       const sessionLabel = `${weekLabel}.sessions.${sessionId}`;

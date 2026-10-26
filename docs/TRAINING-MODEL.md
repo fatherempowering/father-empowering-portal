@@ -86,6 +86,8 @@ Chaque exercice contient une clé stable et un objet `prescription` :
 
 La cible `week.targetRir` s’applique par défaut. `prescription.targetRir` la remplace seulement pour cet exercice.
 
+Une valeur `week.targetRir: null` explicite signifie qu’aucune cible de RIR n’est prescrite par le coach. Elle ne signifie jamais RIR 0 ni entraînement à l’échec. Le champ reste obligatoire : utiliser un entier de 0 à 5 lorsqu’une cible est prescrite, ou `null` lorsqu’elle ne l’est pas.
+
 ## Superset
 
 Un superset est déclaré au niveau du bloc. Il contient exactement deux exercices ayant le même nombre de séries. `restSeconds` représente le repos pris après avoir exécuté les deux exercices du tour.

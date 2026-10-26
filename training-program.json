@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "programVersion": "training-template-v1",
-  "updatedAt": "2026-07-10T00:00:00Z",
+  "programVersion": "training-week1-monday-quads-biceps-20261026-v2",
+  "updatedAt": "2026-10-26T17:31:42Z",
   "training": {
     "phase": {
       "id": "phase-1",
@@ -170,7 +170,521 @@
       "fr": "Complète d’abord la Semaine 0. Ton entraînement apparaîtra ici lorsque Coach Max aura construit le protocole."
     },
     "keyLifts": [],
-    "weeks": []
+    "weeks": [
+      {
+        "week": 1,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "day": {
+              "en": "MON · TRAINING",
+              "fr": "LUN · ENTRAÎNEMENT"
+            },
+            "title": {
+              "en": "Training – Quadriceps & Biceps",
+              "fr": "Entraînement – Quadriceps & Biceps"
+            },
+            "warmup": {
+              "en": "5 to 10 minutes of light cardio, hip/knee/ankle mobility, then 1 to 2 progressive sets before each exercise without failure.",
+              "fr": "5 à 10 minutes de cardio léger, mobilité hanches/genoux/chevilles, puis 1 à 2 séries progressives avant chaque exercice sans échec."
+            },
+            "blocks": [
+              {
+                "label": {
+                  "en": "QUADRICEPS — 12 SETS",
+                  "fr": "QUADRICEPS — 12 SÉRIES"
+                },
+                "mode": "standard",
+                "exercises": [
+                  {
+                    "key": "w1_quad_1",
+                    "name": "Unilateral Leg Extension",
+                    "cue": {
+                      "en": "20 per leg; maximum contraction, controlled range of motion",
+                      "fr": "20 par jambe; contraction maximale, amplitude contrôlée"
+                    },
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "20 / leg",
+                      "restSeconds": 60,
+                      "tempo": "2-2-2",
+                      "loadTarget": {
+                        "en": "100% effort, not 100% of 1RM",
+                        "fr": "100 % d’effort, pas 100 % du 1RM"
+                      },
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "w1_quad_2",
+                    "name": "Unilateral Leg Press",
+                    "cue": {
+                      "en": "20 per leg; sound technique, controlled range of motion",
+                      "fr": "20 par jambe; technique maîtrisée, amplitude contrôlée"
+                    },
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "20 / leg",
+                      "restSeconds": 60,
+                      "tempo": "2-2-2",
+                      "loadTarget": {
+                        "en": "100% effort, not 100% of 1RM",
+                        "fr": "100 % d’effort, pas 100 % du 1RM"
+                      },
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "w1_quad_3",
+                    "name": "Front Squat",
+                    "cue": {
+                      "en": "Sound technique, maximum contraction and a pump",
+                      "fr": "Technique maîtrisée, contraction maximale et congestion"
+                    },
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "20",
+                      "restSeconds": 60,
+                      "tempo": "2-2-2",
+                      "loadTarget": {
+                        "en": "100% effort, not 100% of 1RM",
+                        "fr": "100 % d’effort, pas 100 % du 1RM"
+                      },
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "w1_quad_4",
+                    "name": "Walking Lunges",
+                    "cue": {
+                      "en": "20 total, 10 per leg; controlled movement",
+                      "fr": "20 au total, 10 par jambe; mouvement contrôlé"
+                    },
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "20 total (10 / leg)",
+                      "restSeconds": 60,
+                      "tempo": "2-2-2",
+                      "loadTarget": {
+                        "en": "100% effort, not 100% of 1RM",
+                        "fr": "100 % d’effort, pas 100 % du 1RM"
+                      },
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              },
+              {
+                "label": {
+                  "en": "BICEPS — 15 SETS",
+                  "fr": "BICEPS — 15 SÉRIES"
+                },
+                "mode": "standard",
+                "exercises": [
+                  {
+                    "key": "w1_biceps_1",
+                    "name": "EZ Bar Curl",
+                    "cue": {
+                      "en": "Brisk pace, control and maximum contraction",
+                      "fr": "Rythme soutenu, contrôle et contraction maximale"
+                    },
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "restSeconds": 45,
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "w1_biceps_2",
+                    "name": "Incline Dumbbell Curl",
+                    "cue": {
+                      "en": "Brisk pace, control and maximum contraction",
+                      "fr": "Rythme soutenu, contrôle et contraction maximale"
+                    },
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "restSeconds": 45,
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "w1_biceps_3",
+                    "name": "Preacher Curl",
+                    "cue": {
+                      "en": "Brisk pace, control and maximum contraction",
+                      "fr": "Rythme soutenu, contrôle et contraction maximale"
+                    },
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "restSeconds": 45,
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "w1_biceps_4",
+                    "name": "Cable Biceps Curl",
+                    "cue": {
+                      "en": "Brisk pace, control and maximum contraction",
+                      "fr": "Rythme soutenu, contrôle et contraction maximale"
+                    },
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "restSeconds": 45,
+                      "unit": "lb"
+                    }
+                  },
+                  {
+                    "key": "w1_biceps_5",
+                    "name": "Hammer Curl",
+                    "cue": {
+                      "en": "Brisk pace, control and maximum contraction",
+                      "fr": "Rythme soutenu, contrôle et contraction maximale"
+                    },
+                    "prescription": {
+                      "sets": 3,
+                      "reps": "12",
+                      "restSeconds": 45,
+                      "unit": "lb"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        },
+        "phase": {
+          "en": "6 DAYS OUT • Final week before competition",
+          "fr": "6 DAYS OUT • Dernière semaine avant compétition"
+        },
+        "desc": {
+          "en": "WARM-UP: 5 to 10 minutes of light cardio, hip/knee/ankle mobility, then 1 to 2 progressive sets before each exercise without failure. QUADRICEPS: Unilateral Leg Extension 3 × 20 per leg; Unilateral Leg Press 3 × 20 per leg; Front Squat 3 × 20; Walking Lunges 3 × 20 total, 10 per leg. Tempo 2-2-2, rest 60 seconds, 100% effort with sound technique, maximum contraction, controlled range of motion and a pump. BICEPS: EZ Bar Curl, Incline Dumbbell Curl, Preacher Curl, Cable Biceps Curl and Hammer Curl, each 3 × 12. Five exercises offered to choose from according to preferences; all five are displayed, totaling 15 sets. Rest 45 seconds, brisk pace, control and maximum contraction. SESSION TOTAL: 27 sets — 12 quadriceps and 15 biceps. FOLLOWING DAYS: Resume your usual program at about 70% of normal intensity, 15 reps per set; favor a pump over heavy loads, voluntary contractions and controlled movements. WARNING: 100% effort does not mean 100% of 1RM. Six days before the stage, avoid any load that compromises technique or risks injury; confirm failure training with your coach. NEXT CHECK-IN: Tuesday, October 27, in the morning.",
+          "fr": "ÉCHAUFFEMENT : 5 à 10 minutes de cardio léger, mobilité hanches/genoux/chevilles, puis 1 à 2 séries progressives avant chaque exercice sans échec. QUADRICEPS : Leg Extension unilatéral 3 × 20 par jambe; Leg Press unilatéral 3 × 20 par jambe; Front Squat 3 × 20; Walking Lunges 3 × 20 au total, 10 par jambe. Tempo 2-2-2, repos 60 secondes, 100 % d’effort avec technique maîtrisée, contraction maximale, amplitude contrôlée et congestion. BICEPS : EZ Bar Curl, Incline Dumbbell Curl, Preacher Curl, Cable Biceps Curl et Hammer Curl, chacun 3 × 12. Cinq exercices proposés au choix selon préférences; les cinq sont affichés, total 15 séries. Repos 45 secondes, rythme soutenu, contrôle et contraction maximale. TOTAL SÉANCE : 27 séries, dont 12 quadriceps et 15 biceps. JOURS SUIVANTS : Reprendre le programme habituel, intensité environ 70 % normale, 15 répétitions par série, congestion plutôt que charges lourdes, contractions volontaires et mouvements contrôlés. AVERTISSEMENT : 100 % ne signifie pas 100 % du 1RM; à six jours de la scène, éviter toute charge compromettant la technique ou présentant un risque de blessure; valider avec le coach pour l’échec. PROCHAIN CHECK-IN : Mardi 27 octobre au matin."
+        },
+        "msg": {
+          "en": "6 DAYS OUT • Final week before competition. WARM-UP: 5 to 10 minutes of light cardio, hip/knee/ankle mobility, then 1 to 2 progressive sets before each exercise without failure. QUADRICEPS: Unilateral Leg Extension 3 × 20 per leg; Unilateral Leg Press 3 × 20 per leg; Front Squat 3 × 20; Walking Lunges 3 × 20 total, 10 per leg. Tempo 2-2-2, rest 60 seconds, 100% effort with sound technique, maximum contraction, controlled range of motion and a pump. BICEPS: EZ Bar Curl, Incline Dumbbell Curl, Preacher Curl, Cable Biceps Curl and Hammer Curl, each 3 × 12. Five exercises offered to choose from according to preferences; all five are displayed, totaling 15 sets. Rest 45 seconds, brisk pace, control and maximum contraction. SESSION TOTAL: 27 sets — 12 quadriceps and 15 biceps. FOLLOWING DAYS: Resume your usual program at about 70% of normal intensity, 15 reps per set; favor a pump over heavy loads, voluntary contractions and controlled movements. WARNING: 100% effort does not mean 100% of 1RM. Six days before the stage, avoid any load that compromises technique or risks injury; confirm failure training with your coach. NEXT CHECK-IN: Tuesday, October 27, in the morning.",
+          "fr": "6 DAYS OUT • Dernière semaine avant compétition. ÉCHAUFFEMENT : 5 à 10 minutes de cardio léger, mobilité hanches/genoux/chevilles, puis 1 à 2 séries progressives avant chaque exercice sans échec. QUADRICEPS : Leg Extension unilatéral 3 × 20 par jambe; Leg Press unilatéral 3 × 20 par jambe; Front Squat 3 × 20; Walking Lunges 3 × 20 au total, 10 par jambe. Tempo 2-2-2, repos 60 secondes, 100 % d’effort avec technique maîtrisée, contraction maximale, amplitude contrôlée et congestion. BICEPS : EZ Bar Curl, Incline Dumbbell Curl, Preacher Curl, Cable Biceps Curl et Hammer Curl, chacun 3 × 12. Cinq exercices proposés au choix selon préférences; les cinq sont affichés, total 15 séries. Repos 45 secondes, rythme soutenu, contrôle et contraction maximale. TOTAL SÉANCE : 27 séries, dont 12 quadriceps et 15 biceps. JOURS SUIVANTS : Reprendre le programme habituel, intensité environ 70 % normale, 15 répétitions par série, congestion plutôt que charges lourdes, contractions volontaires et mouvements contrôlés. AVERTISSEMENT : 100 % ne signifie pas 100 % du 1RM; à six jours de la scène, éviter toute charge compromettant la technique ou présentant un risque de blessure; valider avec le coach pour l’échec. PROCHAIN CHECK-IN : Mardi 27 octobre au matin."
+        }
+      },
+      {
+        "week": 2,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "blocks": []
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 3,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "blocks": []
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 4,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "blocks": []
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 5,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "blocks": []
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 6,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "blocks": []
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 7,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "blocks": []
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 8,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "blocks": []
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 9,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "blocks": []
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 10,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "blocks": []
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 11,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "blocks": []
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        }
+      },
+      {
+        "week": 12,
+        "targetRir": null,
+        "sessions": {
+          "a": {
+            "blocks": []
+          },
+          "b": {
+            "blocks": []
+          },
+          "c": {
+            "blocks": []
+          },
+          "d": {
+            "blocks": []
+          },
+          "e": {
+            "blocks": []
+          },
+          "f": {
+            "blocks": []
+          },
+          "g": {
+            "blocks": []
+          }
+        }
+      }
+    ]
   },
   "updateTitle": {
     "en": "CoachMax has prepared an update for your protocol.",
