@@ -1,189 +1,132 @@
 {
   "schemaVersion": 1,
-  "programVersion": "training-template-v1",
-  "updatedAt": "2026-07-10T00:00:00Z",
+  "programVersion": "max-week1-quads-biceps-20261026-v1",
+  "updatedAt": "2026-10-26T14:30:00Z",
+  "updateTitle": "Week 1 — Quadriceps & Biceps",
+  "updateMessage": "Your Monday workout is ready.",
+  "releaseNotes": [
+    "Monday: 27 working sets"
+  ],
   "training": {
-    "phase": {
-      "id": "phase-1",
-      "label": {
-        "en": "PHASE 1",
-        "fr": "PHASE 1"
-      },
-      "order": 1,
-      "objective": {
-        "en": "Built after Week 0 review",
-        "fr": "Construit après l’analyse de la Semaine 0"
-      }
-    },
-    "progression": {
-      "mode": "coach-confirmed",
-      "clientConfirmationRequired": true,
-      "keyLiftChartEnabled": false,
-      "rules": []
-    },
-    "resultTracking": {
-      "scope": "per-set",
-      "perSetFields": [
-        "load",
-        "reps",
-        "rir"
-      ]
-    },
+    "phase": "6 DAYS OUT",
+    "defaultPhase": "6 DAYS OUT",
+    "defaultDesc": "Last week before competition",
     "sessionCatalog": [
       {
         "id": "a",
-        "label": {
-          "en": "SESSION A",
-          "fr": "SÉANCE A"
-        },
-        "title": {
-          "en": "Training A",
-          "fr": "Entraînement A"
-        },
-        "type": "training",
-        "required": true,
-        "schedule": {
-          "mode": "suggested",
-          "suggestedDay": "MON"
-        },
+        "label": "SESSION A",
+        "title": "Quadriceps & Biceps",
+        "suggestedDay": "MON",
         "order": 1
-      },
-      {
-        "id": "b",
-        "label": {
-          "en": "SESSION B",
-          "fr": "SÉANCE B"
-        },
-        "title": {
-          "en": "Training B",
-          "fr": "Entraînement B"
-        },
-        "type": "training",
-        "required": true,
-        "schedule": {
-          "mode": "suggested",
-          "suggestedDay": "TUE"
-        },
-        "order": 2
-      },
-      {
-        "id": "c",
-        "label": {
-          "en": "SESSION C",
-          "fr": "SÉANCE C"
-        },
-        "title": {
-          "en": "Training C",
-          "fr": "Entraînement C"
-        },
-        "type": "training",
-        "required": true,
-        "schedule": {
-          "mode": "suggested",
-          "suggestedDay": "WED"
-        },
-        "order": 3
-      },
-      {
-        "id": "d",
-        "label": {
-          "en": "SESSION D",
-          "fr": "SÉANCE D"
-        },
-        "title": {
-          "en": "Training D",
-          "fr": "Entraînement D"
-        },
-        "type": "training",
-        "required": true,
-        "schedule": {
-          "mode": "suggested",
-          "suggestedDay": "THU"
-        },
-        "order": 4
-      },
-      {
-        "id": "e",
-        "label": {
-          "en": "SESSION E",
-          "fr": "SÉANCE E"
-        },
-        "title": {
-          "en": "Optional Training",
-          "fr": "Entraînement facultatif"
-        },
-        "type": "training",
-        "required": false,
-        "schedule": {
-          "mode": "flexible"
-        },
-        "order": 5
-      },
-      {
-        "id": "f",
-        "label": {
-          "en": "ACTIVE RECOVERY",
-          "fr": "RÉCUPÉRATION ACTIVE"
-        },
-        "title": {
-          "en": "Active Recovery",
-          "fr": "Récupération active"
-        },
-        "type": "active-recovery",
-        "required": true,
-        "schedule": {
-          "mode": "suggested",
-          "suggestedDay": "SAT"
-        },
-        "order": 6
-      },
-      {
-        "id": "g",
-        "label": {
-          "en": "COMPLETE REST",
-          "fr": "REPOS COMPLET"
-        },
-        "title": {
-          "en": "Complete Rest",
-          "fr": "Repos complet"
-        },
-        "type": "complete-rest",
-        "required": true,
-        "schedule": {
-          "mode": "suggested",
-          "suggestedDay": "SUN"
-        },
-        "order": 7
       }
     ],
-    "complementaryProtocols": [],
-    "defaultPhase": {
-      "en": "PROTOCOL BUILD",
-      "fr": "CONSTRUCTION DU PROTOCOLE"
-    },
-    "defaultDesc": {
-      "en": "Your personalized training will be built after Coach Max reviews your Week 0 data.",
-      "fr": "Ton entraînement personnalisé sera construit après l’analyse de tes données de Semaine 0 par Coach Max."
-    },
-    "defaultMessage": {
-      "en": "Complete Week 0 first. Your training plan will appear here once Coach Max builds the protocol.",
-      "fr": "Complète d’abord la Semaine 0. Ton entraînement apparaîtra ici lorsque Coach Max aura construit le protocole."
-    },
-    "keyLifts": [],
-    "weeks": []
-  },
-  "updateTitle": {
-    "en": "CoachMax has prepared an update for your protocol.",
-    "fr": "CoachMax a préparé une mise à jour de ton protocole."
-  },
-  "updateMessage": {
-    "en": "A new training phase or adjustment is ready.",
-    "fr": "Une nouvelle phase d’entraînement ou un ajustement est prêt."
-  },
-  "releaseNotes": [
-    {
-      "en": "Training plan updated",
-      "fr": "Plan d’entraînement mis à jour"
-    }
-  ]
+    "weeks": [
+      {
+        "week": 1,
+        "phase": "6 DAYS OUT",
+        "desc": "Quadriceps & Biceps — Monday",
+        "msg": "100% effort is not 100% of 1RM. Maintain controlled technique. Confirm failure targets with coach.",
+        "sessions": {
+          "a": {
+            "day": "MON · QUADS & BICEPS",
+            "title": "QUADRICEPS & BICEPS",
+            "warmup": "5–10 min easy cardio, hip/knee/ankle mobility, 1–2 progressive warm-up sets before each exercise without failure.",
+            "blocks": [
+              {
+                "label": "QUADRICEPS · 12 SETS",
+                "exercises": [
+                  {
+                    "name": "Single-Leg Leg Extension",
+                    "sets": 3,
+                    "reps": "20 / leg",
+                    "key": "w1_quad_1",
+                    "target": "",
+                    "unit": "lbs",
+                    "note": "Tempo 2-2-2 · Rest 60 sec · Controlled range, maximal contraction"
+                  },
+                  {
+                    "name": "Single-Leg Leg Press",
+                    "sets": 3,
+                    "reps": "20 / leg",
+                    "key": "w1_quad_2",
+                    "target": "",
+                    "unit": "lbs",
+                    "note": "Tempo 2-2-2 · Rest 60 sec · Controlled range, maximal contraction"
+                  },
+                  {
+                    "name": "Front Squat",
+                    "sets": 3,
+                    "reps": "20",
+                    "key": "w1_quad_3",
+                    "target": "",
+                    "unit": "lbs",
+                    "note": "Tempo 2-2-2 · Rest 60 sec · Controlled range, maximal contraction"
+                  },
+                  {
+                    "name": "Walking Lunges",
+                    "sets": 3,
+                    "reps": "20 total (10 / leg)",
+                    "key": "w1_quad_4",
+                    "target": "",
+                    "unit": "lbs",
+                    "note": "Tempo 2-2-2 · Rest 60 sec · Controlled range, maximal contraction"
+                  }
+                ]
+              },
+              {
+                "label": "BICEPS · 15 SETS",
+                "exercises": [
+                  {
+                    "name": "EZ Bar Curl",
+                    "sets": 3,
+                    "reps": "12",
+                    "key": "w1_biceps_1",
+                    "target": "",
+                    "unit": "lbs",
+                    "note": "Rest 45 sec · Controlled contraction, steady pace"
+                  },
+                  {
+                    "name": "Incline Dumbbell Curl",
+                    "sets": 3,
+                    "reps": "12",
+                    "key": "w1_biceps_2",
+                    "target": "",
+                    "unit": "lbs",
+                    "note": "Rest 45 sec · Controlled contraction, steady pace"
+                  },
+                  {
+                    "name": "Preacher Curl",
+                    "sets": 3,
+                    "reps": "12",
+                    "key": "w1_biceps_3",
+                    "target": "",
+                    "unit": "lbs",
+                    "note": "Rest 45 sec · Controlled contraction, steady pace"
+                  },
+                  {
+                    "name": "Cable Biceps Curl",
+                    "sets": 3,
+                    "reps": "12",
+                    "key": "w1_biceps_4",
+                    "target": "",
+                    "unit": "lbs",
+                    "note": "Rest 45 sec · Controlled contraction, steady pace"
+                  },
+                  {
+                    "name": "Hammer Curl",
+                    "sets": 3,
+                    "reps": "12",
+                    "key": "w1_biceps_5",
+                    "target": "",
+                    "unit": "lbs",
+                    "note": "Rest 45 sec · Controlled contraction, steady pace"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
 }
