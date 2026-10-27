@@ -262,6 +262,53 @@ test("Coach numeric entry selects values and normalizes only compact tempos", as
   await tempo.fill("2 / pause / X"); await tempo.press("Tab"); await expect(tempo).toHaveValue("2 / pause / X");
 });
 
+for (const interaction of ["selection", "blur and refocus", "new input"] as const) test(`delayed tempo formatting never overrides ${interaction}`, async ({ page }) => {
+  await page.goto("/?screen=program-builder");
+  await page.getByRole("button", { name: "Ajouter une séance", exact: true }).click();
+  await page.getByRole("button", { name: "Ajouter un bloc", exact: true }).click();
+  await addPress(page);
+  const tempo = page.getByRole("article", { name: "Exercice 1", exact: true }).getByLabel("Tempo", { exact: true });
+  await tempo.fill("2-2");
+  await page.evaluate(() => {
+    const original = window.requestAnimationFrame.bind(window);
+    const cancelled = new Set<number>();
+    const originalCancel = window.cancelAnimationFrame.bind(window);
+    let pending: { callback: FrameRequestCallback; id: number } | null = null;
+    const heldId = 900000001;
+    const gate = { armed: true, release() { gate.armed = false; const current = pending; pending = null; if (current && !cancelled.has(current.id)) current.callback(performance.now()); } };
+    Object.assign(window, { __tempoFrame: gate });
+    window.requestAnimationFrame = callback => {
+      if (!gate.armed) return original(callback);
+      gate.armed = false; pending = { callback, id: heldId }; return heldId;
+    };
+    window.cancelAnimationFrame = id => { if (id === heldId) cancelled.add(id); else originalCancel(id); };
+  });
+  await page.keyboard.insertText("2");
+  await expect(tempo).toHaveValue("2-2-2");
+  if (interaction === "blur and refocus") { await tempo.press("Tab"); await tempo.focus(); }
+  else await tempo.evaluate(input => (input as HTMLInputElement).select());
+  if (interaction === "new input") await page.keyboard.insertText("2 / pause / X");
+  await page.evaluate(() => (window as unknown as { __tempoFrame: { release(): void } }).__tempoFrame.release());
+  await page.keyboard.insertText(interaction === "new input" ? "!" : "3010");
+  await expect(tempo).toHaveValue(interaction === "new input" ? "2 / pause / X!" : "3-0-1-0");
+});
+
+test("tempo formatting preserves an in-word caret and deletion without forcing notation", async ({ page }) => {
+  await page.goto("/?screen=program-builder");
+  await page.getByRole("button", { name: "Ajouter une séance", exact: true }).click();
+  await page.getByRole("button", { name: "Ajouter un bloc", exact: true }).click();
+  await addPress(page);
+  const tempo = page.getByRole("article", { name: "Exercice 1", exact: true }).getByLabel("Tempo", { exact: true });
+  await tempo.fill("2-2-2");
+  await tempo.evaluate(input => (input as HTMLInputElement).setSelectionRange(2, 2));
+  await page.keyboard.insertText("3");
+  await expect(tempo).toHaveValue("2-3-2-2");
+  expect(await tempo.evaluate(input => (input as HTMLInputElement).selectionStart)).toBe(3);
+  await page.keyboard.press("Backspace");
+  await expect(tempo).toHaveValue("2--2-2");
+  expect(await tempo.evaluate(input => (input as HTMLInputElement).selectionStart)).toBe(2);
+});
+
 test("saved versions restore into an editable draft without publishing or overwriting history", async ({ page }) => {
   await page.goto("/?screen=program-builder");
   await page.getByLabel("Titre du programme · français").fill("Fondation V1");
