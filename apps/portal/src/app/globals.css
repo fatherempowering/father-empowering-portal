@@ -527,6 +527,11 @@ body:has([data-fe-public-landing]) > .fe-skip-link {
   min-height: 100svh;
 }
 .fe-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow-y: auto;
+  align-self: start;
   background: var(--fe-ink);
   color: #f5f5f3;
   display: flex;
@@ -1104,10 +1109,12 @@ body:has([data-fe-public-landing]) > .fe-skip-link {
   }
   .fe-app-shell[data-menu-open="true"] .fe-sidebar {
     display: flex;
-    position: absolute;
+    position: fixed;
     top: 4.75rem;
     left: 0;
     right: 0;
+    height: auto;
+    max-height: calc(100dvh - 4.75rem);
     z-index: 4;
     padding: 1rem;
     gap: 1rem;
@@ -1119,6 +1126,9 @@ body:has([data-fe-public-landing]) > .fe-skip-link {
     display: none;
   }
   .fe-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
     background: var(--fe-ink);
     color: #fff;
     border-bottom: 2px solid var(--fe-orange);
@@ -1131,9 +1141,15 @@ body:has([data-fe-public-landing]) > .fe-skip-link {
   }
   .fe-mobile-brand {
     display: block;
+    min-width: 0;
+  }
+  .fe-mobile-brand .fe-brand-compact {
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
   }
   .fe-menu-button {
     display: inline-flex;
+    flex-shrink: 0;
     width: 2.75rem;
     height: 2.75rem;
     align-items: center;

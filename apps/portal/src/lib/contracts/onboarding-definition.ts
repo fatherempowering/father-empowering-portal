@@ -19,20 +19,20 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
   {
     "id": "personal",
     "title": {
-      "fr": "Informations personnelles",
-      "en": "Personal Information"
+      "fr": "Commençons par toi",
+      "en": "Let’s start with you"
     },
     "description": {
-      "fr": "Bienvenue. Ce questionnaire permet à Max de mieux te connaître et de préparer ton Legacy Protocol personnalisé. Réponds avec honnêteté et précision, sans chercher à impressionner. L’objectif n’est pas la perfection : c’est la précision.",
-      "en": "Welcome. This intake allows Max to get to know you and build your personalized Legacy Protocol. Be honest. Be accurate. Do not try to impress. The goal is not perfection. The goal is precision."
+      "fr": "Pour te préparer un accompagnement qui te ressemble, j’ai besoin de connaître ta réalité. Prends le temps de répondre avec honnêteté. Ce que tu vis aujourd’hui sera notre point de départ.",
+      "en": "To build coaching that fits you, I need to understand your reality. Take the time to answer honestly. Where you are today will be our starting point."
     },
     "questions": [
       {
         "key": "fullName",
         "sourceId": "300b2e20-3f19-4c83-8fa7-8c3fbc47bca7",
         "label": {
-          "fr": "Nom complet",
-          "en": "Full Name"
+          "fr": "Ton nom complet",
+          "en": "Your full name"
         },
         "type": "text",
         "required": true,
@@ -49,31 +49,31 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "required": true,
         "maxLength": 320,
         "helper": {
-          "fr": "Ce courriel fait partie de tes réponses. Le modifier ici ne change pas ton adresse de connexion.",
-          "en": "This email is part of your answers. Changing it here does not change your sign-in email."
+          "fr": "Ce courriel fait partie de tes réponses. Si tu le modifies ici, ton courriel de connexion restera le même.",
+          "en": "This email is part of your answers. Changing it here won’t change the email you use to sign in."
         }
       },
       {
         "key": "phoneNumber",
         "sourceId": "f61884a5-b966-4e46-bf6b-506cb7562615",
         "label": {
-          "fr": "Numéro de téléphone",
-          "en": "Phone Number"
+          "fr": "Ton numéro de téléphone",
+          "en": "Your phone number"
         },
         "type": "tel",
         "required": true,
         "maxLength": 40,
         "helper": {
-          "fr": "Inclus l’indicatif du pays, par exemple +1.",
-          "en": "Include your country code, for example +1."
+          "fr": "Ajoute l’indicatif du pays, par exemple +1 pour le Canada.",
+          "en": "Include your country code, for example +1 for Canada."
         }
       },
       {
         "key": "age",
         "sourceId": "c1bd7a6e-2aad-40ea-b09e-b874258a91ab",
         "label": {
-          "fr": "Âge",
-          "en": "Age"
+          "fr": "Ton âge",
+          "en": "Your age"
         },
         "type": "text",
         "required": true,
@@ -83,8 +83,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "height",
         "sourceId": "8e6b6b84-05ba-431c-975c-3498fdee5154",
         "label": {
-          "fr": "Taille",
-          "en": "Height"
+          "fr": "Ta taille",
+          "en": "Your height"
         },
         "type": "text",
         "required": true,
@@ -98,8 +98,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "currentBodyweight",
         "sourceId": "d9b4fda3-0df9-4fef-b887-6cb4465c5c14",
         "label": {
-          "fr": "Poids actuel",
-          "en": "Current Bodyweight"
+          "fr": "Ton poids actuel",
+          "en": "Your current weight"
         },
         "type": "text",
         "required": true,
@@ -114,20 +114,20 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
   {
     "id": "vision",
     "title": {
-      "fr": "Objectifs et vision",
-      "en": "Objectives & Vision"
+      "fr": "Le cap que tu veux te donner",
+      "en": "The direction you want to take"
     },
     "description": {
-      "fr": "Prends quelques minutes pour répondre honnêtement. Tes réponses donnent une direction à ton Legacy Protocol et définissent le cap des 100 prochains jours.",
-      "en": "Take a few minutes to answer honestly. These answers help shape the direction of your Legacy Protocol and establish the standard for the next 100 days."
+      "fr": "Avant de choisir des exercices, je veux comprendre ce que tu veux retrouver dans ta vie. Prends quelques minutes pour définir ce qui compte vraiment pour toi dans les 100 prochains jours.",
+      "en": "Before choosing exercises, I want to understand what you want to bring back into your life. Take a few minutes to define what truly matters to you over the next 100 days."
     },
     "questions": [
       {
         "key": "whyNow",
         "sourceId": "9ee23f41-ff58-43f2-a935-1b8f55f59684",
         "label": {
-          "fr": "Pourquoi commences-tu maintenant ?",
-          "en": "Why are you starting now?"
+          "fr": "Qu’est-ce qui te donne envie de commencer maintenant ?",
+          "en": "What makes you want to start now?"
         },
         "type": "textarea",
         "required": true,
@@ -148,8 +148,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "noLongerTolerate",
         "sourceId": "d54f6e07-91df-4a7a-b581-febd0785a59b",
         "label": {
-          "fr": "Qu’est-ce que tu n’es plus prêt à tolérer ?",
-          "en": "What are you no longer willing to tolerate?"
+          "fr": "Qu’est-ce que tu veux arrêter d’accepter dans ta vie ?",
+          "en": "What do you want to stop accepting in your life?"
         },
         "type": "textarea",
         "required": true,
@@ -159,8 +159,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "lifeChanges",
         "sourceId": "f4715c3c-8446-4d19-b45a-7178f68fb368",
         "label": {
-          "fr": "Si ce programme est une réussite, qu’est-ce qui change dans ta vie ?",
-          "en": "If this program is successful, what changes in your life?"
+          "fr": "Si ces 100 jours se passent bien, qu’est-ce qui aura changé dans ton quotidien ?",
+          "en": "If these 100 days go well, what will have changed in your everyday life?"
         },
         "type": "textarea",
         "required": true,
@@ -170,8 +170,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "fatherVision",
         "sourceId": "4ac36aae-c522-4153-8d57-0290248252f5",
         "label": {
-          "fr": "Quel homme veux-tu devenir et quel père, si applicable ?",
-          "en": "What kind of man do you want to become, and what kind of father, if applicable?"
+          "fr": "Quel homme veux-tu devenir ? Si tu es père, quel exemple veux-tu donner à tes enfants ?",
+          "en": "What kind of man do you want to become? If you’re a father, what example do you want to set for your children?"
         },
         "type": "textarea",
         "required": true,
@@ -206,12 +206,12 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
   {
     "id": "training",
     "title": {
-      "fr": "Entraînement et équipement",
-      "en": "Training History & Equipment"
+      "fr": "Tes entraînements et ton quotidien",
+      "en": "Your training and everyday life"
     },
     "description": {
-      "fr": "Ton expérience, ton équipement et ton horaire aideront Max à préparer un programme réaliste et efficace.",
-      "en": "The goal of this section is to understand your training background, available equipment, and schedule so Max can build a realistic and effective program."
+      "fr": "Ton programme doit trouver sa place dans tes journées. Parle-moi de ton expérience, de l’équipement que tu as et du temps dont tu disposes réellement. Je m’appuierai là-dessus pour préparer la suite.",
+      "en": "Your program needs to fit into your days. Tell me about your experience, the equipment you have and the time you can realistically commit. I’ll use that to plan what comes next."
     },
     "questions": [
       {
@@ -243,8 +243,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "currentTrainingType",
         "sourceId": "1021ca32-a742-49cc-9e28-71f39e487d5e",
         "label": {
-          "fr": "Quel type d’entraînement fais-tu actuellement ?",
-          "en": "What type of training are you currently doing?"
+          "fr": "À quoi ressemblent tes entraînements en ce moment ?",
+          "en": "What does your training look like at the moment?"
         },
         "type": "textarea",
         "required": true,
@@ -265,8 +265,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "trainingNotWorked",
         "sourceId": "57f416f2-f84a-450e-970c-b4385ece99df",
         "label": {
-          "fr": "Qu’est-ce qui n’a PAS bien fonctionné pour toi dans le passé ?",
-          "en": "What has NOT worked well for you in the past?"
+          "fr": "Et qu’est-ce qui a moins bien fonctionné pour toi ?",
+          "en": "And what hasn’t worked as well for you?"
         },
         "type": "textarea",
         "required": true,
@@ -309,15 +309,15 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "availableEquipment",
         "sourceId": "573d631d-c701-4f16-a7c6-adbc5c7fa9a9",
         "label": {
-          "fr": "Décris l’équipement dont tu disposes.",
-          "en": "Describe the equipment you have available."
+          "fr": "Quel équipement as-tu à ta disposition ?",
+          "en": "What equipment do you have available?"
         },
         "type": "textarea",
         "required": true,
         "maxLength": 1500,
         "helper": {
-          "fr": "Par exemple : salle complète, rack et haltères, ou bandes élastiques.",
-          "en": "Examples:* Full commercial gym* Rack, barbell, dumbbells* Resistance bands only"
+          "fr": "Par exemple : gym complet, support pour barre et haltères, ou bandes élastiques.",
+          "en": "For example: a full gym, a barbell rack and dumbbells, or resistance bands."
         }
       },
       {
@@ -337,8 +337,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "availableDays",
         "sourceId": "5147df57-fff3-4ace-aa57-c47fba4c6f87",
         "label": {
-          "fr": "Quels jours sont généralement disponibles pour t’entraîner ?",
-          "en": "What days are usually available for training?"
+          "fr": "Quels jours peux-tu généralement t’entraîner ?",
+          "en": "Which days can you usually train?"
         },
         "type": "multi",
         "required": true,
@@ -398,15 +398,15 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "workSchedule",
         "sourceId": "45b37b5f-fa07-49e2-b40e-85a25a1ae363",
         "label": {
-          "fr": "Quel est ton horaire de travail habituel ?",
-          "en": "Typical work schedule"
+          "fr": "À quoi ressemble ton horaire de travail habituel ?",
+          "en": "What does your usual work schedule look like?"
         },
         "type": "textarea",
         "required": true,
         "maxLength": 1500,
         "helper": {
-          "fr": "Par exemple : construction de 6 h à 15 h, bureau de 8 h à 17 h, ou travail par quarts.",
-          "en": "Example:Construction 6am-3pmOffice 8am-5pmShift work"
+          "fr": "Par exemple : construction de 6 h à 15 h, bureau de 8 h à 17 h ou travail par quarts.",
+          "en": "For example: construction from 6 a.m. to 3 p.m., office work from 8 a.m. to 5 p.m., or shift work."
         }
       },
       {
@@ -493,8 +493,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "cardioDetails",
         "sourceId": "09bd4bb3-750e-4d35-96c1-700bc0b0b409",
         "label": {
-          "fr": "Si oui, quel type de cardio et à quelle fréquence ?",
-          "en": "If yes, what type and how often?"
+          "fr": "Si oui, quel cardio fais-tu et combien de fois par semaine ?",
+          "en": "If so, what cardio do you do and how many times a week?"
         },
         "type": "textarea",
         "required": false,
@@ -530,8 +530,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "coachExperience",
         "sourceId": "b2e3c759-039b-4ee6-82aa-469356412ed4",
         "label": {
-          "fr": "Si oui, qu’as-tu aimé et moins aimé dans cette expérience ?",
-          "en": "If yes, what did you like and dislike about the experience?"
+          "fr": "Si oui, qu’est-ce que tu as apprécié et qu’est-ce qui t’a moins convenu ?",
+          "en": "If so, what did you appreciate and what didn’t work as well for you?"
         },
         "type": "textarea",
         "required": false,
@@ -542,12 +542,12 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
   {
     "id": "health",
     "title": {
-      "fr": "Santé et récupération",
-      "en": "Injuries, Limitations & Recovery"
+      "fr": "Ton corps et ta récupération",
+      "en": "Your body and recovery"
     },
     "description": {
-      "fr": "Ces réponses aident Max à préparer un programme adapté à ton corps. Réponds honnêtement : l’objectif est de progresser, pas de prouver que tu es dur à cuire. Tu peux écrire « Rien à signaler » si c’est le cas.",
-      "en": "This section helps Max build a program that works with your body, not against it. Be honest. The goal is progress, not proving how tough you are. You can write “Nothing to report” where that applies."
+      "fr": "Pour préparer un programme adapté, j’ai besoin de savoir comment ton corps va aujourd’hui : douleurs, anciennes blessures, sommeil et récupération. Réponds simplement, avec honnêteté. Tu peux écrire « Rien à signaler » quand c’est le cas.",
+      "en": "To build a suitable program, I need to know how your body is doing today: pain, past injuries, sleep and recovery. Keep your answers simple and honest. You can write “Nothing to report” where that applies."
     },
     "questions": [
       {
@@ -587,8 +587,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "enjoyedExercises",
         "sourceId": "a4ab024e-e51f-410c-beaa-115e778f4daf",
         "label": {
-          "fr": "Y a-t-il des exercices que tu aimes ou que tu te sens à l’aise de faire ?",
-          "en": "Are there any exercises you enjoy or feel confident performing?"
+          "fr": "Quels exercices aimes-tu faire ou te mettent à l’aise ?",
+          "en": "Which exercises do you enjoy or feel comfortable doing?"
         },
         "type": "textarea",
         "required": true,
@@ -699,8 +699,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "sleepHours",
         "sourceId": "38d319a4-307d-4946-aa35-83fd5de1ee28",
         "label": {
-          "fr": "Combien d’heures dors-tu en moyenne par nuit ?",
-          "en": "Average hours of sleep per night"
+          "fr": "En moyenne, combien d’heures dors-tu par nuit ?",
+          "en": "On average, how many hours do you sleep each night?"
         },
         "type": "number",
         "required": true,
@@ -770,8 +770,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "healthNotes",
         "sourceId": "7e65448a-e191-4187-b83d-fa2d8c2b259d",
         "label": {
-          "fr": "Y a-t-il quelque chose concernant ta santé que Max devrait savoir avant de préparer ton protocole ?",
-          "en": "Is there anything about your health that Max should know before building your protocol?"
+          "fr": "Y a-t-il autre chose sur ta santé que je devrais connaître avant de préparer ton protocole ?",
+          "en": "Is there anything else about your health I should know before preparing your protocol?"
         },
         "type": "textarea",
         "required": false,
@@ -782,12 +782,12 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
   {
     "id": "nutrition",
     "title": {
-      "fr": "Habitudes alimentaires",
-      "en": "Nutrition Assessment"
+      "fr": "Ton alimentation au quotidien",
+      "en": "Your everyday eating habits"
     },
     "description": {
-      "fr": "Il n’existe pas d’alimentation parfaite. Max veut comprendre tes habitudes pour préparer une stratégie adaptée à ta vie. L’honnêteté et la précision passent avant la perfection.",
-      "en": "There is no perfect diet. The goal of this section is to understand your current habits so Max can build a nutrition strategy that fits your life. Be honest. Accuracy beats perfection."
+      "fr": "Raconte-moi comment tu manges dans une journée habituelle, y compris quand elle déborde. Ces réponses vont m’aider à préparer une stratégie que tu peux suivre dans ta vraie vie.",
+      "en": "Tell me how you eat on a typical day, including when things get hectic. Your answers will help me prepare a strategy that works in your everyday life."
     },
     "questions": [
       {
@@ -827,8 +827,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "snacks",
         "sourceId": "0a296666-eba6-486e-bf38-cb276133cb32",
         "label": {
-          "fr": "Quelles collations prends-tu habituellement pendant la journée ?",
-          "en": "Typical snacks throughout the day."
+          "fr": "Quelles collations prends-tu habituellement dans la journée ?",
+          "en": "What snacks do you usually have during the day?"
         },
         "type": "textarea",
         "required": false,
@@ -851,8 +851,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "waterIntake",
         "sourceId": "5a150c87-5adc-46a2-9428-0a1cab42b377",
         "label": {
-          "fr": "Quelle quantité d’eau bois-tu environ par jour ?",
-          "en": "Estimated daily water intake."
+          "fr": "Environ combien d’eau bois-tu par jour ?",
+          "en": "About how much water do you drink each day?"
         },
         "type": "text",
         "required": true,
@@ -964,8 +964,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "nutritionDifficultTimes",
         "sourceId": "39899c98-9d2f-4809-9916-44e4d6cf598b",
         "label": {
-          "fr": "À quels moments as-tu le plus de difficulté avec ton alimentation ?",
-          "en": "What time of day do you struggle the most with nutrition?"
+          "fr": "Dans quelles situations est-ce plus difficile pour toi de bien manger ?",
+          "en": "In what situations do you find it harder to eat well?"
         },
         "type": "multi",
         "required": true,
@@ -1018,8 +1018,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "trackedMacros",
         "sourceId": "e4e6ea7f-10e9-4d5a-8390-2d882569fdd3",
         "label": {
-          "fr": "As-tu déjà suivi tes calories ou tes macros ?",
-          "en": "Have you ever tracked calories or macros?"
+          "fr": "As-tu déjà suivi tes calories ou tes macros (protéines, glucides et lipides) ?",
+          "en": "Have you ever tracked calories or macros (protein, carbohydrates and fat)?"
         },
         "type": "single",
         "required": true,
@@ -1066,8 +1066,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "refusedFoods",
         "sourceId": "64ea29cc-5514-44f2-9540-295bc70c1f00",
         "label": {
-          "fr": "Y a-t-il des aliments que tu refuses absolument de manger ?",
-          "en": "Are there foods you absolutely refuse to eat?"
+          "fr": "Y a-t-il des aliments que tu ne veux absolument pas manger ?",
+          "en": "Are there any foods you absolutely don’t want to eat?"
         },
         "type": "textarea",
         "required": false,
@@ -1077,8 +1077,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "nutritionSuccess",
         "sourceId": "d9580d1d-ba6b-406a-9bae-77b174a36205",
         "label": {
-          "fr": "À quoi ressemblerait une réussite sur le plan alimentaire pour toi ?",
-          "en": "What would success with nutrition look like for you?"
+          "fr": "Pour toi, à quoi ressemblerait une réussite avec ton alimentation ?",
+          "en": "What would success with your eating habits look like for you?"
         },
         "type": "textarea",
         "required": true,
@@ -1088,8 +1088,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "nutritionPriority",
         "sourceId": "4bb1c9df-0aec-422b-bb87-21b6875f232e",
         "label": {
-          "fr": "Si tu pouvais améliorer immédiatement une seule chose dans ton alimentation, laquelle choisirais-tu ?",
-          "en": "If you could fix one thing about your nutrition immediately, what would it be?"
+          "fr": "Si tu pouvais améliorer une seule chose dans ton alimentation dès maintenant, ce serait quoi ?",
+          "en": "If you could improve one thing about your eating habits right now, what would it be?"
         },
         "type": "textarea",
         "required": true,
@@ -1100,12 +1100,12 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
   {
     "id": "commitment",
     "title": {
-      "fr": "Soutien et engagement",
-      "en": "Final Notes & Commitment"
+      "fr": "Avancer avec le bon soutien",
+      "en": "Moving forward with the right support"
     },
     "description": {
-      "fr": "Tu y es presque. Prends un moment pour répondre. Le Legacy Protocol repose sur l’honnêteté, la constance et l’action, plutôt que sur la perfection.",
-      "en": "You are almost done. Take a moment before answering. The Legacy Protocol works when honesty, consistency, and execution replace perfection."
+      "fr": "On arrive à la dernière section. Parle-moi de ce qui risque de te faire perdre le fil et du soutien dont tu as besoin. Ces réponses vont m’aider à mieux t’accompagner quand tes semaines seront plus chargées.",
+      "en": "We’ve reached the last section. Tell me what might throw you off track and what support you need. Your answers will help me coach you when your weeks get busier."
     },
     "questions": [
       {
@@ -1134,8 +1134,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "supportNeeded",
         "sourceId": "2ebac3b0-83b3-4d12-bf97-dd068c2ed2f4",
         "label": {
-          "fr": "De quel soutien as-tu le plus besoin de la part de Max ?",
-          "en": "What support do you need most from Max?"
+          "fr": "De quoi as-tu le plus besoin de ma part pour avancer ?",
+          "en": "What do you need most from me to move forward?"
         },
         "type": "textarea",
         "required": true,
@@ -1145,8 +1145,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         "key": "additionalNotes",
         "sourceId": "7ae65a07-86f6-4947-823a-f427e6ca9dc3",
         "label": {
-          "fr": "Y a-t-il autre chose que Max devrait savoir avant de préparer ton protocole personnalisé ?",
-          "en": "Is there anything else Max should know before building your personalized protocol?"
+          "fr": "Y a-t-il autre chose que tu veux me dire avant que je prépare ton protocole personnalisé ?",
+          "en": "Is there anything else you want to tell me before I prepare your personalized protocol?"
         },
         "type": "textarea",
         "required": false,
@@ -1171,8 +1171,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
           }
         ],
         "helper": {
-          "fr": "Je comprends que les résultats viennent d’actions constantes. Je m’engage à être honnête, à communiquer au besoin et à suivre le processus du mieux que je peux. L’objectif est de progresser, pas d’être parfait.",
-          "en": "I understand that results come from consistent execution. I commit to showing up honestly, communicating when needed, and following the process to the best of my ability. The goal is progress, not perfection."
+          "fr": "Je comprends que mes résultats reposent sur des actions régulières. Je m’engage à être honnête, à communiquer quand j’en ai besoin et à suivre le processus du mieux que je peux. Je vise une progression que je peux tenir dans la durée.",
+          "en": "I understand that my results depend on consistent actions. I commit to being honest, communicating when I need support and following the process as well as I can. I’m aiming for progress I can sustain."
         }
       },
       {

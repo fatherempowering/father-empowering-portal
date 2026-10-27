@@ -77,7 +77,7 @@ select is(pg_temp.save_example(),(select snapshot from exercise_test_results whe
 select is((select count(*) from public.training_exercises),1::bigint,'retry creates no duplicate');
 select throws_ok($$select pg_temp.save_example(title=>'Changed')$$,'P0001','FE_IDEMPOTENCY_CONFLICT','changed payload cannot reuse key');
 select throws_ok($$select pg_temp.save_example(command_id=>'68000000-0000-4000-8000-000000000099',title=>' ')$$,'P0001','FE_INVALID_TRAINING_EXERCISE','blank name rejected by SQL');
-select throws_ok($$select public.save_training_exercise(null,'Press','','','','kg',false,0,'68000000-0000-4000-8000-000000000099')$$,'P0001','FE_INVALID_TRAINING_EXERCISE','unsupported unit rejected by SQL');
+select throws_ok($$select public.save_training_exercise(null,'Press','','','','ton',false,0,'68000000-0000-4000-8000-000000000099')$$,'P0001','FE_INVALID_TRAINING_EXERCISE','unsupported unit rejected by SQL');
 select throws_ok($$select public.save_training_exercise(null,'Press',null,'','','lb',false,0,'68000000-0000-4000-8000-000000000099')$$,'P0001','FE_INVALID_TRAINING_EXERCISE','null cannot bypass validation');
 select throws_ok($$select pg_temp.save_example(command_id=>'68000000-0000-4000-8000-000000000099',archived=>true)$$,'P0001','FE_INVALID_TRAINING_EXERCISE','cannot create an already archived exercise');
 

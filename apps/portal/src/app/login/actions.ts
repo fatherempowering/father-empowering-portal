@@ -16,11 +16,11 @@ export async function signInCoachAction(formData: FormData) {
   } catch (error) {
     if (
       error instanceof M1ContractError &&
-      error.code === "TEMPORARILY_UNAVAILABLE"
+      ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.code)
     ) {
-      redirect("/login?error=unavailable");
+      redirect("/login?error=invalid");
     }
-    redirect("/login?error=invalid");
+    redirect("/login?error=unavailable");
   }
   redirect(destination);
 }

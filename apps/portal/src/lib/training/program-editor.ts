@@ -1,5 +1,6 @@
 import type { ExerciseSnapshot } from "@/lib/contracts/training";
 import type { DraftBlock, DraftExercise, DraftSession, ProgramEditor } from "@/lib/contracts/training-drafts";
+import { pilotDefaultUnit } from "@/lib/contracts/training-pilot";
 
 const text = (fr = "", en = "") => ({ fr, en });
 export function newProgram(): ProgramEditor {
@@ -14,7 +15,9 @@ export function newBlock(): DraftBlock {
 }
 export function addLibraryExercise(exercise: ExerciseSnapshot): DraftExercise {
   return { id: crypto.randomUUID(), libraryExerciseId: exercise.id, name: exercise.name, cue: structuredClone(exercise.cue), media: null,
-    prescription: { sets: 3, reps: "8-10", targetRir: 2, restSeconds: 90, tempo: "", loadTarget: "", unit: exercise.defaultUnit } };
+    ...(exercise.pilot ? { pilot: structuredClone(exercise.pilot) } : {}),
+    prescription: { sets: 3, reps: exercise.pilot && exercise.pilot.performance.measure !== "repetitions" ? "1" : "8-10",
+      targetRir: 2, restSeconds: 90, tempo: "", loadTarget: "", unit: exercise.pilot ? pilotDefaultUnit(exercise.pilot) : exercise.defaultUnit } };
 }
 export function duplicateWeek(program: ProgramEditor, index: number): ProgramEditor {
   if (program.weeks.length >= 52 || !program.weeks[index]) return program;
@@ -23,6 +26,42 @@ export function duplicateWeek(program: ProgramEditor, index: number): ProgramEdi
   // Deep cloning prevents later week edits from changing the source week.
   result.weeks.splice(index + 1, 0, structuredClone(program.weeks[index]));
   result.weeks.forEach((week, i) => { week.number = i + 1; });
+  return result;
+}
+export function weekHasContent(week: ProgramEditor["weeks"][number]): boolean {
+  return Boolean(week.sessions.length || week.objective.fr.trim() || week.objective.en.trim());
+}
+
+/** Week numbers are destinations, not insertion positions. Unselected weeks stay put. */
+export function planWeekCopy(program: ProgramEditor, sourceIndex: number, destinations: number[]) {
+  if (!Number.isInteger(sourceIndex) || !program.weeks[sourceIndex] ||
+    destinations.some((number) => !Number.isInteger(number) || number < 1 || number > 52 || number === sourceIndex + 1)) {
+    throw new RangeError("INVALID_WEEK_SELECTION");
+  }
+  const targets = [...new Set(destinations)].sort((a, b) => a - b);
+  const lastWeek = Math.max(program.weeks.length, ...targets);
+  const added = Array.from({ length: lastWeek - program.weeks.length }, (_, i) => program.weeks.length + i + 1);
+  return {
+    targets,
+    replacements: targets.filter((number) => program.weeks[number - 1] && weekHasContent(program.weeks[number - 1])),
+    added,
+    empty: added.filter((number) => !targets.includes(number)),
+  };
+}
+
+export function copyWeekToWeeks(program: ProgramEditor, sourceIndex: number, destinations: number[], allowReplacement = false): ProgramEditor {
+  const plan = planWeekCopy(program, sourceIndex, destinations);
+  if (!plan.targets.length) throw new RangeError("INVALID_WEEK_SELECTION");
+  if (plan.replacements.length && !allowReplacement) throw new Error("WEEK_REPLACEMENT_REQUIRES_CONFIRMATION");
+  const result = structuredClone(program);
+  for (const number of plan.added) result.weeks.push({ number, objective: text(), sessions: [] });
+  for (const number of plan.targets) {
+    // Preserve movement identities across weeks, as with single-week duplication,
+    // while independently cloning every nested prescription and instruction.
+    result.weeks[number - 1] = { ...structuredClone(program.weeks[sourceIndex]), number };
+  }
+  // Match the existing draft contract before replacing any editor state.
+  if (new TextEncoder().encode(JSON.stringify(result)).length > 512_000) throw new Error("PROGRAM_TOO_LARGE");
   return result;
 }
 export function moveItem<T>(items: T[], index: number, direction: -1 | 1): T[] {
@@ -44,6 +83,14 @@ export function draftWarnings(program: ProgramEditor): string[] {
         if (!block.exercises.length) warnings.push(`${label}, bloc ${b + 1} : aucun exercice.`);
         if ((block.mode === "superset" && block.exercises.length !== 2) || (block.mode === "finisher" && block.exercises.length < 2)) warnings.push(`${label}, bloc ${b + 1} : groupe incomplet.`);
         if (block.mode !== "standard" && block.exercises.some((e) => e.prescription.sets !== block.exercises[0]?.prescription.sets)) warnings.push(`${label}, bloc ${b + 1} : harmonise le nombre de séries par tour.`);
+        for (const exercise of block.exercises) {
+          if (!exercise.pilot) continue;
+          const unit = pilotDefaultUnit(exercise.pilot);
+          if (["sec", "distance", "configuration"].includes(unit) &&
+              [exercise.prescription, ...(exercise.prescription.prescribedSets ?? [])].some((set) => !set.loadTarget.trim())) {
+            warnings.push(`${label}, ${exercise.pilot.name.fr} : précise ${unit === "sec" ? "la durée cible en secondes" : unit === "distance" ? "la distance cible en mètres" : "la configuration cible"} avant publication.`);
+          }
+        }
       }
     }
   }

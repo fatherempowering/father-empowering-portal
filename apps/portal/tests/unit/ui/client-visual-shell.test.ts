@@ -36,8 +36,8 @@ describe("isolated Client visual shell", () => {
   it("renders English without changing the profile or navigation contracts", () => {
     const html = shell(false, false);
     expect(html).toContain('lang="en"');
-    expect(html).toContain("Welcome questionnaire");
-    expect(html).toContain("My program");
+    expect(html).toContain("My questionnaire");
+    expect(html).toContain("My workouts");
     expect(html).toContain("Client Exemple");
   });
 });

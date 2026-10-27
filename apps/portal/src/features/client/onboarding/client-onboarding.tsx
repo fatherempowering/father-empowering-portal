@@ -106,7 +106,7 @@ export function ClientOnboarding({ reviewSubmittedResponses = false }: { reviewS
     const followLink = (event: MouseEvent) => {
       const anchor = (event.target as Element).closest?.("a[href]");
       if (anchor && anchor.getAttribute("target") !== "_blank" &&
-        !window.confirm(french ? "Tes dernières réponses ne sont pas enregistrées. Quitter cette page ?" : "Your latest answers have not been saved. Leave this page?")) {
+        !window.confirm(french ? "Quitter sans enregistrer tes dernières réponses ? Elles ne seront pas conservées." : "Leave without saving your latest answers? They won’t be kept.")) {
         event.preventDefault(); event.stopPropagation();
       }
     };
@@ -132,7 +132,7 @@ export function ClientOnboarding({ reviewSubmittedResponses = false }: { reviewS
     if (!intake || !responses || inFlight.current || conflict || submitted || sessionExpired) return;
     if (form.current && !form.current.reportValidity()) return;
     if (send && !isOnboardingComplete(responses)) {
-      setError(t("Complète les réponses obligatoires avant de transmettre.", "Complete the required answers before submitting.")); return;
+      setError(t("Il reste des réponses obligatoires à remplir avant l’envoi.", "A few required answers still need to be filled in before you send it.")); return;
     }
     inFlight.current = true; setBusy(true); setError(null); setSavedNotice(false);
     try {
@@ -161,17 +161,17 @@ export function ClientOnboarding({ reviewSubmittedResponses = false }: { reviewS
       if (code === "409") setConflict(true);
       if (code === "401" || code === "403") setSessionExpired(true);
       setError(code === "409"
-        ? t("Une version plus récente existe ou le questionnaire a déjà été transmis. Tes saisies restent affichées. Recharge la version enregistrée avant de continuer.", "A newer version exists or the questionnaire has already been submitted. Your entries remain here. Reload the saved version before continuing.")
+        ? t("Ton questionnaire a été mis à jour ailleurs ou a déjà été envoyé. Tes réponses restent à l’écran. Ouvre la version enregistrée avant de continuer.", "Your questionnaire was updated elsewhere or has already been sent. Your answers are still on screen. Open the saved version before continuing.")
         : code === "401" || code === "403"
-          ? t("Ta session n’est plus valide. Reconnecte-toi pour continuer; tes réponses déjà enregistrées restent conservées.", "Your session is no longer valid. Sign in again to continue; your previously saved answers are retained.")
+          ? t("Ta connexion n’est plus active. Reconnecte-toi pour continuer ; tes réponses déjà enregistrées sont conservées.", "You’re no longer signed in. Sign in again to continue; your previously saved answers are kept.")
           : code === "400" || code === "413"
-            ? t("Vérifie le format et la longueur de tes réponses. Rien n’a été transmis au Coach. Tes saisies restent à l’écran.", "Check the format and length of your answers. Nothing was submitted to your Coach. Your entries remain on this page.")
-            : t("La confirmation n’a pas été reçue. Tes réponses restent à l’écran. Réessaie la même action pour confirmer l’enregistrement sans doublon.", "Confirmation was not received. Your answers remain here. Retry the same action to confirm the save without duplication."));
+            ? t("Certaines réponses sont à vérifier : leur format ou leur longueur ne convient pas. Elles restent à l’écran ; rien n’a été envoyé à ton coach.", "Some answers need checking: their format or length doesn’t fit. They remain on screen; nothing has been sent to your coach.")
+            : t("On n’a pas reçu la confirmation d’enregistrement. Tes réponses restent à l’écran. Réessaie la même action pour vérifier si elles sont bien enregistrées, sans créer de doublon.", "We haven’t received the save confirmation. Your answers remain on screen. Try the same action again to check that they were saved, without creating a duplicate."));
     } finally { inFlight.current = false; setBusy(false); }
   }
   async function signOut() {
     if (inFlight.current) return;
-    if (dirty && !window.confirm(t("Tes dernières réponses ne sont pas enregistrées. Te déconnecter ?", "Your latest answers have not been saved. Sign out?"))) return;
+    if (dirty && !window.confirm(t("Te déconnecter sans enregistrer tes dernières réponses ? Elles ne seront pas conservées.", "Sign out without saving your latest answers? They won’t be kept."))) return;
     inFlight.current = true; setBusy(true); setSignOutError(null);
     const ok = await requestClientLogout((destination) => { leavingIntentionally.current = true; window.location.replace(destination); });
     if (!ok) { setSignOutError(t("Déconnexion impossible. Réessaie.", "Unable to sign out. Try again.")); inFlight.current = false; setBusy(false); }
@@ -182,17 +182,17 @@ export function ClientOnboarding({ reviewSubmittedResponses = false }: { reviewS
     <div className={styles.page} data-onboarding-visual="" data-submitted={submitted}>
       <header className={styles.intro}>
         {!showCompletion && <a className={styles.back} href="/client"><Icon name="arrow" />{t("Accueil", "Home")}</a>}
-        <h1 className="fe-title" ref={completionHeading} tabIndex={showCompletion ? -1 : undefined}>{showCompletion ? t("Questionnaire transmis.", "Questionnaire submitted.") : submitted ? client?.displayName : t("Faisons connaissance.", "Let’s get to know you.")}</h1>
-        <p>{showCompletion ? t("Tes réponses sont bien arrivées. Place à la suite.", "Your answers have been received. On to the next step.") : submitted ? t("Ton questionnaire d’accueil · Lecture seule", "Your welcome questionnaire · Read only")
+        <h1 className="fe-title" ref={completionHeading} tabIndex={showCompletion ? -1 : undefined}>{showCompletion ? t("Tes réponses sont envoyées.", "Your answers have been sent.") : submitted ? client?.displayName : t("Faisons connaissance.", "Let’s get to know you.")}</h1>
+        <p>{showCompletion ? t("Max peut maintenant les consulter. Tu peux passer à la suite.", "Max can now review them. You can move on to the next step.") : submitted ? t("Ton questionnaire · À consulter", "Your questionnaire · For viewing")
           : currentSection ? t(`Section ${step+1} sur 6 · ${copy(currentSection.title)}`, `Section ${step+1} of 6 · ${copy(currentSection.title)}`)
-          : t("Vérifier et transmettre", "Review and submit")}</p>
+          : t("Relire et envoyer", "Review and send")}</p>
       </header>
       {error && <Feedback>{error}</Feedback>}
       {signOutError && <Feedback>{signOutError}</Feedback>}
       {sessionExpired && <a className="fe-button" href="/client-login">{t("Me reconnecter", "Sign in again")}</a>}
       {conflict && <button className="fe-button" onClick={() => {
-        if (window.confirm(t("Recharger remplacera les saisies affichées par la version enregistrée. Continuer ?", "Reloading replaces the entries on screen with the saved version. Continue?"))) setAttempt((n) => n+1);
-      }}>{t("Recharger la version enregistrée", "Reload the saved version")}</button>}
+        if (window.confirm(t("Ouvrir la version enregistrée ? Elle remplacera les réponses actuellement affichées, y compris tes modifications non enregistrées.", "Open the saved version? It will replace the answers currently on screen, including your unsaved changes."))) setAttempt((n) => n+1);
+      }}>{t("Ouvrir la version enregistrée", "Open saved version")}</button>}
       {loading ? <Loading>{t("Chargement du questionnaire…", "Loading questionnaire…")}</Loading> : failed ? <><Feedback>{t("Le questionnaire ne peut pas être chargé. Aucune réponse n’a été remplacée.", "The questionnaire could not be loaded. No answers have been replaced.")}</Feedback><button className="fe-button" onClick={() => setAttempt((n) => n+1)}>{t("Réessayer", "Try again")}</button></> : !intake || !responses ? <Loading>{t("Chargement du questionnaire…", "Loading questionnaire…")}</Loading> : showCompletion ? <OnboardingCompletion french={french} /> : <div className={styles.layout}>
         <aside className={styles.sectionRail}>
           <nav aria-label={t("Sections du questionnaire", "Questionnaire sections")}>
@@ -206,7 +206,7 @@ export function ClientOnboarding({ reviewSubmittedResponses = false }: { reviewS
                 }}>{index+1}. {copy(section.title)}</a>
                 : <button className={step === index ? styles.activeStep : ""} type="button" disabled={busy} aria-current={step === index ? "step" : undefined} onClick={() => goToStep(index)}>{index+1}. {copy(section.title)}</button>}
               </li>)}
-              {!submitted ? <li><button className={step === REVIEW_STEP ? styles.activeStep : ""} disabled={busy} type="button" aria-current={step === REVIEW_STEP ? "step" : undefined} onClick={() => goToStep(REVIEW_STEP)}>{t("Vérifier et transmettre", "Review and submit")}</button></li> : null}
+              {!submitted ? <li><button className={step === REVIEW_STEP ? styles.activeStep : ""} disabled={busy} type="button" aria-current={step === REVIEW_STEP ? "step" : undefined} onClick={() => goToStep(REVIEW_STEP)}>{t("Relire et envoyer", "Review and send")}</button></li> : null}
             </ol>
             <label className={styles.sectionPicker}>{t("Aller à une section", "Go to a section")}
               <select disabled={busy} value={step} onChange={(event) => {
@@ -215,49 +215,49 @@ export function ClientOnboarding({ reviewSubmittedResponses = false }: { reviewS
                 else { setStep(index); const target = document.getElementById(`review-${ONBOARDING_SECTIONS[index].id}`) as HTMLDetailsElement | null; if (target) { target.open = true; target.querySelector("summary")?.focus(); target.scrollIntoView({ block: "start" }); } }
               }}>
                 {ONBOARDING_SECTIONS.map((section,index) => <option key={section.id} value={index}>{index+1}. {copy(section.title)}</option>)}
-                {!submitted ? <option value={REVIEW_STEP}>{t("Vérifier et transmettre", "Review and submit")}</option> : null}
+                {!submitted ? <option value={REVIEW_STEP}>{t("Relire et envoyer", "Review and send")}</option> : null}
               </select>
             </label>
           </nav>
           {!submitted ? <div className={styles.progress}>
             <div className={styles.progressHeading}><strong>{t("Ta progression", "Your progress")}</strong><span>{progress} %</span></div>
             <progress aria-label={t("Progression du questionnaire", "Questionnaire progress")} max={required.length} value={validRequiredCount} />
-            <p>{t(`${validRequiredCount} réponses obligatoires sur ${required.length} complétées et valides. Les champs marqués * sont requis avant transmission.`, `${validRequiredCount} of ${required.length} required answers completed and valid. Fields marked * are required before submission.`)}</p>
-            <p className={styles.progressEncouragement}>{progress === 100 ? t("Tout est rempli : il ne reste qu’à vérifier et transmettre.", "All filled in: just review and submit.") : progress >= 75 ? t("Tu approches de la fin. Encore quelques réponses !", "Nearly there. Just a few more answers!") : progress >= 50 ? t("Tu as déjà passé la moitié !", "You are already past halfway!") : t("Tu peux enregistrer et reprendre quand tu veux.", "You can save and return whenever you like.")}</p>
+            <p>{t(`${validRequiredCount} réponses obligatoires sur ${required.length} sont remplies et valides. Les questions avec * sont à remplir avant l’envoi.`, `${validRequiredCount} of ${required.length} required answers are filled in and valid. Questions marked * must be answered before you send it.`)}</p>
+            <p className={styles.progressEncouragement}>{progress === 100 ? t("Tout est rempli. Prends un moment pour relire avant d’envoyer.", "Everything is filled in. Take a moment to review before sending.") : progress >= 75 ? t("Tu approches de la fin. Prends le temps de répondre à ce qui reste.", "You’re nearly there. Take your time with the remaining answers.") : progress >= 50 ? t("Tu as passé la moitié. On continue à ton rythme.", "You’re past halfway. Keep going at your own pace.") : t("Tu peux enregistrer et reprendre quand tu veux.", "You can save and return whenever you like.")}</p>
           </div> : null}
         </aside>
         <div className={styles.content}>
-          <p className={styles.status} role="status" aria-live="polite">{busy ? t("Enregistrement en cours…", "Saving…") : submitted ? t("Questionnaire transmis au Coach", "Questionnaire submitted to your Coach") : dirty ? t("Modifications non enregistrées", "Unsaved changes") : intake.status === "DRAFT" ? t("Brouillon privé enregistré", "Private draft saved") : t("Questionnaire non commencé", "Questionnaire not started")}{savedNotice && !submitted ? t(". Sauvegarde confirmée.", ". Save confirmed.") : ""}</p>
+          <p className={styles.status} role="status" aria-live="polite">{busy ? t("Enregistrement en cours…", "Saving…") : submitted ? t("Questionnaire envoyé à ton coach", "Questionnaire sent to your coach") : dirty ? t("Modifications non enregistrées", "Unsaved changes") : intake.status === "DRAFT" ? t("Brouillon privé enregistré", "Private draft saved") : t("Ton questionnaire t’attend", "Your questionnaire is ready to start")}{savedNotice && !submitted ? t(". Sauvegarde confirmée.", ". Save confirmed.") : ""}</p>
           {submitted ? <>
-            <Feedback tone="success">{t("Max peut maintenant lire tes réponses dans ton dossier. Tu n’as pas à les renvoyer. Ton questionnaire transmis est conservé en lecture seule.", "Max can now read your answers in your file. You do not need to resend them. Your submitted questionnaire is kept read-only.")}</Feedback>
+            <Feedback tone="success">{t("Max peut maintenant consulter tes réponses. Tu peux les relire ici, mais cette version ne peut plus être modifiée. Aucun nouvel envoi n’est nécessaire.", "Max can now review your answers. You can read them here, but this version can no longer be edited. You don’t need to send it again.")}</Feedback>
             <div className={styles.submittedGrid}>
               <OnboardingReview responses={responses} french={french} />
               <aside className={styles.related}>
-                <section><h2>{t("Semaine zéro", "Week Zero")}</h2><p>{t("Tes mesures, ta mobilité et tes disponibilités restent dans ta semaine zéro.", "Your measurements, mobility and availability remain in Week Zero.")}</p><a className="fe-button" href="/client/week-zero">{t("Consulter ma semaine zéro", "View my Week Zero")}</a></section>
+                <section><h2>{t("Semaine zéro", "Week Zero")}</h2><p>{t("Retrouve tes photos, tes mesures et tes résultats d’exercices, de cardio et de mobilité dans ta semaine zéro.", "You’ll find your photos, measurements, exercise results, cardio and mobility observations in Week Zero.")}</p><a className="fe-button" href="/client/week-zero">{t("Consulter ma semaine zéro", "View my Week Zero")}</a></section>
                 <ClientFamilyPhoto compact />
               </aside>
             </div>
-            <div className={styles.actions}><a className="fe-button fe-button-primary" href="/client">{t("Retour à mon portail", "Back to my portal")}</a></div>
+            <div className={styles.actions}><a className="fe-button fe-button-primary" href="/client">{t("Retour à mon accueil", "Back to my home")}</a></div>
           </> : <>
-            <p className={styles.notice}>{t("Brouillon privé jusqu’à transmission. « Enregistrer mon brouillon » et « Continuer » sauvegardent tes réponses; Max les verra seulement après ta confirmation finale.", "Private draft until submission. “Save my draft” and “Continue” save your answers; Max only sees them after your final confirmation.")}</p>
+            <p className={styles.notice}>{t("Tes réponses restent privées jusqu’à l’envoi à Max. « Enregistrer mon brouillon » et « On continue » les sauvegardent. Max les verra après ta confirmation finale.", "Your answers stay private until you send them to Max. “Save my draft” and “Let’s continue” save your answers. Max will see them after your final confirmation.")}</p>
             <form ref={form} onSubmit={(event) => { event.preventDefault(); void persist(false); }}>
               <fieldset className={styles.panel} disabled={busy || conflict || sessionExpired}>
-                <legend className="fe-sr-only">{currentSection ? copy(currentSection.title) : t("Vérifier et transmettre", "Review and submit")}</legend>
-                <h2 className="fe-title" ref={heading} tabIndex={-1}>{currentSection ? copy(currentSection.title) : t("Vérifier et transmettre", "Review and submit")}</h2>
+                <legend className="fe-sr-only">{currentSection ? copy(currentSection.title) : t("Relire et envoyer", "Review and send")}</legend>
+                <h2 className="fe-title" ref={heading} tabIndex={-1}>{currentSection ? copy(currentSection.title) : t("Relire et envoyer", "Review and send")}</h2>
                 {currentSection ? <>
-                  <details className={styles.sectionHelp}><summary>{t("À propos de cette section", "About this section")}</summary><p>{copy(currentSection.description)}</p></details>
+                  <details className={styles.sectionHelp}><summary>{t("Pourquoi ces questions ?", "Why these questions?")}</summary><p>{copy(currentSection.description)}</p></details>
                   <div className={styles.questions}>{currentSection.questions.map((question) => <QuestionField key={question.key} question={question} value={responses[question.key]} french={french} disabled={busy || conflict || sessionExpired} onChange={(value) => edit(question.key, value)} />)}</div>
                 </> : <>
                   <OnboardingReview responses={responses} french={french} />
-                  {needsAttention.length ? <div className={styles.notice} role="alert"><p>{t("Ces réponses sont manquantes ou leur format doit être corrigé. Clique sur une question pour la retrouver :", "These answers are missing or need a format correction. Select a question to find it:")}</p><ul>{needsAttention.map((question) => <li key={question.key}><button type="button" className={styles.questionLink} onClick={() => goToStep(ONBOARDING_SECTIONS.findIndex((section) => section.questions.some((q) => q.key === question.key)))}>{copy(question.label)}</button></li>)}</ul></div> : <Feedback tone="info">{t("Les réponses obligatoires sont complètes. Relis ton questionnaire avant de le transmettre à Max.", "The required answers are complete. Review your questionnaire before submitting it to Max.")}</Feedback>}
-                  <p>{t("Après transmission, cette version restera en lecture seule.", "After submission, this version remains read-only.")}</p>
-                  <button className="fe-button fe-button-primary fe-button-wide" type="button" disabled={busy || conflict || sessionExpired || !isOnboardingComplete(responses)} onClick={() => void persist(true)}>{t("Transmettre mon questionnaire", "Submit my questionnaire")}</button>
+                  {needsAttention.length ? <div className={styles.notice} role="alert"><p>{t("Il reste quelques réponses à remplir ou à corriger. Choisis une question ci-dessous pour la retrouver.", "A few answers still need to be filled in or corrected. Choose a question below to go back to it.")}</p><ul>{needsAttention.map((question) => <li key={question.key}><button type="button" className={styles.questionLink} onClick={() => goToStep(ONBOARDING_SECTIONS.findIndex((section) => section.questions.some((q) => q.key === question.key)))}>{copy(question.label)}</button></li>)}</ul></div> : <Feedback tone="info">{t("Tu as rempli toutes les réponses obligatoires. Relis-les une dernière fois avant de les envoyer à Max.", "You’ve filled in all the required answers. Review them once more before sending them to Max.")}</Feedback>}
+                  <p>{t("Après l’envoi, tu pourras relire tes réponses, mais tu ne pourras plus les modifier.", "After sending, you can read your answers, but you won’t be able to edit them.")}</p>
+                  <button className="fe-button fe-button-primary fe-button-wide" type="button" disabled={busy || conflict || sessionExpired || !isOnboardingComplete(responses)} onClick={() => void persist(true)}>{t("Envoyer mes réponses à Max", "Send my answers to Max")}</button>
                 </>}
               </fieldset>
               <div className={styles.actions}>
                 <button className="fe-button" type="submit" disabled={busy || conflict || sessionExpired}>{t("Enregistrer mon brouillon", "Save my draft")}</button>
                 {step > 0 && <button className="fe-button" type="button" disabled={busy} onClick={() => goToStep(step-1)}>{t("Précédent", "Previous")}</button>}
-                {step < REVIEW_STEP && <button className="fe-button fe-button-primary" type="button" disabled={busy || conflict || sessionExpired} onClick={() => void persist(false, step+1)}>{t("Continuer", "Continue")}</button>}
+                {step < REVIEW_STEP && <button className="fe-button fe-button-primary" type="button" disabled={busy || conflict || sessionExpired} onClick={() => void persist(false, step+1)}>{t("On continue", "Let’s continue")}</button>}
               </div>
             </form>
           </>}

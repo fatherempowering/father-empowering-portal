@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
+import { PublishedExerciseGuidance } from "@/features/training/shared/published-exercise-guidance";
+import { clearSetMeasurements, completedMeasurementMissing, detailsLabel, detailsPlaceholder, measurementLabel, needsMeasurementDetails, publishedExerciseName, repetitionLabel, stripDerivedSet } from "@/lib/training/workout-presentation";
 import type { DraftExercise, DraftSession } from "@/lib/contracts/training-drafts";
 import {
   publicationResponseSchema,
@@ -23,6 +25,7 @@ import {
 } from "@/lib/contracts/training-results";
 
 import styles from "./client-workout.module.css";
+import { buildGuidedUnits, firstPendingGuidedStep, guidedProgress, guidedSetKey, isGuidedStepSaved, restSecondsRemaining, type GuidedUnit } from "./guided-workout";
 
 const REQUEST_TIMEOUT_MS = 12_000;
 const MAX_EXTRA_SETS_PER_EXERCISE = 20;
@@ -33,6 +36,8 @@ type Command = {
   fingerprint: string;
   request: SaveWorkoutRequest;
 };
+type GuideView = "overview" | "run" | "plan" | "exercise-complete" | "review" | "summary" | "records";
+type GuidedTransition = { unitKey: string; stepKey: string; restSeconds: number } | "start";
 
 class WorkoutRequestError extends Error {
   constructor(readonly status: number | "NETWORK" | "AUTH") {
@@ -78,6 +83,16 @@ export function ClientWorkout() {
   const [success, setSuccess] = useState<string | null>(null);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [guideView, setGuideView] = useState<GuideView>("overview");
+  const [activeStepKey, setActiveStepKey] = useState<string | null>(null);
+  const [finishedUnitKey, setFinishedUnitKey] = useState<string | null>(null);
+  const [restDeadline, setRestDeadline] = useState<number | null>(null);
+  const [validationAttempt, setValidationAttempt] = useState(0);
+  const guideRegion = useRef<HTMLDivElement | null>(null);
+  const errorRegion = useRef<HTMLDivElement | null>(null);
+  const guidanceInteracted = useRef(false);
+  const guideReturnView = useRef<GuideView>("overview");
+  const guidedTransition = useRef<GuidedTransition | null>(null);
   const command = useRef<Command | null>(null);
   const leavingIntentionally = useRef(false);
   const inFlight = useRef(false);
@@ -90,9 +105,31 @@ export function ClientWorkout() {
   );
   const dirty = Boolean(workout && !readOnly && baseline !== draftFingerprint);
   const protectsInput = dirty || uncertain;
+  const units = useMemo(() => session ? buildGuidedUnits(session, sets) : [], [session, sets]);
+  const savedSets = workout?.sets ?? [];
+  const progress = guidedProgress(units, savedSets);
+  const nextPending = firstPendingGuidedStep(units, savedSets);
+  const selectedUnit = units.find((unit) => unit.steps.some((step) => step.key === activeStepKey)) ?? nextPending?.unit;
+  const selectedStep = selectedUnit?.steps.find((step) => step.key === activeStepKey) ?? nextPending?.step;
+  const programHref = selector ? `/client/program?${new URLSearchParams({
+    publicationId: selector.publicationId, weekNumber: String(selector.weekNumber), sessionId: selector.sessionId,
+    language: french ? "fr" : "en",
+  })}` : "/client/program";
+
+  // Move attention only when the guided stage changes, never on field edits,
+  // locale changes or countdown ticks. The selector resolves after React commits.
+  useEffect(() => {
+    if (!guidanceInteracted.current) return;
+    focusWorkoutElement(guideRegion.current?.querySelector<HTMLElement>("[data-guide-focus]") ?? null);
+  }, [guideView, activeStepKey, restDeadline]);
+
+  useEffect(() => {
+    if (error) focusWorkoutElement(errorRegion.current);
+  }, [error, validationAttempt]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    setFrench(params.get("language") !== "en");
     const parsed = workoutSelectorSchema.safeParse({
       publicationId: params.get("publicationId"),
       weekNumber: params.get("weekNumber"),
@@ -116,6 +153,9 @@ export function ClientWorkout() {
     setConflict(false);
     setUncertain(false);
     command.current = null;
+    guidedTransition.current = null;
+    setRestDeadline(null);
+    setActiveStepKey(null);
 
     async function load() {
       try {
@@ -154,6 +194,7 @@ export function ClientWorkout() {
         setNote(nextNote);
         setBaseline(editableFingerprint(nextSets, nextNote));
         setCanStart(startAllowed);
+        setGuideView(loaded.workout?.status === "COMPLETED" ? "summary" : "overview");
       } catch (caught) {
         if (!active) return;
         if (caught instanceof WorkoutRequestError && caught.status === "AUTH") {
@@ -221,9 +262,8 @@ export function ClientWorkout() {
 
   function changeSetStatus(item: EditableSet, status: EditableSet["status"]) {
     if (
-      item.status === "DONE" &&
       status !== "DONE" &&
-      (item.reps !== null || item.load !== null || item.rir !== null) &&
+      (item.reps !== null || item.load !== null || item.rir !== null || Boolean(item.details)) &&
       !window.confirm(
         t(
           "Changer le statut effacera les résultats de cette série. Continuer ?",
@@ -233,8 +273,8 @@ export function ClientWorkout() {
     ) return item;
     return {
       ...item,
+      ...(status === "DONE" ? {} : clearSetMeasurements(item)),
       status,
-      ...(status === "DONE" ? {} : { reps: null, load: null, rir: null }),
     };
   }
 
@@ -279,18 +319,30 @@ export function ClientWorkout() {
     setSuccess(null);
   }
 
-  function validationMessage(status: SaveWorkoutRequest["status"]) {
-    if (sets.some((item) => item.status === "SKIPPED") && !note.trim()) {
+  function validationMessage(status: SaveWorkoutRequest["status"], candidateSets = sets) {
+    if (candidateSets.some((item) => item.status === "SKIPPED") && !note.trim()) {
       return t(
         "Ajoute une note pour expliquer au moins une série ignorée.",
         "Add a note explaining at least one skipped set.",
       );
     }
-    const invalidDone = sets.find(
-      (item) => item.status === "DONE" && (item.load === null || (item.unit === "lb" && item.reps === null)),
-    );
+    const exercises = session?.blocks.flatMap((block) => block.exercises) ?? [];
+    const invalidDone = candidateSets.find((item) => {
+      const exercise = exercises.find((candidate) => candidate.id === item.exerciseId);
+      return !exercise || completedMeasurementMissing(exercise, item);
+    });
     if (invalidDone) {
-      return invalidDone.unit === "lb"
+      if (invalidDone.unit === "configuration") return t(
+        `Indique les répétitions et décris la configuration utilisée pour la série ${invalidDone.setNumber}. Aucune résistance en livres n’est déduite.`,
+        `Enter reps and describe the setup used for set ${invalidDone.setNumber}. No resistance in pounds is inferred.`,
+      );
+      if (invalidDone.unit === "distance") {
+        const exercise = exercises.find(item => item.id === invalidDone.exerciseId);
+        const detail = exercise ? detailsLabel(exercise, invalidDone.unit, french).toLowerCase() : t("le contexte du parcours", "the route context");
+        return t(`Indique la distance en mètres et complète « ${detail} » pour la série ${invalidDone.setNumber}.`,
+          `Enter the distance in metres and complete “${detail}” for set ${invalidDone.setNumber}.`);
+      }
+      return invalidDone.unit === "lb" || invalidDone.unit === "kg"
         ? t(
             `Indique les répétitions et la charge pour la série ${invalidDone.setNumber}.`,
             `Enter reps and load for set ${invalidDone.setNumber}.`,
@@ -300,15 +352,13 @@ export function ClientWorkout() {
             `Enter the completed value for set ${invalidDone.setNumber}.`,
           );
     }
-    const invalidMeasurement = sets.find(
+    const invalidMeasurement = candidateSets.find(
       (item) =>
         item.status === "DONE" &&
         ((item.reps !== null && (!Number.isInteger(item.reps) || item.reps < 0 || item.reps > 10_000)) ||
-          item.load === null ||
-          !Number.isFinite(item.load) ||
-          item.load < 0 ||
-          item.load > 100_000 ||
-          Number(item.load.toFixed(6)) !== item.load ||
+          (item.unit === "configuration" ? item.load !== null : item.load === null ||
+          !Number.isFinite(item.load) || item.load < 0 || item.load > 100_000 || Number(item.load.toFixed(6)) !== item.load) ||
+          (item.details != null && item.details.length > 500) ||
           (item.rir !== null && (!Number.isInteger(item.rir) || item.rir < 0 || item.rir > 10))),
     );
     if (invalidMeasurement) {
@@ -317,7 +367,7 @@ export function ClientWorkout() {
         `Check set ${invalidMeasurement.setNumber}: whole-number reps, load from 0 to 100,000 (up to six decimal places) and RIR from 0 to 10.`,
       );
     }
-    if (status === "COMPLETED" && sets.some((item) => item.status === "PENDING")) {
+    if (status === "COMPLETED" && candidateSets.some((item) => item.status === "PENDING")) {
       return t(
         "Marque chaque série prescrite ou ajoutée comme faite ou ignorée avant de terminer.",
         "Mark every prescribed or added set done or skipped before completing the workout.",
@@ -326,7 +376,7 @@ export function ClientWorkout() {
     return null;
   }
 
-  function workoutCommand(status: SaveWorkoutRequest["status"]) {
+  function workoutCommand(status: SaveWorkoutRequest["status"], candidateSets = sets) {
     if (!selector) return null;
     const base = {
       publicationId: selector.publicationId,
@@ -334,7 +384,7 @@ export function ClientWorkout() {
       sessionId: selector.sessionId,
       expectedVersion: workout?.version ?? 0,
       status,
-      sets: sets.map(stripDerivedSet),
+      sets: candidateSets.map(stripDerivedSet),
       note: note.trim() || null,
     };
     const fingerprint = JSON.stringify(base);
@@ -360,11 +410,12 @@ export function ClientWorkout() {
     return command.current.request;
   }
 
-  async function persist(status: SaveWorkoutRequest["status"], confirmCompletion = true) {
+  async function persist(status: SaveWorkoutRequest["status"], confirmCompletion = true, candidateSets = sets, transition?: GuidedTransition) {
     if (!selector || !session || inFlight.current || conflict || readOnly) return;
-    const invalid = validationMessage(status);
+    const invalid = validationMessage(status, candidateSets);
     if (invalid) {
       setError(invalid);
+      setValidationAttempt((current) => current + 1);
       return;
     }
     if (
@@ -377,8 +428,10 @@ export function ClientWorkout() {
         ),
       )
     ) return;
-    const outgoing = workoutCommand(status);
+    const outgoing = workoutCommand(status, candidateSets);
     if (!outgoing) return;
+    if (transition || status === "COMPLETED") guidanceInteracted.current = true;
+    if (transition) guidedTransition.current = transition;
     inFlight.current = true;
     setBusy(true);
     setError(null);
@@ -410,6 +463,26 @@ export function ClientWorkout() {
       setUncertain(false);
       setConflict(false);
       command.current = null;
+      const pendingTransition = guidedTransition.current;
+      guidedTransition.current = null;
+      if (saved.status === "COMPLETED") {
+        setGuideView("summary");
+        setRestDeadline(null);
+      } else if (pendingTransition) {
+        const savedUnits = buildGuidedUnits(saved.session, nextSets);
+        const next = firstPendingGuidedStep(savedUnits, saved.sets);
+        setActiveStepKey(next?.step.key ?? null);
+        if (pendingTransition === "start") {
+          setGuideView(next ? "run" : "review");
+        } else if (next?.unit.key === pendingTransition.unitKey) {
+          setGuideView("run");
+          setRestDeadline(pendingTransition.restSeconds > 0 ? Date.now() + pendingTransition.restSeconds * 1000 : null);
+        } else {
+          setFinishedUnitKey(pendingTransition.unitKey);
+          setRestDeadline(null);
+          setGuideView("exercise-complete");
+        }
+      }
       setSuccess(
         saved.status === "COMPLETED"
           ? t(
@@ -452,6 +525,31 @@ export function ClientWorkout() {
     }
   }
 
+  function resumeGuide() {
+    guidanceInteracted.current = true;
+    setActiveStepKey(nextPending?.step.key ?? null);
+    setGuideView(nextPending ? "run" : "review");
+  }
+
+  function openGuidePage(view: "plan" | "records") {
+    guidanceInteracted.current = true;
+    guideReturnView.current = guideView;
+    setGuideView(view);
+  }
+
+  function validateGuidedStep() {
+    if (!selectedStep || !selectedUnit || busy || uncertain || conflict || readOnly) return;
+    const members = new Set(selectedStep.members.map((member) => guidedSetKey({ exerciseId: member.exercise.id, setNumber: member.setNumber })));
+    const candidateSets = sets.map((item) => members.has(guidedSetKey(item)) && item.status !== "SKIPPED"
+      ? { ...item, status: "DONE" as const } : item);
+    const invalid = validationMessage("IN_PROGRESS", candidateSets);
+    if (invalid) { setSuccess(null); setError(invalid); setValidationAttempt((current) => current + 1); return; }
+    setSets(candidateSets);
+    void persist("IN_PROGRESS", false, candidateSets, {
+      unitKey: selectedUnit.key, stepKey: selectedStep.key, restSeconds: selectedStep.restSeconds,
+    });
+  }
+
   async function logout() {
     if (inFlight.current) return;
     if (
@@ -489,10 +587,10 @@ export function ClientWorkout() {
         </button>
       }
     >
-      <div className={styles.page} data-workout-results="">
+      <div className={styles.page} data-workout-results="" ref={guideRegion} data-guided-running={guideView === "run" || undefined}>
         <div className={styles.heading}>
           <div>
-            <a className={styles.back} href="/client/program">← {t("Mon programme", "My program")}</a>
+            <a className={styles.back} href={programHref}>← {t("Mon programme", "My program")}</a>
             <p className="fe-kicker">TRAINING · {t("RÉSULTATS", "RESULTS")}</p>
             <h1 className="fe-title">{t("Ma séance.", "My workout.")}</h1>
           </div>
@@ -502,7 +600,7 @@ export function ClientWorkout() {
         </div>
 
         {signOutError ? <Feedback>{signOutError}</Feedback> : null}
-        {error ? <Feedback>{error}</Feedback> : null}
+        {error ? <div ref={errorRegion} tabIndex={-1} className={styles.focusAnchor}><Feedback>{error}</Feedback></div> : null}
         {success ? <Feedback tone="success">{success}</Feedback> : null}
         {invalidSelector ? (
           <>
@@ -538,14 +636,25 @@ export function ClientWorkout() {
               workout={workout}
             />
 
-            {!workout ? (
+            <div className={styles.guidedProgress}>
+              <div><span>{t("Progression enregistrée", "Saved progress")}</span><strong>{progress.resolved} / {progress.total} {t("séries", "sets")}</strong></div>
+              <progress aria-label={t("Séries enregistrées", "Saved sets")} max={Math.max(1, progress.total)} value={progress.resolved} />
+            </div>
+
+            {guideView === "overview" ? (
               <section className={styles.startPanel} aria-labelledby="start-workout-title">
-                <h2 id="start-workout-title">{t("Avant de commencer", "Before you start")}</h2>
+                <p className={styles.eyebrow}>{t("TA SÉANCE, UN MOUVEMENT À LA FOIS", "YOUR WORKOUT, ONE MOVEMENT AT A TIME")}</p>
+                <h2 id="start-workout-title" tabIndex={-1} data-guide-focus="" className={styles.focusAnchor}>{t("Le plan de ta séance", "Your workout plan")}</h2>
+                <GuidedPlanRows units={units.slice(0, 3)} savedSets={savedSets} french={french} />
+                {units.length > 3 ? <button type="button" className="fe-button" onClick={() => openGuidePage("plan")}>
+                  {t(`Voir tous les exercices (${units.length} étapes)`, `View all exercises (${units.length} stages)`)}
+                </button> : null}
+                {!units.length ? <p>{t("Aucune série n’est prescrite pour cette séance. Suis les directives de récupération ci-dessus.", "No sets are prescribed for this session. Follow the recovery guidance above.")}</p> : null}
                 <p>
-                  {canStart
+                  {workout ? t("Reprends à la première série qui reste à enregistrer. Tes résultats confirmés sont conservés.", "Resume at the first set still to record. Your confirmed results are kept.") : canStart
                     ? t(
-                        "Vérifie la prescription ci-dessous. La séance ne commence qu’après ton action; aucun résultat n’est prérempli.",
-                        "Review the prescription below. The workout starts only after your action; no result is prefilled.",
+                        "Démarre quand tu es prêt. Tu saisis ce que tu réalises, puis tu valides chaque série. Aucun résultat n’est prérempli.",
+                        "Start when you are ready. Enter what you actually complete, then validate each set. No result is prefilled.",
                       )
                     : t(
                         "Cette ancienne publication reste consultable, mais aucune nouvelle séance ne peut y être démarrée.",
@@ -560,12 +669,14 @@ export function ClientWorkout() {
                   >
                     {t("Recharger l’état de la séance", "Reload workout state")}
                   </button>
-                ) : canStart ? (
+                ) : workout ? <button className="fe-button fe-button-primary" type="button" disabled={busy || uncertain} onClick={resumeGuide}>
+                  {t("Reprendre ma séance", "Resume workout")}
+                </button> : canStart ? (
                   <button
                     className="fe-button fe-button-primary"
                     type="button"
                     disabled={busy}
-                    onClick={() => void persist("IN_PROGRESS", false)}
+                    onClick={() => void persist("IN_PROGRESS", false, sets, "start")}
                   >
                     {busy
                       ? t("Démarrage…", "Starting…")
@@ -577,7 +688,87 @@ export function ClientWorkout() {
               </section>
             ) : null}
 
-            <WorkoutExercises
+            {guideView === "plan" ? <section className={styles.startPanel}>
+              <h2 tabIndex={-1} data-guide-focus="" className={styles.focusAnchor}>{t("Liste des exercices", "Exercise list")}</h2>
+              <p>{t("L’ordre et les prescriptions restent ceux de ton coach.", "The order and prescriptions remain those set by your coach.")}</p>
+              <GuidedPlanRows units={units} savedSets={savedSets} french={french} />
+              <button className="fe-button fe-button-primary" type="button" onClick={() => setGuideView(guideReturnView.current)}>{t("Retour à la séance", "Back to workout")}</button>
+            </section> : null}
+
+            {guideView === "run" && selectedUnit && selectedStep ? <section className={styles.guidedRun} aria-labelledby="guided-current-title">
+              <div className={styles.guidedRunHeading}>
+                <div>
+                  <p className={styles.eyebrow}>{localized(selectedUnit.block.label, french) || t("Entraînement en cours", "Workout in progress")}</p>
+                  <h2 id="guided-current-title" tabIndex={-1} data-guide-focus={restDeadline === null ? "" : undefined} className={styles.focusAnchor}>{selectedUnit.grouped ? selectedUnit.block.mode.toUpperCase() : publishedExerciseName(selectedUnit.exercises[0], french)}</h2>
+                  <p>{t("Étape", "Stage")} {units.indexOf(selectedUnit) + 1} / {units.length} · {selectedStep.extra ? t("Série extra", "Extra set") : selectedUnit.grouped ? t("Tour", "Round") : t("Série", "Set")} {selectedStep.round}{!selectedStep.extra ? ` / ${selectedUnit.steps.filter((step) => !step.extra).length}` : ""}</p>
+                </div>
+                <button className="fe-button" type="button" onClick={() => openGuidePage("plan")}>{t("Liste des exercices", "Exercise list")}</button>
+              </div>
+              {restDeadline !== null ? <GuidedRestTimer deadline={restDeadline} french={french} onContinue={() => setRestDeadline(null)} /> : <>
+                <div className={styles.mediaSpace} aria-label={t("Repère de mouvement", "Movement reference")}>
+                  <span aria-hidden="true">FE</span>
+                  <p>{t("Ta technique d’abord.", "Technique comes first.")}</p>
+                  <small>{t("Aucun média n’est associé à ce mouvement pour le moment. Les consignes sont ci-dessous.", "No media is attached to this movement yet. Guidance is below.")}</small>
+                </div>
+                {selectedUnit.grouped ? <p className={styles.groupInstruction}>{t("Effectue les mouvements de ce tour dans l’ordre. Le repos commence seulement après validation du tour.", "Complete this round’s movements in order. Rest starts only after you validate the round.")} {t("Repos entre les tours", "Rest between rounds")} : {selectedUnit.block.restSeconds} s.</p> : null}
+                {selectedStep.members.map(({ exercise, setNumber }) => {
+                  const item = sets.find((candidate) => guidedSetKey(candidate) === guidedSetKey({ exerciseId: exercise.id, setNumber }));
+                  if (!item) return null;
+                  const confirmed = savedSets.some((saved) => guidedSetKey(saved) === guidedSetKey(item) && saved.status !== "PENDING");
+                  return <article className={styles.guidedMovement} key={exercise.id}>
+                    {selectedUnit.grouped ? <h3>{publishedExerciseName(exercise, french)}</h3> : null}
+                    {localized(exercise.cue, french) ? <p>{localized(exercise.cue, french)}</p> : null}
+                    <PublishedExerciseGuidance exercise={exercise} french={french} />
+                    <WorkoutSetRow french={french} exercise={exercise} item={item} guided
+                      editable={!busy && !uncertain && !conflict && !confirmed}
+                      update={(change) => updateSet(item.exerciseId, item.setNumber, change)}
+                      changeStatus={(status) => updateSet(item.exerciseId, item.setNumber, (current) => changeSetStatus(current, status))}
+                      remove={() => { removeExtra(item); setActiveStepKey(null); setGuideView("review"); }} />
+                    {confirmed ? <p className={styles.confirmedSet}>{t("Cette série est déjà enregistrée. Elle reste conservée pendant ce tour.", "This set is already saved and stays unchanged during this round.")}</p> : null}
+                  </article>;
+                })}
+                <button className={`fe-button fe-button-primary ${styles.validateButton}`} type="button" disabled={busy || uncertain || conflict}
+                  onClick={validateGuidedStep}>
+                  {busy ? t("Enregistrement…", "Saving…") : selectedUnit.grouped && !selectedStep.extra ? t("Valider le tour", "Validate round") : t("Valider la série", "Validate set")}
+                </button>
+              </>}
+            </section> : null}
+
+            {guideView === "exercise-complete" ? <section className={styles.completePanel}>
+              <span className={styles.completeMark} aria-hidden="true">✓</span>
+              <p className={styles.eyebrow}>{t("RÉSULTATS ENREGISTRÉS", "RESULTS SAVED")}</p>
+              <h2 tabIndex={-1} data-guide-focus="" className={styles.focusAnchor}>{(() => { const unit = units.find((candidate) => candidate.key === finishedUnitKey); return unit?.grouped ? localized(unit.block.label, french) : unit ? publishedExerciseName(unit.exercises[0], french) : t("Étape terminée", "Stage complete"); })()}</h2>
+              <p>{t("Cette étape est enregistrée. Prêt pour la suite ?", "This stage is saved. Ready for the next one?")}</p>
+              {nextPending ? <div className={styles.nextMovement}><span>{t("PROCHAINE ÉTAPE", "UP NEXT")}</span><strong>{nextPending.unit.grouped ? localized(nextPending.unit.block.label, french) : publishedExerciseName(nextPending.unit.exercises[0], french)}</strong></div> : <p>{t("Toutes tes séries sont enregistrées. Il reste à terminer la séance.", "All your sets are saved. You can now complete the workout.")}</p>}
+              <button className="fe-button fe-button-primary" type="button" disabled={busy || uncertain || conflict} onClick={resumeGuide}>{nextPending ? t("Exercice suivant", "Next exercise") : t("Voir le résumé de ma séance", "Review my workout")}</button>
+              <div className={styles.extraActions}>{units.find((unit) => unit.key === finishedUnitKey)?.exercises.map((exercise) => <button className="fe-button" type="button" key={exercise.id}
+                disabled={busy || uncertain || conflict || sets.filter((item) => item.exerciseId === exercise.id && item.kind === "EXTRA").length >= MAX_EXTRA_SETS_PER_EXERCISE || sets.length >= MAX_WORKOUT_SETS}
+                onClick={() => { addExtra(exercise); setActiveStepKey(null); setGuideView("run"); }}>
+                {t("Ajouter une série extra", "Add extra set")} · {publishedExerciseName(exercise, french)}
+              </button>)}</div>
+            </section> : null}
+
+            {guideView === "review" || guideView === "summary" ? <section className={styles.completePanel}>
+              <p className={styles.eyebrow}>{readOnly ? t("ENTRAÎNEMENT TERMINÉ", "WORKOUT COMPLETE") : t("DERNIÈRE ÉTAPE", "ONE LAST STEP")}</p>
+              {readOnly ? <span className={styles.completeMark} aria-hidden="true">✓</span> : null}
+              <h2 tabIndex={-1} data-guide-focus="" className={styles.focusAnchor}>{readOnly ? t("Ta séance est conservée.", "Your workout is saved.") : t("Fais le point, puis termine ta séance.", "Review, then finish your workout.")}</h2>
+              <div className={styles.summaryStats}><div><strong>{progress.done}</strong><span>{t("séries réalisées", "sets completed")}</span></div><div><strong>{progress.skipped}</strong><span>{t("séries ignorées", "sets skipped")}</span></div><div><strong>{progress.total - progress.resolved}</strong><span>{t("séries restantes", "sets remaining")}</span></div></div>
+              <p>{readOnly ? t("Les résultats sont en lecture seule et disponibles pour ton suivi.", "Your results are read-only and available for your follow-up.") : t("Les séries enregistrées ne ferment pas encore la séance. Vérifie ta note, puis confirme la fin ci-dessous.", "Saved sets do not close the workout yet. Review your note, then confirm completion below.")}</p>
+              {readOnly && workout?.note ? <div className={styles.summaryNote}><h3>{t("Ta note de séance", "Your workout note")}</h3><p>{workout.note}</p></div> : null}
+              {readOnly ? <a className="fe-button fe-button-primary" href={programHref}>{t("Retour à mon programme", "Back to my program")}</a> : nextPending ? <button className="fe-button" type="button" onClick={resumeGuide}>{t("Reprendre les séries restantes", "Resume remaining sets")}</button> : null}
+            </section> : null}
+
+            {guideView !== "plan" && guideView !== "records" ? <div className={styles.secondaryActions}>
+              <button className="fe-button" type="button" disabled={busy || uncertain || (guideView === "run" && dirty)} onClick={() => openGuidePage("records")}>
+                {!workout ? t("Consulter toutes les prescriptions", "View all prescriptions") : readOnly ? t("Consulter mes résultats", "View my results") : t("Revoir/modifier mes résultats", "Review/edit my results")}
+              </button>
+            </div> : null}
+
+            {guideView === "records" ? <>
+              <h2 tabIndex={-1} data-guide-focus="" className={styles.focusAnchor}>{t("Mes résultats détaillés", "My detailed results")}</h2>
+              <button className="fe-button" type="button" disabled={busy || uncertain || dirty} onClick={() => guideReturnView.current === "run" ? resumeGuide() : setGuideView(guideReturnView.current)}>{t("Retour à la séance guidée", "Back to guided workout")}</button>
+              {dirty ? <p>{t("Enregistre tes modifications ci-dessous avant de reprendre le guidage.", "Save your changes below before returning to the guided workout.")}</p> : null}
+              <WorkoutExercises
               french={french}
               session={session}
               sets={sets}
@@ -588,8 +779,9 @@ export function ClientWorkout() {
               addExtra={addExtra}
               removeExtra={removeExtra}
             />
+            </> : null}
 
-            {workout ? (
+            {workout && ["run", "review", "records", "exercise-complete"].includes(guideView) ? (
               <section className={styles.notePanel} aria-labelledby="workout-note-title">
                 <h2 id="workout-note-title">{t("Note de séance", "Workout note")}</h2>
                 <label>
@@ -637,7 +829,7 @@ export function ClientWorkout() {
                   <button className="fe-button fe-button-primary" type="button" disabled={busy} onClick={() => void persist(pendingCommandStatus, false)}>
                     {t("Réessayer pour confirmer", "Retry to confirm")}
                   </button>
-                ) : (
+                ) : guideView === "records" || guideView === "review" ? (
                   <div className={styles.actionButtons}>
                     <button className="fe-button" type="button" disabled={busy || !dirty} onClick={() => void persist("IN_PROGRESS", false)}>
                       {t("Enregistrer les résultats", "Save results")}
@@ -646,7 +838,7 @@ export function ClientWorkout() {
                       {t("Terminer la séance", "Complete workout")}
                     </button>
                   </div>
-                )}
+                ) : null}
               </section>
             ) : readOnly && workout ? (
               <Feedback tone="success">
@@ -661,6 +853,40 @@ export function ClientWorkout() {
       </div>
     </AppShell>
   );
+}
+
+function GuidedPlanRows({ units, savedSets, french }: { units: GuidedUnit[]; savedSets: WorkoutSetResult[]; french: boolean }) {
+  return <ol className={styles.planRows}>{units.map((unit, index) => {
+    const complete = unit.steps.every((step) => isGuidedStepSaved(step, savedSets));
+    return <li key={unit.key}>
+      <span className={styles.planNumber} aria-hidden="true">{complete ? "✓" : String(index + 1).padStart(2, "0")}</span>
+      <div>
+        <strong>{unit.grouped ? localized(unit.block.label, french) || unit.block.mode : publishedExerciseName(unit.exercises[0], french)}</strong>
+        <p>{unit.grouped ? `${unit.block.mode.toUpperCase()} · ${unit.steps.filter((step) => !step.extra).length} ${french ? "tours" : "rounds"}` : `${unit.exercises[0].prescription.sets} ${french ? "séries" : "sets"}`}{complete ? ` · ${french ? "enregistré" : "saved"}` : ""}</p>
+        {unit.grouped ? <ul>{unit.exercises.map((exercise) => <li key={exercise.id}>{publishedExerciseName(exercise, french)} · {exercise.prescription.sets} {french ? "séries" : "sets"}</li>)}</ul> : <p><PrescriptionText exercise={unit.exercises[0]} value={unit.exercises[0].prescription} french={french} /></p>}
+      </div>
+    </li>;
+  })}</ol>;
+}
+
+function GuidedRestTimer({ deadline, french, onContinue }: { deadline: number; french: boolean; onContinue(): void }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
+    const refresh = () => setNow(Date.now());
+    document.addEventListener("visibilitychange", refresh);
+    return () => { window.clearInterval(timer); document.removeEventListener("visibilitychange", refresh); };
+  }, []);
+  const remaining = restSecondsRemaining(deadline, now);
+  return <section className={styles.restTimer} aria-labelledby="rest-timer-title">
+    <p className={styles.eyebrow}>{french ? "SÉRIE ENREGISTRÉE" : "SET SAVED"}</p>
+    <h3 id="rest-timer-title" tabIndex={-1} data-guide-focus="" className={styles.focusAnchor}>{french ? "Respire. Récupère." : "Breathe. Recover."}</h3>
+    <div className={styles.timerDigits} aria-label={french ? `${remaining} secondes de repos restantes` : `${remaining} seconds of rest remaining`}>
+      {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}
+    </div>
+    <p role="status">{remaining === 0 ? french ? "Repos terminé. Continue quand tu es prêt." : "Rest finished. Continue when you are ready." : french ? "Le prochain effort t’attend. Rien ne démarre automatiquement." : "Your next effort is waiting. Nothing starts automatically."}</p>
+    <button className="fe-button fe-button-primary" type="button" onClick={onContinue}>{remaining ? french ? "Passer le repos" : "Skip rest" : french ? "Continuer" : "Continue"}</button>
+  </section>;
 }
 
 function WorkoutHeading({
@@ -752,11 +978,12 @@ function WorkoutExercises({
               <article className={styles.exercise} key={exercise.id} aria-labelledby={`workout-exercise-${exercise.id}`}>
                 <div className={styles.exerciseHeading}>
                   <div>
-                    <h3 id={`workout-exercise-${exercise.id}`}>{exercise.name}</h3>
+                    <h3 id={`workout-exercise-${exercise.id}`}>{publishedExerciseName(exercise, french)}</h3>
                     <p>{localized(exercise.cue, french)}</p>
                   </div>
                   <span>{exercise.prescription.sets} {t("série(s) prescrite(s)", "prescribed set(s)")}</span>
                 </div>
+                <PublishedExerciseGuidance exercise={exercise} french={french} />
                 {!resultsVisible ? (
                   <PrescriptionList exercise={exercise} french={french} />
                 ) : (
@@ -802,6 +1029,7 @@ function WorkoutSetRow({
   update,
   changeStatus,
   remove,
+  guided = false,
 }: {
   french: boolean;
   exercise: DraftSession["blocks"][number]["exercises"][number];
@@ -810,13 +1038,14 @@ function WorkoutSetRow({
   update(change: (set: EditableSet) => EditableSet): void;
   changeStatus(status: EditableSet["status"]): void;
   remove(): void;
+  guided?: boolean;
 }) {
   const t = (fr: string, en: string) => (french ? fr : en);
   const prescription = item.kind === "PRESCRIBED"
     ? exercise.prescription.prescribedSets?.[item.setNumber - 1] ?? exercise.prescription
     : null;
-  const prefix = `${exercise.name} · ${t("série", "set")} ${item.setNumber}`;
-  const resultDisabled = !editable || item.status !== "DONE";
+  const prefix = `${publishedExerciseName(exercise, french)} · ${t("série", "set")} ${item.setNumber}`;
+  const resultDisabled = !editable || (guided ? item.status === "SKIPPED" : item.status !== "DONE");
   return (
     <section className={styles.setCard} data-kind={item.kind} aria-label={prefix}>
       <div className={styles.setHeading}>
@@ -833,22 +1062,27 @@ function WorkoutSetRow({
       {prescription ? (
         <p className={styles.prescription} id={`prescription-${item.exerciseId}-${item.setNumber}`}>
           <strong>{t("Prescription", "Prescription")} :</strong>{" "}
-          <PrescriptionText value={prescription} french={french} />
+          <PrescriptionText value={prescription} french={french} exercise={exercise} />
         </p>
       ) : null}
-      <label className={styles.statusField}>
+      {guided ? <div className={styles.guidedSetState}>
+        <p>{item.status === "SKIPPED" ? t("Série ignorée : explique pourquoi dans la note de séance avant de valider.", "Skipped set: explain why in the workout note before validating.") : t("Inscris ce que tu viens de réaliser. La cible reste une indication, pas un résultat.", "Enter what you actually completed. The target is guidance, not a result.")}</p>
+        {editable ? <button className="fe-text-button" type="button" onClick={() => changeStatus(item.status === "SKIPPED" ? "PENDING" : "SKIPPED")}>
+          {item.status === "SKIPPED" ? t("Saisir cette série", "Enter this set") : t("Ignorer cette série", "Skip this set")}
+        </button> : null}
+      </div> : <label className={styles.statusField}>
         {t("Statut de la série", "Set status")}
         <select value={item.status} disabled={!editable} onChange={(event) => changeStatus(event.target.value as EditableSet["status"])}>
           <option value="PENDING">{t("À faire", "Pending")}</option>
           <option value="DONE">{t("Faite", "Done")}</option>
           <option value="SKIPPED">{t("Ignorée", "Skipped")}</option>
         </select>
-      </label>
+      </label>}
       <div className={styles.resultFields}>
         <label>
-          {t("Répétitions", "Reps")} {item.unit === "lb" ? "*" : `(${t("facultatif", "optional")})`}
+          {repetitionLabel(exercise, french)} {["lb", "kg", "configuration"].includes(item.unit) ? "*" : `(${t("facultatif", "optional")})`}
           <input
-            aria-label={`${t("Répétitions", "Reps")} · ${prefix}`}
+            aria-label={`${repetitionLabel(exercise, french)} · ${prefix}`}
             type="number"
             min={0}
             max={10_000}
@@ -862,10 +1096,10 @@ function WorkoutSetRow({
             }}
           />
         </label>
-        <label>
-          {measurementLabel(item.unit, french)} *
+        {item.unit !== "configuration" ? <label>
+          {measurementLabel(item.unit, french, exercise)} *
           <input
-            aria-label={`${measurementLabel(item.unit, french)} · ${prefix}`}
+            aria-label={`${measurementLabel(item.unit, french, exercise)} · ${prefix}`}
             type="number"
             min={0}
             max={100_000}
@@ -878,7 +1112,16 @@ function WorkoutSetRow({
               update((current) => ({ ...current, load }));
             }}
           />
-        </label>
+        </label> : null}
+        {needsMeasurementDetails(exercise, item.unit) ? <label>
+          {detailsLabel(exercise, item.unit, french)} *
+          <input
+            aria-label={`${detailsLabel(exercise, item.unit, french)} · ${prefix}`}
+            type="text" maxLength={500} value={item.details ?? ""} disabled={resultDisabled}
+            placeholder={detailsPlaceholder(exercise, item.unit, french)}
+            onChange={(event) => update((current) => ({ ...current, details: event.target.value }))}
+          />
+        </label> : null}
         <label>
           RIR ({t("facultatif", "optional")})
           <input
@@ -911,6 +1154,7 @@ function PrescriptionList({ exercise, french }: { exercise: DraftExercise; frenc
             <PrescriptionText
               value={exercise.prescription.prescribedSets?.[index] ?? exercise.prescription}
               french={french}
+              exercise={exercise}
             />
           </span>
         </li>
@@ -922,13 +1166,18 @@ function PrescriptionList({ exercise, french }: { exercise: DraftExercise; frenc
 function PrescriptionText({
   value,
   french,
+  exercise,
 }: {
   value: Omit<DraftExercise["prescription"], "sets" | "prescribedSets">;
   french: boolean;
+  exercise: DraftExercise;
 }) {
+  const measure = exercise.pilot?.performance.measure;
+  const timed = measure === "duration" || measure === "distance";
+  const unit = value.unit === "configuration" ? "" : value.unit === "distance" && exercise.pilot ? "m" : value.unit;
   return (
     <>
-      {value.reps} {french ? "rép." : "reps"} · {value.loadTarget || "—"} {value.unit} · RIR {value.targetRir} ·{" "}
+      {value.reps} {timed ? (french ? "passage(s)" : "round(s)") : repetitionLabel(exercise, french).toLowerCase()} · {value.loadTarget || "—"} {unit} · RIR {value.targetRir} ·{" "}
       {french ? "repos" : "rest"} {value.restSeconds} s{value.tempo ? ` · ${value.tempo}` : ""}
     </>
   );
@@ -964,37 +1213,20 @@ function hydrateSets(session: DraftSession, saved: WorkoutSetResult[]): Editable
   return hydrated;
 }
 
-function stripDerivedSet(item: EditableSet): WorkoutSetInput {
-  return {
-    exerciseId: item.exerciseId,
-    setNumber: item.setNumber,
-    status: item.status,
-    reps: item.status === "DONE" ? item.reps : null,
-    load: item.status === "DONE" ? item.load : null,
-    rir: item.status === "DONE" ? item.rir : null,
-  };
-}
-
 function editableFingerprint(sets: EditableSet[], note: string) {
   return JSON.stringify({
-    sets: sets.map(stripDerivedSet),
+    // A guided set stays PENDING while the Client enters actual measurements.
+    // Serialization intentionally strips those values; editing protection must
+    // not, otherwise closing the page before Validate silently loses the input.
+    sets: sets.map(({ exerciseId, setNumber, status, reps, load, rir, details }) => ({
+      exerciseId, setNumber, status, reps, load, rir, details,
+    })),
     note: note.trim() || null,
   });
 }
 
 function localized(value: { fr: string; en: string }, french: boolean) {
   return value[french ? "fr" : "en"] || value.fr || value.en;
-}
-
-function measurementLabel(unit: EditableSet["unit"], french: boolean) {
-  const labels = {
-    lb: french ? "Charge (lb)" : "Load (lb)",
-    min: french ? "Durée (min)" : "Duration (min)",
-    sec: french ? "Durée (sec)" : "Duration (sec)",
-    distance: french ? "Distance" : "Distance",
-    level: french ? "Niveau" : "Level",
-  } as const;
-  return labels[unit];
 }
 
 function numberOrNull(value: number) {
@@ -1006,4 +1238,13 @@ function formatDate(value: string, french: boolean) {
     dateStyle: "long",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function focusWorkoutElement(element: HTMLElement | null) {
+  if (!element) return;
+  element.focus({ preventScroll: true });
+  element.scrollIntoView({
+    block: "start",
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+  });
 }

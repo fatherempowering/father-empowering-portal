@@ -59,4 +59,16 @@ describe("Coach login action", () => {
     await expect(signInCoachAction(credentials())).rejects.toThrow("NEXT_REDIRECT");
     expect(mocks.redirect).toHaveBeenCalledWith("/login?error=unavailable");
   });
+
+  it("keeps actual invalid credentials generic", async () => {
+    mocks.signIn.mockRejectedValue(new M1ContractError("UNAUTHENTICATED", "Invalid credentials", 401));
+    await expect(signInCoachAction(credentials())).rejects.toThrow("NEXT_REDIRECT");
+    expect(mocks.redirect).toHaveBeenCalledWith("/login?error=invalid");
+  });
+
+  it("does not expose or misclassify an unexpected network failure", async () => {
+    mocks.signIn.mockRejectedValue(new Error("private provider error"));
+    await expect(signInCoachAction(credentials())).rejects.toThrow("NEXT_REDIRECT");
+    expect(mocks.redirect).toHaveBeenCalledExactlyOnceWith("/login?error=unavailable");
+  });
 });

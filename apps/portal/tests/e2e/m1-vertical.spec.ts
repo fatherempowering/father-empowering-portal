@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
+import { verifyWeekZeroBrowserJourney } from "../harness/week-zero-browser";
 
 import {
   ONBOARDING_SECTIONS,
@@ -318,7 +319,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await clientPage.getByRole("button", { name: /activer mon portail/i }).click();
 
   await expect(clientPage).toHaveURL(/\/client(?:\?.*)?$/);
-  await expect(clientPage.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
+  await expect(clientPage.getByRole("heading", { name: "Ton parcours commence ici." })).toBeVisible();
   await expect(clientPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   await expect(clientPage.getByText(/^accès actif$/i).first()).toBeVisible();
   await clientPage.getByRole("button", { name: "Menu", exact: true }).click();
@@ -334,7 +335,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     }),
   ).toBeVisible();
   await expect(
-    clientPage.getByRole("link", { name: "Compléter mon questionnaire d’accueil" }),
+    clientPage.getByRole("link", { name: "Commencer mon questionnaire" }),
   ).toHaveAttribute("href", "/client/onboarding");
   await expect(
     clientPage.getByRole("link", { name: "Voir aujourd’hui" }),
@@ -353,7 +354,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     }),
   ).toBeVisible();
   await expect(
-    clientPage.getByRole("link", { name: "Compléter mon questionnaire d’accueil" }),
+    clientPage.getByRole("link", { name: "Commencer mon questionnaire" }),
   ).toHaveAttribute("href", "/client/onboarding");
   await expect(clientPage.getByText(/à jour|rien à faire/i)).toHaveCount(0);
   await clientPage.getByRole("button", { name: /ouvrir le menu/i }).click();
@@ -368,13 +369,13 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   if (!clientId) throw new Error("The activated Client has no persisted identifier.");
 
   await clientPage
-    .getByRole("link", { name: "Compléter mon questionnaire d’accueil" })
+    .getByRole("link", { name: "Commencer mon questionnaire" })
     .click();
   await expect(clientPage).toHaveURL(/\/client\/onboarding(?:\?.*)?$/);
   await expect(
     clientPage.getByRole("heading", { name: "Faisons connaissance." }),
   ).toBeVisible();
-  await clientPage.getByLabel(/Numéro de téléphone/i).fill("+1 514 555 0199");
+  await clientPage.getByLabel(/Ton numéro de téléphone/i).fill("+1 514 555 0199");
 
   let backWasProtected = false;
   clientPage.once("dialog", async (dialog) => {
@@ -384,12 +385,12 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await clientPage.evaluate(() => window.history.back());
   await expect.poll(() => backWasProtected).toBe(true);
   await expect(clientPage).toHaveURL(/\/client\/onboarding(?:\?.*)?$/);
-  await expect(clientPage.getByLabel(/Numéro de téléphone/i)).toHaveValue(
+  await expect(clientPage.getByLabel(/Ton numéro de téléphone/i)).toHaveValue(
     "+1 514 555 0199",
   );
 
   await fillOnboardingSection(clientPage, 0);
-  await clientPage.getByRole("button", { name: /^Continuer$/i }).click();
+  await clientPage.getByRole("button", { name: /^On continue$/i }).click();
   await expect(
     clientPage.getByRole("heading", { name: ONBOARDING_SECTIONS[1]!.title.fr }),
   ).toBeVisible();
@@ -440,7 +441,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(
     continuedPage.getByRole("heading", { name: "Faisons connaissance." }),
   ).toBeVisible();
-  await expect(continuedPage.getByLabel(/Numéro de téléphone/i)).toHaveValue(
+  await expect(continuedPage.getByLabel(/Ton numéro de téléphone/i)).toHaveValue(
     "+1 514 555 0199",
   );
   expect(continuedOtpRequests).toHaveLength(0);
@@ -454,17 +455,17 @@ test("Max → création → invitation → OTP → activation → accès isolé"
         .click();
     }
     await fillOnboardingSection(continuedPage, sectionIndex);
-    await continuedPage.getByRole("button", { name: /^Continuer$/i }).click();
+    await continuedPage.getByRole("button", { name: /^On continue$/i }).click();
   }
   await expect(
-    continuedPage.getByText(/54 réponses obligatoires sur 54 complétées et valides/i),
+    continuedPage.getByText(/54 réponses obligatoires sur 54 sont remplies et valides/i),
   ).toBeVisible();
   expect(await browserStorageContainsPrivateOnboarding(continuedPage)).toBe(false);
   await continuedPage
-    .getByRole("button", { name: /Transmettre mon questionnaire/i })
+    .getByRole("button", { name: /Envoyer mes réponses à Max/i })
     .click();
   await expect(
-    continuedPage.getByText(/Questionnaire transmis au Coach/i).first(),
+    continuedPage.getByText(/Questionnaire envoyé à ton coach/i).first(),
   ).toBeVisible();
   await expect(
     continuedPage.getByText("Vidéo à venir", { exact: true }),
@@ -472,7 +473,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await expect(continuedPage.locator("form, details, video, iframe")).toHaveCount(0);
   await expect(continuedPage.locator("h1")).toBeFocused();
   await expect(continuedPage).toHaveURL(`${environment.appUrl}/client/onboarding`);
-  await expect(continuedPage.getByRole("link", { name: "Retour à la page d’accueil", exact: true })).toHaveAttribute("href", "/client");
+  await expect(continuedPage.getByRole("link", { name: "Retour à mon accueil", exact: true })).toHaveAttribute("href", "/client");
   await continuedPage.reload();
   await expect(continuedPage.locator("[data-onboarding-completion]")).toBeVisible();
   await expect(continuedPage.locator("details")).toHaveCount(0);
@@ -480,7 +481,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
 
   // Answers remain available only through an intentional read-only visit.
   await continuedPage.goto(`${environment.appUrl}/client/onboarding?view=responses`);
-  await expect(continuedPage.getByText(/conservé en lecture seule/i)).toBeVisible();
+  await expect(continuedPage.getByText(/cette version ne peut plus être modifiée/i)).toBeVisible();
   await expect(continuedPage.locator("details")).toHaveCount(6);
   await expect(continuedPage.locator("form")).toHaveCount(0);
 
@@ -520,184 +521,14 @@ test("Max → création → invitation → OTP → activation → accès isolé"
     data: { assessment: { status: "NOT_STARTED", version: 0 } },
   });
 
-  await continuedPage.goto(`${environment.appUrl}/client/week-zero`);
-  await expect(continuedPage).toHaveURL(/\/client\/week-zero(?:\?.*)?$/);
-  await expect(
-    continuedPage.getByRole("heading", { name: "Ta semaine zéro" }),
-  ).toBeVisible();
-  await expect(
-    continuedPage.getByText(/photos, calibration des charges et cardio/i),
-  ).toHaveCount(0);
-  await expect(continuedPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
-  await continuedPage.getByLabel(/Poids au réveil \(lb\)/i).fill("214.5");
-  await continuedPage
-    .getByLabel(/Tour de taille au nombril \(po\)/i)
-    .fill("41.25");
-  await continuedPage
-    .getByLabel(/Autres précisions \(facultatif\)/i)
-    .fill("Poids et tour de taille pris au réveil.");
-  await continuedPage
-    .getByRole("button", { name: /Enregistrer mon brouillon/i })
-    .click();
-  await expect(
-    continuedPage.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
-  ).toBeVisible();
-
-  await maxPage.goto(
-    `${environment.appUrl}/coach/clients/${encodeURIComponent(clientId)}`,
-  );
-  await expect(maxPage.getByTestId("coach-client-detail")).toBeVisible();
-  await expect(maxPage.getByTestId("initial-assessment-status")).toHaveText(
-    /Non transmis/i,
-  );
-  await expect(maxPage.getByText(/Aucune semaine zéro transmise/i)).toBeVisible();
-  await expect(maxPage.getByText(/pris au réveil/i)).toHaveCount(0);
-  await expect(continuedPage.getByLabel(/Poids au réveil \(lb\)/i)).toHaveValue(
-    "214.5",
-  );
-  await expect(
-    continuedPage.getByLabel(/Tour de taille au nombril \(po\)/i),
-  ).toHaveValue("41.25");
-  await expect(
-    continuedPage.getByLabel(/Autres précisions \(facultatif\)/i),
-  ).toHaveValue("Poids et tour de taille pris au réveil.");
+  await verifyWeekZeroBrowserJourney({ clientPage: continuedPage, coachPage: maxPage, context: clientContext, appUrl: environment.appUrl, clientId });
   expect(continuedOtpRequests).toHaveLength(0);
-
-  await continuedPage
-    .getByRole("button", { name: /4\. Vérifier et transmettre/i })
-    .click();
-  await expect(
-    continuedPage.getByText(/À compléter avant de transmettre/i),
-  ).toBeVisible();
-  await expect(
-    continuedPage.getByRole("button", {
-      name: /Transmettre mon bilan au Coach/i,
-    }),
-  ).toBeDisabled();
-
-  await continuedPage.getByRole("button", { name: /2\. Mobilité/i }).click();
-  for (const label of [
-    /Douleur pendant le squat \/ les jambes/i,
-    /Douleur pendant la flexion des hanches/i,
-    /Douleur pendant une poussée/i,
-    /Douleur pendant un tirage/i,
-    /Douleur pendant le cardio/i,
-  ]) {
-    await continuedPage.getByLabel(label).selectOption("NO");
-  }
-  await continuedPage
-    .getByLabel(/Mouvement le plus limité/i)
-    .fill("Charnière de hanches limitée au lever.");
-  await continuedPage
-    .getByLabel(/Mouvement le plus confortable/i)
-    .fill("Marche et poussée horizontale.");
-  await continuedPage
-    .getByLabel(/Zone raide ou tendue/i)
-    .fill("Ischio-jambier droit.");
-
-  await continuedPage
-    .getByRole("button", { name: /3\. Disponibilités/i })
-    .click();
-  await continuedPage.getByLabel(/^Lundi$/i).check();
-  await continuedPage.getByLabel(/^Mercredi$/i).check();
-  await continuedPage
-    .getByLabel(/Moment de la journée \(facultatif\)/i)
-    .fill("06:30");
-  await continuedPage
-    .getByLabel(/Durée disponible par séance/i)
-    .fill("40");
-  await continuedPage
-    .getByLabel(/Séances possibles par semaine/i)
-    .fill("3");
-  await continuedPage
-    .getByLabel(/Contraintes à partager/i)
-    .fill("Déplacement professionnel le jeudi.");
-
-  await continuedPage
-    .getByRole("button", { name: /4\. Vérifier et transmettre/i })
-    .click();
-  await expect(
-    continuedPage.getByText(/champs requis de la semaine zéro sont remplis/i),
-  ).toBeVisible();
-  await expect(continuedPage.getByText(/Photos, charges et cardio/i)).toBeVisible();
-  await expect(continuedPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
-  await continuedPage
-    .getByRole("button", { name: /Transmettre mon bilan au Coach/i })
-    .click();
-  await expect(
-    continuedPage.getByText(/Semaine zéro transmise au Coach/i),
-  ).toBeVisible();
-  await expect(
-    continuedPage.getByText(/réponses transmises sont conservées en lecture seule/i),
-  ).toBeVisible();
-  await expect(
-    continuedPage.getByText(/Photos, calibration des charges et cardio/i),
-  ).toBeVisible();
-  await expect(continuedPage.getByText(/Week Zero terminé/i)).toHaveCount(0);
-
-  const persistedAssessment = await clientContext.request.get(
-    `${environment.appUrl}/api/v1/client/week-zero`,
-  );
-  expect(persistedAssessment.status()).toBe(200);
-  expect(persistedAssessment.headers()["cache-control"]).toContain("no-store");
-  expect(await persistedAssessment.json()).toMatchObject({
-    data: {
-      assessment: {
-        status: "SUBMITTED",
-        responses: {
-          measurements: {
-            bodyWeightLb: 214.5,
-            waistIn: 41.25,
-            other: "Poids et tour de taille pris au réveil.",
-          },
-          mobility: {
-            painSquat: "NO",
-            painHinge: "NO",
-            painPush: "NO",
-            painPull: "NO",
-            painCardio: "NO",
-            limitedMovement: "Charnière de hanches limitée au lever.",
-            comfortableMovement: "Marche et poussée horizontale.",
-            tightArea: "Ischio-jambier droit.",
-          },
-          availability: {
-            days: ["MONDAY", "WEDNESDAY"],
-            bestTime: "06:30",
-            sessionDurationMinutes: 40,
-            sessionsPerWeek: 3,
-            constraints: "Déplacement professionnel le jeudi.",
-          },
-        },
-      },
-    },
-  });
-
-  await maxPage.reload();
-  await expect(maxPage.getByTestId("initial-assessment-status")).toHaveText(
-    /Semaine zéro transmise/i,
-  );
-  await expect(maxPage.getByText(/toute la Week Zero est terminée/i)).toBeVisible();
-  await expect(maxPage.getByTestId("assessment-measurements")).toContainText(
-    "214.5 lb",
-  );
-  await expect(maxPage.getByTestId("assessment-measurements")).toContainText(
-    "41.25 po",
-  );
-  await expect(maxPage.getByTestId("assessment-mobility")).toContainText(
-    "Charnière de hanches limitée au lever.",
-  );
-  await expect(maxPage.getByTestId("assessment-availability")).toContainText(
-    "Lundi, Mercredi",
-  );
-  await expect(maxPage.getByTestId("assessment-availability")).toContainText(
-    "Déplacement professionnel le jeudi.",
-  );
   await maxPage.getByRole("link", { name: /Retour aux clients/i }).click();
   await expect(maxPage).toHaveURL(/\/coach(?:\?.*)?$/);
 
   await continuedPage.goto(`${environment.appUrl}/client`);
   await expect(
-    continuedPage.getByRole("heading", { name: "Ton point de départ." }),
+    continuedPage.getByRole("heading", { name: "Ton parcours commence ici." }),
   ).toBeVisible();
   await expect(continuedPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   await expect(
@@ -706,7 +537,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await continuedPage.goto(`${environment.appUrl}/client-login`);
   await expect(continuedPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(
-    continuedPage.getByRole("heading", { name: "Ton point de départ." }),
+    continuedPage.getByRole("heading", { name: "Ton parcours commence ici." }),
   ).toBeVisible();
   expect(continuedOtpRequests).toHaveLength(0);
 
@@ -763,6 +594,12 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   expect(await signedOutAssessment.text()).not.toMatch(
     /214\.5|41\.25|Charnière de hanches|Déplacement professionnel/i,
   );
+  const signedOutAcquisition = await clientContext.request.get(
+    `${environment.appUrl}/api/v1/client/week-zero/acquisition`,
+  );
+  expect(signedOutAcquisition.status()).toBe(401);
+  expect(signedOutAcquisition.headers()["cache-control"]).toContain("no-store");
+  expect(await signedOutAcquisition.text()).not.toMatch(/214\.5|41\.25|Charnière de hanches/i);
 
   const returningContext = await browser.newContext();
   const returningPage = await returningContext.newPage();
@@ -794,7 +631,7 @@ test("Max → création → invitation → OTP → activation → accès isolé"
   await returningPage.getByRole("button", { name: /ouvrir mon portail/i }).click();
   await expect(returningPage).toHaveURL(/\/client(?:\?.*)?$/);
   await expect(
-    returningPage.getByRole("heading", { name: "Ton point de départ." }),
+    returningPage.getByRole("heading", { name: "Ton parcours commence ici." }),
   ).toBeVisible();
   await expect(returningPage.getByText(/bienvenue, Client Vertical/i)).toBeVisible();
   const authUsers = await admin.auth.admin.listUsers({ page: 1, perPage: 1_000 });

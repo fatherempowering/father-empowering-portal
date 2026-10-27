@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/fe/app-shell";
+import { PublishedExerciseGuidance } from "@/features/training/shared/published-exercise-guidance";
+import { publishedExerciseName, repetitionLabel } from "@/lib/training/workout-presentation";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { workoutListSchema, workoutSessionResponseSchema, type WorkoutSnapshot, type WorkoutListItem } from "@/lib/contracts/training-results";
 import { publicationResponseSchema } from "@/lib/contracts/training-publication";
@@ -105,12 +107,13 @@ function WorkoutDetails({ clientId, item }: { clientId: string; item: WorkoutLis
     <button className="fe-button" type="button" aria-expanded={opened} onClick={()=>setOpened(value=>!value)}>{opened ? "Masquer les résultats" : "Voir la prescription et les résultats"}</button>
     {opened ? failed ? <><Feedback>Impossible de charger cette séance. Aucun résultat n’a été modifié.</Feedback><button className="fe-button" type="button" onClick={()=>setAttempt(n=>n+1)}>Réessayer cette séance</button></> : !workout ? <Loading>Chargement de la séance…</Loading> : <>
       {workout.session.blocks.flatMap(block=>block.exercises).map(exercise=><section key={exercise.id} className={styles.exercise}>
-        <h4>{exercise.name}</h4>
-        <p>Prescription : {exercise.prescription.sets} séries · {exercise.prescription.reps} répétitions · cible {exercise.prescription.loadTarget || "—"} ({exercise.prescription.unit}) · RIR {exercise.prescription.targetRir}</p>
-        {exercise.prescription.prescribedSets?.map((set,index)=><p key={index}>Série prescrite {index+1} : {set.reps} répétitions · {set.loadTarget || "—"} ({set.unit}) · RIR {set.targetRir}</p>)}
+        <h4>{publishedExerciseName(exercise, true)}</h4>
+        <PublishedExerciseGuidance exercise={exercise} french coach />
+        <p>Prescription : {exercise.prescription.sets} séries · {exercise.prescription.reps} {exercise.pilot && exercise.pilot.performance.measure !== "repetitions" ? "passage(s)" : repetitionLabel(exercise, true).toLowerCase()} · cible {exercise.prescription.loadTarget || "—"} {exercise.prescription.unit === "configuration" ? "" : `(${exercise.prescription.unit === "distance" && exercise.pilot ? "m" : exercise.prescription.unit})`} · RIR {exercise.prescription.targetRir}</p>
+        {exercise.prescription.prescribedSets?.map((set,index)=><p key={index}>Série prescrite {index+1} : {set.reps} {exercise.pilot && exercise.pilot.performance.measure !== "repetitions" ? "passage(s)" : repetitionLabel(exercise, true).toLowerCase()} · {set.loadTarget || "—"} {set.unit === "configuration" ? "" : `(${set.unit === "distance" && exercise.pilot ? "m" : set.unit})`} · RIR {set.targetRir}</p>)}
         {!workout.sets.some(s=>s.exerciseId===exercise.id) ? <p>Aucun résultat enregistré pour cet exercice.</p> : null}
         <ul>{workout.sets.filter(s=>s.exerciseId===exercise.id).map(set=><li key={set.setNumber}>
-          Série {set.setNumber}{set.kind==="EXTRA" ? " · EXTRA" : ""} : {set.status==="DONE" ? `${set.reps === null ? "" : set.reps+" répétitions · "}${set.load ?? "—"} ${set.unit}${set.rir === null ? "" : " · RIR "+set.rir}` : set.status==="SKIPPED" ? "Non effectuée" : "À compléter"}
+          Série {set.setNumber}{set.kind==="EXTRA" ? " · EXTRA" : ""} : {set.status==="DONE" ? `${set.reps === null ? "" : set.reps+" "+repetitionLabel(exercise, true).toLowerCase()+" · "}${set.unit === "configuration" ? "Configuration : " : `${set.load ?? "—"} ${set.unit === "distance" && exercise.pilot ? "m" : set.unit}`}${set.details ? (set.unit === "configuration" ? "" : " · ")+set.details : ""}${set.rir === null ? "" : " · RIR "+set.rir}` : set.status==="SKIPPED" ? "Non effectuée" : "À compléter"}
         </li>)}</ul>
       </section>)}
       {workout.note ? <p className={styles.note}><strong>Note du client :</strong> {workout.note}</p> : null}

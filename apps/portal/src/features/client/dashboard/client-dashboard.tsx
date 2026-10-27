@@ -121,7 +121,7 @@ export function ClientDashboard({
       {signOutError ? <Feedback>{signOutError}</Feedback> : null}
       {failed ? (
         <>
-          <h1 className="fe-title">Portail temporairement indisponible</h1>
+          <h1 className="fe-title">{"Ton portail est indisponible pour le moment"}</h1>
           <Feedback>
             Impossible de charger ton portail. Vérifie ta connexion et réessaie.
           </Feedback>
@@ -130,7 +130,7 @@ export function ClientDashboard({
           </button>
         </>
       ) : !dashboard ? (
-        <Loading>Chargement du portail…</Loading>
+        <Loading>{"Ton portail s’ouvre…"}</Loading>
       ) : (
         <ClientPortalView dashboard={dashboard} view={view} />
       )}

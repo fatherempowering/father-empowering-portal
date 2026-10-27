@@ -22,11 +22,11 @@ describe("client portal presentation", () => {
     const copy = clientPortalCopy(client());
 
     expect(copy.openToday).toBe("Voir aujourd’hui");
-    expect(copy.nextActionLabel).toBe("Programme");
+    expect(copy.nextActionLabel).toBe("Tes entraînements");
     expect(copy.nextActionStatus).toBe("Accès actif");
-    expect(copy.nextActionTitle).toBe("Ton accès est actif.");
+    expect(copy.nextActionTitle).toBe("Ton portail est prêt.");
     expect(copy.nextActionDescription).toContain(
-      "ne contient pas encore ton programme",
+      "n’est pas encore disponible dans ce portail",
     );
     expect(JSON.stringify(copy)).not.toMatch(
       /à jour|rien à faire|séance prête|entraînement du jour|prochaine étape apparaîtra/i,

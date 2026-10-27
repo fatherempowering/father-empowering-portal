@@ -26,7 +26,7 @@ export const publicationSchema = z.object({
 export type ProgramPublication = z.infer<typeof publicationSchema>;
 export const publicationResponseSchema = z.object({ program: publicationSchema.nullable() }).strict();
 export const publicationClientsSchema = z.object({
-  clients: z.array(z.object({ id: uuidSchema, name: z.string().min(1).max(241) }).strict()).max(20),
+  clients: z.array(z.object({ id: uuidSchema, name: z.string().min(1).max(241), isOwnProfile: z.boolean().optional() }).strict()).max(20),
   total: z.number().int().nonnegative(), page: z.number().int().nonnegative(),
 }).strict();
 export type PublicationClients = z.infer<typeof publicationClientsSchema>;

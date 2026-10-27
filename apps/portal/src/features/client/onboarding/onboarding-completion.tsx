@@ -12,8 +12,8 @@ export function OnboardingCompletion({ french }: { french: boolean }) {
   const language = french ? "fr" : "en";
   const video = VIDEO_SLOTS[language];
   return <div className={styles.completion} data-onboarding-completion="">
-    <p className={styles.status} role="status">{french ? "Questionnaire transmis au Coach" : "Questionnaire submitted to your Coach"}</p>
-    <p>{french ? "Max peut maintenant lire tes réponses. Tu n’as rien à renvoyer." : "Max can now read your answers. There is nothing to resend."}</p>
+    <p className={styles.status} role="status">{french ? "Questionnaire envoyé à ton coach" : "Questionnaire sent to your coach"}</p>
+    <p>{french ? "Tes réponses sont bien envoyées. Max peut maintenant les consulter pour préparer la suite." : "Your answers have been sent. Max can now review them to prepare what comes next."}</p>
     <section className={styles.videoIntroduction} aria-labelledby="week-zero-video-title" data-video-language={language}>
       <h2 id="week-zero-video-title">{video.title}</h2>
       <div className={styles.videoPlaceholder}>
@@ -22,7 +22,7 @@ export function OnboardingCompletion({ french }: { french: boolean }) {
       </div>
     </section>
     <div className={styles.actions}>
-      <a className="fe-button fe-button-primary" href="/client">{french ? "Retour à la page d’accueil" : "Back to home"}</a>
+      <a className="fe-button fe-button-primary" href="/client">{french ? "Retour à mon accueil" : "Back to my home"}</a>
     </div>
   </div>;
 }

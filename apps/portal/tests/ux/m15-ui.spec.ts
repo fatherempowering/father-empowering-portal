@@ -1,12 +1,18 @@
-import { mkdir } from "node:fs/promises";
-import { resolve } from "node:path";
-
 import { expect, test } from "@playwright/test";
 
-const v2CaptureDirectory = resolve(
-  process.cwd(),
-  "docs/client/captures-v2",
-);
+test("Coach identifies personal profile among same-name clients after reload", async ({page}) => {
+  await page.goto("/?screen=coach&state=same-name-clients");
+  for (let attempt=0;attempt<2;attempt++) {
+    await expect(page.getByText("Maxime Bourdon — Mon profil personnel",{exact:true})).toBeVisible();
+    await expect(page.getByText("Maxime Bourdon",{exact:true})).toBeVisible();
+    await expect(page.getByText("owner@example.test",{exact:true})).toBeVisible();
+    await expect(page.getByText("other@example.test",{exact:true})).toBeVisible();
+    await expect(page.getByRole("link",{name:"Voir le dossier",exact:true})).toHaveCount(2);
+    if (attempt===0) await page.reload();
+  }
+  await page.setViewportSize({width:320,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
+});
 
 for (const landing of [
   {
@@ -112,13 +118,13 @@ test("Client V2 pilot preserves the dark FE composition without invented program
     await page.setViewportSize(viewport);
     await page.goto("/?screen=client-v2");
     const pilot = page.locator("[data-client-v2-pilot]");
-    await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ton parcours commence ici." })).toBeVisible();
     await expect(page.getByText("Bienvenue, Alex Martin.")).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Ta semaine zéro" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Commencer ma semaine zéro" }),
+      page.getByRole("link", { name: "Commençons ma semaine zéro" }),
     ).toHaveAttribute("href", "/client/week-zero");
     await expect(page.getByRole("link", { name: "Voir aujourd’hui" })).toHaveCount(0);
     await expect(page.getByText(/87,4 kg|7 h 28|3 \/ 4|score|séance du jour/i)).toHaveCount(0);
@@ -170,7 +176,7 @@ test("Client V2 mobile menu traps focus, closes with Escape and returns focus", 
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?screen=client-v2");
-  await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ton parcours commence ici." })).toBeVisible();
 
   const trigger = page.getByRole("button", { name: "Menu" });
   await trigger.click();
@@ -200,14 +206,14 @@ test("Client V2 loading and failure keep the branded shell and real recovery", a
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?screen=client-v2&state=client-request-hang-once");
-  await expect(page.getByRole("status")).toContainText("Chargement de ton portail");
+  await expect(page.getByRole("status")).toContainText("Ton portail s’ouvre");
   await expect(page.locator('[data-pilot-state="loading"]')).toBeVisible();
   await expect(page.locator("[data-pilot-hero]")).toBeVisible();
 
   await page.goto("/?screen=client-v2&state=error");
   await expect(page.locator('[data-pilot-state="error"]')).toBeVisible();
   await expect(page.getByRole("alert")).toContainText(
-    "Impossible de charger cette page.",
+    "On n’arrive pas à ouvrir cette page.",
   );
   await expect(page.getByRole("button", { name: "Réessayer" })).toBeEnabled();
   await expect(page.locator("[data-pilot-hero]")).toBeVisible();
@@ -216,7 +222,7 @@ test("Client V2 loading and failure keep the branded shell and real recovery", a
 test("Client V2 supports English and 200% reflow at 320px", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 820 });
   await page.goto("/?screen=client-v2&state=english");
-  await expect(page.getByRole("heading", { name: "Your starting point." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your journey starts here." })).toBeVisible();
   await expect(page.getByText("Welcome, Alex Martin.")).toBeVisible();
   await expect(
     page.getByRole("heading", {
@@ -248,14 +254,14 @@ test("personal portal navigation is staff-only across Coach and Client shells", 
   page,
 }) => {
   await page.goto("/?screen=client-v2");
-  await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Espace Coach" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Ton parcours commence ici." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Portail Coach" })).toHaveCount(0);
 
   await page.goto("/?screen=client-v2-staff");
-  await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ton parcours commence ici." })).toBeVisible();
   const pilotMenu = page.getByRole("button", { name: "Menu" });
   if (await pilotMenu.isVisible()) await pilotMenu.click();
-  const pilotCoachLink = page.getByRole("link", { name: "Espace Coach" });
+  const pilotCoachLink = page.getByRole("link", { name: "Portail Coach" });
   await expect(pilotCoachLink).toHaveAttribute("href", "/coach");
   expect(await pilotCoachLink.evaluate((element) => element.tagName)).toBe("A");
 
@@ -275,7 +281,8 @@ test("personal portal navigation is staff-only across Coach and Client shells", 
   if (await coachMenu.isVisible()) await coachMenu.click();
   await expect(
     page.getByRole("link", { name: "Mon portail personnel" }),
-  ).toHaveAttribute("href", "/coach/personal");
+  ).toHaveCount(0);
+  await expect(page.locator('nav a[href="/client"]')).toHaveCount(0);
 });
 
 test("personal portal setup sends the strict intent and follows the safe success destination", async ({
@@ -354,20 +361,20 @@ test("Client onboarding takes priority in the pilot until it is submitted", asyn
 }) => {
   await page.goto("/?screen=client-v2&state=onboarding-not-started");
   const start = page.getByRole("link", {
-    name: "Compléter mon questionnaire d’accueil",
+    name: "Commencer mon questionnaire",
   });
   await expect(start).toBeVisible();
   await expect(start).toHaveAttribute("href", "/client/onboarding");
   await expect(
-    page.getByRole("link", { name: "Commencer ma semaine zéro" }),
+    page.getByRole("link", { name: "Commençons ma semaine zéro" }),
   ).toHaveCount(0);
 
   await page.goto("/?screen=client-v2&state=onboarding-draft");
   await expect(
-    page.getByRole("link", { name: "Reprendre mon questionnaire d’accueil" }),
+    page.getByRole("link", { name: "Reprendre mon questionnaire" }),
   ).toHaveAttribute("href", "/client/onboarding");
   await expect(
-    page.getByRole("link", { name: "Commencer ma semaine zéro" }),
+    page.getByRole("link", { name: "Commençons ma semaine zéro" }),
   ).toHaveCount(0);
 });
 
@@ -378,7 +385,7 @@ test("Client onboarding status failure keeps recovery without an extra assessmen
 
   await expect(
     page.getByRole("heading", {
-      name: "Ta prochaine étape ne peut pas être chargée",
+      name: "Ta prochaine étape est momentanément inaccessible",
     }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Réessayer" })).toBeEnabled();
@@ -429,17 +436,17 @@ test("Old measurements stay intact until an explicit replacement", async ({ page
   await height.getByRole("button", { name: /Métrique/ }).click();
   await expect(height.getByText("Réponse : Ancienne taille sans unité", { exact: true })).toBeVisible();
   await expect(page.getByText("Brouillon privé enregistré", { exact: true })).toBeVisible();
-  await height.getByRole("button", { name: "Saisir autrement" }).click();
+  await height.getByRole("button", { name: "Écrire ma réponse" }).click();
   await expect(height.getByLabel("Taille avec unité")).toHaveValue("Ancienne taille sans unité");
   await height.getByLabel("Taille avec unité").fill("180 cm");
-  await height.getByRole("button", { name: "Utiliser les rouleaux" }).click();
+  await height.getByRole("button", { name: "Choisir avec les nombres" }).click();
   await expect(height.getByRole("option", { name: "180", exact: true })).toHaveAttribute("aria-selected", "true");
 });
 
 test("Vision scale uses an accessible wheel and includes non-fathers", async ({ page }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
-  await page.getByRole("button", { name: "2. Objectifs et vision" }).click();
-  await expect(page.getByLabel("Quel homme veux-tu devenir et quel père, si applicable ? *")).toBeVisible();
+  await page.getByRole("button", { name: "2. Le cap que tu veux te donner" }).click();
+  await expect(page.getByLabel("Quel homme veux-tu devenir ? Si tu es père, quel exemple veux-tu donner à tes enfants ? *")).toBeVisible();
   const score = page.locator('[data-question="commitmentScore"]').getByRole("listbox");
   await expect(score).toHaveAttribute("aria-required", "true");
   await score.focus();
@@ -456,7 +463,7 @@ test("Vision scale uses an accessible wheel and includes non-fathers", async ({ 
 
 test("Wheel scrolling commits the centered score and never invents an answer on mount", async ({ page }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
-  await page.getByRole("button", { name: "2. Objectifs et vision" }).click();
+  await page.getByRole("button", { name: "2. Le cap que tu veux te donner" }).click();
   const score = page.locator('[data-question="commitmentScore"]').getByRole("listbox");
   await expect(score.getByRole("option", { name: "Choisir", exact: true })).toHaveAttribute("aria-selected", "true");
   await score.hover();
@@ -470,7 +477,7 @@ test("Wheel scrolling commits the centered score and never invents an answer on 
 
 test("Touch scroll followed immediately by Continue cannot lose the selected score", async ({ page }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
-  await page.getByRole("button", { name: "2. Objectifs et vision" }).click();
+  await page.getByRole("button", { name: "2. Le cap que tu veux te donner" }).click();
   const score = page.locator('[data-question="commitmentScore"]').getByRole("listbox");
   await expect(score).toBeVisible();
   await page.clock.pauseAt(new Date());
@@ -480,9 +487,9 @@ test("Touch scroll followed immediately by Continue cannot lose the selected sco
     element.dispatchEvent(new Event("scroll", { bubbles: true }));
   });
   // No clock advancement: the old 160-ms debounce cannot run before navigation.
-  await page.getByRole("button", { name: "Continuer", exact: true }).click();
+  await page.getByRole("button", { name: "On continue", exact: true }).click();
   await page.clock.runFor(250);
-  await expect(page.getByRole("heading", { name: "Entraînement et équipement", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tes entraînements et ton quotidien", exact: true })).toBeVisible();
   const commands = await page.evaluate(() => (window as unknown as { __onboardingRequests: { responses: Record<string, unknown> }[] }).__onboardingRequests);
   expect(commands.at(-1)?.responses.commitmentScore).toBe(3);
 });
@@ -495,7 +502,7 @@ test("Custom wheels lock while saving and recover after a network failure", asyn
   await page.getByRole("button", { name: "Enregistrer mon brouillon" }).click();
   await expect(feet).toHaveAttribute("aria-disabled", "true");
   await page.clock.runFor(250);
-  await expect(page.getByText(/La confirmation n’a pas été reçue/)).toBeVisible();
+  await expect(page.getByText(/On n’a pas reçu la confirmation/)).toBeVisible();
   await expect(feet).not.toHaveAttribute("aria-disabled", "true");
   await feet.press("ArrowDown");
   await expect(feet.getByRole("option", { name: "6", exact: true })).toHaveAttribute("aria-selected", "true");
@@ -506,7 +513,7 @@ test("Custom wheels stay locked during a version conflict", async ({ page }) => 
   const feet = page.getByRole("listbox", { name: "Pieds", exact: true });
   await feet.getByRole("option", { name: "5", exact: true }).click();
   await page.getByRole("button", { name: "Enregistrer mon brouillon" }).click();
-  await expect(page.getByText(/Une version plus récente existe/)).toBeVisible();
+  await expect(page.getByText(/a été mis/)).toBeVisible();
   await expect(feet).toHaveAttribute("aria-disabled", "true");
   await feet.press("ArrowDown");
   await expect(feet.getByRole("option", { name: "5", exact: true })).toHaveAttribute("aria-selected", "true");
@@ -514,19 +521,19 @@ test("Custom wheels stay locked during a version conflict", async ({ page }) => 
 
 test("No equipment remains explicit in English questionnaire review", async ({ page }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-not-started&language=en");
-  await page.getByRole("button", { name: "3. Training History & Equipment" }).click();
-  await page.getByRole("checkbox", { name: "Not applicable — no equipment at home" }).check();
-  await page.getByRole("button", { name: "Review and submit", exact: true }).click();
-  await expect(page.getByText("Not applicable — no equipment at home.", { exact: true })).toBeVisible();
-  await expect(page.getByText("Non applicable — aucun équipement à la maison.", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "3. Your training and everyday life" }).click();
+  await page.getByRole("checkbox", { name: "I don’t have equipment at home" }).check();
+  await page.getByRole("button", { name: "Review and send", exact: true }).click();
+  await expect(page.getByText("No equipment at home.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Aucun équipement à la maison.", { exact: true })).toHaveCount(0);
 });
 
 test("No equipment is explicit, reversible and saved as an answer", async ({ page }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
-  await page.getByRole("button", { name: "3. Entraînement et équipement" }).click();
+  await page.getByRole("button", { name: "3. Tes entraînements et ton quotidien" }).click();
   const equipment = page.getByLabel("Équipement disponible", { exact: true });
   await equipment.fill("Haltères disponibles à la salle");
-  const none = page.getByRole("checkbox", { name: "Non applicable — aucun équipement à la maison" });
+  const none = page.getByRole("checkbox", { name: "Je n’ai pas d’équipement à la maison" });
   await none.check();
   await expect(equipment).toHaveCount(0);
   await none.uncheck();
@@ -536,8 +543,8 @@ test("No equipment is explicit, reversible and saved as an answer", async ({ pag
   await expect(page.getByText(/Sauvegarde confirmée/)).toBeVisible();
   const commands = await page.evaluate(() => (window as unknown as { __onboardingRequests: { responses: Record<string, unknown> }[] }).__onboardingRequests);
   expect(commands.at(-1)?.responses.availableEquipment).toBe("Non applicable — aucun équipement à la maison.");
-  await page.getByRole("button", { name: "Vérifier et transmettre", exact: true }).click();
-  await expect(page.getByText("Non applicable — aucun équipement à la maison.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Relire et envoyer", exact: true }).click();
+  await expect(page.getByText("Aucun équipement à la maison.", { exact: true })).toBeVisible();
 });
 
 test("Green progress is below the steps, counts answers not navigation, and reaches 100 only when complete", async ({ page }) => {
@@ -546,14 +553,14 @@ test("Green progress is below the steps, counts answers not navigation, and reac
   await expect(progress).toHaveAttribute("value", "0");
   const steps = page.getByRole("navigation", { name: "Sections du questionnaire" });
   expect((await progress.boundingBox())!.y).toBeGreaterThan((await steps.boundingBox())!.y + (await steps.boundingBox())!.height);
-  await page.getByRole("button", { name: "Vérifier et transmettre", exact: true }).click();
+  await page.getByRole("button", { name: "Relire et envoyer", exact: true }).click();
   await expect(progress).toHaveAttribute("value", "0");
-  await expect(page.getByRole("button", { name: "Transmettre mon questionnaire", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Envoyer mes réponses à Max", exact: true })).toBeDisabled();
   await page.goto("/?screen=client-onboarding&state=onboarding-complete-draft");
   await expect(progress).toHaveAttribute("value", "54");
   await expect(progress).toHaveAttribute("max", "54");
   await expect(page.getByText("100 %", { exact: true })).toBeVisible();
-  await expect(page.getByText("Tout est rempli : il ne reste qu’à vérifier et transmettre.")).toBeVisible();
+  await expect(page.getByText("Tout est rempli. Prends un moment pour relire avant d’envoyer.")).toBeVisible();
 });
 
 test("Client onboarding resumes its server draft after a document reload", async ({
@@ -566,12 +573,12 @@ test("Client onboarding resumes its server draft after a document reload", async
   await expect(
     page.getByText("Brouillon privé enregistré", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByLabel(/Nom complet/)).toHaveValue("Alex Brouillon");
+  await expect(page.getByLabel(/Ton nom complet/)).toHaveValue("Alex Brouillon");
   await expect(page.getByLabel(/Courriel/)).toHaveValue("alex@example.test");
 
   await page.reload();
 
-  await expect(page.getByLabel(/Nom complet/)).toHaveValue("Alex Brouillon");
+  await expect(page.getByLabel(/Ton nom complet/)).toHaveValue("Alex Brouillon");
   await expect(page.getByLabel(/Courriel/)).toHaveValue("alex@example.test");
 });
 
@@ -579,12 +586,12 @@ test("Client onboarding keeps entries and its mutation key across a transient PU
   page,
 }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-save-error-once");
-  const fullName = page.getByLabel(/Nom complet/);
+  const fullName = page.getByLabel(/Ton nom complet/);
   await fullName.fill("Alex Saisie locale");
   const save = page.getByRole("button", { name: "Enregistrer mon brouillon" });
 
   await save.click();
-  await expect(page.getByText(/La confirmation n’a pas été reçue/i)).toBeVisible();
+  await expect(page.getByText(/On n’a pas reçu la confirmation/i)).toBeVisible();
   await expect(fullName).toHaveValue("Alex Saisie locale");
 
   await save.click();
@@ -596,23 +603,23 @@ test("Client onboarding keeps local entries on 409 and reloads only after confir
   page,
 }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-conflict");
-  const fullName = page.getByLabel(/Nom complet/);
+  const fullName = page.getByLabel(/Ton nom complet/);
   await fullName.fill("Alex Saisie en conflit");
   await page.getByRole("button", { name: "Enregistrer mon brouillon" }).click();
 
-  await expect(page.getByText(/Une version plus récente existe/i)).toBeVisible();
+  await expect(page.getByText(/a été mis/i)).toBeVisible();
   await expect(fullName).toHaveValue("Alex Saisie en conflit");
   await expect(
     page.getByRole("button", { name: "Enregistrer mon brouillon" }),
   ).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Continuer" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "On continue" })).toBeDisabled();
 
   page.once("dialog", (dialog) => dialog.dismiss());
-  await page.getByRole("button", { name: "Recharger la version enregistrée" }).click();
+  await page.getByRole("button", { name: "Ouvrir la version enregistrée" }).click();
   await expect(fullName).toHaveValue("Alex Saisie en conflit");
 
   page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: "Recharger la version enregistrée" }).click();
+  await page.getByRole("button", { name: "Ouvrir la version enregistrée" }).click();
   await expect(fullName).toHaveValue("Alex Version enregistrée");
   await expect(
     page.getByText("Brouillon privé enregistré", { exact: true }),
@@ -623,22 +630,22 @@ test("Client onboarding excludes invalid formats from progress and lists them be
   page,
 }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
-  await page.getByLabel(/Nom complet/).fill("Alex Martin");
+  await page.getByLabel(/Ton nom complet/).fill("Alex Martin");
   await page.getByLabel(/Courriel/).fill("courriel-invalide");
   await expect(
-    page.getByText(/1 réponses obligatoires sur \d+ complétées et valides/i),
+    page.getByText(/1 réponses obligatoires sur \d+ sont remplies et valides/i),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Vérifier et transmettre" }).click();
+  await page.getByRole("button", { name: "Relire et envoyer" }).click();
   const attention = page.getByRole("alert").filter({
-    hasText: "Ces réponses sont manquantes ou leur format doit être corrigé",
+    hasText: "Il reste quelques réponses à remplir ou à corriger",
   });
   await expect(attention).toBeVisible();
   await expect(
     attention.getByRole("button", { name: "Courriel" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Transmettre mon questionnaire" }),
+    page.getByRole("button", { name: "Envoyer mes réponses à Max" }),
   ).toBeDisabled();
 });
 
@@ -647,14 +654,14 @@ test("Submitted Client onboarding is read-only and returns to the portal without
 }) => {
   await page.goto("/?screen=client-onboarding&state=onboarding-submitted&view=responses");
   await expect(
-    page.getByText("Questionnaire transmis au Coach", { exact: true }),
+    page.getByText("Questionnaire envoyé à ton coach", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText(/questionnaire transmis est conservé en lecture seule/i),
+    page.getByText(/cette version ne peut plus être modifiée/i),
   ).toBeVisible();
   await expect(page.locator("form")).toHaveCount(0);
   await expect(page.locator("details")).toHaveCount(6);
-  await expect(page.getByRole("link", { name: "Retour à mon portail" })).toHaveAttribute("href", "/client");
+  await expect(page.getByRole("link", { name: "Retour à mon accueil" })).toHaveAttribute("href", "/client");
   await expect(page.getByRole("link", { name: /bilan initial/i })).toHaveCount(0);
 });
 
@@ -664,7 +671,7 @@ test("Client onboarding reflows without browser storage at narrow widths", async
   for (const width of [390, 320]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/?screen=client-onboarding&state=onboarding-draft");
-    await expect(page.getByLabel(/Nom complet/)).toHaveValue("Alex Brouillon");
+    await expect(page.getByLabel(/Ton nom complet/)).toHaveValue("Alex Brouillon");
     expect(
       await page.evaluate(
         () =>
@@ -687,13 +694,13 @@ test("Document onboarding entry and cancelled browser Back preserve a dirty answ
 }) => {
   await page.goto("/?screen=client-v2&state=onboarding-not-started");
   const entry = page.getByRole("link", {
-    name: "Compléter mon questionnaire d’accueil",
+    name: "Commencer mon questionnaire",
   });
   await expect(entry).toHaveAttribute("href", "/client/onboarding");
   expect(await entry.evaluate((element) => element.tagName)).toBe("A");
 
   await page.goto("/?screen=client-onboarding&state=onboarding-not-started");
-  const fullName = page.getByLabel(/Nom complet/);
+  const fullName = page.getByLabel(/Ton nom complet/);
   await fullName.fill("Alex à conserver");
   let dialogType = "";
   page.once("dialog", async (dialog) => {
@@ -720,13 +727,16 @@ test("Week Zero resumes a saved draft and reflows at Client mobile widths", asyn
       page.getByRole("heading", { name: "Ta semaine zéro" }),
     ).toBeVisible();
     await expect(
-      page.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
+      page.getByText(/Brouillon enregistré\. Pas encore envoyé à ton coach\./i),
     ).toBeVisible();
-    await expect(page.getByLabel(/Poids au réveil \(lb\)/i)).toHaveValue(
+    const steps = page.getByRole("button", { name: /Voir les étapes/i });
+    if (await steps.isVisible()) await steps.click();
+    await page.getByRole("button", { name: /3\. Mesures/i }).click();
+    await expect(page.getByRole("spinbutton", { name: /Poids au réveil \(lb\)/i })).toHaveValue(
       "207.5",
     );
     await expect(
-      page.getByLabel(/Tour de taille au nombril \(po\)/i),
+      page.getByRole("spinbutton", { name: /Tour de taille au nombril \(po\)/i }),
     ).toHaveValue("39.5");
     await expect(page.getByText(/Week Zero terminé/i)).toHaveCount(0);
     expect(
@@ -738,7 +748,13 @@ test("Week Zero resumes a saved draft and reflows at Client mobile widths", asyn
       `Week Zero draft at ${viewport.width}px`,
     ).toBe(true);
     await page.reload();
-    await expect(page.getByLabel(/Poids au réveil \(lb\)/i)).toHaveValue(
+    await expect(
+      page.getByText(/Brouillon enregistré\. Pas encore envoyé à ton coach\./i),
+    ).toBeVisible();
+    const reloadedSteps = page.getByRole("button", { name: /Voir les étapes/i });
+    if (await reloadedSteps.isVisible()) await reloadedSteps.click();
+    await page.getByRole("button", { name: /3\. Mesures/i }).click();
+    await expect(page.getByRole("spinbutton", { name: /Poids au réveil \(lb\)/i })).toHaveValue(
       "207.5",
     );
   }
@@ -748,20 +764,24 @@ test("Week Zero retains entries and the command across a transient save failure"
   page,
 }) => {
   await page.goto("/?screen=client-week-zero&state=assessment-save-error-once");
-  const weight = page.getByLabel(/Poids au réveil \(lb\)/i);
+  await expect(page.getByRole("progressbar")).toBeVisible();
+  const steps = page.getByRole("button", { name: /Voir les étapes/i });
+  if (await steps.isVisible()) await steps.click();
+  await page.getByRole("button", { name: /3\. Mesures/i }).click();
+  const weight = page.getByRole("spinbutton", { name: /Poids au réveil \(lb\)/i });
   await weight.fill("214.5");
   await page
     .getByRole("button", { name: /Enregistrer mon brouillon/i })
     .click();
   await expect(
-    page.getByText(/La confirmation n’a pas été reçue/i),
+    page.getByText(/On n’a pas reçu la confirmation/i),
   ).toBeVisible();
   await expect(weight).toHaveValue("214.5");
   await page
     .getByRole("button", { name: /Enregistrer mon brouillon/i })
     .click();
   await expect(
-    page.getByText(/Brouillon enregistré — pas encore transmis au Coach/i),
+    page.getByText(/Brouillon enregistré\. Pas encore envoyé à ton coach\./i),
   ).toBeVisible();
   await expect(weight).toHaveValue("214.5");
 });
@@ -770,18 +790,22 @@ test("Week Zero keeps local entries on 409 until explicit reload", async ({
   page,
 }) => {
   await page.goto("/?screen=client-week-zero&state=assessment-conflict");
-  const weight = page.getByLabel(/Poids au réveil \(lb\)/i);
+  await expect(page.getByRole("progressbar")).toBeVisible();
+  const steps = page.getByRole("button", { name: /Voir les étapes/i });
+  if (await steps.isVisible()) await steps.click();
+  await page.getByRole("button", { name: /3\. Mesures/i }).click();
+  const weight = page.getByRole("spinbutton", { name: /Poids au réveil \(lb\)/i });
   await weight.fill("214.5");
   await page
     .getByRole("button", { name: /Enregistrer mon brouillon/i })
     .click();
   await expect(
-    page.getByText(/Une version plus récente existe/i),
+    page.getByText(/a été mis/i),
   ).toBeVisible();
   await expect(weight).toHaveValue("214.5");
   page.once("dialog", (dialog) => dialog.accept());
   await page
-    .getByRole("button", { name: /Recharger la version enregistrée/i })
+    .getByRole("button", { name: /Ouvrir la version enregistrée/i })
     .click();
   await expect(weight).toHaveValue("199");
 });
@@ -790,26 +814,32 @@ test("Week Zero blocks incomplete submission and keeps submitted answers read-on
   page,
 }) => {
   await page.goto("/?screen=client-week-zero");
+  await expect(page.getByRole("progressbar")).toBeVisible();
+  const steps = page.getByRole("button", { name: /Voir les étapes/i });
+  if (await steps.isVisible()) await steps.click();
   await page
-    .getByRole("button", { name: /4\. Vérifier et transmettre/i })
+    .getByRole("button", { name: /7\. Relire et envoyer/i })
     .click();
   await expect(
-    page.getByText(/À compléter avant de transmettre/i),
+    page.getByText(/Il reste à compléter/i),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /Transmettre mon bilan au Coach/i }),
+    page.getByRole("button", { name: /Envoyer ma semaine zéro/i }),
   ).toBeDisabled();
-  await expect(page.getByText(/photos, charges et cardio/i)).toBeVisible();
 
   await page.goto("/?screen=client-week-zero&state=assessment-submitted");
+  await expect(page.locator('[data-state="not_started"]')).toBeVisible();
+  await expect(page.getByText("Ton ancien bilan", { exact: true })).toBeVisible();
+  await expect(page.locator('[data-state="submitted"]')).toHaveCount(0);
+
+  await page.goto("/?screen=client-week-zero&state=acquisition-submitted");
   await expect(
-    page.getByText(/Semaine zéro transmise au Coach/i),
+    page.getByText(/Semaine zéro envoyée à ton coach/i),
   ).toBeVisible();
   await expect(
-    page.getByText(/réponses transmises sont conservées en lecture seule/i),
+    page.getByText(/ne peuvent plus être modifiées/i),
   ).toBeVisible();
   await expect(page.locator("form")).toHaveCount(0);
-  await expect(page.getByText(/Photos, calibration des charges et cardio/i)).toBeVisible();
   await expect(page.getByText(/Week Zero terminé/i)).toHaveCount(0);
 });
 
@@ -819,7 +849,6 @@ test("captures the Client V2 pilot at the required review viewports", async ({
   if (testInfo.project.name !== "desktop") {
     return;
   }
-  await mkdir(v2CaptureDirectory, { recursive: true });
   for (const viewport of [
     { width: 1672, height: 941 },
     { width: 390, height: 844 },
@@ -830,8 +859,7 @@ test("captures the Client V2 pilot at the required review viewports", async ({
     await expect(page.locator('[data-pilot-state="ready"]')).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({
-      path: resolve(
-        v2CaptureDirectory,
+      path: testInfo.outputPath(
         `client-home-fr-${viewport.width}x${viewport.height}.png`,
       ),
     });
@@ -842,7 +870,7 @@ test("captures the Client V2 pilot at the required review viewports", async ({
   await expect(page.locator('[data-pilot-state="loading"]')).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
-    path: resolve(v2CaptureDirectory, "client-home-loading-390x844.png"),
+    path: testInfo.outputPath("client-home-loading-390x844.png"),
   });
   await page.goto("/?screen=client-v2&state=error");
   await expect(page.locator('[data-pilot-state="error"]')).toBeVisible();
@@ -850,7 +878,7 @@ test("captures the Client V2 pilot at the required review viewports", async ({
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
-    path: resolve(v2CaptureDirectory, "client-home-error-390x844.png"),
+    path: testInfo.outputPath("client-home-error-390x844.png"),
   });
 });
 
@@ -954,7 +982,7 @@ test("Client loading times out and retry recovers from a suspended request", asy
   await page.getByLabel("Écran").selectOption("client");
 
   await expect(page.getByRole("alert")).toContainText(
-    "Impossible de charger cette page.",
+    "On n’arrive pas à ouvrir cette page.",
   );
   const menu = page.getByRole("button", { name: "Menu" });
   if (await menu.isVisible()) await menu.click();
@@ -969,7 +997,7 @@ test("Client loading times out and retry recovers from a suspended request", asy
   await retry.click();
 
   await expect(
-    page.getByRole("heading", { name: "Ton point de départ." }),
+    page.getByRole("heading", { name: "Ton parcours commence ici." }),
   ).toBeVisible();
   await expect(page.getByText("Bienvenue, Alex Martin.")).toBeVisible();
 });
@@ -1036,7 +1064,7 @@ test("Client pilot exposes only factual M1 content and keeps Today outside the d
     page.getByRole("heading", { name: "Ta semaine zéro" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Commencer ma semaine zéro" }),
+    page.getByRole("link", { name: "Commençons ma semaine zéro" }),
   ).toHaveAttribute("href", "/client/week-zero");
   if (await menu.isVisible()) await menu.click();
   await expect(page.getByText("Compte", { exact: true }).first()).toBeVisible();
@@ -1055,7 +1083,7 @@ test("Client pilot exposes only factual M1 content and keeps Today outside the d
     page.getByRole("heading", { name: "Ta semaine zéro" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Commencer ma semaine zéro" }),
+    page.getByRole("link", { name: "Commençons ma semaine zéro" }),
   ).toHaveAttribute("href", "/client/week-zero");
   await expect(page.getByText(/à jour|rien à faire/i)).toHaveCount(0);
   await expect(page.getByText("Compte", { exact: true })).toBeVisible();

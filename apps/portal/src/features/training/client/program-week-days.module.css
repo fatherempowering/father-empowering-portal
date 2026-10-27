@@ -1,0 +1,17 @@
+.navigation { display: grid; gap: .75rem; min-width: 0; max-width: 100%; }
+.heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
+.heading h3 { margin: 0; font-size: 1rem; }
+.heading > span { font-size: .75rem; color: var(--fe-muted, #62615e); }
+.rail { display: flex; gap: .625rem; overflow-x: auto; min-width: 0; max-width: 100%; padding: .25rem .25rem .75rem; scroll-snap-type: x proximity; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #b95000 #deddd7; }
+.rail button { display: flex; flex-direction: column; gap: .4rem; flex: 0 0 auto; text-align: left; font: inherit; line-height: 1.35; cursor: pointer; padding: 1rem; border: 2px solid transparent; border-radius: .625rem; scroll-snap-align: start; overflow-wrap: anywhere; }
+.rail strong { font-size: 1rem; }
+.rail span, .rail small { font-size: .8125rem; }
+.week { width: 10.5rem; background: #20201e; color: #f8f7f3; }
+.week span { color: #deddd7; }
+.week small { margin-top: auto; color: #deddd7; }
+.day { width: 11.5rem; background: #eeede8; color: #1a1a1a; }
+.rail button[aria-pressed="true"] { border-color: #b95000; box-shadow: inset 0 -3px #b95000; }
+.rail button[aria-pressed="true"] strong { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .25rem; }
+.rail button:focus-visible { outline: 3px solid #b95000; outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { .rail { scroll-behavior: smooth; } }
+@media (max-width: 24rem) { .week { width: 9rem; } .day { width: 10rem; } .rail button { padding: .75rem; } }

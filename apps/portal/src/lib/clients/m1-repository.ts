@@ -24,9 +24,9 @@ function placeholderTokenHash() {
 }
 
 export async function listCoachClients(): Promise<
-  Array<{ client: ClientSummary; invitation: InvitationSummary | null }>
+  Array<{ client: ClientSummary; invitation: InvitationSummary | null; isOwnProfile: boolean }>
 > {
-  await requireCoachVerified();
+  const actor = await requireCoachVerified();
   const supabase = await createServerSupabaseClient();
   const { data: clients, error: clientsError } = await supabase
     .from("clients")
@@ -71,6 +71,7 @@ export async function listCoachClients(): Promise<
     if (!assignment) return [];
     const invitation = invitationByClient.get(client.id);
     return [{
+      isOwnProfile: client.organization_id === actor.organizationId && client.auth_user_id === actor.userId,
       client: {
         id: client.id,
         organizationId: client.organization_id,

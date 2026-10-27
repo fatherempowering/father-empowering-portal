@@ -1,0 +1,14 @@
+.form { display: grid; gap: 1rem; }
+.shortcuts { display: flex; flex-wrap: wrap; gap: .5rem; }
+.form button { max-width: 100%; white-space: normal; }
+.weeks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; border: 0; padding: 0; margin: 0; min-width: 0; }
+.weeks legend { font-weight: 700; padding-bottom: .75rem; }
+.week { display: flex; align-items: center; gap: .75rem; padding: .75rem; border: 1px solid var(--fe-line); border-radius: .5rem; min-height: 3.75rem; cursor: pointer; }
+.week:has(input:checked) { border-color: var(--fe-orange); background: #fff6ed; }
+.week:has(input:disabled) { background: var(--fe-canvas); cursor: default; }
+.week input { width: 1.25rem; height: 1.25rem; flex: 0 0 auto; accent-color: var(--fe-orange); }
+.week span { min-width: 0; font-weight: 600; }
+.week small { display: block; margin-top: .2rem; font-size: .75rem; font-weight: 400; color: var(--fe-muted); }
+.summary { display: grid; gap: .5rem; font-size: .875rem; color: var(--fe-muted); overflow-wrap: anywhere; }
+.warning { display: grid; gap: .75rem; padding: 1rem; background: #fff6ed; border: 1px solid #c76a26; border-radius: .5rem; }
+@media (max-width: 360px) { .weeks { grid-template-columns: 1fr; } }

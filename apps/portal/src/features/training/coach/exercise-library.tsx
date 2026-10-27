@@ -9,9 +9,10 @@ import {
   type ExerciseDefinition, type ExerciseList, type ExerciseSnapshot, type SaveExerciseRequest,
 } from "@/lib/contracts/training";
 import styles from "./exercise-library.module.css";
+import { ExercisePilot } from "./exercise-pilot";
 
 const EMPTY: ExerciseDefinition = { name: "", equipment: "", cue: { fr: "", en: "" }, defaultUnit: "lb", archived: false };
-const UNIT_LABELS = { lb: "Livres (lb)", min: "Minutes", sec: "Secondes", distance: "Distance", level: "Niveau" };
+const UNIT_LABELS = { lb: "Livres (lb)", kg: "Kilogrammes (kg)", min: "Minutes", sec: "Secondes", distance: "Distance", level: "Niveau", configuration: "Configuration (sans conversion en poids)" };
 type ListState = { kind: "loading" } | { kind: "error" } | { kind: "ready"; value: ExerciseList };
 
 function handleAuth(response: Response) {
@@ -23,6 +24,7 @@ function handleAuth(response: Response) {
 }
 
 export function ExerciseLibrary() {
+  const [showPilot, setShowPilot] = useState(false);
   const [list, setList] = useState<ListState>({ kind: "loading" });
   const [filters, setFilters] = useState({ query: "", archived: "false", page: 0 });
   const [query, setQuery] = useState("");
@@ -139,6 +141,8 @@ export function ExerciseLibrary() {
           <p>Prépare les mouvements réutilisables dans tes futurs programmes. Aucune modification ici ne publie un programme chez un client.</p></div>
         <button className="fe-button fe-button-primary" type="button" disabled={saving || uncertain} onClick={() => edit(null)}>Nouvel exercice</button>
       </header>
+      <button className="fe-button" type="button" aria-expanded={showPilot} onClick={() => setShowPilot(!showPilot)}>{showPilot ? "Fermer le catalogue" : "Explorer le catalogue Legacy"}</button>
+      {showPilot ? <ExercisePilot /> : null}
       <div className={styles.columns}>
         <section className={styles.panel} aria-label="Bibliothèque d’exercices">
           <h2>Bibliothèque</h2>
@@ -173,7 +177,7 @@ export function ExerciseLibrary() {
               <legend className="fe-sr-only">Informations de l’exercice</legend>
               <label htmlFor="exercise-name">Nom de l’exercice (anglais)<input id="exercise-name" ref={nameInput} required maxLength={160} value={draft.name} onChange={(event) => change({ name: event.target.value })} /></label>
               <label htmlFor="exercise-equipment">Équipement<input id="exercise-equipment" maxLength={120} placeholder="Ex. haltères, poulie, aucun" value={draft.equipment} onChange={(event) => change({ equipment: event.target.value })} /></label>
-              <div><label htmlFor="exercise-unit">Unité par défaut</label><select id="exercise-unit" value={draft.defaultUnit} onChange={(event) => change({ defaultUnit: event.target.value as ExerciseDefinition["defaultUnit"] })}>{TRAINING_UNITS.map((unit) => <option key={unit} value={unit}>{UNIT_LABELS[unit]}</option>)}</select></div>
+              <div><label htmlFor="exercise-unit">Unité par défaut</label><select id="exercise-unit" value={draft.defaultUnit} onChange={(event) => change({ defaultUnit: event.target.value as ExerciseDefinition["defaultUnit"] })}>{TRAINING_UNITS.filter((unit) => unit !== "configuration" || selected?.pilot).map((unit) => <option key={unit} value={unit}>{UNIT_LABELS[unit]}</option>)}</select></div>
               <label htmlFor="exercise-cue-fr">Consigne courte · français<textarea id="exercise-cue-fr" maxLength={300} value={draft.cue.fr} onChange={(event) => change({ cue: { ...draft.cue, fr: event.target.value } })} /></label>
               <label htmlFor="exercise-cue-en">Consigne courte · anglais<textarea id="exercise-cue-en" maxLength={300} value={draft.cue.en} onChange={(event) => change({ cue: { ...draft.cue, en: event.target.value } })} /></label>
               {selected ? <label className={styles.check}><input type="checkbox" checked={draft.archived} onChange={(event) => change({ archived: event.target.checked })} />Archiver cet exercice (sans le supprimer)</label> : null}

@@ -57,6 +57,16 @@ describe("Coach M1 invitation replay composition", () => {
     vi.clearAllMocks();
   });
 
+  it("preserves the server-derived personal marker without changing either identity", async () => {
+    repository.listCoachClients.mockResolvedValue([
+      { client: activeClient, invitation: null, isOwnProfile: true },
+      { client: { ...activeClient, id: "other" }, invitation: null, isOwnProfile: false },
+    ]);
+    const result = await coachM1Dependencies.listAssignedClients(null as never);
+    expect(result.clients.map(item => item.isOwnProfile)).toEqual([true, false]);
+    expect(result.clients.map(item => item.firstName)).toEqual(["Ariane", "Ariane"]);
+  });
+
   it("rejoue l’ancienne révocation sans retourner l’invitation créée ensuite", async () => {
     const revokedInvitation = invitation(
       "50000000-0000-4000-8000-000000000001",

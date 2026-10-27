@@ -43,6 +43,7 @@ export interface CreateClientFormValues {
 
 export interface CoachDashboardClient {
   id: string;
+  isOwnProfile?: boolean;
   firstName: string;
   lastName: string;
   email: string;

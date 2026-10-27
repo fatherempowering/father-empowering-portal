@@ -1,0 +1,174 @@
+[
+  {
+    "query": "ischio-fessiers",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "BB_012",
+      "KB_015",
+      "BB_001",
+      "DB_001",
+      "DB_045"
+    ]
+  },
+  {
+    "query": "jambes",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "BB_012",
+      "BB_001",
+      "DB_001",
+      "KB_015",
+      "DB_045"
+    ]
+  },
+  {
+    "query": "pecs",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "BW_021",
+      "CA_001",
+      "MA_018"
+    ]
+  },
+  {
+    "query": "chest",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "BW_021",
+      "CA_001",
+      "MA_018"
+    ]
+  },
+  {
+    "query": "hamstrings",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "BB_012",
+      "KB_015"
+    ]
+  },
+  {
+    "query": "ischio-jambiers",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "BB_012",
+      "KB_015"
+    ]
+  },
+  {
+    "query": "ischiojambiers",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "BB_012",
+      "KB_015"
+    ]
+  },
+  {
+    "query": "ischios",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "BB_012",
+      "KB_015"
+    ]
+  },
+  {
+    "query": "abdominaux",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "BA_027",
+      "BW_049"
+    ]
+  },
+  {
+    "query": "abdos",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "BA_027",
+      "BW_049"
+    ]
+  },
+  {
+    "query": "chest supported row",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "MA_063"
+    ]
+  },
+  {
+    "query": "curl alterné",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "DB_034"
+    ]
+  },
+  {
+    "query": "DB025",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "DB_025"
+    ]
+  },
+  {
+    "query": "DB_025",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "DB_025"
+    ]
+  },
+  {
+    "query": "forearm plank",
+    "stabilizers": "false",
+    "equipment": "",
+    "ids": [
+      "BW_049"
+    ]
+  },
+  {
+    "query": "grand dorsal",
+    "stabilizers": "true",
+    "equipment": "",
+    "ids": [
+      "CA_050",
+      "DB_025",
+      "MA_028",
+      "MA_063",
+      "BB_012",
+      "KB_015"
+    ]
+  },
+  {
+    "query": "abdominaux",
+    "stabilizers": "true",
+    "equipment": "",
+    "ids": [
+      "BA_027",
+      "BW_049",
+      "BB_001",
+      "BB_012",
+      "BW_021",
+      "CA_001",
+      "CA_050",
+      "DB_001",
+      "DB_025",
+      "DB_034",
+      "DB_045",
+      "MA_018",
+      "MA_028",
+      "MA_063"
+    ]
+  }
+]

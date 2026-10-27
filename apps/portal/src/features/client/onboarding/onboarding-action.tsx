@@ -39,12 +39,12 @@ export function OnboardingAction({ french, actionClassName = "fe-button fe-butto
 
   if (sessionExpired) return <div role="alert">
     <h2>{t("Reconnecte-toi pour continuer", "Sign in again to continue")}</h2>
-    <p>{t("Ta session n’est plus valide. Tes réponses déjà enregistrées restent conservées.", "Your session is no longer valid. Your previously saved answers are retained.")}</p>
+    <p>{t("Ta connexion n’est plus active. Tes réponses déjà enregistrées sont conservées.", "You’re no longer signed in. Your previously saved answers are kept.")}</p>
     <Link className={actionClassName} href="/client-login">{t("Me reconnecter", "Sign in again")}</Link>
   </div>;
   if (failed) return <div role="alert">
-    <h2>{t("Ta prochaine étape ne peut pas être chargée", "Your next step could not be loaded")}</h2>
-    <p>{t("Nous n’avons pas pu vérifier l’état de ton questionnaire. Tes réponses enregistrées restent conservées.", "We could not check your questionnaire’s status. Your saved answers are retained.")}</p>
+    <h2>{t("Ta prochaine étape est momentanément inaccessible", "Your next step is temporarily unavailable")}</h2>
+    <p>{t("On n’a pas pu ouvrir ton questionnaire. Tes réponses enregistrées sont conservées.", "We couldn’t open your questionnaire. Your saved answers are kept.")}</p>
     <button className={actionClassName} type="button" onClick={() => setAttempt((n) => n+1)}>{t("Réessayer", "Try again")}</button>
     <p><a href="/client/onboarding">{t("Ouvrir mon questionnaire d’accueil", "Open my welcome questionnaire")}</a></p>
   </div>;
@@ -54,10 +54,10 @@ export function OnboardingAction({ french, actionClassName = "fe-button fe-butto
   </div>;
   return <div data-onboarding-status={status}>
     <h2>{visualCheckpoint ? t("Faisons connaissance.", "Let’s get to know you.") : t("Commençons par mieux te connaître", "Let’s get to know you")}</h2>
-    <p>{visualCheckpoint ? t("Tes objectifs, tes habitudes, ton quotidien. Prépare ton accompagnement avec Max.", "Your goals, your habits, your everyday life. Prepare your coaching journey with Max.") : t("Tes objectifs, ta santé, tes habitudes et ton quotidien : complète ton questionnaire d’accueil à ton rythme. Ton brouillon reste privé jusqu’à sa transmission à Max.", "Your goals, health, habits and daily life: complete your welcome questionnaire at your own pace. Your draft stays private until you submit it to Max.")}</p>
+    <p>{visualCheckpoint ? t("Parle-nous de tes objectifs, de tes habitudes et de ton quotidien. Max s’appuiera sur tes réponses pour préparer ton accompagnement.", "Tell us about your goals, habits and everyday life. Max will use your answers to prepare your coaching.") : t("Prenons le temps de mieux te connaître : tes objectifs, ta santé, tes habitudes et ton quotidien. Avance à ton rythme. Ton brouillon reste privé jusqu’à l’envoi à Max.", "Let’s take the time to get to know your goals, health, habits and everyday life. Go at your own pace. Your draft stays private until you send it to Max.")}</p>
     <a className={actionClassName} href="/client/onboarding">{status === "DRAFT"
-      ? t("Reprendre mon questionnaire d’accueil", "Continue my welcome questionnaire")
-      : t("Compléter mon questionnaire d’accueil", "Complete my welcome questionnaire")}</a>
+      ? t("Reprendre mon questionnaire", "Continue my questionnaire")
+      : t("Commencer mon questionnaire", "Start my questionnaire")}</a>
     {visualCheckpoint ? <small>{t("Ton brouillon reste privé jusqu’à sa transmission.", "Your draft stays private until you submit it.")}</small> : null}
   </div>;
 }

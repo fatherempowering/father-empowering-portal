@@ -34,7 +34,7 @@ test.beforeAll(async () => {
   normalClient = await seedNormalClient(owner);
 });
 
-test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async ({
+test("Les profils personnels existants restent isolés sans raccourci Client dans la navigation Coach", async ({
   browser,
 }) => {
   const context = await browser.newContext();
@@ -54,7 +54,10 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
   const otpRequestsAfterLogin = coachOtpRequests;
   expect(otpRequestsAfterLogin).toBeGreaterThan(0);
 
-  await page.getByRole("link", { name: /mon portail personnel/i }).click();
+  await expect(page.getByRole("link", { name: /mon portail personnel/i })).toHaveCount(0);
+  // Compatibility and isolation are still tested; this legacy entry is no
+  // longer offered in the Coach navigation. Existing identities are retained.
+  await page.goto(`${environment.appUrl}/coach/personal`);
   await expect(page).toHaveURL(/\/coach\/personal$/);
   await expect(
     page.getByRole("heading", { name: /portail personnel/i }),
@@ -77,9 +80,9 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
   expect(creation.status()).toBe(201);
 
   await expect(page).toHaveURL(/\/client(?:\?.*)?$/);
-  await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ton parcours commence ici." })).toBeVisible();
   await expectSessionCookies(context);
-  await expect(page.getByRole("link", { name: /^espace coach$/i })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: /^portail coach$/i })).toHaveAttribute(
     "href",
     "/coach",
   );
@@ -167,10 +170,11 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
   expect(ownResponses).not.toContain(normalClient.email);
   expect(ownResponses).not.toContain(normalClient.clientId);
 
-  await page.getByRole("link", { name: /^espace coach$/i }).click();
+  await page.getByRole("link", { name: /^portail coach$/i }).click();
   await expect(page).toHaveURL(/\/coach(?:\?.*)?$/);
   await expect(page.getByRole("heading", { name: /^clients$/i })).toBeVisible();
-  await page.getByRole("link", { name: /mon portail personnel/i }).click();
+  await expect(page.getByRole("link", { name: /mon portail personnel/i })).toHaveCount(0);
+  await page.goto(`${environment.appUrl}/client`);
   await expect(page).toHaveURL(/\/client(?:\?.*)?$/);
   expect(coachOtpRequests).toBe(otpRequestsAfterLogin);
 
@@ -181,6 +185,35 @@ test("Staff se connecte une fois et alterne Coach ↔ son portail Client", async
   await page.goto(`${environment.appUrl}/client/week-zero`);
   await expect(page.getByRole("heading", { name: /semaine zéro/i })).toBeVisible();
   expect(coachOtpRequests).toBe(otpRequestsAfterLogin);
+
+  // Explicit local fixture assignment, not a permission change or automatic
+  // side effect of personal profile creation. Both records deliberately share a name.
+  const fixture = createM1AdminClient(environment);
+  const assignments = await fixture.from("coach_client_assignments").insert(
+    [ownClientId, normalClient.clientId].map(clientId => ({
+      organization_id:owner.organizationId,coach_user_id:owner.userId,client_id:clientId,
+      status:"ACTIVE",is_primary:true,created_by:owner.userId,
+    })),
+  );
+  expect(assignments.error).toBeNull();
+  await page.goto(`${environment.appUrl}/coach`);
+  for (let attempt=0;attempt<2;attempt++) {
+    await expect(page.getByText("Max Personnel — Mon profil personnel",{exact:true})).toBeVisible();
+    await expect(page.getByText("Max Personnel",{exact:true})).toBeVisible();
+    const recipients = await context.request.get(`${environment.appUrl}/api/v1/coach/programs/recipients?page=0`);
+    expect(recipients.status()).toBe(200);
+    const recipientBody = await recipients.json() as {data:{clients:Array<{id:string;name:string;isOwnProfile:boolean}>}};
+    expect(recipientBody.data.clients).toEqual(expect.arrayContaining([
+      {id:ownClientId,name:"Max Personnel",isOwnProfile:true},
+      {id:normalClient.clientId,name:"Max Personnel",isOwnProfile:false},
+    ]));
+    expect(recipientBody.data.clients).toHaveLength(2);
+    if(attempt===0) await page.reload();
+  }
+  expect(coachOtpRequests).toBe(otpRequestsAfterLogin);
+  await expect(page.getByRole("link",{name:/mon portail personnel/i})).toHaveCount(0);
+  await page.goto(`${environment.appUrl}/client`);
+  await expect(page).toHaveURL(/\/client(?:\?.*)?$/);
 
   await page.getByRole("button", { name: /se déconnecter/i }).click();
   await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
@@ -227,8 +260,8 @@ test("le Client normal garde son OTP et ne reçoit aucun switch Staff", async ({
   await codeInput.fill(extractSixDigitOtp(otpMail));
   await page.getByRole("button", { name: /ouvrir mon portail/i }).click();
   await expect(page).toHaveURL(/\/client(?:\?.*)?$/);
-  await expect(page.getByRole("heading", { name: "Ton point de départ." })).toBeVisible();
-  await expect(page.getByRole("link", { name: /^espace coach$/i })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Ton parcours commence ici." })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^portail coach$/i })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /mon portail personnel/i })).toHaveCount(0);
 
   const own = await context.request.get(`${environment.appUrl}/api/v1/client/me`);
@@ -279,8 +312,8 @@ async function seedNormalClient(staff: SeededStaff): Promise<SeededClient> {
       organization_id: staff.organizationId,
       auth_user_id: created.data.user.id,
       email,
-      first_name: "Normal",
-      last_name: "Client",
+      first_name: "Max",
+      last_name: "Personnel",
       locale: "fr-CA",
       time_zone: "America/Montreal",
       status: "ACTIVE",
