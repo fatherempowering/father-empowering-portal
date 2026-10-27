@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { EMPTY_NUTRITION_DOCUMENT, clientNutritionResponseSchema, coachNutritionResponseSchema, type NutritionDocument } from "../../src/lib/contracts/client-followup";
 import { programSnapshotSchema, type ProgramSnapshot } from "../../src/lib/contracts/training-drafts";
 import { publicationResponseSchema, publicationSchema, type ProgramPublication } from "../../src/lib/contracts/training-publication";
@@ -125,6 +125,17 @@ async function historicalWorkout(publication: ProgramPublication, actor = client
 }
 
 describe.sequential("Independent HTTP plan withdrawal security, history and concurrency", () => {
+  afterAll(async () => {
+    // Close only this suite's disposable sessions through normal Supabase Auth.
+    // Leaving verified Coach sessions open would exhaust the shared loopback
+    // rate-limit bucket before the browser suite. Never reset or widen limits.
+    for (const session of [coachSession, unverified, unassigned, foreignAdmin, client?.session, peer?.session]) {
+      if (!session) continue;
+      const { error } = await session.client.auth.signOut({ scope: "local" });
+      if (error) throw new Error("Unable to close a disposable withdrawal session");
+    }
+  });
+
   beforeAll(async () => {
     coach = await seedStaffIdentity(environment, { email: `withdrawal.assigned.${randomUUID()}@example.test`, password, role: "COACH" });
     coachSession = await signIn(coach.email);
