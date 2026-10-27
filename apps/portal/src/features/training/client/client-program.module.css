@@ -120,10 +120,46 @@
   font-size: 0.8125rem;
 }
 
+.history {
+  /* Lookbook V1.1: scoped to the existing history, not a global theme change. */
+  --fe-ink: #fff;
+  --fe-muted: #ced3d7;
+  --fe-line: #46515b;
+  --fe-paper: #1a2229;
+  --fe-orange: #ff7a1a;
+  color-scheme: dark;
+  color: var(--fe-ink);
+  background: #101416;
+  border-color: var(--fe-line);
+}
+
+.history h2 {
+  font: 400 clamp(1.75rem, 3vw, 2.25rem)/1.15 "FE Display", sans-serif;
+  letter-spacing: .025em;
+}
+
+.history .eyebrow { font-size: .875rem; }
+
+.historyIntro,
 .historyHeading > span {
   color: var(--fe-muted, #62615e);
   font-size: 0.875rem;
 }
+
+.historyIntro { font-size: 1rem; }
+
+.history :global(.fe-button) {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  border-color: #ff7a1a;
+  background: transparent;
+  color: #ff7a1a;
+  text-align: center;
+  white-space: normal;
+}
+
+.history :global(.fe-button):hover:not(:disabled) { background: #30271f; }
+.history :focus-visible { outline: 3px solid #ff7a1a; outline-offset: 3px; }
 
 .historyList {
   display: grid;
@@ -141,19 +177,40 @@
   padding: 0.875rem;
   border: 1px solid var(--fe-line, #deddd7);
   border-radius: 0.5rem;
-  background: #f8f7f3;
+  background: var(--fe-paper);
 }
 
-.historyList li > div,
-.historyList span {
-  display: block;
+.historyRecord {
+  display: grid;
+  gap: .375rem;
   min-width: 0;
 }
 
-.historyList span {
-  margin-top: 0.125rem;
+.historyMeta {
   color: var(--fe-muted, #62615e);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
+}
+
+.historyStatus {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .25rem .625rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: .875rem;
+  font-weight: 650;
+  color: #ff7a1a;
+  background: #30271f;
+  white-space: nowrap;
+}
+
+.historyStatus svg { flex-shrink: 0; }
+
+.historyStatus[data-status="COMPLETED"] {
+  color: #60e88a;
+  background: #182e24;
 }
 
 .pagination {
@@ -192,6 +249,11 @@
   .block {
     padding: 0.75rem;
   }
+
+  /* Keep useful reading width when the user enlarges text independently. */
+  .history { padding: 16px; }
+  .historyList li { padding: 12px; }
+  .history :global(.fe-button) { padding-inline: 12px; }
 }
 
 @media (max-width: 22rem) {
@@ -206,4 +268,6 @@
   .pagination button {
     width: 100%;
   }
+
+  .history { padding: 12px; }
 }
