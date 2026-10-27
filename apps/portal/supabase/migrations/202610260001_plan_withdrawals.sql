@@ -39,14 +39,17 @@ revoke all on app_private.training_withdrawal_receipts from public,anon,authenti
 
 create or replace function app_private.training_publication_snapshot(p public.training_program_publications) returns jsonb
 language sql stable set search_path='' as $$
+ -- Preserve the exact legacy JSON shape until a withdrawal actually exists.
+ -- The new application accepts this optional field; the previous strict reader
+ -- can continue reading active plans during the additive migration rollout.
  select jsonb_build_object('id',p.id,'clientId',p.client_id,'programId',p.program_id,'draftVersion',p.draft_version,
-   'revision',p.revision,'document',p.document,'publishedAt',p.published_at,
-   'withdrawnAt',(select w.withdrawn_at from public.training_program_withdrawals w where w.publication_id=p.id))
+   'revision',p.revision,'document',p.document,'publishedAt',p.published_at)
+   || coalesce((select jsonb_build_object('withdrawnAt',w.withdrawn_at) from public.training_program_withdrawals w where w.publication_id=p.id),'{}'::jsonb)
 $$;
 create or replace function app_private.nutrition_publication_json(p public.nutrition_plan_publications) returns jsonb
 language sql stable set search_path='' as $$
- select jsonb_build_object('id',p.id,'clientId',p.client_id,'revision',p.revision,'draftVersion',p.draft_version,'document',p.document,'publishedAt',p.published_at,
-   'withdrawnAt',(select w.withdrawn_at from public.nutrition_plan_withdrawals w where w.publication_id=p.id))
+ select jsonb_build_object('id',p.id,'clientId',p.client_id,'revision',p.revision,'draftVersion',p.draft_version,'document',p.document,'publishedAt',p.published_at)
+   || coalesce((select jsonb_build_object('withdrawnAt',w.withdrawn_at) from public.nutrition_plan_withdrawals w where w.publication_id=p.id),'{}'::jsonb)
 $$;
 
 create function public.withdraw_training_program(p_client_id uuid,p_expected_publication_id uuid,p_idempotency_key uuid)

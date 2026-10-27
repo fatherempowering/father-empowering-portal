@@ -53,6 +53,7 @@ set local role authenticated;
 select pg_temp.become(1);
 insert into results values('draft',public.save_training_program_draft(null,pg_temp.document(),0,gen_random_uuid()));
 insert into results values('published',pg_temp.publish());
+select ok(not((select snapshot from results where label='published') ? 'withdrawnAt'),'active Training publication retains its pre-migration strict JSON shape');
 select lives_ok('select public.save_training_program_draft(pg_temp.draft_id(),pg_temp.document(),1,gen_random_uuid())','save a separate second draft version');
 insert into results values('latest',pg_temp.publish(2,pg_temp.pub_id(),gen_random_uuid()));
 select pg_temp.become(5,'otp');
@@ -94,6 +95,7 @@ select is(public.get_training_publication_for_coach('5d100000-0000-4000-8000-000
 
 select lives_ok($$select public.mutate_coach_nutrition('5d100000-0000-4000-8000-000000000005',jsonb_build_object('action','save','expectedVersion',0,'clientMutationId',gen_random_uuid(),'document',pg_temp.followup_nutrition()))$$,'save native Nutrition');
 insert into results values('nutrition',public.mutate_coach_nutrition('5d100000-0000-4000-8000-000000000005',jsonb_build_object('action','publish','expectedVersion',1,'expectedPublicationId',null,'clientMutationId',gen_random_uuid())));
+select ok(not(public.get_followup_for_coach('5d100000-0000-4000-8000-000000000005','nutrition')->'publication' ? 'withdrawnAt') and not(public.get_followup_for_coach('5d100000-0000-4000-8000-000000000005','nutrition')#>'{history,0}' ? 'withdrawnAt'),'active Nutrition publication and history retain their pre-migration strict JSON shape');
 select pg_temp.become(5,'otp');
 select throws_ok('select pg_temp.withdraw_nutrition()','P0001','FE_FORBIDDEN','Client cannot withdraw Nutrition');
 select pg_temp.become(2);
