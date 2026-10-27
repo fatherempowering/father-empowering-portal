@@ -28,7 +28,7 @@ export async function listTrainingExercises(input: ExerciseListQuery) {
   const actor = await requireCoachVerified();
   const supabase = await createServerSupabaseClient();
   let query = supabase.from("training_exercises")
-    .select("id, name, equipment, cue_fr, cue_en, default_unit, archived, row_version, created_by, updated_at", { count: "exact" })
+    .select("id, name, equipment, cue_fr, cue_en, default_unit, archived, row_version, created_by, updated_at, pilot", { count: "exact" })
     .eq("organization_id", actor.organizationId)
     .eq("archived", input.archived === "true")
     .order("name").order("id")
@@ -46,7 +46,8 @@ export async function listTrainingExercises(input: ExerciseListQuery) {
       cue: { fr: row.cue_fr, en: row.cue_en }, defaultUnit: row.default_unit,
       archived: row.archived, version: row.row_version,
       createdBy: row.created_by, updatedAt: row.updated_at,
-      canEdit: actor.role === "ADMIN" || row.created_by === actor.userId,
+      canEdit: !row.pilot && (actor.role === "ADMIN" || row.created_by === actor.userId),
+      ...(row.pilot ? { pilot: row.pilot } : {}),
     })),
     total: count, page: input.page, pageSize: 50,
   });

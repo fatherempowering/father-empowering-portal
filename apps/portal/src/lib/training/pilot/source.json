@@ -1,0 +1,2165 @@
+{
+  "serverOnlyMarker": "FE_PILOT_SOURCE_SERVER_ONLY_20261023",
+  "sourceSchema": "legacy.integration_pilot.1.0.0",
+  "catalogVersion": "3.1.0-pilot.1",
+  "provenance": {
+    "catalogSha256": "d0b1594c6c0025543207bf3156a56912d5764044c3fa28611f805a14c5052986",
+    "dictionarySha256": "c445d185e938b29dbc08b96d4b728e598cac337c5b442b796df24a2b5729793d"
+  },
+  "exercises": [
+    {
+      "id": "DB_001",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Squat gobelet avec haltère",
+        "en": "Dumbbell goblet squat"
+      },
+      "aliases": {
+        "fr": [
+          "Squat gobelet avec un haltère",
+          "Squat goblet avec haltère"
+        ],
+        "en": [
+          "Dumbbell goblet squat",
+          "Goblet squat with a dumbbell"
+        ],
+        "legacy_unclassified": [
+          "Goblet squat"
+        ]
+      },
+      "equipment": {
+        "id": "dumbbell",
+        "labels": {
+          "fr": "Haltères",
+          "en": "Dumbbells"
+        }
+      },
+      "movement_family": {
+        "id": "squat",
+        "labels": {
+          "fr": "Squat",
+          "en": "Squat"
+        },
+        "specific_family_fr": "Squat chargé"
+      },
+      "muscle_roles": {
+        "primary": [
+          "MG_QUADRICEPS",
+          "M_GLUTEUS_MAXIMUS"
+        ],
+        "secondary": [
+          "MG_HIP_ADDUCTORS"
+        ],
+        "stabilizers": [
+          "MG_ERECTOR_SPINAE",
+          "MG_ABDOMINALS"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Debout, tenez un haltère vertical contre le sternum avec les deux mains sous sa tête et les pieds stables.",
+          "execution": "Fléchissez ensemble les hanches et les genoux jusqu’à votre profondeur contrôlée, en gardant les talons au sol.",
+          "finish": "Poussez le sol pour revenir debout sans perdre le contrôle du tronc."
+        },
+        "en": {
+          "setup": "Stand with stable feet and hold one dumbbell vertically at your breastbone, both hands under its upper head.",
+          "execution": "Bend your hips and knees together to your controlled depth while keeping your heels down.",
+          "finish": "Push through the floor to stand upright with your trunk controlled."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "total_cycles",
+        "count_unit": "complete_cycle",
+        "load_entry_basis": "per_implement",
+        "load_components": [
+          {
+            "label_fr": "Masse de l’unique haltère",
+            "label_en": "Mass of the single dumbbell"
+          }
+        ],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "DB_025",
+      "version": "1.2.0",
+      "previous_version": "1.1.0",
+      "name": {
+        "fr": "Rowing unilatéral avec appui sur banc",
+        "en": "One-arm dumbbell row"
+      },
+      "aliases": {
+        "fr": [
+          "Rowing à un bras avec appui main-genou sur banc",
+          "Tirage unilatéral avec haltère sur banc"
+        ],
+        "en": [
+          "Bench-supported one-arm dumbbell row",
+          "One-arm dumbbell row with hand and knee support"
+        ],
+        "legacy_unclassified": []
+      },
+      "equipment": {
+        "id": "dumbbell",
+        "labels": {
+          "fr": "Haltères",
+          "en": "Dumbbells"
+        }
+      },
+      "movement_family": {
+        "id": "pull_horizontal",
+        "labels": {
+          "fr": "Tirage horizontal",
+          "en": "Horizontal pull"
+        },
+        "specific_family_fr": "Rowing à un bras avec appui"
+      },
+      "muscle_roles": {
+        "primary": [
+          "M_LATISSIMUS_DORSI",
+          "MG_RHOMBOIDS",
+          "MP_TRAPEZIUS_MIDDLE"
+        ],
+        "secondary": [
+          "MP_DELTOID_POSTERIOR",
+          "M_BICEPS_BRACHII"
+        ],
+        "stabilizers": [
+          "MG_ABDOMINALS",
+          "MG_ERECTOR_SPINAE"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Placez la main et le genou opposés au bras de travail sur un banc fixe, le pied du côté actif au sol et l’haltère dans la main de travail.",
+          "execution": "Tirez le coude vers le flanc sans faire tourner le thorax ni avancer l’épaule.",
+          "finish": "Redescendez l’haltère jusqu’au bras long en gardant le bassin stable."
+        },
+        "en": {
+          "setup": "Support your non-working hand and knee on a fixed bench, with your working-side foot on the floor and a dumbbell in your working hand.",
+          "execution": "Pull your elbow toward your side without rotating your chest or letting your shoulder roll forward.",
+          "finish": "Lower the dumbbell to a long arm while keeping your pelvis stable."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "per_side",
+        "count_unit": "single_side_cycle",
+        "load_entry_basis": "per_implement",
+        "load_components": [
+          {
+            "label_fr": "Masse de l’haltère du bras actif",
+            "label_en": "Mass of the working-arm dumbbell"
+          }
+        ],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "DB_034",
+      "version": "1.2.0",
+      "previous_version": "1.1.0",
+      "name": {
+        "fr": "Curl alterné avec haltères",
+        "en": "Alternating dumbbell curl"
+      },
+      "aliases": {
+        "fr": [
+          "Flexion alternée des coudes avec haltères en supination",
+          "Curl alterné debout, paumes vers l’avant"
+        ],
+        "en": [
+          "Standing alternating supinated dumbbell curl",
+          "Alternating dumbbell biceps curl"
+        ],
+        "legacy_unclassified": []
+      },
+      "equipment": {
+        "id": "dumbbell",
+        "labels": {
+          "fr": "Haltères",
+          "en": "Dumbbells"
+        }
+      },
+      "movement_family": {
+        "id": "elbow_flexion",
+        "labels": {
+          "fr": "Flexion du coude",
+          "en": "Elbow flexion"
+        },
+        "specific_family_fr": "Flexion du coude"
+      },
+      "muscle_roles": {
+        "primary": [
+          "M_BICEPS_BRACHII",
+          "M_BRACHIALIS"
+        ],
+        "secondary": [
+          "M_BRACHIORADIALIS"
+        ],
+        "stabilizers": [
+          "FG_GRIP",
+          "MG_ABDOMINALS"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Debout, gardez un haltère de même charge dans chaque main, bras allongés et paumes vers l’avant.",
+          "execution": "Fléchissez le coude droit puis rabaissez l’haltère, en gardant l’épaule et le tronc stables.",
+          "finish": "Réalisez la même flexion et le même retour à gauche pour terminer le cycle avec les deux bras allongés."
+        },
+        "en": {
+          "setup": "Stand with equally loaded dumbbells in your hands, arms long and palms facing forward.",
+          "execution": "Curl the right dumbbell and lower it, keeping your shoulder and trunk still.",
+          "finish": "Curl and lower the left dumbbell to finish the cycle with both arms long."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "total_cycles",
+        "count_unit": "alternating_pair",
+        "load_entry_basis": "per_implement",
+        "load_components": [
+          {
+            "label_fr": "Masse par haltère, identique des deux côtés",
+            "label_en": "Mass per dumbbell, equal on both sides"
+          }
+        ],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "DB_045",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Marche du fermier avec haltères",
+        "en": "Dumbbell farmer carry"
+      },
+      "aliases": {
+        "fr": [
+          "Porté du fermier avec deux haltères",
+          "Marche chargée avec deux haltères aux côtés"
+        ],
+        "en": [
+          "Dumbbell farmer’s walk",
+          "Two-dumbbell farmer carry"
+        ],
+        "legacy_unclassified": [
+          "Farmer’s walk",
+          "Marche du fermier"
+        ]
+      },
+      "equipment": {
+        "id": "dumbbell",
+        "labels": {
+          "fr": "Haltères",
+          "en": "Dumbbells"
+        }
+      },
+      "movement_family": {
+        "id": "carry",
+        "labels": {
+          "fr": "Porté",
+          "en": "Loaded carry"
+        },
+        "specific_family_fr": "Porté en marche"
+      },
+      "muscle_roles": {
+        "primary": [
+          "FG_GRIP"
+        ],
+        "secondary": [
+          "MG_QUADRICEPS",
+          "M_GLUTEUS_MAXIMUS",
+          "MG_TRICEPS_SURAE"
+        ],
+        "stabilizers": [
+          "MG_ABDOMINALS",
+          "M_TRAPEZIUS",
+          "MG_ERECTOR_SPINAE",
+          "M_GLUTEUS_MEDIUS"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Debout dans un couloir dégagé, tenez deux haltères de même charge aux côtés, bras longs et prise neutre fermée.",
+          "execution": "Avancez à pas contrôlés en gardant le bassin et les épaules à niveau, sans balancer les haltères.",
+          "finish": "Arrêtez-vous avant de poser les deux haltères au sol de façon contrôlée."
+        },
+        "en": {
+          "setup": "Stand in a clear lane holding equally loaded dumbbells at your sides, arms long and thumbs around the handles.",
+          "execution": "Walk forward with controlled steps, keeping your hips and shoulders level without swinging the dumbbells.",
+          "finish": "Stop before lowering both dumbbells to the floor under control."
+        }
+      },
+      "performance": {
+        "measure": "distance",
+        "repetition_basis": "not_applicable",
+        "count_unit": "not_applicable",
+        "load_entry_basis": "per_implement",
+        "load_components": [
+          {
+            "label_fr": "Masse par haltère, identique des deux côtés",
+            "label_en": "Mass per dumbbell, equal on both sides"
+          }
+        ],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "BB_001",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Squat arrière barre haute",
+        "en": "High-bar back squat"
+      },
+      "aliases": {
+        "fr": [
+          "Squat arrière à barre haute",
+          "Back squat barre haute"
+        ],
+        "en": [
+          "Barbell high-bar back squat",
+          "High-bar squat"
+        ],
+        "legacy_unclassified": []
+      },
+      "equipment": {
+        "id": "barbell",
+        "labels": {
+          "fr": "Barres",
+          "en": "Barbell"
+        }
+      },
+      "movement_family": {
+        "id": "squat",
+        "labels": {
+          "fr": "Squat",
+          "en": "Squat"
+        },
+        "specific_family_fr": "Squat chargé"
+      },
+      "muscle_roles": {
+        "primary": [
+          "MG_QUADRICEPS",
+          "M_GLUTEUS_MAXIMUS"
+        ],
+        "secondary": [
+          "MG_HIP_ADDUCTORS"
+        ],
+        "stabilizers": [
+          "MG_ERECTOR_SPINAE",
+          "MG_ABDOMINALS"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Depuis un rack à sécurités, placez la barre sur la masse musculaire du haut des trapèzes avec une prise fermée et les pieds stables.",
+          "execution": "Fléchissez ensemble les hanches et les genoux jusqu’à votre profondeur contrôlée, en gardant les talons au sol.",
+          "finish": "Poussez le sol pour revenir debout et replacez la barre au rack après la série."
+        },
+        "en": {
+          "setup": "From a rack with safety supports, position the bar on your upper trapezius muscles with a closed grip and stable feet.",
+          "execution": "Bend your hips and knees together to your controlled depth while keeping your heels down.",
+          "finish": "Push through the floor to stand upright and return the bar to the rack after the set."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "total_cycles",
+        "count_unit": "complete_cycle",
+        "load_entry_basis": "total_external_mass",
+        "load_components": [
+          {
+            "label_fr": "Masse réelle de la barre seule",
+            "label_en": "Actual mass of the empty bar"
+          },
+          {
+            "label_fr": "Masse totale de tous les disques",
+            "label_en": "Total mass of all plates"
+          },
+          {
+            "label_fr": "Masse totale mesurée des colliers",
+            "label_en": "Total measured mass of the collars"
+          }
+        ],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "BB_012",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Soulevé de terre conventionnel",
+        "en": "Conventional barbell deadlift"
+      },
+      "aliases": {
+        "fr": [
+          "Soulevé de terre à la barre en position conventionnelle",
+          "Deadlift conventionnel à double pronation"
+        ],
+        "en": [
+          "Conventional deadlift",
+          "Conventional barbell deadlift with a double-overhand grip"
+        ],
+        "legacy_unclassified": []
+      },
+      "equipment": {
+        "id": "barbell",
+        "labels": {
+          "fr": "Barres",
+          "en": "Barbell"
+        }
+      },
+      "movement_family": {
+        "id": "hinge",
+        "labels": {
+          "fr": "Charnière de hanche",
+          "en": "Hip hinge"
+        },
+        "specific_family_fr": "Soulevé de terre depuis le sol"
+      },
+      "muscle_roles": {
+        "primary": [
+          "M_GLUTEUS_MAXIMUS",
+          "MG_QUADRICEPS",
+          "MG_HAMSTRINGS"
+        ],
+        "secondary": [],
+        "stabilizers": [
+          "MG_ERECTOR_SPINAE",
+          "M_LATISSIMUS_DORSI",
+          "FG_GRIP",
+          "MG_ABDOMINALS"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Placez les pieds sous le bassin et saisissez la barre au sol en double pronation fermée, les mains à l’extérieur des jambes.",
+          "execution": "Poussez le sol en étendant les hanches et les genoux, bras longs et barre près des jambes, jusqu’à la station debout.",
+          "finish": "Reculez les hanches puis fléchissez les genoux pour reposer la barre au sol de façon contrôlée."
+        },
+        "en": {
+          "setup": "Place your feet under your hips and take a closed double-overhand grip on the bar on the floor, with your hands outside your legs.",
+          "execution": "Push through the floor and extend your hips and knees to stand upright, keeping your arms long and the bar close to your legs.",
+          "finish": "Move your hips back, then bend your knees to return the bar to the floor under control."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "total_cycles",
+        "count_unit": "complete_cycle",
+        "load_entry_basis": "total_external_mass",
+        "load_components": [
+          {
+            "label_fr": "Masse réelle de la barre seule",
+            "label_en": "Actual mass of the empty bar"
+          },
+          {
+            "label_fr": "Masse totale de tous les disques",
+            "label_en": "Total mass of all plates"
+          },
+          {
+            "label_fr": "Masse totale mesurée des colliers",
+            "label_en": "Total measured mass of the collars"
+          }
+        ],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "CA_001",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Développé poitrine debout à câbles",
+        "en": "Standing cable chest press"
+      },
+      "aliases": {
+        "fr": [
+          "Développé de poitrine debout à deux câbles",
+          "Poussée poitrine debout à double poulie"
+        ],
+        "en": [
+          "Standing dual-cable chest press",
+          "Standing two-handle cable chest press"
+        ],
+        "legacy_unclassified": [
+          "Standing cable chest press"
+        ]
+      },
+      "equipment": {
+        "id": "cable",
+        "labels": {
+          "fr": "Câbles",
+          "en": "Cables"
+        }
+      },
+      "movement_family": {
+        "id": "push_horizontal",
+        "labels": {
+          "fr": "Poussée horizontale",
+          "en": "Horizontal push"
+        },
+        "specific_family_fr": "Développé poitrine debout à câbles"
+      },
+      "muscle_roles": {
+        "primary": [
+          "M_PECTORALIS_MAJOR"
+        ],
+        "secondary": [
+          "M_TRICEPS_BRACHII",
+          "MP_DELTOID_ANTERIOR"
+        ],
+        "stabilizers": [
+          "MG_ABDOMINALS",
+          "MG_ERECTOR_SPINAE"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Debout en fente, prenez les deux poignées D des poulies placées derrière vous à hauteur de poitrine, mains près du thorax.",
+          "execution": "Poussez les deux poignées devant la poitrine sans tourner le tronc ni casser les poignets.",
+          "finish": "Ramenez les mains près du thorax en contrôlant les câbles et en gardant les mêmes appuis."
+        },
+        "en": {
+          "setup": "Stand in a split stance with both D-handles near your chest, using pulleys behind you at chest height.",
+          "execution": "Press both handles forward in front of your chest without rotating your trunk or bending your wrists.",
+          "finish": "Bring your hands back toward your chest under cable control while keeping the same foot position."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "total_cycles",
+        "count_unit": "complete_cycle",
+        "load_entry_basis": "to_confirm",
+        "load_components": [
+          {
+            "label_fr": "Réglage affiché de la pile gauche, si indépendante",
+            "label_en": "Displayed left-stack setting, if independent"
+          },
+          {
+            "label_fr": "Réglage affiché de la pile droite, si indépendante",
+            "label_en": "Displayed right-stack setting, if independent"
+          },
+          {
+            "label_fr": "Réglage affiché de la pile commune, si partagée",
+            "label_en": "Displayed shared-stack setting, if shared"
+          }
+        ],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "CA_050",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Rowing unilatéral à demi-genou à câble",
+        "en": "Half-kneeling single-arm cable row"
+      },
+      "aliases": {
+        "fr": [
+          "Tirage unilatéral à câble en demi-genou",
+          "Rowing à une main, genou actif au sol"
+        ],
+        "en": [
+          "Half-kneeling one-arm cable row",
+          "Half-kneeling single-arm cable row with working-side knee down"
+        ],
+        "legacy_unclassified": []
+      },
+      "equipment": {
+        "id": "cable",
+        "labels": {
+          "fr": "Câbles",
+          "en": "Cables"
+        }
+      },
+      "movement_family": {
+        "id": "pull_horizontal",
+        "labels": {
+          "fr": "Tirage horizontal",
+          "en": "Horizontal pull"
+        },
+        "specific_family_fr": "Rowing unilatéral à demi-genou à câble"
+      },
+      "muscle_roles": {
+        "primary": [
+          "M_LATISSIMUS_DORSI",
+          "MG_RHOMBOIDS",
+          "MP_TRAPEZIUS_MIDDLE"
+        ],
+        "secondary": [
+          "M_BICEPS_BRACHII"
+        ],
+        "stabilizers": [
+          "MG_ABDOMINALS",
+          "M_GLUTEUS_MAXIMUS",
+          "MG_ERECTOR_SPINAE"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Placez le genou du bras actif au sol et l’autre pied devant, face à une poulie au niveau du bas du thorax, poignée D dans la main active.",
+          "execution": "Tirez le coude vers les côtes sans tourner le thorax ni reculer le bassin.",
+          "finish": "Laissez le bras se rallonger sous contrôle en gardant le bassin et les appuis fixes."
+        },
+        "en": {
+          "setup": "Kneel on your working-side knee with the opposite foot forward, facing a pulley at lower-chest height and holding a D-handle in your working hand.",
+          "execution": "Pull your elbow toward your ribs without rotating your chest or shifting your pelvis backward.",
+          "finish": "Let your arm lengthen under control while keeping your pelvis and support points still."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "per_side",
+        "count_unit": "single_side_cycle",
+        "load_entry_basis": "displayed_stack_setting",
+        "load_components": [
+          {
+            "label_fr": "Réglage affiché de la pile utilisée",
+            "label_en": "Displayed setting of the stack in use"
+          }
+        ],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "MA_018",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Développé poitrine à machine",
+        "en": "Machine chest press"
+      },
+      "aliases": {
+        "fr": [
+          "Presse poitrine assise à machine",
+          "Développé pectoral à machine"
+        ],
+        "en": [
+          "Seated machine chest press",
+          "Machine pectoral press"
+        ],
+        "legacy_unclassified": [
+          "Machine chest press"
+        ]
+      },
+      "equipment": {
+        "id": "machine",
+        "labels": {
+          "fr": "Machines",
+          "en": "Machine"
+        }
+      },
+      "movement_family": {
+        "id": "push_horizontal",
+        "labels": {
+          "fr": "Poussée horizontale",
+          "en": "Horizontal push"
+        },
+        "specific_family_fr": "Développé à leviers pour la poitrine"
+      },
+      "muscle_roles": {
+        "primary": [
+          "M_PECTORALIS_MAJOR"
+        ],
+        "secondary": [
+          "MP_DELTOID_ANTERIOR",
+          "M_TRICEPS_BRACHII"
+        ],
+        "stabilizers": [
+          "MG_ROTATOR_CUFF",
+          "FG_GRIP",
+          "MG_ABDOMINALS"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Asseyez-vous le dos au dossier, placez les pieds sur les appuis prévus et réglez le siège et les poignées selon le modèle.",
+          "execution": "Poussez les deux poignées suivant le trajet de la machine, en gardant le dos en contact avec le dossier et les poignets alignés.",
+          "finish": "Ramenez les poignées sous contrôle jusqu’au départ toléré par les épaules, sans laisser retomber les leviers."
+        },
+        "en": {
+          "setup": "Sit with your back against the pad, place your feet on the intended supports and adjust the seat and handles for the selected model.",
+          "execution": "Press both handles along the machine’s path, keeping your back against the pad and your wrists aligned.",
+          "finish": "Return the handles under control to the starting position your shoulders can tolerate, without letting the levers drop."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "total_cycles",
+        "count_unit": "complete_cycle",
+        "load_entry_basis": "to_confirm",
+        "load_components": [],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "MA_028",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Traction assistée à machine",
+        "en": "Assisted pull-up machine"
+      },
+      "aliases": {
+        "fr": [
+          "Traction à assistance mécanique",
+          "Traction à machine avec assistance"
+        ],
+        "en": [
+          "Machine-assisted pull-up",
+          "Assisted machine pull-up"
+        ],
+        "legacy_unclassified": [
+          "Assisted pull-up machine"
+        ]
+      },
+      "equipment": {
+        "id": "machine",
+        "labels": {
+          "fr": "Machines",
+          "en": "Machine"
+        }
+      },
+      "movement_family": {
+        "id": "pull_vertical",
+        "labels": {
+          "fr": "Tirage vertical",
+          "en": "Vertical pull"
+        },
+        "specific_family_fr": "Traction assistée à machine"
+      },
+      "muscle_roles": {
+        "primary": [
+          "M_LATISSIMUS_DORSI",
+          "M_TERES_MAJOR"
+        ],
+        "secondary": [
+          "M_BICEPS_BRACHII",
+          "M_BRACHIALIS",
+          "MP_TRAPEZIUS_INFERIOR"
+        ],
+        "stabilizers": [
+          "MG_ROTATOR_CUFF",
+          "MG_ABDOMINALS",
+          "FG_GRIP"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Réglez l’assistance puis, selon la procédure de la machine, saisissez les poignées hautes en pronation et placez les genoux sur le coussin mobile prévu.",
+          "execution": "Tirez le corps vers les poignées sans balancer le tronc, en gardant les genoux en contact avec le coussin qui accompagne la montée.",
+          "finish": "Redescendez sous contrôle jusqu’à l’allongement des bras que vous maîtrisez, puis quittez le coussin selon la procédure de la machine."
+        },
+        "en": {
+          "setup": "Set the assistance, then follow the machine’s access procedure to grasp the upper handles with an overhand grip and place your knees on the moving pad.",
+          "execution": "Pull your body toward the handles without swinging, keeping your knees on the pad as it rises with you.",
+          "finish": "Lower under control to the arm extension you can maintain, then leave the pad using the machine’s exit procedure."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "total_cycles",
+        "count_unit": "complete_cycle",
+        "load_entry_basis": "to_confirm",
+        "load_components": [],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "MA_063",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Rowing unilatéral à machine avec appui de poitrine",
+        "en": "Single-arm chest-supported machine row"
+      },
+      "aliases": {
+        "fr": [
+          "Rowing machine un bras avec appui thoracique",
+          "Tirage horizontal unilatéral à machine avec poitrine soutenue"
+        ],
+        "en": [
+          "Unilateral chest-supported machine row",
+          "Chest-supported single-arm machine row"
+        ],
+        "legacy_unclassified": []
+      },
+      "equipment": {
+        "id": "machine",
+        "labels": {
+          "fr": "Machines",
+          "en": "Machine"
+        }
+      },
+      "movement_family": {
+        "id": "pull_horizontal",
+        "labels": {
+          "fr": "Tirage horizontal",
+          "en": "Horizontal pull"
+        },
+        "specific_family_fr": "Rowing unilatéral à machine avec appui de poitrine"
+      },
+      "muscle_roles": {
+        "primary": [
+          "M_LATISSIMUS_DORSI",
+          "MG_RHOMBOIDS",
+          "MP_TRAPEZIUS_MIDDLE"
+        ],
+        "secondary": [
+          "MP_DELTOID_POSTERIOR",
+          "M_BICEPS_BRACHII",
+          "M_BRACHIALIS"
+        ],
+        "stabilizers": [
+          "MG_ROTATOR_CUFF",
+          "MG_ABDOMINALS",
+          "FG_GRIP"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Réglez le siège et l’appui thoracique, posez les pieds sur les appuis et prenez la poignée du bras actif, l’autre main sur le support fixe prévu.",
+          "execution": "Tirez la poignée vers le flanc en reculant le coude près des côtes, sans tourner le bassin ni décoller la poitrine.",
+          "finish": "Rallongez le bras sous contrôle jusqu’au départ, sans hausser l’épaule ni déplacer le levier inactif."
+        },
+        "en": {
+          "setup": "Adjust the seat and chest pad, place your feet on the supports and grasp the working handle, keeping your other hand on the intended fixed support.",
+          "execution": "Pull the handle toward your side with the elbow close to your ribs, without rotating your pelvis or lifting your chest from the pad.",
+          "finish": "Extend the arm under control to the start, without shrugging or moving the inactive lever."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "per_side",
+        "count_unit": "single_side_cycle",
+        "load_entry_basis": "to_confirm",
+        "load_components": [],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "BW_021",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Pompe au sol",
+        "en": "Push-up"
+      },
+      "aliases": {
+        "fr": [
+          "Pompe au sol",
+          "Pompes au sol",
+          "Pompe classique sur pointes de pieds"
+        ],
+        "en": [
+          "Push-up",
+          "Pushup",
+          "Floor push-up",
+          "Standard floor push-up"
+        ],
+        "legacy_unclassified": []
+      },
+      "equipment": {
+        "id": "bodyweight",
+        "labels": {
+          "fr": "Poids du corps",
+          "en": "Bodyweight"
+        }
+      },
+      "movement_family": {
+        "id": "push_horizontal",
+        "labels": {
+          "fr": "Poussée horizontale",
+          "en": "Horizontal push"
+        },
+        "specific_family_fr": "Pompe au sol"
+      },
+      "muscle_roles": {
+        "primary": [
+          "M_PECTORALIS_MAJOR",
+          "M_TRICEPS_BRACHII"
+        ],
+        "secondary": [
+          "MP_DELTOID_ANTERIOR",
+          "M_SERRATUS_ANTERIOR"
+        ],
+        "stabilizers": [
+          "MG_ABDOMINALS"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Posez les mains près de la largeur des épaules et alignez tête, bassin et jambes sur les pointes de pieds.",
+          "execution": "Fléchissez les coudes pour abaisser le thorax en gardant le corps en ligne.",
+          "finish": "Repoussez le sol pour retrouver les bras allongés sans laisser le bassin s’affaisser."
+        },
+        "en": {
+          "setup": "Place your hands near shoulder width and align your head, hips and legs while supported on your toes.",
+          "execution": "Bend your elbows to lower your chest while keeping your body aligned.",
+          "finish": "Push the floor away to straighten your arms without letting your hips sag."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "total_cycles",
+        "count_unit": "complete_cycle",
+        "load_entry_basis": "not_applicable",
+        "load_components": [],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "BW_049",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Planche sur avant-bras",
+        "en": "Forearm plank"
+      },
+      "aliases": {
+        "fr": [
+          "Planche sur avant-bras",
+          "Gainage ventral sur avant-bras",
+          "Planche ventrale sur les coudes"
+        ],
+        "en": [
+          "Forearm plank",
+          "Front plank on forearms",
+          "Elbow plank"
+        ],
+        "legacy_unclassified": []
+      },
+      "equipment": {
+        "id": "bodyweight",
+        "labels": {
+          "fr": "Poids du corps",
+          "en": "Bodyweight"
+        }
+      },
+      "movement_family": {
+        "id": "core",
+        "labels": {
+          "fr": "Tronc",
+          "en": "Trunk control"
+        },
+        "specific_family_fr": "Planche sur avant-bras"
+      },
+      "muscle_roles": {
+        "primary": [
+          "MG_ABDOMINALS"
+        ],
+        "secondary": [],
+        "stabilizers": [
+          "M_DELTOID",
+          "M_GLUTEUS_MAXIMUS"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Posez les avant-bras au sol, coudes sous les épaules, avec les genoux encore en appui.",
+          "execution": "Décollez les genoux et maintenez tête, bassin et chevilles alignés en respirant.",
+          "finish": "Reposez les genoux avant de relâcher le tronc."
+        },
+        "en": {
+          "setup": "Place your forearms on the floor with your elbows under your shoulders and your knees supported.",
+          "execution": "Lift your knees and hold your head, hips and ankles aligned while breathing.",
+          "finish": "Lower your knees before relaxing your trunk."
+        }
+      },
+      "performance": {
+        "measure": "duration",
+        "repetition_basis": "not_applicable",
+        "count_unit": "not_applicable",
+        "load_entry_basis": "not_applicable",
+        "load_components": [],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "KB_015",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Swing à deux mains à hauteur de poitrine",
+        "en": "Two-Hand Kettlebell Swing"
+      },
+      "aliases": {
+        "fr": [
+          "Swing kettlebell à deux mains à hauteur de poitrine",
+          "Balancement kettlebell à deux mains",
+          "Swing russe à deux mains à hauteur de poitrine"
+        ],
+        "en": [
+          "Two-hand kettlebell swing",
+          "Two-handed kettlebell swing to chest height",
+          "Chest-height kettlebell swing"
+        ],
+        "legacy_unclassified": []
+      },
+      "equipment": {
+        "id": "kettlebell",
+        "labels": {
+          "fr": "Kettlebells",
+          "en": "Kettlebell"
+        }
+      },
+      "movement_family": {
+        "id": "hinge",
+        "labels": {
+          "fr": "Charnière de hanche",
+          "en": "Hip hinge"
+        },
+        "specific_family_fr": "Swing kettlebell à hauteur de poitrine"
+      },
+      "muscle_roles": {
+        "primary": [
+          "M_GLUTEUS_MAXIMUS",
+          "MG_HAMSTRINGS"
+        ],
+        "secondary": [],
+        "stabilizers": [
+          "FG_TRUNK",
+          "M_LATISSIMUS_DORSI",
+          "FG_FINGER_FLEXORS"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Tenez une kettlebell à deux mains, pieds environ largeur épaules, puis reculez les hanches avec la cloche entre les cuisses.",
+          "execution": "Étendez vivement les hanches pour faire flotter la cloche devant la poitrine, bras longs.",
+          "finish": "Guidez son retour entre les cuisses en reculant les hanches, sans tirer avec les épaules."
+        },
+        "en": {
+          "setup": "Hold one kettlebell with both hands, feet about shoulder width, then hinge with the bell between your thighs.",
+          "execution": "Extend your hips briskly to let the bell float in front of your chest with long arms.",
+          "finish": "Guide it back between your thighs by hinging, without lifting it with your shoulders."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "total_cycles",
+        "count_unit": "complete_cycle",
+        "load_entry_basis": "per_implement",
+        "load_components": [
+          {
+            "label_fr": "Masse de la kettlebell unique",
+            "label_en": "Mass of the single kettlebell"
+          }
+        ],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    },
+    {
+      "id": "BA_027",
+      "version": "1.1.0",
+      "previous_version": "1.0.0",
+      "name": {
+        "fr": "Pallof press debout avec bande",
+        "en": "Standing Band Pallof Press"
+      },
+      "aliases": {
+        "fr": [
+          "Pallof press debout avec élastique",
+          "Presse antirotation debout avec bande",
+          "Développé antirotation debout à l’élastique"
+        ],
+        "en": [
+          "Standing resistance-band Pallof press",
+          "Standing band anti-rotation press",
+          "Standing tubing Pallof press"
+        ],
+        "legacy_unclassified": []
+      },
+      "equipment": {
+        "id": "band",
+        "labels": {
+          "fr": "Élastiques",
+          "en": "Resistance band"
+        }
+      },
+      "movement_family": {
+        "id": "core",
+        "labels": {
+          "fr": "Tronc",
+          "en": "Trunk control"
+        },
+        "specific_family_fr": "Pallof press avec bande"
+      },
+      "muscle_roles": {
+        "primary": [
+          "MG_ABDOMINAL_OBLIQUES",
+          "M_TRANSVERSUS_ABDOMINIS"
+        ],
+        "secondary": [
+          "M_RECTUS_ABDOMINIS"
+        ],
+        "stabilizers": [
+          "M_DELTOID",
+          "M_GLUTEUS_MAXIMUS"
+        ]
+      },
+      "client_instructions": {
+        "fr": {
+          "setup": "Placez l’ancrage à gauche à hauteur du sternum et tenez la poignée à deux mains devant la poitrine, pieds parallèles stables.",
+          "execution": "Tendez les bras devant vous sans laisser les épaules ou le bassin tourner vers l’ancrage.",
+          "finish": "Ramenez les mains au sternum en gardant le tronc face devant."
+        },
+        "en": {
+          "setup": "Set the anchor to your left at sternum height and hold the handle with both hands at your chest, feet stable and parallel.",
+          "execution": "Extend your arms in front without letting your shoulders or hips turn toward the anchor.",
+          "finish": "Bring your hands back to your sternum while keeping your trunk facing forward."
+        }
+      },
+      "performance": {
+        "measure": "repetitions",
+        "repetition_basis": "per_side",
+        "count_unit": "single_side_cycle",
+        "load_entry_basis": "band_configuration",
+        "load_components": [
+          {
+            "label_fr": "Identification de la bande et du montage",
+            "label_en": "Band identification and setup"
+          }
+        ],
+        "convention_status": "proposed_pending_cavaliers_acceptance",
+        "accepted_by": null,
+        "accepted_at": null
+      },
+      "validations": {
+        "instructions": {
+          "preparation_status": "editorial_draft",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "image": {
+          "preparation_status": "brief_available_no_asset",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        },
+        "video": {
+          "preparation_status": "motion_reference_and_timing_to_complete",
+          "review_status": "pending",
+          "approved_by": null,
+          "approved_at": null,
+          "rejection_reason": null
+        }
+      }
+    }
+  ],
+  "machines": [
+    {
+      "id": "ATL_PW737__MA_018",
+      "exercise_id": "MA_018",
+      "exercise_version": "1.1.0",
+      "model_id": "ATL_PW737",
+      "model_version": "1.0.0",
+      "model_code": "PW737",
+      "name": "Vertical chest press",
+      "manufacturer": "Atlantis Strength",
+      "evidence": "exact_product",
+      "publishable": false,
+      "reason_fr": "Adapter et faire valider les consignes au modèle et à son exemplaire avant affichage client."
+    },
+    {
+      "id": "HST_RS2301__MA_018",
+      "exercise_id": "MA_018",
+      "exercise_version": "1.1.0",
+      "model_id": "HST_RS2301",
+      "model_version": "1.0.0",
+      "model_code": "RS-2301",
+      "name": "Chest Press",
+      "manufacturer": "HOIST Fitness Systems, Inc.",
+      "evidence": "exact_product",
+      "publishable": false,
+      "reason_fr": "Adapter et faire valider les consignes au modèle et à son exemplaire avant affichage client."
+    },
+    {
+      "id": "HST_RS2700__MA_028",
+      "exercise_id": "MA_028",
+      "exercise_version": "1.1.0",
+      "model_id": "HST_RS2700",
+      "model_version": "1.0.0",
+      "model_code": "RS-2700",
+      "name": "Chin/Dip Assist",
+      "manufacturer": "HOIST Fitness Systems, Inc.",
+      "evidence": "inferred_family",
+      "publishable": false,
+      "reason_fr": "La fonction documentaire ne valide pas les consignes génériques pour cet appareil; confirmer appuis, réglages et révision. Le RS-2700 impose notamment un plateau de pieds au lieu du coussin de genoux de la fiche de base."
+    },
+    {
+      "id": "LFT_SS_CP__MA_018",
+      "exercise_id": "MA_018",
+      "exercise_version": "1.1.0",
+      "model_id": "LFT_SS_CP",
+      "model_version": "1.0.0",
+      "model_code": "SS-CP",
+      "name": "Insignia Series Chest Press",
+      "manufacturer": "Life Fitness",
+      "evidence": "exact_product",
+      "publishable": false,
+      "reason_fr": "Adapter et faire valider les consignes au modèle et à son exemplaire avant affichage client."
+    },
+    {
+      "id": "TGY_SELECTION900_MNFP__MA_018",
+      "exercise_id": "MA_018",
+      "exercise_version": "1.1.0",
+      "model_id": "TGY_SELECTION900_MNFP",
+      "model_version": "1.0.0",
+      "model_code": "MNFP",
+      "name": "Chest Press",
+      "manufacturer": "Technogym",
+      "evidence": "exact_product",
+      "publishable": false,
+      "reason_fr": "Adapter et faire valider les consignes au modèle et à son exemplaire avant affichage client."
+    },
+    {
+      "id": "TGY_SELECTION900_MNHP__MA_063",
+      "exercise_id": "MA_063",
+      "exercise_version": "1.1.0",
+      "model_id": "TGY_SELECTION900_MNHP",
+      "model_version": "1.0.0",
+      "model_code": "MNHP",
+      "name": "Low Row",
+      "manufacturer": "Technogym",
+      "evidence": "exact_product",
+      "publishable": false,
+      "reason_fr": "Adapter et faire valider les consignes au modèle et à son exemplaire avant affichage client."
+    },
+    {
+      "id": "MXF_ULTRA_G7_S13__MA_018",
+      "exercise_id": "MA_018",
+      "exercise_version": "1.1.0",
+      "model_id": "MXF_ULTRA_G7_S13",
+      "model_version": "1.0.0",
+      "model_code": "G7-S13",
+      "name": "Ultra Converging Chest Press",
+      "manufacturer": "Matrix Fitness",
+      "evidence": "exact_product",
+      "publishable": false,
+      "reason_fr": "Adapter et faire valider les consignes au modèle et à son exemplaire avant affichage client."
+    }
+  ],
+  "dictionary": {
+    "anatomy_concepts": [
+      {
+        "id": "MG_QUADRICEPS",
+        "labels": {
+          "fr": "quadriceps",
+          "en": "quadriceps"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "quadriceps fémoral"
+          ],
+          "en": [
+            "quads"
+          ]
+        }
+      },
+      {
+        "id": "M_GLUTEUS_MAXIMUS",
+        "labels": {
+          "fr": "grand fessier",
+          "en": "gluteus maximus"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      },
+      {
+        "id": "M_GLUTEUS_MEDIUS",
+        "labels": {
+          "fr": "moyen fessier",
+          "en": "gluteus medius"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      },
+      {
+        "id": "MG_HIP_ADDUCTORS",
+        "labels": {
+          "fr": "adducteurs de la hanche",
+          "en": "hip adductors"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "adducteurs"
+          ],
+          "en": []
+        }
+      },
+      {
+        "id": "MG_ERECTOR_SPINAE",
+        "labels": {
+          "fr": "érecteurs du rachis",
+          "en": "erector spinae"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "érecteurs du rachis",
+            "érecteurs spinaux"
+          ],
+          "en": [
+            "spinal erectors"
+          ]
+        }
+      },
+      {
+        "id": "MG_ABDOMINALS",
+        "labels": {
+          "fr": "muscles abdominaux",
+          "en": "abdominal muscles"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "abdominaux"
+          ],
+          "en": []
+        }
+      },
+      {
+        "id": "MG_HAMSTRINGS",
+        "labels": {
+          "fr": "ischio-jambiers",
+          "en": "hamstrings"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "ischiojambiers",
+            "ischio jambiers",
+            "ischios"
+          ],
+          "en": [
+            "hamstring muscles"
+          ]
+        }
+      },
+      {
+        "id": "M_LATISSIMUS_DORSI",
+        "labels": {
+          "fr": "grand dorsal",
+          "en": "latissimus dorsi"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": [
+            "lats"
+          ]
+        }
+      },
+      {
+        "id": "MG_RHOMBOIDS",
+        "labels": {
+          "fr": "rhomboïdes",
+          "en": "rhomboids"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      },
+      {
+        "id": "MP_TRAPEZIUS_MIDDLE",
+        "labels": {
+          "fr": "portion moyenne du trapèze",
+          "en": "middle trapezius"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "trapèzes moyens",
+            "trapèze moyen"
+          ],
+          "en": [
+            "middle traps"
+          ]
+        }
+      },
+      {
+        "id": "MP_TRAPEZIUS_INFERIOR",
+        "labels": {
+          "fr": "portion inférieure du trapèze",
+          "en": "lower trapezius"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "trapèzes inférieurs",
+            "trapèze inférieur"
+          ],
+          "en": [
+            "lower traps"
+          ]
+        }
+      },
+      {
+        "id": "MP_DELTOID_POSTERIOR",
+        "labels": {
+          "fr": "portion postérieure du deltoïde",
+          "en": "posterior deltoid"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "deltoïde postérieur",
+            "deltoïdes postérieurs"
+          ],
+          "en": [
+            "rear delts"
+          ]
+        }
+      },
+      {
+        "id": "MP_DELTOID_ANTERIOR",
+        "labels": {
+          "fr": "portion antérieure du deltoïde",
+          "en": "anterior deltoid"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "deltoïde antérieur",
+            "deltoïdes antérieurs"
+          ],
+          "en": [
+            "front delts"
+          ]
+        }
+      },
+      {
+        "id": "M_DELTOID",
+        "labels": {
+          "fr": "deltoïde",
+          "en": "deltoid"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "deltoïdes"
+          ],
+          "en": [
+            "deltoids"
+          ]
+        }
+      },
+      {
+        "id": "M_BICEPS_BRACHII",
+        "labels": {
+          "fr": "biceps brachial",
+          "en": "biceps brachii"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "biceps"
+          ],
+          "en": []
+        }
+      },
+      {
+        "id": "M_BRACHIALIS",
+        "labels": {
+          "fr": "brachial",
+          "en": "brachialis"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      },
+      {
+        "id": "M_BRACHIORADIALIS",
+        "labels": {
+          "fr": "brachioradial",
+          "en": "brachioradialis"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "long supinateur"
+          ],
+          "en": []
+        }
+      },
+      {
+        "id": "FG_GRIP",
+        "labels": {
+          "fr": "muscles de préhension",
+          "en": "grip muscles"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      },
+      {
+        "id": "M_TRAPEZIUS",
+        "labels": {
+          "fr": "trapèze",
+          "en": "trapezius"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "trapèzes"
+          ],
+          "en": [
+            "traps"
+          ]
+        }
+      },
+      {
+        "id": "M_PECTORALIS_MAJOR",
+        "labels": {
+          "fr": "grand pectoral",
+          "en": "pectoralis major"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      },
+      {
+        "id": "M_TRICEPS_BRACHII",
+        "labels": {
+          "fr": "triceps brachial",
+          "en": "triceps brachii"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "triceps"
+          ],
+          "en": []
+        }
+      },
+      {
+        "id": "M_TERES_MAJOR",
+        "labels": {
+          "fr": "grand rond",
+          "en": "teres major"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      },
+      {
+        "id": "MG_ROTATOR_CUFF",
+        "labels": {
+          "fr": "coiffe des rotateurs",
+          "en": "rotator cuff"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      },
+      {
+        "id": "MG_ABDOMINAL_OBLIQUES",
+        "labels": {
+          "fr": "obliques abdominaux",
+          "en": "abdominal obliques"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "obliques"
+          ],
+          "en": [
+            "obliques"
+          ]
+        }
+      },
+      {
+        "id": "M_TRANSVERSUS_ABDOMINIS",
+        "labels": {
+          "fr": "transverse de l’abdomen",
+          "en": "transversus abdominis"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "transverse abdominal"
+          ],
+          "en": []
+        }
+      },
+      {
+        "id": "M_RECTUS_ABDOMINIS",
+        "labels": {
+          "fr": "grand droit de l’abdomen",
+          "en": "rectus abdominis"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "droit de l’abdomen"
+          ],
+          "en": []
+        }
+      },
+      {
+        "id": "M_SERRATUS_ANTERIOR",
+        "labels": {
+          "fr": "dentelé antérieur",
+          "en": "serratus anterior"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      },
+      {
+        "id": "FG_FINGER_FLEXORS",
+        "labels": {
+          "fr": "fléchisseurs des doigts",
+          "en": "finger flexors"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      },
+      {
+        "id": "FG_TRUNK",
+        "labels": {
+          "fr": "muscles du tronc",
+          "en": "trunk muscles"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      },
+      {
+        "id": "REG_FOREARM",
+        "labels": {
+          "fr": "avant-bras",
+          "en": "forearm"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "muscles des avant-bras"
+          ],
+          "en": [
+            "forearms"
+          ]
+        }
+      },
+      {
+        "id": "MG_CALF",
+        "labels": {
+          "fr": "muscles du mollet",
+          "en": "calf muscles"
+        },
+        "anatomical_aliases": {
+          "fr": [
+            "mollets",
+            "mollet"
+          ],
+          "en": [
+            "calves",
+            "calf"
+          ]
+        }
+      },
+      {
+        "id": "MG_TRICEPS_SURAE",
+        "labels": {
+          "fr": "triceps sural",
+          "en": "triceps surae"
+        },
+        "anatomical_aliases": {
+          "fr": [],
+          "en": []
+        }
+      }
+    ],
+    "search_groups": [
+      {
+        "id": "Q_PECTORALS",
+        "terms": [
+          "pecs",
+          "pectoraux",
+          "poitrine",
+          "chest",
+          "pec",
+          "pectorals"
+        ],
+        "target_concept_ids": [
+          "M_PECTORALIS_MAJOR"
+        ]
+      },
+      {
+        "id": "Q_GLUTES",
+        "terms": [
+          "fessiers",
+          "glutes",
+          "glute"
+        ],
+        "target_concept_ids": [
+          "M_GLUTEUS_MAXIMUS",
+          "M_GLUTEUS_MEDIUS"
+        ]
+      },
+      {
+        "id": "Q_HAMSTRINGS_GLUTES",
+        "terms": [
+          "ischio-fessiers",
+          "ischio fessiers",
+          "ischiofessiers",
+          "hamstrings and glutes"
+        ],
+        "target_concept_ids": [
+          "MG_HAMSTRINGS",
+          "M_GLUTEUS_MAXIMUS",
+          "M_GLUTEUS_MEDIUS"
+        ],
+        "coverage_sets": [
+          [
+            "MG_HAMSTRINGS"
+          ],
+          [
+            "M_GLUTEUS_MAXIMUS",
+            "M_GLUTEUS_MEDIUS"
+          ]
+        ]
+      },
+      {
+        "id": "Q_LEGS",
+        "terms": [
+          "jambes",
+          "legs",
+          "bas du corps",
+          "lower body"
+        ],
+        "target_concept_ids": [
+          "MG_QUADRICEPS",
+          "MG_HAMSTRINGS",
+          "M_GLUTEUS_MAXIMUS",
+          "M_GLUTEUS_MEDIUS",
+          "MG_HIP_ADDUCTORS",
+          "MG_CALF"
+        ]
+      },
+      {
+        "id": "Q_BACK",
+        "terms": [
+          "dos",
+          "back"
+        ],
+        "target_concept_ids": [
+          "M_LATISSIMUS_DORSI",
+          "MG_RHOMBOIDS",
+          "MP_TRAPEZIUS_MIDDLE",
+          "M_TRAPEZIUS",
+          "MG_ERECTOR_SPINAE"
+        ]
+      },
+      {
+        "id": "Q_ABS",
+        "terms": [
+          "abdos",
+          "abs",
+          "abdominals",
+          "abdominal"
+        ],
+        "target_concept_ids": [
+          "MG_ABDOMINALS",
+          "MG_ABDOMINAL_OBLIQUES",
+          "M_TRANSVERSUS_ABDOMINIS",
+          "M_RECTUS_ABDOMINIS"
+        ]
+      }
+    ],
+    "search_expansions": [
+      {
+        "concept_id": "MG_ABDOMINALS",
+        "include_ids": [
+          "MG_ABDOMINALS",
+          "MG_ABDOMINAL_OBLIQUES",
+          "M_TRANSVERSUS_ABDOMINIS",
+          "M_RECTUS_ABDOMINIS"
+        ]
+      },
+      {
+        "concept_id": "M_DELTOID",
+        "include_ids": [
+          "M_DELTOID",
+          "MP_DELTOID_ANTERIOR",
+          "MP_DELTOID_POSTERIOR"
+        ]
+      },
+      {
+        "concept_id": "M_TRAPEZIUS",
+        "include_ids": [
+          "M_TRAPEZIUS",
+          "MP_TRAPEZIUS_MIDDLE",
+          "MP_TRAPEZIUS_INFERIOR"
+        ]
+      },
+      {
+        "concept_id": "MG_CALF",
+        "include_ids": [
+          "MG_CALF",
+          "MG_TRICEPS_SURAE"
+        ]
+      }
+    ]
+  }
+}

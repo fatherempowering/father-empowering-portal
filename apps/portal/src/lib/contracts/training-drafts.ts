@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { uuidSchema } from "./m1";
 import { trainingPrescriptionSchema, trainingTextSchema } from "./training";
+import { pilotProgramExerciseSchema, validatePilotPrescription } from "./training-pilot";
 
 // Editing is intentionally distinct from publication readiness: an unfinished
 // week, session or superset must be savable. No Client can read this document.
@@ -9,7 +10,8 @@ export const draftExerciseSchema = z.object({
   name: z.string().trim().min(1).max(160), cue: trainingTextSchema,
   media: z.null(), // private media delivery is not implemented yet
   prescription: trainingPrescriptionSchema,
-}).strict();
+  pilot: pilotProgramExerciseSchema.optional(),
+}).strict().superRefine(validatePilotPrescription);
 export const draftBlockSchema = z.object({
   id: uuidSchema, label: trainingTextSchema,
   mode: z.enum(["standard", "superset", "finisher"]),

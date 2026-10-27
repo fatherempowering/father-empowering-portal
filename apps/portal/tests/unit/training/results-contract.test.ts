@@ -8,6 +8,7 @@ import {
   workoutSessionResponseSchema,
   workoutSnapshotSchema,
 } from "@/lib/contracts/training-results";
+import { pilotResultExercise } from "./pilot-result-fixture";
 
 const ids = {
   publication: "a1000000-0000-4000-8000-000000000001",
@@ -143,6 +144,33 @@ describe("training result contracts", () => {
     const invalid = snapshot();
     invalid.status = "COMPLETED";
     expect(workoutSnapshotSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it("rejects carry distance missing weights and a unit that disagrees with its frozen prescription", () => {
+    const workout = snapshot();
+    const carry = pilotResultExercise("DB_045");
+    workout.session = structuredClone(session);
+    workout.session.blocks[0]!.exercises = [carry];
+    workout.sets = [{ exerciseId: carry.id, setNumber: 1, status: "DONE", kind: "PRESCRIBED", unit: "distance",
+      reps: null, load: 30, rir: null }];
+    expect(workoutSnapshotSchema.safeParse(workout).success).toBe(false);
+    workout.sets[0]!.details = "2 haltères de 25 lb";
+    expect(workoutSnapshotSchema.safeParse(workout).success).toBe(true);
+    workout.sets[0]!.unit = "lb";
+    workout.sets[0]!.reps = 8;
+    expect(workoutSnapshotSchema.safeParse(workout).success).toBe(false);
+  });
+
+  it("accepts a configuration snapshot without resistance and rejects forged numeric resistance", () => {
+    const workout = snapshot();
+    const band = pilotResultExercise("BA_027");
+    workout.session = structuredClone(session);
+    workout.session.blocks[0]!.exercises = [band];
+    workout.sets = [{ exerciseId: band.id, setNumber: 1, status: "DONE", kind: "PRESCRIBED", unit: "configuration",
+      reps: 10, load: null, rir: null, details: "Bande rouge, ancrage poitrine" }];
+    expect(workoutSnapshotSchema.safeParse(workout).success).toBe(true);
+    workout.sets[0]!.load = 0;
+    expect(workoutSnapshotSchema.safeParse(workout).success).toBe(false);
   });
 
   it("keeps a historical workout tied to the matching immutable publication", () => {

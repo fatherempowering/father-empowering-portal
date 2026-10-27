@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
+import { PublishedExerciseGuidance } from "@/features/training/shared/published-exercise-guidance";
+import { publishedExerciseName, repetitionLabel } from "@/lib/training/workout-presentation";
 import type { DraftExercise } from "@/lib/contracts/training-drafts";
 import {
   publicationResponseSchema,
@@ -370,14 +372,16 @@ function SessionPreview({
           <h3>{localized(block.label, french) || (french ? "Bloc" : "Block")}</h3>
           {block.exercises.map((exercise) => (
             <div className={styles.exercise} key={exercise.id}>
-              <h4>{exercise.name}</h4>
+              <h4>{publishedExerciseName(exercise, french)}</h4>
               {exercise.cue.fr || exercise.cue.en ? <p>{localized(exercise.cue, french)}</p> : null}
+              <PublishedExerciseGuidance exercise={exercise} french={french} />
               {Array.from({ length: exercise.prescription.sets }, (_, index) => (
                 <p key={index}>
                   <strong>{french ? "Série" : "Set"} {index + 1}</strong> ·{" "}
                   <Prescription
                     value={exercise.prescription.prescribedSets?.[index] ?? exercise.prescription}
                     french={french}
+                    exercise={exercise}
                   />
                 </p>
               ))}
@@ -516,16 +520,21 @@ function formatDate(value: string, french: boolean) {
 function Prescription({
   value,
   french,
+  exercise,
 }: {
   value: Omit<DraftExercise["prescription"], "sets" | "prescribedSets">;
   french: boolean;
+  exercise: DraftExercise;
 }) {
+  const measure = exercise.pilot?.performance.measure;
+  const timed = measure === "duration" || measure === "distance";
+  const unit = value.unit === "configuration" ? "" : value.unit === "distance" && exercise.pilot ? "m" : value.unit;
   return (
     <>
-      {value.reps} {french ? "répétitions" : "reps"} · RIR {value.targetRir} ·{" "}
+      {value.reps} {timed ? (french ? "passage(s)" : "round(s)") : repetitionLabel(exercise, french).toLowerCase()} · RIR {value.targetRir} ·{" "}
       {french ? "Repos" : "Rest"} {value.restSeconds} s
       {value.tempo ? ` · Tempo ${value.tempo}` : ""} · {french ? "Charge / cible" : "Load / target"} :{" "}
-      {value.loadTarget || "—"} ({value.unit})
+      {value.loadTarget || "—"}{unit ? ` (${unit})` : ""}
     </>
   );
 }

@@ -8,6 +8,8 @@ export function programRepositoryError(error: { message: string } | null) {
   const allowed = [
     ["FE_UNAUTHENTICATED", "UNAUTHENTICATED", 401], ["FE_FORBIDDEN", "FORBIDDEN", 403],
     ["FE_NOT_FOUND", "NOT_FOUND", 404], ["FE_INVALID_TRAINING_DRAFT", "VALIDATION_FAILED", 400],
+    ["FE_INVALID_PILOT_SNAPSHOT", "VALIDATION_FAILED", 400],
+    ["FE_PILOT_DISABLED", "TEMPORARILY_UNAVAILABLE", 503],
     ["FE_VERSION_CONFLICT", "VERSION_CONFLICT", 409], ["FE_IDEMPOTENCY_CONFLICT", "DUPLICATE", 409],
   ] as const;
   for (const [marker, code, status] of allowed) if (error?.message === marker) return new M1ContractError(code, "Program operation denied", status);

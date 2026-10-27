@@ -21,6 +21,7 @@ import { Feedback, Loading } from "@/components/fe/feedback";
 import { Icon } from "@/components/fe/icon";
 import { Modal } from "@/components/fe/modal";
 import { invitationPresentation } from "./invitation-presentation";
+import { coachClientLabel } from "@/lib/clients/client-label";
 
 interface ApiEnvelope<T> {
   data?: T;
@@ -365,7 +366,7 @@ export function CoachDashboard() {
                       </span>
                       <div>
                         <strong>
-                          {client.firstName} {client.lastName}
+                          {coachClientLabel(`${client.firstName} ${client.lastName}`, client.isOwnProfile)}
                         </strong>
                         <small>{client.email}</small>
                       </div>

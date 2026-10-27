@@ -32,8 +32,9 @@ export const coachM1Dependencies: CoachM1Dependencies = {
   async listAssignedClients() {
     const bundles = await listCoachClients();
     return {
-      clients: bundles.map(({ client, invitation }) => ({
+      clients: bundles.map(({ client, invitation, isOwnProfile }) => ({
         id: client.id,
+        isOwnProfile: isOwnProfile === true,
         firstName: client.firstName,
         lastName: client.lastName,
         email: client.email,

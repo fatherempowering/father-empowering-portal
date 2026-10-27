@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Icon } from "@/components/fe/icon";
 import { usePortalAccess } from "@/components/fe/portal-access-context";
+import { selectNumericInputOnFocus } from "@/components/fe/select-numeric-input";
 import styles from "./client-home-pilot.module.css";
 
 /** Presentation-only shell for the first visual checkpoint (Home + Onboarding).
@@ -88,7 +89,7 @@ export function ClientVisualShell({ children, name, french, current, accountActi
         <span className={styles.topbarIdentity}><span aria-hidden="true">{initials}</span>{identity}</span>
         <button className={styles.menuToggle} type="button" ref={toggle} aria-controls={menuId} aria-expanded={open} onClick={() => setOpen(true)}><Icon name="menu" /><span>Menu</span></button>
       </header>
-      <main className={styles.main} id="main-content">{children}</main>
+      <main className={styles.main} id="main-content" onFocusCapture={selectNumericInputOnFocus}>{children}</main>
     </div>
   </div>;
 }

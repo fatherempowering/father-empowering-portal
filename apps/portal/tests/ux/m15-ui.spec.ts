@@ -8,6 +8,20 @@ const v2CaptureDirectory = resolve(
   "docs/client/captures-v2",
 );
 
+test("Coach identifies personal profile among same-name clients after reload", async ({page}) => {
+  await page.goto("/?screen=coach&state=same-name-clients");
+  for (let attempt=0;attempt<2;attempt++) {
+    await expect(page.getByText("Maxime Bourdon — Mon profil personnel",{exact:true})).toBeVisible();
+    await expect(page.getByText("Maxime Bourdon",{exact:true})).toBeVisible();
+    await expect(page.getByText("owner@example.test",{exact:true})).toBeVisible();
+    await expect(page.getByText("other@example.test",{exact:true})).toBeVisible();
+    await expect(page.getByRole("link",{name:"Voir le dossier",exact:true})).toHaveCount(2);
+    if (attempt===0) await page.reload();
+  }
+  await page.setViewportSize({width:320,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
+});
+
 for (const landing of [
   {
     screen: "landing-en",

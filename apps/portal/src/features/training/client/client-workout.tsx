@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
+import { PublishedExerciseGuidance } from "@/features/training/shared/published-exercise-guidance";
+import { clearSetMeasurements, completedMeasurementMissing, detailsLabel, measurementLabel, needsMeasurementDetails, publishedExerciseName, repetitionLabel, stripDerivedSet } from "@/lib/training/workout-presentation";
 import type { DraftExercise, DraftSession } from "@/lib/contracts/training-drafts";
 import {
   publicationResponseSchema,
@@ -223,7 +225,7 @@ export function ClientWorkout() {
     if (
       item.status === "DONE" &&
       status !== "DONE" &&
-      (item.reps !== null || item.load !== null || item.rir !== null) &&
+      (item.reps !== null || item.load !== null || item.rir !== null || Boolean(item.details)) &&
       !window.confirm(
         t(
           "Changer le statut effacera les résultats de cette série. Continuer ?",
@@ -233,8 +235,8 @@ export function ClientWorkout() {
     ) return item;
     return {
       ...item,
+      ...(status === "DONE" ? {} : clearSetMeasurements(item)),
       status,
-      ...(status === "DONE" ? {} : { reps: null, load: null, rir: null }),
     };
   }
 
@@ -286,11 +288,21 @@ export function ClientWorkout() {
         "Add a note explaining at least one skipped set.",
       );
     }
-    const invalidDone = sets.find(
-      (item) => item.status === "DONE" && (item.load === null || (item.unit === "lb" && item.reps === null)),
-    );
+    const exercises = session?.blocks.flatMap((block) => block.exercises) ?? [];
+    const invalidDone = sets.find((item) => {
+      const exercise = exercises.find((candidate) => candidate.id === item.exerciseId);
+      return !exercise || completedMeasurementMissing(exercise, item);
+    });
     if (invalidDone) {
-      return invalidDone.unit === "lb"
+      if (invalidDone.unit === "configuration") return t(
+        `Indique les répétitions et décris la configuration utilisée pour la série ${invalidDone.setNumber}. Aucune résistance en livres n’est déduite.`,
+        `Enter reps and describe the setup used for set ${invalidDone.setNumber}. No resistance in pounds is inferred.`,
+      );
+      if (invalidDone.unit === "distance") return t(
+        `Indique la distance en mètres et les charges transportées avec leurs unités pour la série ${invalidDone.setNumber}.`,
+        `Enter the distance in metres and carried weights with their units for set ${invalidDone.setNumber}.`,
+      );
+      return invalidDone.unit === "lb" || invalidDone.unit === "kg"
         ? t(
             `Indique les répétitions et la charge pour la série ${invalidDone.setNumber}.`,
             `Enter reps and load for set ${invalidDone.setNumber}.`,
@@ -304,11 +316,9 @@ export function ClientWorkout() {
       (item) =>
         item.status === "DONE" &&
         ((item.reps !== null && (!Number.isInteger(item.reps) || item.reps < 0 || item.reps > 10_000)) ||
-          item.load === null ||
-          !Number.isFinite(item.load) ||
-          item.load < 0 ||
-          item.load > 100_000 ||
-          Number(item.load.toFixed(6)) !== item.load ||
+          (item.unit === "configuration" ? item.load !== null : item.load === null ||
+          !Number.isFinite(item.load) || item.load < 0 || item.load > 100_000 || Number(item.load.toFixed(6)) !== item.load) ||
+          (item.details != null && item.details.length > 500) ||
           (item.rir !== null && (!Number.isInteger(item.rir) || item.rir < 0 || item.rir > 10))),
     );
     if (invalidMeasurement) {
@@ -752,11 +762,12 @@ function WorkoutExercises({
               <article className={styles.exercise} key={exercise.id} aria-labelledby={`workout-exercise-${exercise.id}`}>
                 <div className={styles.exerciseHeading}>
                   <div>
-                    <h3 id={`workout-exercise-${exercise.id}`}>{exercise.name}</h3>
+                    <h3 id={`workout-exercise-${exercise.id}`}>{publishedExerciseName(exercise, french)}</h3>
                     <p>{localized(exercise.cue, french)}</p>
                   </div>
                   <span>{exercise.prescription.sets} {t("série(s) prescrite(s)", "prescribed set(s)")}</span>
                 </div>
+                <PublishedExerciseGuidance exercise={exercise} french={french} />
                 {!resultsVisible ? (
                   <PrescriptionList exercise={exercise} french={french} />
                 ) : (
@@ -815,7 +826,7 @@ function WorkoutSetRow({
   const prescription = item.kind === "PRESCRIBED"
     ? exercise.prescription.prescribedSets?.[item.setNumber - 1] ?? exercise.prescription
     : null;
-  const prefix = `${exercise.name} · ${t("série", "set")} ${item.setNumber}`;
+  const prefix = `${publishedExerciseName(exercise, french)} · ${t("série", "set")} ${item.setNumber}`;
   const resultDisabled = !editable || item.status !== "DONE";
   return (
     <section className={styles.setCard} data-kind={item.kind} aria-label={prefix}>
@@ -833,7 +844,7 @@ function WorkoutSetRow({
       {prescription ? (
         <p className={styles.prescription} id={`prescription-${item.exerciseId}-${item.setNumber}`}>
           <strong>{t("Prescription", "Prescription")} :</strong>{" "}
-          <PrescriptionText value={prescription} french={french} />
+          <PrescriptionText value={prescription} french={french} exercise={exercise} />
         </p>
       ) : null}
       <label className={styles.statusField}>
@@ -846,9 +857,9 @@ function WorkoutSetRow({
       </label>
       <div className={styles.resultFields}>
         <label>
-          {t("Répétitions", "Reps")} {item.unit === "lb" ? "*" : `(${t("facultatif", "optional")})`}
+          {repetitionLabel(exercise, french)} {["lb", "kg", "configuration"].includes(item.unit) ? "*" : `(${t("facultatif", "optional")})`}
           <input
-            aria-label={`${t("Répétitions", "Reps")} · ${prefix}`}
+            aria-label={`${repetitionLabel(exercise, french)} · ${prefix}`}
             type="number"
             min={0}
             max={10_000}
@@ -862,10 +873,10 @@ function WorkoutSetRow({
             }}
           />
         </label>
-        <label>
-          {measurementLabel(item.unit, french)} *
+        {item.unit !== "configuration" ? <label>
+          {measurementLabel(item.unit, french, exercise)} *
           <input
-            aria-label={`${measurementLabel(item.unit, french)} · ${prefix}`}
+            aria-label={`${measurementLabel(item.unit, french, exercise)} · ${prefix}`}
             type="number"
             min={0}
             max={100_000}
@@ -878,7 +889,16 @@ function WorkoutSetRow({
               update((current) => ({ ...current, load }));
             }}
           />
-        </label>
+        </label> : null}
+        {needsMeasurementDetails(exercise, item.unit) ? <label>
+          {detailsLabel(exercise, item.unit, french)} *
+          <input
+            aria-label={`${detailsLabel(exercise, item.unit, french)} · ${prefix}`}
+            type="text" maxLength={500} value={item.details ?? ""} disabled={resultDisabled}
+            placeholder={item.unit === "distance" ? t("Ex. 2 haltères de 20 lb", "E.g. 2 dumbbells of 20 lb") : t("Bande et montage, ou machine et réglage affiché", "Band and setup, or machine and displayed setting")}
+            onChange={(event) => update((current) => ({ ...current, details: event.target.value }))}
+          />
+        </label> : null}
         <label>
           RIR ({t("facultatif", "optional")})
           <input
@@ -911,6 +931,7 @@ function PrescriptionList({ exercise, french }: { exercise: DraftExercise; frenc
             <PrescriptionText
               value={exercise.prescription.prescribedSets?.[index] ?? exercise.prescription}
               french={french}
+              exercise={exercise}
             />
           </span>
         </li>
@@ -922,13 +943,18 @@ function PrescriptionList({ exercise, french }: { exercise: DraftExercise; frenc
 function PrescriptionText({
   value,
   french,
+  exercise,
 }: {
   value: Omit<DraftExercise["prescription"], "sets" | "prescribedSets">;
   french: boolean;
+  exercise: DraftExercise;
 }) {
+  const measure = exercise.pilot?.performance.measure;
+  const timed = measure === "duration" || measure === "distance";
+  const unit = value.unit === "configuration" ? "" : value.unit === "distance" && exercise.pilot ? "m" : value.unit;
   return (
     <>
-      {value.reps} {french ? "rép." : "reps"} · {value.loadTarget || "—"} {value.unit} · RIR {value.targetRir} ·{" "}
+      {value.reps} {timed ? (french ? "passage(s)" : "round(s)") : repetitionLabel(exercise, french).toLowerCase()} · {value.loadTarget || "—"} {unit} · RIR {value.targetRir} ·{" "}
       {french ? "repos" : "rest"} {value.restSeconds} s{value.tempo ? ` · ${value.tempo}` : ""}
     </>
   );
@@ -964,17 +990,6 @@ function hydrateSets(session: DraftSession, saved: WorkoutSetResult[]): Editable
   return hydrated;
 }
 
-function stripDerivedSet(item: EditableSet): WorkoutSetInput {
-  return {
-    exerciseId: item.exerciseId,
-    setNumber: item.setNumber,
-    status: item.status,
-    reps: item.status === "DONE" ? item.reps : null,
-    load: item.status === "DONE" ? item.load : null,
-    rir: item.status === "DONE" ? item.rir : null,
-  };
-}
-
 function editableFingerprint(sets: EditableSet[], note: string) {
   return JSON.stringify({
     sets: sets.map(stripDerivedSet),
@@ -984,17 +999,6 @@ function editableFingerprint(sets: EditableSet[], note: string) {
 
 function localized(value: { fr: string; en: string }, french: boolean) {
   return value[french ? "fr" : "en"] || value.fr || value.en;
-}
-
-function measurementLabel(unit: EditableSet["unit"], french: boolean) {
-  const labels = {
-    lb: french ? "Charge (lb)" : "Load (lb)",
-    min: french ? "Durée (min)" : "Duration (min)",
-    sec: french ? "Durée (sec)" : "Duration (sec)",
-    distance: french ? "Distance" : "Distance",
-    level: french ? "Niveau" : "Level",
-  } as const;
-  return labels[unit];
 }
 
 function numberOrNull(value: number) {

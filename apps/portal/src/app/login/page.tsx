@@ -25,7 +25,10 @@ export default async function LoginPage({
       ) : error === "recovery" ? (
         <Feedback>Le lien est invalide ou expiré. Demande un nouveau lien.</Feedback>
       ) : error === "unavailable" ? (
-        <Feedback>La connexion est momentanément indisponible. Réessaie.</Feedback>
+        <Feedback>
+          La connexion est momentanément indisponible. Réessaie dans quelques instants.
+          Inutile de modifier ton mot de passe.
+        </Feedback>
       ) : error ? (
         <Feedback>Le courriel ou le mot de passe est invalide.</Feedback>
       ) : null}
@@ -35,7 +38,7 @@ export default async function LoginPage({
           <input name="email" type="email" autoComplete="email" required />
         </label>
         <PasswordField />
-        <SubmitButton pendingLabel="Connexion et envoi du code…">
+        <SubmitButton pendingLabel="Connexion…">
           Se connecter
         </SubmitButton>
       </form>
