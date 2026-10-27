@@ -99,7 +99,8 @@ test("Client reads the published prescription in French and English on narrow sc
   for(const width of [1280,390,320]) { await page.setViewportSize({width,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true); }
 });
 test("Client failure is distinct from no published program",async({page})=>{
-  await page.goto("/?screen=client-program");await expect(page.getByText(/n’a pas encore publié de programme/)).toBeVisible();
+  const noActiveProgram = "Aucun programme actif pour le moment. Ton coach prépare la suite; tes séances et résultats restent dans l’historique.";
+  await page.goto("/?screen=client-program");await expect(page.getByText(noActiveProgram, { exact: true })).toBeVisible();
   await page.goto("/?screen=client-program&state=publication-load-error");await expect(page.getByRole("alert")).toContainText("n’ont pas pu être chargés");
-  await expect(page.getByText(/n’a pas encore publié de programme/)).toHaveCount(0);
+  await expect(page.getByText(noActiveProgram, { exact: true })).toHaveCount(0);
 });

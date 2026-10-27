@@ -30,6 +30,7 @@ export function setupFollowupHarness(scenario: string | (() => string), fallback
       nutrition = { id: uuid(30), clientId: CLIENT, revision: 2, draftVersion: 2, document, publishedAt: stamp };
       nutritionHistory = [{ ...nutrition, id: uuid(31), revision: 1, draftVersion: 1, document: { ...plan(), title: pair("Ancien plan", "Previous plan"), targets: { calories: 2200, proteinG: 160, carbohydrateG: 200, fatG: 70 } }, publishedAt: "2026-10-01T12:00:00.000Z" }];
       nutritionDraft = { version: 2, document: structuredClone(document), updatedAt: stamp };
+      if (state === "followup-withdrawn") { nutritionHistory.unshift({ ...nutrition, withdrawnAt: stamp }); nutrition = null; }
       if (state !== "followup-single") history = [submission(40, "2026-10-25", 180), submission(41, "2026-10-10", 184, "2026-10-11T12:00:00.000Z")];
       if (state === "followup-many") history = Array.from({ length: 53 }, (_, index) => submission(100 + index, new Date(Date.UTC(2026, 9, 25 - index)).toISOString().slice(0, 10), 180 + index / 10));
       version = history.length;
@@ -77,8 +78,12 @@ export function setupFollowupHarness(scenario: string | (() => string), fallback
     if (isNutrition && coach) {
       const parsed = nutritionMutationSchema.safeParse(body);
       if (!parsed.success) return response(null, 400);
-      if (parsed.data.expectedVersion !== (nutritionDraft?.version ?? 0)) return response(null, 409);
+      if (parsed.data.action !== "withdraw" && parsed.data.expectedVersion !== (nutritionDraft?.version ?? 0)) return response(null, 409);
       if (parsed.data.action === "save") nutritionDraft = { version: (nutritionDraft?.version ?? 0) + 1, document: structuredClone(parsed.data.document), updatedAt: stamp };
+      else if (parsed.data.action === "withdraw") {
+        if (!nutrition || parsed.data.expectedPublicationId !== nutrition.id) return response(null, 409);
+        nutritionHistory.unshift({ ...structuredClone(nutrition), withdrawnAt: stamp }); nutrition = null;
+      }
       else {
         if (!nutritionDraft || !publishableNutritionDocumentSchema.safeParse(nutritionDraft.document).success) return response(null, 400);
         if (parsed.data.expectedPublicationId !== (nutrition?.id ?? null)) return response(null, 409);

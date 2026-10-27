@@ -1,0 +1,4 @@
+.dialog { margin: auto; width: min(520px, calc(100vw - 32px)); box-sizing: border-box; border: 1px solid var(--fe-border, #bcb8af); border-radius: 16px; padding: 24px; color: var(--fe-ink, #191919); background: var(--fe-paper, #f5f4f0); max-height: calc(100dvh - 32px); overflow: auto; }
+.dialog::backdrop { background: rgb(0 0 0 / 65%); }
+.dialog h2 { margin-top: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }

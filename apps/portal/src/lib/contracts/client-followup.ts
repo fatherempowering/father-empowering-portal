@@ -23,13 +23,14 @@ export const EMPTY_NUTRITION_DOCUMENT: NutritionDocument = {
   instructions: { fr: "", en: "" }, preparation: { fr: "", en: "" }, grocery: { fr: "", en: "" },
 };
 export const nutritionDraftSchema = z.object({ version, document: nutritionDocumentSchema, updatedAt: timestamp }).strict();
-export const nutritionPublicationSchema = z.object({ id: uuidSchema, clientId: uuidSchema, revision: version.refine(n => n > 0), draftVersion: version.refine(n => n > 0), document: nutritionDocumentSchema, publishedAt: timestamp }).strict();
+export const nutritionPublicationSchema = z.object({ id: uuidSchema, clientId: uuidSchema, revision: version.refine(n => n > 0), draftVersion: version.refine(n => n > 0), document: nutritionDocumentSchema, publishedAt: timestamp, withdrawnAt: timestamp.nullable().optional() }).strict();
 export type NutritionPublication = z.infer<typeof nutritionPublicationSchema>;
 export const clientNutritionResponseSchema = z.object({ publication: nutritionPublicationSchema.nullable(), history: z.array(nutritionPublicationSchema).max(50), historyTruncated: z.boolean() }).strict();
 export const coachNutritionResponseSchema = clientNutritionResponseSchema.extend({ draft: nutritionDraftSchema.nullable() }).strict();
 export const nutritionMutationSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("save"), document: nutritionDocumentSchema, expectedVersion: version, clientMutationId: uuidSchema }).strict(),
   z.object({ action: z.literal("publish"), expectedVersion: version.refine(n => n > 0), expectedPublicationId: uuidSchema.nullable(), clientMutationId: uuidSchema }).strict(),
+  z.object({ action: z.literal("withdraw"), expectedPublicationId: uuidSchema, clientMutationId: uuidSchema }).strict(),
 ]);
 export type NutritionMutation = z.infer<typeof nutritionMutationSchema>;
 

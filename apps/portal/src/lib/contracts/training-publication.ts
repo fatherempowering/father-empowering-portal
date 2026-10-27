@@ -18,10 +18,15 @@ export const publishProgramRequestSchema = z.object({
   clientMutationId: uuidSchema,
 }).strict();
 export type PublishProgramRequest = z.infer<typeof publishProgramRequestSchema>;
+export const withdrawProgramRequestSchema = z.object({
+  expectedPublicationId: uuidSchema, clientMutationId: uuidSchema,
+}).strict();
+export type WithdrawProgramRequest = z.infer<typeof withdrawProgramRequestSchema>;
 export const publicationSchema = z.object({
   id: uuidSchema, clientId: uuidSchema, programId: uuidSchema,
   draftVersion: z.number().int().positive(), revision: z.number().int().positive(),
   document: publishableProgramSchema, publishedAt: z.string().datetime({ offset: true }),
+  withdrawnAt: z.string().datetime({ offset: true }).nullable().optional(),
 }).strict();
 export type ProgramPublication = z.infer<typeof publicationSchema>;
 export const publicationResponseSchema = z.object({ program: publicationSchema.nullable() }).strict();

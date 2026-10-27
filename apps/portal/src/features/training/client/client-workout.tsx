@@ -99,7 +99,8 @@ export function ClientWorkout() {
   const inFlight = useRef(false);
 
   const t = useCallback((fr: string, en: string) => (french ? fr : en), [french]);
-  const readOnly = workout?.status === "COMPLETED";
+  const withdrawn = Boolean(publication?.withdrawnAt);
+  const readOnly = workout?.status === "COMPLETED" || withdrawn;
   const draftFingerprint = useMemo(
     () => editableFingerprint(sets, note),
     [note, sets],
@@ -181,7 +182,7 @@ export function ClientWorkout() {
           const currentResponse = await request("/api/v1/client/program");
           if (!currentResponse.ok) throw new WorkoutRequestError(currentResponse.status);
           const current = publicationResponseSchema.parse((await currentResponse.json()).data).program;
-          startAllowed = current?.id === loaded.publication.id;
+          startAllowed = !loaded.publication.withdrawnAt && current?.id === loaded.publication.id;
         }
         if (!active) return;
         const nextSets = loaded.workout
@@ -195,7 +196,7 @@ export function ClientWorkout() {
         setNote(nextNote);
         setBaseline(editableFingerprint(nextSets, nextNote));
         setCanStart(startAllowed);
-        setGuideView(loaded.workout?.status === "COMPLETED" ? "summary" : "overview");
+        setGuideView(loaded.workout?.status === "COMPLETED" || loaded.publication.withdrawnAt ? "summary" : "overview");
       } catch (caught) {
         if (!active) return;
         if (caught instanceof WorkoutRequestError && caught.status === "AUTH") {
@@ -751,11 +752,11 @@ export function ClientWorkout() {
             </section> : null}
 
             {guideView === "review" || guideView === "summary" ? <section className={styles.completePanel}>
-              <p className={styles.eyebrow}>{readOnly ? t("ENTRAÎNEMENT TERMINÉ", "WORKOUT COMPLETE") : t("DERNIÈRE ÉTAPE", "ONE LAST STEP")}</p>
-              {readOnly ? <span className={styles.completeMark} aria-hidden="true">✓</span> : null}
+              <p className={styles.eyebrow}>{withdrawn ? t("PLAN RETIRÉ", "PLAN WITHDRAWN") : readOnly ? t("ENTRAÎNEMENT TERMINÉ", "WORKOUT COMPLETE") : t("DERNIÈRE ÉTAPE", "ONE LAST STEP")}</p>
+              {workout?.status === "COMPLETED" ? <span className={styles.completeMark} aria-hidden="true">✓</span> : null}
               <h2 tabIndex={-1} data-guide-focus="" className={styles.focusAnchor}>{readOnly ? t("Ta séance est conservée.", "Your workout is saved.") : t("Fais le point, puis termine ta séance.", "Review, then finish your workout.")}</h2>
               <div className={styles.summaryStats}><div><strong>{progress.done}</strong><span>{t("séries réalisées", "sets completed")}</span></div><div><strong>{progress.skipped}</strong><span>{t("séries ignorées", "sets skipped")}</span></div><div><strong>{progress.total - progress.resolved}</strong><span>{t("séries restantes", "sets remaining")}</span></div></div>
-              <p>{readOnly ? t("Les résultats sont en lecture seule et disponibles pour ton suivi.", "Your results are read-only and available for your follow-up.") : t("Les séries enregistrées ne ferment pas encore la séance. Vérifie ta note, puis confirme la fin ci-dessous.", "Saved sets do not close the workout yet. Review your note, then confirm completion below.")}</p>
+              <p>{withdrawn ? t("Ton coach a retiré ce plan. Les résultats déjà enregistrés restent consultables, sans modification. Ton prochain programme apparaîtra dans ton espace Entraînement.", "Your coach withdrew this plan. Previously saved results remain available, read-only. Your next program will appear in Training.") : readOnly ? t("Les résultats sont en lecture seule et disponibles pour ton suivi.", "Your results are read-only and available for your follow-up.") : t("Les séries enregistrées ne ferment pas encore la séance. Vérifie ta note, puis confirme la fin ci-dessous.", "Saved sets do not close the workout yet. Review your note, then confirm completion below.")}</p>
               {readOnly && workout?.note ? <div className={styles.summaryNote}><h3>{t("Ta note de séance", "Your workout note")}</h3><p>{workout.note}</p></div> : null}
               {readOnly ? <a className="fe-button fe-button-primary" href={programHref}>{t("Retour à mon programme", "Back to my program")}</a> : nextPending ? <button className="fe-button" type="button" onClick={resumeGuide}>{t("Reprendre les séries restantes", "Resume remaining sets")}</button> : null}
             </section> : null}
@@ -844,7 +845,7 @@ export function ClientWorkout() {
               </section>
             ) : readOnly && workout ? (
               <Feedback tone="success">
-                {t(
+                {withdrawn ? t("Plan retiré. Résultats conservés en lecture seule.", "Plan withdrawn. Results preserved read-only.") : t(
                   `Séance terminée le ${formatDate(workout.completedAt!, french)}. Résultats conservés en lecture seule.`,
                   `Workout completed on ${formatDate(workout.completedAt!, french)}. Results are saved read-only.`,
                 )}

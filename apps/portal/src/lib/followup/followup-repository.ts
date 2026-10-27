@@ -42,8 +42,16 @@ export async function readOwnNutrition() {
     .select("id,client_id,revision,draft_version,document,published_at", { count: "exact" })
     .eq("organization_id", actor.organizationId).eq("client_id", actor.ownClientId).order("revision", { ascending: false }).limit(50);
   if (error) throw followupError(error);
-  const history = (data ?? []).map(publication);
-  return clientNutritionResponseSchema.parse({ publication: history[0] ?? null, history, historyTruncated: exactCount(count) > history.length });
+  let history = (data ?? []).map(publication);
+  if (history.length) {
+    const { data: withdrawals, error: withdrawalError } = await db.from("nutrition_plan_withdrawals")
+      .select("publication_id,withdrawn_at").in("publication_id", history.map(item => item.id));
+    if (withdrawalError) throw followupError(withdrawalError);
+    const dates = new Map((withdrawals ?? []).map(row => [row.publication_id, row.withdrawn_at]));
+    history = history.map(item => nutritionPublicationSchema.parse({ ...item, withdrawnAt: dates.get(item.id) ?? null }));
+  }
+  const latest = history[0] ?? null;
+  return clientNutritionResponseSchema.parse({ publication: latest?.withdrawnAt ? null : latest, history, historyTruncated: exactCount(count) > history.length });
 }
 
 export async function readCoachNutrition(clientId: string) {

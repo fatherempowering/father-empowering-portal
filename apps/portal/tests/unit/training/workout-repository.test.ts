@@ -43,6 +43,7 @@ describe("workout repository",()=>{
     expect(workoutError({message:"FE_INVALID_WORKOUT"}).status).toBe(400);
     expect(workoutError({message:"FE_WORKOUT_COMPLETED"}).status).toBe(409);
     expect(workoutError({message:"FE_SUPERSEDED_PUBLICATION"}).status).toBe(409);
+    expect(workoutError({message:"FE_WITHDRAWN_PUBLICATION"})).toMatchObject({status:409,code:"VERSION_CONFLICT",message:"This program was withdrawn. Its saved results remain available for reading only."});
     expect(workoutError({message:"FE_NOT_FOUND private note"}).status).toBe(503);
   });
 });

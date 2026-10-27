@@ -54,4 +54,11 @@ describe("Native follow-up contracts", () => {
     expect(source).toContain('count: "exact"');
     expect(source).toContain("checkInsTruncated");
   });
+  it("withdraws only an explicit published identity, never an inferred draft or privileged target", () => {
+    const input={action:"withdraw",expectedPublicationId:mutationId,clientMutationId:mutationId};
+    expect(nutritionMutationSchema.safeParse(input).success).toBe(true);
+    for(const extra of [{expectedPublicationId:null},{expectedVersion:1},{clientId:mutationId},{withdrawnBy:mutationId}]) {
+      expect(nutritionMutationSchema.safeParse({...input,...extra}).success).toBe(false);
+    }
+  });
 });

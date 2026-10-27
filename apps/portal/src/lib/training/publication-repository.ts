@@ -2,7 +2,7 @@ import "server-only";
 import { requireCoachVerified } from "@/lib/auth/actor";
 import { getStaffPersonalProfile, requireOwnClientAccess } from "@/lib/auth/own-client-access";
 import { M1ContractError, uuidSchema } from "@/lib/contracts/m1";
-import { publicationClientsSchema, publicationSchema, publicationResponseSchema, publishProgramRequestSchema, type PublishProgramRequest } from "@/lib/contracts/training-publication";
+import { publicationClientsSchema, publicationSchema, publicationResponseSchema, publishProgramRequestSchema, withdrawProgramRequestSchema, type PublishProgramRequest, type WithdrawProgramRequest } from "@/lib/contracts/training-publication";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { programRepositoryError } from "./program-repository";
 
@@ -10,6 +10,7 @@ export function publicationError(error: { message: string } | null) {
   if (error?.message === "FE_PILOT_RECIPIENT_DISABLED") return new M1ContractError("PILOT_RECIPIENT_DISABLED", "Ce destinataire n’est pas autorisé pour les exercices pilotes de ce test staging. Choisis un compte de test autorisé; le brouillon est conservé.", 400);
   if (error?.message === "FE_INVALID_TRAINING_PUBLICATION") return new M1ContractError("PROGRAM_INCOMPLETE", "Complète les éléments signalés dans le programme avant de publier.", 400);
   if (error?.message === "FE_ALREADY_PUBLISHED") return new M1ContractError("ALREADY_PUBLISHED", "Cette version est déjà publiée pour ce client.", 409);
+  if (error?.message === "FE_INVALID_WITHDRAWAL") return new M1ContractError("VALIDATION_FAILED", "Invalid publication withdrawal.", 400);
   return programRepositoryError(error);
 }
 export async function listTrainingRecipients(page: number) {
@@ -32,6 +33,14 @@ async function readCurrent(organizationId: string, clientId: string) {
     .eq("organization_id", organizationId).eq("client_id", clientId)
     .order("revision", { ascending: false }).limit(1).maybeSingle();
   if (error) throw publicationError(error);
+  if (data) {
+    // Select the latest revision first: filtering withdrawals before LIMIT
+    // would resurrect an older plan after the current one is withdrawn.
+    const { data: withdrawal, error: withdrawalError } = await supabase.from("training_program_withdrawals")
+      .select("withdrawn_at").eq("publication_id", data.id).maybeSingle();
+    if (withdrawalError) throw publicationError(withdrawalError);
+    if (withdrawal) return null;
+  }
   return data ? publicationSchema.parse({ id: data.id, clientId: data.client_id, programId: data.program_id,
     draftVersion: data.draft_version, revision: data.revision, document: data.document, publishedAt: data.published_at }) : null;
 }
@@ -59,4 +68,16 @@ export async function publishProgram(input: PublishProgramRequest) {
   });
   if (error) throw publicationError(error);
   return publicationSchema.parse(data);
+}
+export async function withdrawProgram(clientId: string, input: WithdrawProgramRequest) {
+  await requireCoachVerified();
+  const id = uuidSchema.parse(clientId); const parsed = withdrawProgramRequestSchema.parse(input);
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.rpc("withdraw_training_program", {
+    p_client_id: id, p_expected_publication_id: parsed.expectedPublicationId, p_idempotency_key: parsed.clientMutationId,
+  });
+  if (error) throw publicationError(error);
+  // A replay can follow a later publication. Return the actual current state,
+  // never a stale null receipt that could hide the newly published plan.
+  return readCoachPublication(id);
 }
