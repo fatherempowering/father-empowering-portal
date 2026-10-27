@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const repo = vi.hoisted(() => ({ listTrainingRecipients: vi.fn(), publishProgram: vi.fn(), readCoachPublication: vi.fn(), readOwnPublication: vi.fn() }));
+const repo = vi.hoisted(() => ({ listTrainingRecipients: vi.fn(), publishProgram: vi.fn(), withdrawProgram: vi.fn(), readCoachPublication: vi.fn(), readOwnPublication: vi.fn() }));
 vi.mock("@/lib/training/publication-repository", () => repo);
-import { clientPublicationHttp, coachPublicationHttp, publishProgramHttp, recipientsHttp } from "@/features/training/server/publication-http";
+import { clientPublicationHttp, coachPublicationHttp, publishProgramHttp, withdrawProgramHttp, recipientsHttp } from "@/features/training/server/publication-http";
 const id = "19100000-0000-4000-8000-000000000001";
 const command = { clientId: id, programId: id, draftVersion: 1, expectedPublicationId: null, clientMutationId: id };
 const request = (origin: string | null = "https://preview.example", body: unknown = command) => new Request("http://internal:3000", { method: "POST", headers: { "Content-Type": "application/json", ...(origin ? { Origin: origin } : {}) }, body: JSON.stringify(body) });
@@ -28,5 +28,17 @@ describe("publication HTTP", () => {
   it("never returns raw exceptions", async() => {
     repo.publishProgram.mockRejectedValue(new Error("PRIVATE_VALUE")); const r = await publishProgramHttp(request());
     expect(r.status).toBe(503); expect(await r.text()).not.toContain("PRIVATE_VALUE");
+  });
+  it("withdraws only from canonical origin with an explicit immutable publication identity", async() => {
+    const context={params:Promise.resolve({clientId:id})}; const body={expectedPublicationId:id,clientMutationId:id};
+    repo.withdrawProgram.mockResolvedValue(null);
+    const response=await withdrawProgramHttp(request(undefined,body),context);
+    expect(response.status).toBe(200); expect(await response.json()).toEqual({data:{program:null}});
+    expect(response.headers.get("cache-control")).toContain("no-store"); expect(repo.withdrawProgram).toHaveBeenCalledExactlyOnceWith(id,body);
+    expect((await withdrawProgramHttp(request(null,body),context)).status).toBe(403);
+    expect((await withdrawProgramHttp(request(undefined,{...body,actorId:id}),context)).status).toBe(400);
+    expect((await withdrawProgramHttp(request(undefined,{...body,expectedPublicationId:null}),context)).status).toBe(400);
+    expect((await withdrawProgramHttp(request(undefined,body),{params:Promise.resolve({clientId:"bad"})})).status).toBe(400);
+    expect(repo.withdrawProgram).toHaveBeenCalledTimes(1);
   });
 });

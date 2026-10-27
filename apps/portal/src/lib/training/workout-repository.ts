@@ -15,6 +15,7 @@ export function workoutError(error: { message: string } | null) {
   if (error?.message === "FE_INVALID_WORKOUT") return new M1ContractError("VALIDATION_FAILED", "Check the workout results before saving", 400);
   if (error?.message === "FE_WORKOUT_COMPLETED") return new M1ContractError("VERSION_CONFLICT", "This workout is already completed", 409);
   if (error?.message === "FE_SUPERSEDED_PUBLICATION") return new M1ContractError("VERSION_CONFLICT", "Open the current program before starting a new workout", 409);
+  if (error?.message === "FE_WITHDRAWN_PUBLICATION") return new M1ContractError("VERSION_CONFLICT", "This program was withdrawn. Its saved results remain available for reading only.", 409);
   return programRepositoryError(error);
 }
 

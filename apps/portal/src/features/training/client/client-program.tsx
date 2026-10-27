@@ -241,11 +241,11 @@ export function ClientProgram() {
             </button>
           </>
         ) : !program ? (
-          <p>
+          <><p>
             {french
-              ? "Ton coach n’a pas encore publié de programme. Reviens ici après sa publication."
-              : "Your coach has not published a program yet. Come back once it is published."}
-          </p>
+              ? "Aucun programme actif pour le moment. Ton coach prépare la suite; tes séances et résultats restent dans l’historique."
+              : "No active program right now. Your coach is preparing what comes next; your workouts and results remain in your history."}
+          </p><WorkoutHistory french={french} history={history} page={historyPage} setPage={setHistoryPage} /></>
         ) : (
           <>
             {week ? <ProgramWeekDays program={program} week={week} session={session} french={french} choose={choose} part="weeks" /> : null}

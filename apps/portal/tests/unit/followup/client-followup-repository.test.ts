@@ -10,7 +10,7 @@ const clientId = "10000000-0000-4000-8000-000000000001";
 const organizationId = "10000000-0000-4000-8000-000000000002";
 const date = "2026-01-01T12:00:00Z";
 function query(result: unknown) {
-  return Object.assign(Promise.resolve(result), { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(), limit: vi.fn().mockReturnThis(), range: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockReturnThis(), not: vi.fn().mockReturnThis() });
+  return Object.assign(Promise.resolve(result), { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), in: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(), limit: vi.fn().mockReturnThis(), range: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockReturnThis(), not: vi.fn().mockReturnThis() });
 }
 describe("Follow-up repository capabilities and truthful reads", () => {
   beforeEach(() => { vi.resetAllMocks(); mock.coach.mockResolvedValue({ organizationId }); mock.own.mockResolvedValue({ organizationId, ownClientId: clientId }); });
@@ -100,5 +100,25 @@ describe("Follow-up repository capabilities and truthful reads", () => {
     expect(followupError({ message: "FE_IDEMPOTENCY_CONFLICT" })).toMatchObject({ status: 409, code: "DUPLICATE" });
     expect(followupError({ message: "FE_CHECKIN_INCOMPLETE" })).toMatchObject({ status: 400 });
     expect(followupError({ message: "private FE_NOT_FOUND medical payload" })).toMatchObject({ status: 503, message: "Follow-up is temporarily unavailable." });
+  });
+  it("retains Nutrition history but never resurrects a prior plan after withdrawal", async () => {
+    const oldId="10000000-0000-4000-8000-000000000003";
+    const row=(id:string,revision:number)=>({id,client_id:clientId,revision,draft_version:revision,document:EMPTY_NUTRITION_DOCUMENT,published_at:date});
+    const history=query({data:[row(clientId,2),row(oldId,1)],error:null,count:2});
+    const retired=query({data:[{publication_id:clientId,withdrawn_at:date}],error:null});
+    mock.from.mockReturnValueOnce(history).mockReturnValueOnce(retired);
+    const actual=await readOwnNutrition();
+    expect(actual.publication).toBeNull(); expect(actual.history.map(p=>[p.id,p.withdrawnAt])).toEqual([[clientId,date],[oldId,null]]);
+    expect(retired.in).toHaveBeenCalledWith("publication_id",[clientId,oldId]);
+    expect(history.eq).toHaveBeenCalledWith("client_id",clientId); expect(history.eq).toHaveBeenCalledWith("organization_id",organizationId);
+    expect(mock.from).toHaveBeenCalledTimes(2);
+  });
+  it("withdrawal replays re-read current Nutrition without trusting an old receipt", async () => {
+    const input={action:"withdraw" as const,expectedPublicationId:clientId,clientMutationId:clientId};
+    mock.rpc.mockResolvedValueOnce({data:{publicationId:clientId},error:null})
+      .mockResolvedValueOnce({data:{draft:null,publication:null,history:[],historyTruncated:false},error:null});
+    expect((await mutateCoachNutrition(clientId,input)).publication).toBeNull();
+    expect(mock.rpc).toHaveBeenNthCalledWith(1,"mutate_coach_nutrition",{p_client_id:clientId,p_input:input});
+    expect(mock.rpc).toHaveBeenNthCalledWith(2,"get_followup_for_coach",{p_client_id:clientId,p_kind:"nutrition",p_page:0});
   });
 });

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { AppShell } from "@/components/fe/app-shell";
 import { Feedback, Loading } from "@/components/fe/feedback";
+import { PlanWithdrawalDialog } from "@/components/fe/plan-withdrawal-dialog";
 import { coachCheckInsResponseSchema, coachNutritionResponseSchema, nutritionMutationSchema, EMPTY_NUTRITION_DOCUMENT,
   type NutritionDocument, type NutritionMutation, type CheckInMeasurements } from "@/lib/contracts/client-followup";
 import styles from "./coach-followup.module.css";
@@ -67,12 +68,15 @@ export function CoachFollowup({ clientId }: { clientId: string }) {
   const [attempt, setAttempt] = useState(0);
   const [uncertain, setUncertain] = useState(false);
   const [confirmPublish, setConfirmPublish] = useState(false);
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const command = useRef<NutritionMutation | null>(null);
   const inFlight = useRef(false);
   const publishCancel = useRef<HTMLButtonElement>(null);
   const publishTrigger = useRef<HTMLButtonElement>(null);
+  const withdrawTrigger = useRef<HTMLButtonElement>(null);
   const base = `/api/v1/coach/clients/${encodeURIComponent(clientId)}`;
   const dirty = JSON.stringify(document) !== baseline;
+  const draftAlreadyPublished = Boolean(nutrition?.draft && [nutrition.publication, ...nutrition.history].some(item => item?.draftVersion === nutrition.draft!.version));
 
   useEffect(() => {
     let mounted = true;
@@ -117,11 +121,14 @@ export function CoachFollowup({ clientId }: { clientId: string }) {
     }
     setConfirmPublish(true);
   }
-  async function mutate(action: "save" | "publish", retry = false) {
+  async function mutate(action: "save" | "publish" | "withdraw", retry = false) {
     if (!nutrition || inFlight.current) return;
+    if (action === "withdraw" && !retry && !nutrition.publication) return;
     inFlight.current = true; setBusy(true); setError(null); setSuccess(null); setConfirmPublish(false);
+    setConfirmWithdraw(false);
     if (!retry || !command.current) command.current = action === "save"
       ? { action, document: structuredClone(document), expectedVersion: nutrition.draft?.version ?? 0, clientMutationId: crypto.randomUUID() }
+      : action === "withdraw" ? { action, expectedPublicationId: nutrition.publication!.id, clientMutationId: crypto.randomUUID() }
       : { action, expectedVersion: nutrition.draft?.version ?? 0, expectedPublicationId: nutrition.publication?.id ?? null, clientMutationId: crypto.randomUUID() };
     const valid = nutritionMutationSchema.safeParse(command.current);
     if (!valid.success) {
@@ -131,8 +138,12 @@ export function CoachFollowup({ clientId }: { clientId: string }) {
     try {
       const result = await request(`${base}/nutrition`, coachNutritionResponseSchema, command.current);
       const next = result.draft?.document ?? EMPTY_NUTRITION_DOCUMENT;
-      setNutrition(result); setDocument(structuredClone(next)); setBaseline(JSON.stringify(next));
-      setSuccess(command.current.action === "publish" ? "Plan nutritionnel publié. Le client peut maintenant le consulter." : "Brouillon enregistré. Il reste privé jusqu’à la publication.");
+      setNutrition(result);
+      if (command.current.action !== "withdraw") { setDocument(structuredClone(next)); setBaseline(JSON.stringify(next)); }
+      setSuccess(command.current.action === "withdraw" ? result.publication
+        ? "Le retrait est confirmé. Un nouveau plan est maintenant actif; il n’a pas été retiré."
+        : "Plan nutritionnel retiré. Les versions précédentes restent consultables."
+        : command.current.action === "publish" ? "Plan nutritionnel publié. Le client peut maintenant le consulter." : "Brouillon enregistré. Il reste privé jusqu’à la publication.");
       command.current = null; setUncertain(false);
     } catch (caught) {
       const editable = caught instanceof FollowupRequestError && caught.status === 400;
@@ -162,6 +173,7 @@ export function CoachFollowup({ clientId }: { clientId: string }) {
       {!loading && nutrition ? <section className={styles.panel} aria-labelledby="coach-nutrition-heading">
         <header><p className="fe-kicker">Prescription nutritionnelle</p><h2 id="coach-nutrition-heading">Construire le plan</h2>
           <p>{nutrition.publication ? `Version ${nutrition.publication.revision} publiée le ${new Date(nutrition.publication.publishedAt).toLocaleDateString("fr-CA")}. Elle reste visible pendant tes modifications.` : "Aucun plan publié pour ce client."}</p>
+          {nutrition.publication ? <button ref={withdrawTrigger} className="fe-button" type="button" disabled={busy || uncertain} onClick={() => setConfirmWithdraw(true)}>Retirer le plan actif</button> : null}
         </header>
         <p>Les champs * sont nécessaires à la publication. Une version française ou anglaise suffit. Les textes libres ne sont pas traduits automatiquement.</p>
         <fieldset className={styles.editor} disabled={busy || uncertain}>
@@ -184,11 +196,12 @@ export function CoachFollowup({ clientId }: { clientId: string }) {
         </fieldset>
         <div className={styles.actions}>
           <button className="fe-button fe-button-primary" disabled={busy || uncertain || !dirty} onClick={() => mutate("save")}>{busy ? "Enregistrement…" : "Enregistrer le brouillon"}</button>
-          <button ref={publishTrigger} className="fe-button" disabled={busy || uncertain || dirty || !nutrition.draft || nutrition.publication?.draftVersion === nutrition.draft.version} onClick={beginPublish}>Publier le plan nutritionnel</button>
+          <button ref={publishTrigger} className="fe-button" disabled={busy || uncertain || dirty || !nutrition.draft || draftAlreadyPublished} onClick={beginPublish}>Publier le plan nutritionnel</button>
+          {!nutrition.publication && draftAlreadyPublished ? <small>Modifie puis enregistre le brouillon pour publier une nouvelle version.</small> : null}
           {dirty ? <small>Enregistre tes modifications avant de publier.</small> : null}
           {uncertain ? <><button className="fe-button" disabled={busy} onClick={() => mutate(command.current?.action ?? "save", true)}>Réessayer la même demande</button><button className="fe-button" disabled={busy} onClick={() => setAttempt(value => value + 1)}>Recharger l’état enregistré</button></> : null}
         </div>
-        {nutrition.history.length ? <details><summary>Publications conservées ({nutrition.history.length}{nutrition.historyTruncated ? "+" : ""})</summary>{nutrition.history.map(item => <p key={item.id}>Version {item.revision} · {item.document.title.fr || item.document.title.en} · {new Date(item.publishedAt).toLocaleString("fr-CA")}</p>)}</details> : null}
+        {nutrition.history.length ? <details><summary>Publications conservées ({nutrition.history.length}{nutrition.historyTruncated ? "+" : ""})</summary>{nutrition.history.map(item => <p key={item.id}>Version {item.revision} · {item.document.title.fr || item.document.title.en} · {new Date(item.publishedAt).toLocaleString("fr-CA")}{item.withdrawnAt ? ` · Plan retiré le ${new Date(item.withdrawnAt).toLocaleString("fr-CA")}` : ""}</p>)}</details> : null}
       </section> : null}
       <section className={styles.panel} aria-labelledby="coach-checkins-heading"><h2 id="coach-checkins-heading">Check-ins transmis</h2><p>Les brouillons du client restent privés. Les réponses transmises sont conservées telles quelles.</p>
         <button className="fe-button" disabled={loadingHistory} onClick={() => historyPage(checkIns?.page ?? 0)}>{loadingHistory ? "Actualisation…" : "Actualiser les check-ins"}</button>
@@ -203,6 +216,7 @@ export function CoachFollowup({ clientId }: { clientId: string }) {
         </details>)}
         {checkIns && checkIns.total > 50 ? <nav className={styles.actions} aria-label="Pages de check-ins"><button className="fe-button" disabled={loadingHistory || checkIns.page === 0} onClick={() => historyPage(checkIns.page - 1)}>Précédents</button><span>Page {checkIns.page + 1} · {checkIns.total} check-ins</span><button className="fe-button" disabled={loadingHistory || (checkIns.page + 1) * 50 >= checkIns.total} onClick={() => historyPage(checkIns.page + 1)}>Suivants</button></nav> : null}
       </section>
+      {confirmWithdraw ? <PlanWithdrawalDialog title="Retirer ce plan nutritionnel?" onCancel={() => { setConfirmWithdraw(false); withdrawTrigger.current?.focus(); }} onConfirm={() => void mutate("withdraw")} /> : null}
       {confirmPublish ? <div className={styles.backdrop} onKeyDown={event => {
         if (event.key === "Escape") closeConfirmation();
         if (event.key === "Tab") {
