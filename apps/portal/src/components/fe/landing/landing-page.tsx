@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect } from "react";
-import { usePortalLanguage } from "../portal-preferences";
+import { initializePortalLanguage, usePortalLanguage } from "../portal-preferences";
 import { LanguageControl } from "../preference-controls";
 import { landingCopy, type LandingLocale } from "./landing-copy";
 export { landingCopy, resolveLandingLocale } from "./landing-copy";
@@ -11,7 +11,7 @@ import styles from "./landing-page.module.css";
 
 export function LandingPage({ locale }: { locale: LandingLocale }) {
   const { language } = usePortalLanguage(locale);
-  useEffect(() => { document.documentElement.lang = language; }, [language]);
+  useEffect(() => { initializePortalLanguage(locale); }, [locale]);
   const copy = landingCopy[language];
   return (
     <>

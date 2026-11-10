@@ -6,6 +6,17 @@ import { newProgram, newSession } from "@/lib/training/program-editor";
 afterEach(() => { vi.unstubAllGlobals(); vi.resetModules(); });
 
 describe("display-only preferences", () => {
+  it.each([["", "fr"], ["?lang=en", "en"]])("initialization preserves the explicit browser choice %s", async (query, expected) => {
+    const location = new URL(`https://staging.example.test/${query}`);
+    const document = { cookie: "fe-language=fr", documentElement: { lang: "", dataset: {} } };
+    const setItem = vi.fn();
+    vi.stubGlobal("document", document); vi.stubGlobal("location", location);
+    vi.stubGlobal("window", { location, localStorage: { getItem: () => null, setItem }, history: { state: null, replaceState: vi.fn() }, dispatchEvent: vi.fn() });
+    const { initializePortalLanguage } = await import("@/components/fe/portal-preferences");
+    initializePortalLanguage("en");
+    expect(document.documentElement.lang).toBe(expected);
+    expect(setItem).toHaveBeenCalledWith("fe-language", expected);
+  });
   it.each(["fr", "en"])("accepts only the supported language %s", async value => {
     const { parseLanguage } = await import("@/components/fe/portal-preferences");
     expect(parseLanguage(value)).toBe(value);

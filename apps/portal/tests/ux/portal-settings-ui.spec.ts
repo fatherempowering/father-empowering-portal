@@ -1,5 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
+for (const entry of ["/?screen=landing-en", "/client/program?language=en"]) test(`English entry ${entry} persists into Auth without a redundant language click`, async ({ page }) => {
+  await page.goto(entry);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page.goto("/?screen=login");
+  await expect(page.getByRole("heading", { name: "Return to your portal.", exact: true })).toBeVisible();
+});
+
 async function settings(page: Page) { await page.getByRole("button", { name: /^(Ouvrir les réglages|Open settings)$/ }).click(); }
 async function closeSettings(page: Page) { await page.getByRole("button", { name: /^(Fermer les réglages|Close settings)$/ }).click(); }
 

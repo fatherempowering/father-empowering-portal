@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePortalLanguage, usePortalTheme, type PortalLanguage } from "./portal-preferences";
+import { parseLanguage, setPortalLanguage, usePortalLanguage, usePortalTheme, type PortalLanguage } from "./portal-preferences";
 import "./portal-settings.css";
 
 export function LanguageControl({ fallback = "fr", reload = false }: { fallback?: PortalLanguage; reload?: boolean }) {
@@ -17,7 +17,12 @@ export function LanguageControl({ fallback = "fr", reload = false }: { fallback?
 export function PortalPreferenceEffects() {
   const { language } = usePortalLanguage();
   const { theme } = usePortalTheme();
-  useEffect(() => { document.documentElement.lang = language; }, [language]);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = parseLanguage(params.get("language")) ?? parseLanguage(params.get("lang"));
+    if (fromUrl) setPortalLanguage(fromUrl);
+    else document.documentElement.lang = language;
+  }, [language]);
   useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
   return null;
 }

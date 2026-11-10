@@ -70,6 +70,11 @@ export function setPortalTheme(theme: PortalTheme) {
   window.dispatchEvent(new Event(changed));
 }
 
+/** Read the browser preference before persisting a server-rendered default. */
+export function initializePortalLanguage(fallback: PortalLanguage) {
+  setPortalLanguage(languageSnapshot() ?? fallback);
+}
+
 const serverLanguage = () => null;
 const serverTheme = (): PortalTheme => "light";
 
