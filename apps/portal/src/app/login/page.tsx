@@ -1,3 +1,4 @@
+import { UiText } from "@/components/fe/ui-text";
 import Link from "next/link";
 import { AuthShell } from "@/components/fe/auth-shell";
 import { Feedback } from "@/components/fe/feedback";
@@ -13,40 +14,40 @@ export default async function LoginPage({
   const { error, password } = await searchParams;
   return (
     <AuthShell>
-      <p className="fe-kicker">Espace Coach</p>
-      <h1 className="fe-title">Accède à ton espace Coach.</h1>
-      <p className="fe-intro">
+      <p className="fe-kicker"><UiText>Espace Coach</UiText></p>
+      <h1 className="fe-title"><UiText>Accède à ton espace Coach.</UiText></h1>
+      <p className="fe-intro"><UiText>
         Entre ton courriel et ton mot de passe.
-      </p>
+      </UiText></p>
       {password === "updated" ? (
-        <Feedback tone="success">
+        <Feedback tone="success"><UiText>
           Ton mot de passe est enregistré. Connecte-toi pour continuer.
-        </Feedback>
+        </UiText></Feedback>
       ) : error === "recovery" ? (
-        <Feedback>Le lien est invalide ou expiré. Demande un nouveau lien.</Feedback>
+        <Feedback><UiText>Le lien est invalide ou expiré. Demande un nouveau lien.</UiText></Feedback>
       ) : error === "unavailable" ? (
-        <Feedback>
+        <Feedback><UiText>
           La connexion est momentanément indisponible. Réessaie dans quelques instants.
           Inutile de modifier ton mot de passe.
-        </Feedback>
+        </UiText></Feedback>
       ) : error ? (
-        <Feedback>Le courriel ou le mot de passe est invalide.</Feedback>
+        <Feedback><UiText>Le courriel ou le mot de passe est invalide.</UiText></Feedback>
       ) : null}
       <form action={signInCoachAction} className="fe-form">
-        <label className="fe-field">
+        <label className="fe-field"><UiText>
           Courriel
-          <input name="email" type="email" autoComplete="email" required />
+          </UiText><input name="email" type="email" autoComplete="email" required />
         </label>
         <PasswordField />
-        <SubmitButton pendingLabel="Connexion…">
+        <SubmitButton pendingLabel="Connexion…"><UiText>
           Se connecter
-        </SubmitButton>
+        </UiText></SubmitButton>
       </form>
       <p className="fe-auth-secondary">
-        <Link href="/forgot-password">Définir ou réinitialiser mon mot de passe</Link>
+        <Link href="/forgot-password"><UiText>Définir ou réinitialiser mon mot de passe</UiText></Link>
       </p>
-      <p className="fe-auth-secondary">
-        Tu es client ? <Link href="/client-login">Accéder à mon portail</Link>
+      <p className="fe-auth-secondary"><UiText>
+        Tu es client ? </UiText><Link href="/client-login"><UiText>Accéder à mon portail</UiText></Link>
       </p>
     </AuthShell>
   );

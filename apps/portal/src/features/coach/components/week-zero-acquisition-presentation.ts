@@ -1,3 +1,4 @@
+import { translateUi } from "@/components/fe/ui-copy";
 import { WEEK_ZERO_MOVEMENT_KEYS, type CoachWeekZeroAcquisition, type WeekZeroLoadEntry, type WeekZeroMovementKey } from "@/lib/contracts/week-zero-acquisition";
 
 export const movementLabels: Record<WeekZeroMovementKey, string> = {
@@ -16,16 +17,18 @@ const variants: Record<string, string> = {
 const modes = { TOTAL: "au total", PER_HAND: "par haltère", BODYWEIGHT: "Poids du corps", ASSISTED: "d’assistance", ADDED: "ajoutés" };
 type Item = { label: string; value: string };
 export type AcquisitionSection = { id: string; title: string; items: Item[] };
-const value = (item: string | number | null, unit = "") => item === null || item === "" ? "Non renseigné" : `${item}${unit}`;
+const displayValue = (item: string | number | null, unit: string, language: "fr" | "en") => item === null || item === "" ? translateUi("Non renseigné", language) : `${item}${language === "en" ? unit.replace(" po", " in").replace(" ans", " years") : unit}`;
 
-export function calibrationItems(entry: WeekZeroLoadEntry, movement: WeekZeroMovementKey): Item[] {
-  if (entry.status === "NOT_PERFORMED") return [{ label: "État", value: "Non réalisé — à revoir avec le Coach" }, { label: "Raison", value: value(entry.reason) }, { label: "Note", value: value(entry.note) }];
-  if (entry.status === "NOT_STARTED") return [{ label: "État", value: "Non renseigné" }];
+export function calibrationItems(entry: WeekZeroLoadEntry, movement: WeekZeroMovementKey, language: "fr" | "en" = "fr"): Item[] {
+  const value = (item: string | number | null, unit = "") => displayValue(item, unit, language);
+  const t = (text: string) => translateUi(text, language);
+  if (entry.status === "NOT_PERFORMED") return [{ label: "État", value: t("Non réalisé — à revoir avec le Coach") }, { label: "Raison", value: value(entry.reason) }, { label: "Note", value: value(entry.note) }];
+  if (entry.status === "NOT_STARTED") return [{ label: "État", value: t("Non renseigné") }];
   return [
-    { label: "Exercice réalisé", value: entry.variant ? variants[entry.variant] ?? entry.variant : "Non renseigné" },
-    { label: "Charge", value: entry.mode === "BODYWEIGHT" ? modes.BODYWEIGHT : entry.load === null || !entry.unit || !entry.mode ? "Non renseignée" : `${entry.load} ${entry.unit.toLowerCase()} ${modes[entry.mode]}` },
+    { label: "Exercice réalisé", value: entry.variant ? t(variants[entry.variant] ?? entry.variant) : t("Non renseigné") },
+    { label: "Charge", value: entry.mode === "BODYWEIGHT" ? t(modes.BODYWEIGHT) : entry.load === null || !entry.unit || !entry.mode ? t("Non renseignée") : `${entry.load} ${entry.unit.toLowerCase()} ${t(modes[entry.mode])}` },
     { label: movement === "lunge" ? "Répétitions par côté" : "Répétitions", value: value(entry.reps) },
-    { label: "Répétitions estimées en réserve", value: entry.rir === null ? "Le client ne sait pas" : String(entry.rir) },
+    { label: "Répétitions estimées en réserve", value: entry.rir === null ? t("Le client ne sait pas") : String(entry.rir) },
     { label: "Note / douleur", value: value(entry.note) },
   ];
 }
@@ -35,7 +38,9 @@ export function formatSeconds(seconds: number): string {
   return `${Math.floor(tenths / 600)}:${((tenths % 600) / 10).toFixed(1).padStart(4, "0")}`;
 }
 
-export function acquisitionSections(snapshot: CoachWeekZeroAcquisition): AcquisitionSection[] {
+export function acquisitionSections(snapshot: CoachWeekZeroAcquisition, language: "fr" | "en" = "fr"): AcquisitionSection[] {
+  const value = (item: string | number | null, unit = "") => displayValue(item, unit, language);
+  const t = (text: string) => translateUi(text, language);
   const r = snapshot.responses;
   if (snapshot.status !== "SUBMITTED" || !r) return [];
   const sections: AcquisitionSection[] = [{ id: "measurements", title: "Mesures de départ", items: [
@@ -50,40 +55,40 @@ export function acquisitionSections(snapshot: CoachWeekZeroAcquisition): Acquisi
     { label: "Mollet droit", value: value(r.measurements.rightCalfIn ?? null, " po") },
     { label: "Précisions", value: value(r.measurements.other) },
   ] }];
-  for (const movement of WEEK_ZERO_MOVEMENT_KEYS) sections.push({ id: movement, title: movementLabels[movement], items: calibrationItems(r.loads[movement], movement) });
+  for (const movement of WEEK_ZERO_MOVEMENT_KEYS) sections.push({ id: movement, title: movementLabels[movement], items: calibrationItems(r.loads[movement], movement, language) });
   const cardio: Item[] = [];
   const selfLabels = { EXCELLENT: "Excellent", GOOD: "Bon", POOR: "Mauvais", NONE: "Nul" };
-  cardio.push({ label: "Niveau cardio — autoévaluation (hors calcul)", value: r.cardio.selfAssessment ? selfLabels[r.cardio.selfAssessment] : "Non renseigné" });
+  cardio.push({ label: "Niveau cardio — autoévaluation (hors calcul)", value: r.cardio.selfAssessment ? t(selfLabels[r.cardio.selfAssessment]) : t("Non renseigné") });
   if (r.cardio.status === "NOT_PERFORMED") {
-    cardio.push({ label: "État", value: "Cardio non réalisé — à revoir avec le Coach" }, { label: "Raison", value: value(r.cardio.reason) });
+    cardio.push({ label: "État", value: t("Cardio non réalisé — à revoir avec le Coach") }, { label: "Raison", value: value(r.cardio.reason) });
   } else {
-    cardio.push({ label: "Protocole", value: "Concept2 Rower — 2 000 m" },
-      { label: "Temps enregistré", value: r.cardio.totalSeconds === null ? "Non renseigné" : formatSeconds(r.cardio.totalSeconds) },
+    cardio.push({ label: "Protocole", value: t("Concept2 Rower — 2 000 m") },
+      { label: "Temps enregistré", value: r.cardio.totalSeconds === null ? t("Non renseigné") : formatSeconds(r.cardio.totalSeconds) },
       { label: "Poids utilisé pour le calcul", value: value(r.cardio.weightKg, " kg") },
       { label: "Âge au test", value: value(r.cardio.age, " ans") },
-      { label: "Sexe utilisé par la formule", value: r.cardio.sex === "MALE" ? "Masculin" : r.cardio.sex === "FEMALE" ? "Féminin" : "Non renseigné" },
-      { label: "Expérience en aviron", value: r.cardio.trainingLevel === "HIGHLY_TRAINED" ? "Très entraîné en aviron" : "Pas très entraîné en aviron" });
+      { label: "Sexe utilisé par la formule", value: r.cardio.sex === "MALE" ? t("Masculin") : r.cardio.sex === "FEMALE" ? t("Féminin") : t("Non renseigné") },
+      { label: "Expérience en aviron", value: r.cardio.trainingLevel === "HIGHLY_TRAINED" ? t("Très entraîné en aviron") : t("Pas très entraîné en aviron") });
     const result = snapshot.derived?.cardio;
     if (result) {
       cardio.push({ label: "Allure moyenne / 500 m", value: formatSeconds(result.paceSecondsPer500) },
         { label: "Puissance moyenne", value: `${result.averageWatts.toFixed(1)} W` },
-        { label: "VO₂max estimé — pas une mesure de laboratoire", value: result.estimatedVo2MaxMlKgMin === null ? "Estimation indisponible : ce résultat est hors des limites de la formule." : `${result.estimatedVo2MaxMlKgMin.toFixed(1)} mL/kg/min` });
+        { label: "VO₂max estimé — pas une mesure de laboratoire", value: result.estimatedVo2MaxMlKgMin === null ? t("Estimation indisponible : ce résultat est hors des limites de la formule.") : `${result.estimatedVo2MaxMlKgMin.toFixed(1)} mL/kg/min` });
       const labels = { POOR: "Faible", FAIR: "À développer", AVERAGE: "Moyen", GOOD: "Bon", EXCELLENT: "Excellent", OUTSIDE_REFERENCE: "Hors des valeurs de référence", UNAVAILABLE_AGE_REFERENCE: "Référence d’âge indisponible" };
-      cardio.push({ label: "Repère cardio Concept2", value: result.classification ? labels[result.classification] : "Non disponible" });
-    } else cardio.push({ label: "Estimation", value: "Indisponible : aucun résultat calculé reçu" });
+      cardio.push({ label: "Repère cardio Concept2", value: result.classification ? t(labels[result.classification]) : t("Non disponible") });
+    } else cardio.push({ label: "Estimation", value: t("Indisponible : aucun résultat calculé reçu") });
   }
   cardio.push({ label: "Commentaire cardio", value: value(r.cardio.notes) });
   sections.push({ id: "cardio", title: "Cardio", items: cardio });
-  const pain = { NO: "Non", YES: "Oui", NOT_PERFORMED: "Non testé", NOT_ASSESSED: "Non renseigné" };
+  const pain = { NO: "Non", YES: "Oui", NOT_PERFORMED: "Non testé", NOT_ASSESSED: t("Non renseigné") };
   sections.push({ id: "mobility", title: "Mobilité après les exercices", items: [
-    { label: "Douleur squat / jambes", value: pain[r.mobility.painSquat] },
-    { label: "Douleur — flexion des hanches ou soulevé de terre", value: pain[r.mobility.painHinge] },
-    { label: "Douleur poussée", value: pain[r.mobility.painPush] },
-    { label: "Douleur tirage", value: pain[r.mobility.painPull] },
-    { label: "Douleur cardio", value: pain[r.mobility.painCardio] },
+    { label: "Douleur squat / jambes", value: t(pain[r.mobility.painSquat]) },
+    { label: "Douleur — flexion des hanches ou soulevé de terre", value: t(pain[r.mobility.painHinge]) },
+    { label: "Douleur poussée", value: t(pain[r.mobility.painPush]) },
+    { label: "Douleur tirage", value: t(pain[r.mobility.painPull]) },
+    { label: "Douleur cardio", value: t(pain[r.mobility.painCardio]) },
     { label: "Mouvement le plus limité", value: value(r.mobility.limitedMovement) },
     { label: "Mouvement le plus confortable", value: value(r.mobility.comfortableMovement) },
     { label: "Zone raide ou tendue", value: value(r.mobility.tightArea) },
   ] });
-  return sections;
+  return sections.map(section => ({ ...section, title: t(section.title), items: section.items.map(item => ({ ...item, label: t(item.label) })) }));
 }

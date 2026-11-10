@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText, useUiCopy } from "@/components/fe/ui-text";
 import { useId, useState, type FormEvent } from "react";
 import type { CreateClientFormValues } from "../model";
 import { Modal } from "@/components/fe/modal";
@@ -29,6 +30,7 @@ export function CreateClientDialog({
   onClose,
   onSubmit,
 }: CreateClientDialogProps) {
+  const c = useUiCopy();
   const titleId = useId();
   const descriptionId = useId();
   const emailId = useId();
@@ -47,16 +49,16 @@ export function CreateClientDialog({
     >
       <header className="fe-dialog-header">
         <div>
-          <p className="fe-kicker">Nouvelle relation</p>
-          <h2 id={titleId}>Inviter un client</h2>
-          <p className="fe-intro" id={descriptionId}>
+          <p className="fe-kicker"><UiText>Nouvelle relation</UiText></p>
+          <h2 id={titleId}><UiText>Inviter un client</UiText></h2>
+          <p className="fe-intro" id={descriptionId}><UiText>
             Crée sa fiche et prépare son accès au portail.
-          </p>
+          </UiText></p>
         </div>
         <button
           className="fe-icon-button"
           type="button"
-          aria-label="Fermer le formulaire"
+          aria-label={c("Fermer le formulaire")}
           onClick={onClose}
           disabled={busy}
         >
@@ -69,9 +71,9 @@ export function CreateClientDialog({
         aria-busy={busy}
       >
         <div className="fe-two-fields">
-          <label className="fe-field">
+          <label className="fe-field"><UiText>
             Prénom
-            <input
+            </UiText><input
               autoComplete="given-name"
               data-autofocus
               disabled={busy}
@@ -84,9 +86,9 @@ export function CreateClientDialog({
               required
             />
           </label>
-          <label className="fe-field">
+          <label className="fe-field"><UiText>
             Nom
-            <input
+            </UiText><input
               autoComplete="family-name"
               disabled={busy}
               maxLength={80}
@@ -100,7 +102,7 @@ export function CreateClientDialog({
           </label>
         </div>
         <div className="fe-field">
-          <label htmlFor={emailId}>Courriel du client</label>
+          <label htmlFor={emailId}><UiText>Courriel du client</UiText></label>
           <input
             id={emailId}
             autoComplete="email"
@@ -115,13 +117,13 @@ export function CreateClientDialog({
             required
             aria-describedby={`${emailId}-hint`}
           />
-          <p className="fe-hint" id={`${emailId}-hint`}>
+          <p className="fe-hint" id={`${emailId}-hint`}><UiText>
             Il recevra son invitation et ses codes de connexion à cette adresse.
-          </p>
+          </UiText></p>
         </div>
-        <label className="fe-field">
+        <label className="fe-field"><UiText>
           Langue du portail
-          <select
+          </UiText><select
             name="locale"
             disabled={busy}
             value={values.locale}
@@ -132,7 +134,7 @@ export function CreateClientDialog({
               })
             }
           >
-            <option value="fr">Français</option>
+            <option value="fr"><UiText>Français</UiText></option>
             <option value="en">English</option>
           </select>
         </label>
@@ -141,10 +143,10 @@ export function CreateClientDialog({
           onChange={(timezone) => setValues({ ...values, timezone })}
           disabled={busy}
         />
-        <p className="fe-form-summary">
+        <p className="fe-form-summary"><UiText>
           Le client deviendra actif après avoir ouvert son invitation et validé
           son code courriel.
-        </p>
+        </UiText></p>
         {error ? <Feedback>{error}</Feedback> : null}
         <div className="fe-form-actions">
           <button
@@ -152,15 +154,15 @@ export function CreateClientDialog({
             type="button"
             onClick={onClose}
             disabled={busy}
-          >
+          ><UiText>
             Annuler
-          </button>
+          </UiText></button>
           <button
             className="fe-button fe-button-primary"
             type="submit"
             disabled={busy}
           >
-            {busy ? "Création…" : "Créer et inviter"}
+            {busy ? <UiText>{"Création…"}</UiText> : <UiText>{"Créer et inviter"}</UiText>}
           </button>
         </div>
       </form>

@@ -1,5 +1,7 @@
 "use client";
 
+import { usePortalLanguage } from "@/components/fe/portal-preferences";
+import { UiText } from "@/components/fe/ui-text";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -123,38 +125,38 @@ export function CoachClientDetail({ clientId }: { clientId: string }) {
     <AppShell space="coach" current="clients">
       <div className={styles.page} data-testid="coach-client-detail">
         <div className={styles.headingActions}>
-          <Link className="fe-button" href="/coach">
+          <Link className="fe-button" href="/coach"><UiText>
             Retour aux clients
-          </Link>
+          </UiText></Link>
           <button
             className="fe-button"
             type="button"
             disabled={signingOut}
             onClick={() => void signOut()}
           >
-            {signingOut ? "Déconnexion…" : "Se déconnecter"}
+            {signingOut ? <UiText>{"Déconnexion…"}</UiText> : <UiText>{"Se déconnecter"}</UiText>}
           </button>
         </div>
         {signOutError ? <Feedback>{signOutError}</Feedback> : null}
         {state.kind === "loading" ? (
-          <Loading>Chargement du dossier client…</Loading>
+          <Loading><UiText>Chargement du dossier client…</UiText></Loading>
         ) : state.kind === "not-found" ? (
           <section className={styles.assessment}>
             <div className={styles.empty}>
-              <h1 className="fe-title">Dossier inaccessible</h1>
-              <p>
+              <h1 className="fe-title"><UiText>Dossier inaccessible</UiText></h1>
+              <p><UiText>
                 Ce client est introuvable ou ne fait pas partie de tes clients
                 assignés.
-              </p>
+              </UiText></p>
             </div>
           </section>
         ) : state.kind === "error" ? (
           <>
-            <h1 className="fe-title">Dossier temporairement indisponible</h1>
+            <h1 className="fe-title"><UiText>Dossier temporairement indisponible</UiText></h1>
             <Feedback>{state.message}</Feedback>
-            <button className="fe-button" type="button" onClick={retry}>
+            <button className="fe-button" type="button" onClick={retry}><UiText>
               Réessayer
-            </button>
+            </UiText></button>
           </>
         ) : (
           <ClientAssessment value={state.value} />
@@ -165,80 +167,81 @@ export function CoachClientDetail({ clientId }: { clientId: string }) {
 }
 
 function ClientAssessment({ value }: { value: CoachClientWeekZero }) {
+  const { language, french } = usePortalLanguage(); void french;
   const { client, assessment } = value;
   const submitted = assessment.status === "SUBMITTED";
   const submittedAt = formatAssessmentDate(
     assessment.submittedAt,
-    client.timezone,
+    client.timezone, language,
   );
 
   return (
     <>
       <header className={styles.heading}>
         <div>
-          <p className="fe-kicker">Dossier client</p>
+          <p className="fe-kicker"><UiText>Dossier client</UiText></p>
           <h1 className="fe-title">{client.displayName}</h1>
           <p className={styles.identity}>{client.email}</p>
         </div>
       </header>
-      <Link className="fe-button fe-button-primary" href={`/coach/clients/${encodeURIComponent(client.id)}/workouts`}>
+      <Link className="fe-button fe-button-primary" href={`/coach/clients/${encodeURIComponent(client.id)}/workouts`}><UiText>
         Voir les entraînements et résultats
-      </Link>
-      <Link className="fe-button" href={`/coach/clients/${encodeURIComponent(client.id)}/followup`}>
+      </UiText></Link>
+      <Link className="fe-button" href={`/coach/clients/${encodeURIComponent(client.id)}/followup`}><UiText>
         Nutrition et check-ins
-      </Link>
+      </UiText></Link>
       <CoachOnboardingDetail clientId={client.id} />
       <CoachWeekZeroAcquisition clientId={client.id} timezone={client.timezone} />
       {submitted && <details
         className={styles.assessment}
         aria-labelledby="initial-assessment-title"
       >
-        <summary className={styles.historySummary}>Consulter l’ancien bilan partiel transmis</summary>
+        <summary className={styles.historySummary}><UiText>Consulter l’ancien bilan partiel transmis</UiText></summary>
         <header className={styles.assessmentHeader}>
           <div>
             <p className="fe-kicker">Week Zero</p>
-            <h2 id="initial-assessment-title">Ancien bilan partiel — conservé</h2>
-            <p>
+            <h2 id="initial-assessment-title"><UiText>Ancien bilan partiel — conservé</UiText></h2>
+            <p><UiText>
               Réponses historiques. Ce bilan ne remplace pas la collecte complète de la semaine zéro.
-            </p>
+            </UiText></p>
           </div>
           <span
             className={`fe-badge ${submitted ? "fe-badge-active" : ""}`}
             data-testid="initial-assessment-status"
           >
             <Icon name={submitted ? "check" : "clock"} />
-            {submitted ? "Ancien bilan transmis" : "Non transmis"}
+            {submitted ? <UiText>{"Ancien bilan transmis"}</UiText> : <UiText>{"Non transmis"}</UiText>}
           </span>
         </header>
         {!submitted ? (
           <div className={styles.empty}>
-            <h3>Aucune semaine zéro transmise</h3>
-            <p>
+            <h3><UiText>Aucune semaine zéro transmise</UiText></h3>
+            <p><UiText>
               Le client peut enregistrer un brouillon, mais ses réponses ne
               deviennent visibles ici qu’après la transmission.
-            </p>
+            </UiText></p>
           </div>
         ) : assessment.responses === null ? (
           <div className={styles.empty}>
-            <Feedback>
+            <Feedback><UiText>
               Le bilan est marqué comme transmis, mais ses réponses ne sont pas
               disponibles. Actualise le dossier pour réessayer.
-            </Feedback>
+            </UiText></Feedback>
           </div>
         ) : (
           <>
             <div className={styles.empty}>
               <p>
                 {submittedAt
-                  ? `Transmis le ${submittedAt}.`
-                : "La semaine zéro a été transmise."}
-                {" "}
+                  ? `${french ? "Transmis le" : "Submitted on"} ${submittedAt}.`
+                : <UiText>{"La semaine zéro a été transmise."}</UiText>}
+                {" "}<UiText>
                 Cette première étape ne signifie pas que toute la Week Zero est
                 terminée.
-              </p>
+              </UiText></p>
             </div>
             <div className={styles.sections}>
-              {assessmentSections(assessment.responses).map((section) => (
+              {assessmentSections(assessment.responses, language).map((section) => (
                 <section
                   className={styles.section}
                   data-testid={`assessment-${section.id}`}

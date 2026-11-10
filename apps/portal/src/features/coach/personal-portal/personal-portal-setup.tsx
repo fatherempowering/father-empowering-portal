@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText } from "@/components/fe/ui-text";
 import { useRef, useState, type FormEvent } from "react";
 
 import { Feedback } from "@/components/fe/feedback";
@@ -126,19 +127,19 @@ export function PersonalPortalSetup({
     <>
       <header className="fe-page-heading">
         <div>
-          <p className="fe-kicker">Espace Coach</p>
-          <h1 className="fe-title">Mon portail personnel</h1>
-          <p className="fe-intro">
+          <p className="fe-kicker"><UiText>Espace Coach</UiText></p>
+          <h1 className="fe-title"><UiText>Mon portail personnel</UiText></h1>
+          <p className="fe-intro"><UiText>
             Active un nouveau profil Client lié à ton compte Coach pour suivre ton
             propre parcours dans le portail.
-          </p>
+          </UiText></p>
         </div>
       </header>
       <section className="fe-panel" aria-labelledby="personal-portal-setup-title">
         <header className="fe-panel-header">
           <div>
-            <h2 id="personal-portal-setup-title">Créer mon profil personnel</h2>
-            <p>Ton ancien Client test demeure intact et séparé.</p>
+            <h2 id="personal-portal-setup-title"><UiText>Créer mon profil personnel</UiText></h2>
+            <p><UiText>Ton ancien Client test demeure intact et séparé.</UiText></p>
           </div>
         </header>
         <form
@@ -146,14 +147,14 @@ export function PersonalPortalSetup({
           aria-busy={busy}
           onSubmit={(event) => void submit(event)}
         >
-          <p className="fe-form-summary">
+          <p className="fe-form-summary"><UiText>
             Cette activation crée seulement ton nouveau profil personnel. Elle
             n’envoie aucune invitation et ne demande aucun code supplémentaire.
-          </p>
+          </UiText></p>
           <div className="fe-two-fields">
-            <label className="fe-field">
+            <label className="fe-field"><UiText>
               Prénom
-              <input
+              </UiText><input
                 autoComplete="given-name"
                 disabled={busy}
                 maxLength={120}
@@ -163,9 +164,9 @@ export function PersonalPortalSetup({
                 onChange={(event) => update({ firstName: event.target.value })}
               />
             </label>
-            <label className="fe-field">
+            <label className="fe-field"><UiText>
               Nom
-              <input
+              </UiText><input
                 autoComplete="family-name"
                 disabled={busy}
                 maxLength={120}
@@ -176,9 +177,9 @@ export function PersonalPortalSetup({
               />
             </label>
           </div>
-          <label className="fe-field">
+          <label className="fe-field"><UiText>
             Langue du portail personnel
-            <select
+            </UiText><select
               disabled={busy}
               name="locale"
               value={values.locale}
@@ -186,7 +187,7 @@ export function PersonalPortalSetup({
                 locale: event.target.value as SetupValues["locale"],
               })}
             >
-              <option value="fr-CA">Français</option>
+              <option value="fr-CA"><UiText>Français</UiText></option>
               <option value="en-CA">English</option>
             </select>
           </label>
@@ -202,7 +203,7 @@ export function PersonalPortalSetup({
               disabled={busy}
               type="submit"
             >
-              {busy ? "Activation…" : "Activer mon portail personnel"}
+              {busy ? <UiText>{"Activation…"}</UiText> : <UiText>{"Activer mon portail personnel"}</UiText>}
             </button>
           </div>
         </form>

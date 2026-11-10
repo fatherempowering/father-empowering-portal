@@ -8,6 +8,8 @@ import { usePortalAccess } from "@/components/fe/portal-access-context";
 import { selectNumericInputOnFocus } from "@/components/fe/select-numeric-input";
 import { LegacyClientHeader } from "@/components/fe/legacy-client-header";
 import styles from "./client-home-pilot.module.css";
+import { PortalSettings } from "@/components/fe/portal-settings";
+import { usePortalLanguage } from "@/components/fe/portal-preferences";
 
 /** Shared presentation shell. Week Zero is the representative V1.1 checkpoint;
  * other screens keep their existing presentation until visual validation. */
@@ -90,6 +92,7 @@ export function ClientVisualShell({ children, name, french, current, accountActi
         <div className={styles.frameTitle}><strong>The Legacy Protocol</strong><span>{french ? "Portail Legacy" : "Legacy portal"}</span></div>
         <NavLink className={styles.mobileBrand} href="/" aria-label="Father Empowering"><img src="/icon-192.png" width="44" height="44" alt="" /><span>Father Empowering</span></NavLink>
         <span className={styles.topbarIdentity}><span aria-hidden="true">{initials}</span>{identity}</span>
+        <PortalSettings client />
         <button className={styles.menuToggle} type="button" ref={toggle} aria-controls={menuId} aria-expanded={open} onClick={() => setOpen(true)}><Icon name="menu" /><span>Menu</span></button>
       </header>}
       <main className={styles.main} id="main-content" onFocusCapture={selectNumericInputOnFocus}>{children}</main>
@@ -98,8 +101,9 @@ export function ClientVisualShell({ children, name, french, current, accountActi
 }
 
 export function ClientFamilyPhoto({ compact = false }: { compact?: boolean }) {
-  return <aside className={`${styles.familyPhoto} ${compact ? styles.familyCompact : ""}`} aria-label="A stronger you. A brighter them.">
+  const { t } = usePortalLanguage();
+  return <aside className={`${styles.familyPhoto} ${compact ? styles.familyCompact : ""}`} aria-label={t("Plus fort pour toi. Plus loin pour eux.", "A stronger you. A brighter them.")}>
     <img src="/brand/client/father-child.webp" width="720" height="1080" alt="" loading="lazy" decoding="async" />
-    <p>A stronger you.<br />A brighter them.</p>
+    <p>{t("Plus fort pour toi.", "A stronger you.")}<br />{t("Plus loin pour eux.", "A brighter them.")}</p>
   </aside>;
 }

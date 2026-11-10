@@ -1,4 +1,4 @@
-.page { min-width: 0; background: #f4f3ef; color: #1c1c1c; overflow-wrap: anywhere; padding-bottom: 24px; }
+.page { min-width: 0; background: var(--portal-canvas, #f4f3ef); color: var(--portal-ink, #1c1c1c); overflow-wrap: anywhere; padding-bottom: 24px; }
 .page h2, .page h3, .page h4 { margin: 0; }
 .page > button { margin: 16px 18px 0; }
 .page > p, .page > :global(.fe-feedback), .page > :global(.fe-loading) { margin: 18px; }
@@ -11,14 +11,14 @@
 .headingTools > button { min-height: 38px; background: #2c2c2c; border: 1px solid #555; color: #fff; font: 400 13px "FE Display", sans-serif; letter-spacing: 1px; padding: 8px 12px; }
 .trainingLayout { display: grid; align-items: start; gap: 16px; min-width: 0; }
 .trainingMain { min-width: 0; }
-.session { width: calc(100% - 28px); max-width: 620px; margin: 14px auto 22px; min-width: 0; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 4px 18px #0000000d; }
+.session { width: calc(100% - 28px); max-width: 620px; margin: 14px auto 22px; min-width: 0; border-radius: 18px; overflow: hidden; background: var(--portal-paper, #fff); box-shadow: 0 4px 18px #0000000d; }
 .sessionHeading { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #1c1c1c; color: #fff; padding: 18px; border-bottom: 3px solid #c85a00; }
 .eyebrow { color: #c85a00; font: 400 12px "FE Display", sans-serif; letter-spacing: 1.5px; text-transform: uppercase; margin: 0 0 4px; }
 .sessionHeading .eyebrow { color: #e8761a; }
 .sessionHeading h2 { font: 400 30px/1.1 "FE Display", sans-serif; letter-spacing: 1px; }
 .sessionType { flex-shrink: 0; color: #bbb; font: 400 12px "FE Display", sans-serif; letter-spacing: 1px; }
 .sessionBody { display: grid; gap: 14px; padding: 22px 18px; }
-.sessionBody > p { margin: 0; font-size: 13px; color: #666; line-height: 1.6; }
+.sessionBody > p { margin: 0; font-size: 13px; color: var(--portal-muted, #666); line-height: 1.6; }
 .sessionAction { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .sessionAction > a { flex: 1; min-height: 48px; border-radius: 10px; text-transform: uppercase; font: 400 19px "FE Display", sans-serif; letter-spacing: 1px; }
 .sessionAction > span { font-size: 13px; color: #287e40; }
@@ -26,26 +26,26 @@
 .sessionPlan summary { cursor: pointer; min-height: 44px; padding: 12px 0; font-size: 13px; font-weight: 600; }
 .sessionPlan[open] { display: grid; gap: 12px; }
 .sessionPlan summary:focus-visible { outline: 3px solid #c85a00; outline-offset: 2px; }
-.block { padding: 14px; border: 1px solid #e5e3dd; border-radius: 10px; background: #f8f7f3; min-width: 0; }
+.block { padding: 14px; border: 1px solid var(--portal-line, #e5e3dd); border-radius: 10px; background: var(--portal-soft, #f8f7f3); min-width: 0; }
 .block h3 { font: 400 19px "FE Display", sans-serif; letter-spacing: 1px; }
-.exercise { padding: 12px 0; border-bottom: 1px solid #e5e3dd; }
+.exercise { padding: 12px 0; border-bottom: 1px solid var(--portal-line, #e5e3dd); }
 .exercise:last-child { border-bottom: 0; }
 .exercise h4 { font: 400 21px "FE Display", sans-serif; }
 .exercise p { font-size: 13px; line-height: 1.55; }
-.history { margin: 20px 14px 0; padding: 18px; border: 1px solid #e5e3dd; border-radius: 12px; background: #fff; min-width: 0; scroll-margin-top: 85px; }
+.history { margin: 20px 14px 0; padding: 18px; border: 1px solid var(--portal-line, #e5e3dd); border-radius: 12px; background: var(--portal-paper, #fff); min-width: 0; scroll-margin-top: 85px; }
 .historyHeading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .history h2 { font: 400 24px "FE Display", sans-serif; letter-spacing: 1px; scroll-margin-top: 85px; }
-.historyHeading > span, .historyIntro { color: #666; font-size: 13px; }
+.historyHeading > span, .historyIntro { color: var(--portal-muted, #666); font-size: 13px; }
 .historyIntro { margin: 10px 0 16px; }
 .historyList { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.historyList li { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px; border: 1px solid #e5e3dd; border-radius: 10px; background: #faf9f6; }
+.historyList li { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px; border: 1px solid var(--portal-line, #e5e3dd); border-radius: 10px; background: var(--portal-soft, #faf9f6); }
 .historyRecord { display: grid; gap: 5px; min-width: 0; }
 .historyRecord > strong { font: 400 20px "FE Display", sans-serif; letter-spacing: .6px; }
-.historyMeta { color: #666; font-size: 14px; }
+.historyMeta { color: var(--portal-muted, #666); font-size: 14px; }
 .historyStatus { display: inline-flex; align-items: center; gap: 5px; justify-self: start; border-radius: 20px; padding: 4px 8px; background: #fff0df; color: #8b3f00; font-size: 12px; }
 .historyStatus[data-status="COMPLETED"] { background: #e6f3e9; color: #287e40; }
 .historyStatus svg { width: 14px; height: 14px; }
-.history :global(.fe-button) { min-height: 44px; white-space: normal; text-align: center; background: #fff; color: #1c1c1c; border-color: #d5d2c9; }
+.history :global(.fe-button) { min-height: 44px; white-space: normal; text-align: center; background: var(--portal-paper, #fff); color: var(--portal-ink, #1c1c1c); border-color: #d5d2c9; }
 .pagination { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; font-size: 13px; }
 .homeProgram { display: grid; gap: 12px; min-width: 0; max-width: 100%; }
 .homeProgram > a { justify-self: start; }

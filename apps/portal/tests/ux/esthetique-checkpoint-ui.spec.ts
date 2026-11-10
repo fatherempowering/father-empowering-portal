@@ -168,7 +168,8 @@ test("program label never claims publication while empty, failed or loading", as
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(page.getByText(/PROGRAMME DISPONIBLE|PROGRAMME EN PRÉPARATION/)).toHaveCount(0);
   await page.goto("/?screen=client-program&state=program-published");
-  await expect(page.getByText("TRAINING · PROGRAMME DISPONIBLE", { exact: true })).toBeVisible();
+  // The explicit English preference now survives page navigation.
+  await expect(page.getByText("TRAINING · PROGRAM AVAILABLE", { exact: true })).toBeVisible();
   // No generalized new theme before the first-page visual checkpoint is approved.
   await expect(page.locator("[data-client-visual]")).toHaveCount(0);
 });

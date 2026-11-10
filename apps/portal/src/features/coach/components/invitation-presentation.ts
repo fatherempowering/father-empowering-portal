@@ -1,3 +1,4 @@
+import { translateUi } from "@/components/fe/ui-copy";
 import type { CoachDashboardClient } from "../model";
 
 export type AccessPresentation = {
@@ -7,16 +8,16 @@ export type AccessPresentation = {
   icon: "check" | "clock" | "alert";
 };
 
-function date(value: string | null, timezone: string): string | null {
+function date(value: string | null, timezone: string, language: "fr" | "en"): string | null {
   if (!value || !Number.isFinite(Date.parse(value))) return null;
   try {
-    return new Intl.DateTimeFormat("fr-CA", {
+    return new Intl.DateTimeFormat(`${language}-CA`, {
       day: "numeric",
       month: "short",
       timeZone: timezone,
     }).format(new Date(value));
   } catch {
-    return new Intl.DateTimeFormat("fr-CA", {
+    return new Intl.DateTimeFormat(`${language}-CA`, {
       day: "numeric",
       month: "short",
       timeZone: "UTC",
@@ -25,9 +26,10 @@ function date(value: string | null, timezone: string): string | null {
 }
 
 /** Presentation only; backend statuses and mutation permissions stay authoritative. */
-export function invitationPresentation(
+function rawInvitationPresentation(
   client: CoachDashboardClient,
   now: number,
+  language: "fr" | "en",
 ): AccessPresentation {
   if (client.status === "ACTIVE")
     return {
@@ -89,17 +91,22 @@ export function invitationPresentation(
       icon: "clock",
       detail: "Envoi en préparation",
     };
-  const sent = date(invitation.sentAt, client.timezone);
-  const expires = date(invitation.expiresAt, client.timezone);
+  const sent = date(invitation.sentAt, client.timezone, language);
+  const expires = date(invitation.expiresAt, client.timezone, language);
   return {
     label: "Activation en attente",
     tone: "neutral",
     icon: "clock",
     detail: [
-      sent ? `Invitation envoyée · ${sent}` : "Invitation envoyée",
-      expires ? `Expire le ${expires}` : null,
+      sent ? `${translateUi("Invitation envoyée", language)} · ${sent}` : "Invitation envoyée",
+      expires ? `${language === "fr" ? "Expire le" : "Expires on"} ${expires}` : null,
     ]
       .filter(Boolean)
       .join(" — "),
   };
+}
+
+export function invitationPresentation(client: CoachDashboardClient, now: number, language: "fr" | "en" = "fr"): AccessPresentation {
+  const result = rawInvitationPresentation(client, now, language);
+  return { ...result, label: translateUi(result.label, language), detail: translateUi(result.detail, language) };
 }

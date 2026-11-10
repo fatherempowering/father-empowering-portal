@@ -1,5 +1,7 @@
 "use client";
 
+import { usePortalLanguage } from "@/components/fe/portal-preferences";
+import { UiText, useUiCopy } from "@/components/fe/ui-text";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
@@ -48,13 +50,15 @@ function PairFields({ id, label, value, onChange, required = false }: {
   id: string; label: string; value: Pair; onChange(value: Pair): void; required?: boolean;
 }) {
   return <fieldset className={styles.pair}><legend>{label}{required ? " *" : ""}</legend>
-    {(["fr", "en"] as const).map(language => <label key={language} htmlFor={`${id}-${language}`}>{language === "fr" ? "Français" : "English"}
+    {(["fr", "en"] as const).map(language => <label key={language} htmlFor={`${id}-${language}`}>{language === "fr" ? <UiText>{"Français"}</UiText> : "English"}
       <textarea id={`${id}-${language}`} value={value[language]} rows={2} maxLength={4000} onChange={event => onChange({ ...value, [language]: event.target.value })} />
     </label>)}
   </fieldset>;
 }
 
 export function CoachFollowup({ clientId }: { clientId: string }) {
+  const { language, french } = usePortalLanguage(); void french;
+  const c = useUiCopy();
   const [nutrition, setNutrition] = useState<NutritionState | null>(null);
   const [checkIns, setCheckIns] = useState<CheckInsState | null>(null);
   const [document, setDocument] = useState<NutritionDocument>(() => structuredClone(EMPTY_NUTRITION_DOCUMENT));
@@ -164,59 +168,59 @@ export function CoachFollowup({ clientId }: { clientId: string }) {
 
   return <AppShell space="coach" current="clients" documentNavigation>
     <div className={styles.page}>
-      <Link className="fe-button" href={`/coach/clients/${encodeURIComponent(clientId)}`}>← Dossier client</Link>
-      <header><p className="fe-kicker">Suivi du client</p><h1>Nutrition et check-ins</h1><p>Le plan que tu prescris. Les observations que ton client te transmet.</p></header>
-      {loading ? <Loading>Chargement du suivi…</Loading> : null}
+      <Link className="fe-button" href={`/coach/clients/${encodeURIComponent(clientId)}`}><UiText>← Dossier client</UiText></Link>
+      <header><p className="fe-kicker"><UiText>Suivi du client</UiText></p><h1><UiText>Nutrition et check-ins</UiText></h1><p><UiText>Le plan que tu prescris. Les observations que ton client te transmet.</UiText></p></header>
+      {loading ? <Loading><UiText>Chargement du suivi…</UiText></Loading> : null}
       {error ? <Feedback>{error}</Feedback> : null}
       {success ? <div className={styles.success} role="status">{success}</div> : null}
-      {!loading && !nutrition ? <button className="fe-button" onClick={() => setAttempt(value => value + 1)}>Réessayer</button> : null}
+      {!loading && !nutrition ? <button className="fe-button" onClick={() => setAttempt(value => value + 1)}><UiText>Réessayer</UiText></button> : null}
       {!loading && nutrition ? <section className={styles.panel} aria-labelledby="coach-nutrition-heading">
-        <header><p className="fe-kicker">Prescription nutritionnelle</p><h2 id="coach-nutrition-heading">Construire le plan</h2>
-          <p>{nutrition.publication ? `Version ${nutrition.publication.revision} publiée le ${new Date(nutrition.publication.publishedAt).toLocaleDateString("fr-CA")}. Elle reste visible pendant tes modifications.` : "Aucun plan publié pour ce client."}</p>
-          {nutrition.publication ? <button ref={withdrawTrigger} className="fe-button" type="button" disabled={busy || uncertain} onClick={() => setConfirmWithdraw(true)}>Retirer le plan actif</button> : null}
+        <header><p className="fe-kicker"><UiText>Prescription nutritionnelle</UiText></p><h2 id="coach-nutrition-heading"><UiText>Construire le plan</UiText></h2>
+          <p>{nutrition.publication ? `Version ${nutrition.publication.revision} publiée le ${new Date(nutrition.publication.publishedAt).toLocaleDateString("fr-CA")}. Elle reste visible pendant tes modifications.` : <UiText>{"Aucun plan publié pour ce client."}</UiText>}</p>
+          {nutrition.publication ? <button ref={withdrawTrigger} className="fe-button" type="button" disabled={busy || uncertain} onClick={() => setConfirmWithdraw(true)}><UiText>Retirer le plan actif</UiText></button> : null}
         </header>
-        <p>Les champs * sont nécessaires à la publication. Une version française ou anglaise suffit. Les textes libres ne sont pas traduits automatiquement.</p>
+        <p><UiText>Les champs * sont nécessaires à la publication. Une version française ou anglaise suffit. Les textes libres ne sont pas traduits automatiquement.</UiText></p>
         <fieldset className={styles.editor} disabled={busy || uncertain}>
-          <PairFields id="nutrition-title" label="Titre du plan" value={document.title} onChange={value => updatePair("title", value)} required />
-          <fieldset className={styles.targets}><legend>Cibles prescrites — facultatives</legend>
-            {([['calories', 'Calories (kcal)', 15000], ['proteinG', 'Protéines (g)', 1000], ['carbohydrateG', 'Glucides (g)', 2000], ['fatG', 'Lipides (g)', 1000]] as const).map(([key, label, max]) => <label key={key}>{label}<input type="number" min={0} max={max} step="any" value={document.targets[key] ?? ""} onChange={event => setDocument(current => ({ ...current, targets: { ...current.targets, [key]: event.target.value === "" ? null : Number(event.target.value) } }))} /></label>)}
+          <PairFields id="nutrition-title" label={c("Titre du plan")} value={document.title} onChange={value => updatePair("title", value)} required />
+          <fieldset className={styles.targets}><legend><UiText>Cibles prescrites — facultatives</UiText></legend>
+            {([['calories', 'Calories (kcal)', 15000], ['proteinG', 'Protéines (g)', 1000], ['carbohydrateG', 'Glucides (g)', 2000], ['fatG', 'Lipides (g)', 1000]] as const).map(([key, label, max]) => <label key={key}><UiText>{label}</UiText><input type="number" min={0} max={max} step="any" value={document.targets[key] ?? ""} onChange={event => setDocument(current => ({ ...current, targets: { ...current.targets, [key]: event.target.value === "" ? null : Number(event.target.value) } }))} /></label>)}
           </fieldset>
-          <h3>Repas</h3>
-          {document.meals.map((meal, index) => <section className={styles.meal} key={meal.id} aria-label={`Repas ${index + 1}`}>
-            <header><h3>Repas {index + 1}</h3><button className="fe-button" type="button" onClick={() => setDocument(current => ({ ...current, meals: current.meals.filter(item => item.id !== meal.id) }))}>Retirer le repas {index + 1}</button></header>
-            <PairFields id={`meal-${meal.id}-title`} label="Nom du repas" required value={meal.title} onChange={value => updateMeal(meal.id, "title", value)} />
-            <PairFields id={`meal-${meal.id}-time`} label="Moment / horaire — facultatif" value={meal.timeLabel ?? blankPair()} onChange={value => updateMeal(meal.id, "timeLabel", value)} />
-            <PairFields id={`meal-${meal.id}-portions`} label="Aliments et portions (précise cru/cuit si pertinent)" required value={meal.portions} onChange={value => updateMeal(meal.id, "portions", value)} />
-            <PairFields id={`meal-${meal.id}-notes`} label="Notes du repas — facultatives" value={meal.notes} onChange={value => updateMeal(meal.id, "notes", value)} />
+          <h3><UiText>Repas</UiText></h3>
+          {document.meals.map((meal, index) => <section className={styles.meal} key={meal.id} aria-label={`${french ? "Repas" : "Meal"} ${index + 1}`}>
+            <header><h3><UiText>Repas </UiText>{index + 1}</h3><button className="fe-button" type="button" onClick={() => setDocument(current => ({ ...current, meals: current.meals.filter(item => item.id !== meal.id) }))}><UiText>Retirer le repas </UiText>{index + 1}</button></header>
+            <PairFields id={`meal-${meal.id}-title`} label={c("Nom du repas")} required value={meal.title} onChange={value => updateMeal(meal.id, "title", value)} />
+            <PairFields id={`meal-${meal.id}-time`} label={c("Moment / horaire — facultatif")} value={meal.timeLabel ?? blankPair()} onChange={value => updateMeal(meal.id, "timeLabel", value)} />
+            <PairFields id={`meal-${meal.id}-portions`} label={c("Aliments et portions (précise cru/cuit si pertinent)")} required value={meal.portions} onChange={value => updateMeal(meal.id, "portions", value)} />
+            <PairFields id={`meal-${meal.id}-notes`} label={c("Notes du repas — facultatives")} value={meal.notes} onChange={value => updateMeal(meal.id, "notes", value)} />
           </section>)}
-          <button id="add-meal" className="fe-button" type="button" disabled={document.meals.length >= 20} onClick={() => setDocument(current => ({ ...current, meals: [...current.meals, { id: crypto.randomUUID(), title: blankPair(), timeLabel: blankPair(), portions: blankPair(), notes: blankPair() }] }))}>+ Ajouter un repas</button>
-          <PairFields id="nutrition-instructions" label="Consignes" value={document.instructions} onChange={value => updatePair("instructions", value)} />
-          <PairFields id="nutrition-preparation" label="Préparation — facultative" value={document.preparation} onChange={value => updatePair("preparation", value)} />
-          <PairFields id="nutrition-grocery" label="Liste d’épicerie prescrite — facultative" value={document.grocery} onChange={value => updatePair("grocery", value)} />
+          <button id="add-meal" className="fe-button" type="button" disabled={document.meals.length >= 20} onClick={() => setDocument(current => ({ ...current, meals: [...current.meals, { id: crypto.randomUUID(), title: blankPair(), timeLabel: blankPair(), portions: blankPair(), notes: blankPair() }] }))}><UiText>+ Ajouter un repas</UiText></button>
+          <PairFields id="nutrition-instructions" label={c("Consignes")} value={document.instructions} onChange={value => updatePair("instructions", value)} />
+          <PairFields id="nutrition-preparation" label={c("Préparation — facultative")} value={document.preparation} onChange={value => updatePair("preparation", value)} />
+          <PairFields id="nutrition-grocery" label={c("Liste d’épicerie prescrite — facultative")} value={document.grocery} onChange={value => updatePair("grocery", value)} />
         </fieldset>
         <div className={styles.actions}>
-          <button className="fe-button fe-button-primary" disabled={busy || uncertain || !dirty} onClick={() => mutate("save")}>{busy ? "Enregistrement…" : "Enregistrer le brouillon"}</button>
-          <button ref={publishTrigger} className="fe-button" disabled={busy || uncertain || dirty || !nutrition.draft || draftAlreadyPublished} onClick={beginPublish}>Publier le plan nutritionnel</button>
-          {!nutrition.publication && draftAlreadyPublished ? <small>Modifie puis enregistre le brouillon pour publier une nouvelle version.</small> : null}
-          {dirty ? <small>Enregistre tes modifications avant de publier.</small> : null}
-          {uncertain ? <><button className="fe-button" disabled={busy} onClick={() => mutate(command.current?.action ?? "save", true)}>Réessayer la même demande</button><button className="fe-button" disabled={busy} onClick={() => setAttempt(value => value + 1)}>Recharger l’état enregistré</button></> : null}
+          <button className="fe-button fe-button-primary" disabled={busy || uncertain || !dirty} onClick={() => mutate("save")}>{busy ? <UiText>{"Enregistrement…"}</UiText> : <UiText>{"Enregistrer le brouillon"}</UiText>}</button>
+          <button ref={publishTrigger} className="fe-button" disabled={busy || uncertain || dirty || !nutrition.draft || draftAlreadyPublished} onClick={beginPublish}><UiText>Publier le plan nutritionnel</UiText></button>
+          {!nutrition.publication && draftAlreadyPublished ? <small><UiText>Modifie puis enregistre le brouillon pour publier une nouvelle version.</UiText></small> : null}
+          {dirty ? <small><UiText>Enregistre tes modifications avant de publier.</UiText></small> : null}
+          {uncertain ? <><button className="fe-button" disabled={busy} onClick={() => mutate(command.current?.action ?? "save", true)}><UiText>Réessayer la même demande</UiText></button><button className="fe-button" disabled={busy} onClick={() => setAttempt(value => value + 1)}><UiText>Recharger l’état enregistré</UiText></button></> : null}
         </div>
-        {nutrition.history.length ? <details><summary>Publications conservées ({nutrition.history.length}{nutrition.historyTruncated ? "+" : ""})</summary>{nutrition.history.map(item => <p key={item.id}>Version {item.revision} · {item.document.title.fr || item.document.title.en} · {new Date(item.publishedAt).toLocaleString("fr-CA")}{item.withdrawnAt ? ` · Plan retiré le ${new Date(item.withdrawnAt).toLocaleString("fr-CA")}` : ""}</p>)}</details> : null}
+        {nutrition.history.length ? <details><summary><UiText>Publications conservées (</UiText>{nutrition.history.length}{nutrition.historyTruncated ? "+" : ""})</summary>{nutrition.history.map(item => <p key={item.id}><UiText>Version </UiText>{item.revision} · {item.document.title[language] || item.document.title.fr || item.document.title.en} · {new Date(item.publishedAt).toLocaleString(`${language}-CA`)}{item.withdrawnAt ? ` · ${french ? "Plan retiré le" : "Plan withdrawn on"} ${new Date(item.withdrawnAt).toLocaleString(`${language}-CA`)}` : ""}</p>)}</details> : null}
       </section> : null}
-      <section className={styles.panel} aria-labelledby="coach-checkins-heading"><h2 id="coach-checkins-heading">Check-ins transmis</h2><p>Les brouillons du client restent privés. Les réponses transmises sont conservées telles quelles.</p>
-        <button className="fe-button" disabled={loadingHistory} onClick={() => historyPage(checkIns?.page ?? 0)}>{loadingHistory ? "Actualisation…" : "Actualiser les check-ins"}</button>
-        {checkInError ? <><Feedback>{checkInError}</Feedback><button className="fe-button" disabled={loadingHistory} onClick={() => historyPage(checkIns?.page ?? 0)}>Réessayer les check-ins</button></> : null}
-        {checkIns && checkIns.history.length === 0 ? <p>Aucun check-in transmis pour le moment.</p> : null}
-        {checkIns?.history.map(item => <details className={styles.submission} key={item.id}><summary>Observations du {new Date(`${item.document.observedOn}T12:00:00Z`).toLocaleDateString("fr-CA", { timeZone: "UTC" })}</summary>
-          <p>Transmis le {new Date(item.submittedAt).toLocaleString("fr-CA")}</p>
-          <dl className={styles.observations}>{(Object.entries(item.document.measurements) as [keyof CheckInMeasurements, number | null][]).filter(([,value]) => value !== null).map(([key,value]) => <div key={key}><dt>{observationLabels[key]}</dt><dd>{value}</dd></div>)}
-            {([['sleepHours','Sommeil (heures)'],['sleepQuality','Qualité du sommeil /10'],['energy','Énergie /10'],['stress','Stress /10'],['soreness','Courbatures /10'],['cardioMinutes','Cardio (minutes)'],['cardioZone','Zone cardio']] as const).filter(([key]) => item.document[key] !== null).map(([key,label]) => <div key={key}><dt>{label}</dt><dd>{item.document[key]}</dd></div>)}
+      <section className={styles.panel} aria-labelledby="coach-checkins-heading"><h2 id="coach-checkins-heading"><UiText>Check-ins transmis</UiText></h2><p><UiText>Les brouillons du client restent privés. Les réponses transmises sont conservées telles quelles.</UiText></p>
+        <button className="fe-button" disabled={loadingHistory} onClick={() => historyPage(checkIns?.page ?? 0)}>{loadingHistory ? <UiText>{"Actualisation…"}</UiText> : <UiText>{"Actualiser les check-ins"}</UiText>}</button>
+        {checkInError ? <><Feedback>{checkInError}</Feedback><button className="fe-button" disabled={loadingHistory} onClick={() => historyPage(checkIns?.page ?? 0)}><UiText>Réessayer les check-ins</UiText></button></> : null}
+        {checkIns && checkIns.history.length === 0 ? <p><UiText>Aucun check-in transmis pour le moment.</UiText></p> : null}
+        {checkIns?.history.map(item => <details className={styles.submission} key={item.id}><summary><UiText>Observations du </UiText>{new Date(`${item.document.observedOn}T12:00:00Z`).toLocaleDateString(`${language}-CA`, { timeZone: "UTC" })}</summary>
+          <p><UiText>Transmis le </UiText>{new Date(item.submittedAt).toLocaleString(`${language}-CA`)}</p>
+          <dl className={styles.observations}>{(Object.entries(item.document.measurements) as [keyof CheckInMeasurements, number | null][]).filter(([,value]) => value !== null).map(([key,value]) => <div key={key}><dt><UiText>{observationLabels[key]}</UiText></dt><dd>{value}</dd></div>)}
+            {([['sleepHours','Sommeil (heures)'],['sleepQuality','Qualité du sommeil /10'],['energy','Énergie /10'],['stress','Stress /10'],['soreness','Courbatures /10'],['cardioMinutes','Cardio (minutes)'],['cardioZone','Zone cardio']] as const).filter(([key]) => item.document[key] !== null).map(([key,label]) => <div key={key}><dt><UiText>{label}</UiText></dt><dd>{item.document[key]}</dd></div>)}
           </dl>
           {item.document.notes ? <p className={styles.preserve}>{item.document.notes}</p> : null}
         </details>)}
-        {checkIns && checkIns.total > 50 ? <nav className={styles.actions} aria-label="Pages de check-ins"><button className="fe-button" disabled={loadingHistory || checkIns.page === 0} onClick={() => historyPage(checkIns.page - 1)}>Précédents</button><span>Page {checkIns.page + 1} · {checkIns.total} check-ins</span><button className="fe-button" disabled={loadingHistory || (checkIns.page + 1) * 50 >= checkIns.total} onClick={() => historyPage(checkIns.page + 1)}>Suivants</button></nav> : null}
+        {checkIns && checkIns.total > 50 ? <nav className={styles.actions} aria-label={c("Pages de check-ins")}><button className="fe-button" disabled={loadingHistory || checkIns.page === 0} onClick={() => historyPage(checkIns.page - 1)}><UiText>Précédents</UiText></button><span><UiText>Page </UiText>{checkIns.page + 1} · {checkIns.total}<UiText> check-ins</UiText></span><button className="fe-button" disabled={loadingHistory || (checkIns.page + 1) * 50 >= checkIns.total} onClick={() => historyPage(checkIns.page + 1)}><UiText>Suivants</UiText></button></nav> : null}
       </section>
-      {confirmWithdraw ? <PlanWithdrawalDialog title="Retirer ce plan nutritionnel?" onCancel={() => { setConfirmWithdraw(false); withdrawTrigger.current?.focus(); }} onConfirm={() => void mutate("withdraw")} /> : null}
+      {confirmWithdraw ? <PlanWithdrawalDialog title={c("Retirer ce plan nutritionnel?")} onCancel={() => { setConfirmWithdraw(false); withdrawTrigger.current?.focus(); }} onConfirm={() => void mutate("withdraw")} /> : null}
       {confirmPublish ? <div className={styles.backdrop} onKeyDown={event => {
         if (event.key === "Escape") closeConfirmation();
         if (event.key === "Tab") {
@@ -224,7 +228,7 @@ export function CoachFollowup({ clientId }: { clientId: string }) {
           if (event.shiftKey && window.document.activeElement === buttons[0]) { event.preventDefault(); buttons[1]?.focus(); }
           else if (!event.shiftKey && window.document.activeElement === buttons[1]) { event.preventDefault(); buttons[0]?.focus(); }
         }
-      }}><section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="nutrition-confirm-title"><h2 id="nutrition-confirm-title">Publier ce plan?</h2><p>Le client verra cette nouvelle version dès sa prochaine lecture. La publication précédente reste conservée.</p><div className={styles.actions}><button ref={publishCancel} className="fe-button" onClick={closeConfirmation}>Annuler</button><button className="fe-button fe-button-primary" onClick={() => mutate("publish")}>Confirmer la publication</button></div></section></div> : null}
+      }}><section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="nutrition-confirm-title"><h2 id="nutrition-confirm-title"><UiText>Publier ce plan?</UiText></h2><p><UiText>Le client verra cette nouvelle version dès sa prochaine lecture. La publication précédente reste conservée.</UiText></p><div className={styles.actions}><button ref={publishCancel} className="fe-button" onClick={closeConfirmation}><UiText>Annuler</UiText></button><button className="fe-button fe-button-primary" onClick={() => mutate("publish")}><UiText>Confirmer la publication</UiText></button></div></section></div> : null}
     </div>
   </AppShell>;
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { usePortalLanguage } from "@/components/fe/portal-preferences";
+import { UiText } from "@/components/fe/ui-text";
 import { useEffect, useState } from "react";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { coachWeekZeroAcquisitionSchema } from "@/lib/contracts/week-zero-acquisition";
@@ -12,6 +14,7 @@ type Snapshot = z.infer<typeof coachWeekZeroAcquisitionSchema>;
 type State = { kind: "loading" } | { kind: "error" } | { kind: "ready"; value: Snapshot };
 
 export function CoachWeekZeroAcquisition({ clientId, timezone }: { clientId: string; timezone: string }) {
+  const { language, french } = usePortalLanguage(); void french;
   const [state, setState] = useState<State>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -48,32 +51,32 @@ export function CoachWeekZeroAcquisition({ clientId, timezone }: { clientId: str
     : 0;
   return <section className={styles.assessment} aria-labelledby="week-zero-acquisition-title" aria-busy={state.kind === "loading"} data-testid="coach-week-zero-acquisition">
     <header className={styles.assessmentHeader}>
-      <div><p className="fe-kicker">{"Son point de départ"}</p><h2 id="week-zero-acquisition-title">Semaine zéro</h2>
-        <p>{"Ses photos, ses mesures, ses charges de départ et ses observations sur le cardio et la mobilité, envoyés ensemble."}</p></div>
+      <div><p className="fe-kicker">{<UiText>{"Son point de départ"}</UiText>}</p><h2 id="week-zero-acquisition-title"><UiText>Semaine zéro</UiText></h2>
+        <p>{<UiText>{"Ses photos, ses mesures, ses charges de départ et ses observations sur le cardio et la mobilité, envoyés ensemble."}</UiText>}</p></div>
       {snapshot && <span className="fe-badge" data-testid="week-zero-acquisition-status">
-        {submitted ? exceptions ? "Transmise avec éléments non réalisés" : "Semaine zéro transmise" : "Non transmise"}
+        {submitted ? exceptions ? <UiText>{"Transmise avec éléments non réalisés"}</UiText> : <UiText>{"Semaine zéro transmise"}</UiText> : <UiText>{"Non transmise"}</UiText>}
       </span>}
     </header>
-    {state.kind === "loading" ? <div className={styles.empty}><Loading>Chargement de la semaine zéro…</Loading></div>
+    {state.kind === "loading" ? <div className={styles.empty}><Loading><UiText>Chargement de la semaine zéro…</UiText></Loading></div>
       : state.kind === "error" ? <div className={styles.empty}>
-        <Feedback>{"On n’a pas pu ouvrir sa semaine zéro. Réessaie pour la consulter."}</Feedback>
-        <button type="button" className="fe-button" onClick={() => { setState({ kind: "loading" }); setAttempt(n => n + 1); }}>Réessayer</button>
+        <Feedback>{<UiText>{"On n’a pas pu ouvrir sa semaine zéro. Réessaie pour la consulter."}</UiText>}</Feedback>
+        <button type="button" className="fe-button" onClick={() => { setState({ kind: "loading" }); setAttempt(n => n + 1); }}><UiText>Réessayer</UiText></button>
       </div> : !responses || !snapshot ? <div className={styles.empty}>
-        <h3>Aucune semaine zéro complète transmise</h3>
-        <p>{"Son brouillon et ses photos restent privés jusqu’à l’envoi. Un ancien bilan partiel ne remplace pas sa semaine zéro complète."}</p>
+        <h3><UiText>Aucune semaine zéro complète transmise</UiText></h3>
+        <p>{<UiText>{"Son brouillon et ses photos restent privés jusqu’à l’envoi. Un ancien bilan partiel ne remplace pas sa semaine zéro complète."}</UiText>}</p>
       </div> : <>
         <div className={styles.empty}>
-          <p>Transmise le {formatAssessmentDate(snapshot.submittedAt, timezone) ?? "date indisponible"}. Réponses conservées en lecture seule.</p>
-          {exceptions > 0 && <p className={styles.exception}>{exceptions} {"élément(s) non réalisé(s). Les raisons indiquées par le client sont présentées ci-dessous."}</p>}
+          <p><UiText>Transmise le </UiText>{formatAssessmentDate(snapshot.submittedAt, timezone, language) ?? <UiText>{"date indisponible"}</UiText>}<UiText>. Réponses conservées en lecture seule.</UiText></p>
+          {exceptions > 0 && <p className={styles.exception}>{exceptions} {<UiText>{"élément(s) non réalisé(s). Les raisons indiquées par le client sont présentées ci-dessous."}</UiText>}</p>}
         </div>
         <div className={styles.photoGrid}>
           {(["front", "side", "back"] as const).map((slot, index) => <PrivatePhoto key={slot}
             src={`/api/v1/coach/clients/${encodeURIComponent(clientId)}/week-zero/photos?slot=${slot}&assetId=${encodeURIComponent(responses.photos[slot] ?? "")}`}
-            label={["Face", "Profil", "Dos"][index]} />)}
+            label={(french ? ["Face", "Profil", "Dos"] : ["Front", "Side", "Back"])[index]} />)}
         </div>
-        {responses.photos.notes && <p className={styles.empty}>Notes des photos : {responses.photos.notes}</p>}
+        {responses.photos.notes && <p className={styles.empty}><UiText>Notes des photos : </UiText>{responses.photos.notes}</p>}
         <div className={styles.acquisitionSections}>
-          {acquisitionSections(snapshot).map(section => <section key={section.id} className={styles.section} data-testid={`acquisition-${section.id}`}>
+          {acquisitionSections(snapshot, language).map(section => <section key={section.id} className={styles.section} data-testid={`acquisition-${section.id}`}>
             <h3>{section.title}</h3><dl className={styles.values}>{section.items.map(item => <div key={item.label} className={styles.value}>
               <dt>{item.label}</dt><dd>{item.value}</dd>
             </div>)}</dl>
@@ -84,12 +87,13 @@ export function CoachWeekZeroAcquisition({ clientId, timezone }: { clientId: str
 }
 
 function PrivatePhoto({ src, label }: { src: string; label: string }) {
+  const { french } = usePortalLanguage();
   const [failed, setFailed] = useState(false);
   return <figure>
-    {failed ? <Feedback>Photo {label.toLowerCase()} indisponible. Recharge le dossier pour réessayer.</Feedback>
+    {failed ? <Feedback><UiText>Photo </UiText>{label.toLowerCase()}<UiText> indisponible. Recharge le dossier pour réessayer.</UiText></Feedback>
       // Authenticated, no-store image proxy: never an external or public Storage URL.
       // eslint-disable-next-line @next/next/no-img-element
-      : <img src={src} alt={`Photo de départ — ${label.toLowerCase()}`} loading="lazy" onError={() => setFailed(true)} />}
+      : <img src={src} alt={`${french ? "Photo de départ" : "Starting photo"} — ${label.toLowerCase()}`} loading="lazy" onError={() => setFailed(true)} />}
     <figcaption>{label}</figcaption>
   </figure>;
 }

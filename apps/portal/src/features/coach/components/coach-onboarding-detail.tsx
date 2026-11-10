@@ -1,5 +1,7 @@
 "use client";
 
+import { usePortalLanguage } from "@/components/fe/portal-preferences";
+import { UiText } from "@/components/fe/ui-text";
 import { useCallback, useEffect, useState } from "react";
 
 import { Feedback, Loading } from "@/components/fe/feedback";
@@ -112,14 +114,14 @@ export function CoachOnboardingDetail({ clientId }: { clientId: string }) {
       <OnboardingHeader state={state} />
       {state.kind === "loading" ? (
         <div className={styles.empty}>
-          <Loading>Chargement du questionnaire d’accueil…</Loading>
+          <Loading><UiText>Chargement du questionnaire d’accueil…</UiText></Loading>
         </div>
       ) : state.kind === "error" ? (
         <div className={styles.empty}>
           <Feedback>{state.message}</Feedback>
-          <button className="fe-button" type="button" onClick={retry}>
+          <button className="fe-button" type="button" onClick={retry}><UiText>
             Réessayer
-          </button>
+          </UiText></button>
         </div>
       ) : (
         <OnboardingContent value={state.value} onRetry={retry} />
@@ -143,9 +145,9 @@ function OnboardingHeader({ state }: { state: LoadState }) {
   return (
     <header className={styles.assessmentHeader}>
       <div>
-        <p className="fe-kicker">Accueil Client</p>
-        <h2 id="coach-onboarding-title">Questionnaire d’accueil</h2>
-        <p>Les réponses transmises par le client, en lecture seule.</p>
+        <p className="fe-kicker"><UiText>Accueil Client</UiText></p>
+        <h2 id="coach-onboarding-title"><UiText>Questionnaire d’accueil</UiText></h2>
+        <p><UiText>Les réponses transmises par le client, en lecture seule.</UiText></p>
       </div>
       <span
         className={`fe-badge ${submitted ? "fe-badge-active" : ""}`}
@@ -154,7 +156,7 @@ function OnboardingHeader({ state }: { state: LoadState }) {
         <Icon
           name={submitted ? "check" : state.kind === "error" ? "alert" : "clock"}
         />
-        {label}
+        <UiText>{label}</UiText>
       </span>
     </header>
   );
@@ -167,15 +169,16 @@ function OnboardingContent({
   value: CoachOnboardingDetailValue;
   onRetry: () => void;
 }) {
+  const { language, french } = usePortalLanguage(); void french;
   const { client, intake } = value;
   if (intake.status !== "SUBMITTED") {
     return (
       <div className={styles.empty}>
-        <h3>Aucun questionnaire d’accueil transmis</h3>
-        <p>
+        <h3><UiText>Aucun questionnaire d’accueil transmis</UiText></h3>
+        <p><UiText>
           Un brouillon peut exister, mais aucune réponse n’est visible ici tant
           que le client ne l’a pas transmise.
-        </p>
+        </UiText></p>
       </div>
     );
   }
@@ -183,33 +186,33 @@ function OnboardingContent({
   if (intake.responses === null) {
     return (
       <div className={styles.empty}>
-        <Feedback>
+        <Feedback><UiText>
           Le questionnaire est marqué comme transmis, mais ses réponses ne sont
           pas disponibles. Réessaie pour actualiser le dossier.
-        </Feedback>
-        <button className="fe-button" type="button" onClick={onRetry}>
+        </UiText></Feedback>
+        <button className="fe-button" type="button" onClick={onRetry}><UiText>
           Réessayer
-        </button>
+        </UiText></button>
       </div>
     );
   }
 
   const submittedAt = formatAssessmentDate(
     intake.submittedAt,
-    client.timezone,
+    client.timezone, language,
   );
-  const sections = onboardingPresentationSections(intake.responses, "fr");
+  const sections = onboardingPresentationSections(intake.responses, language);
 
   return (
     <>
       <div className={styles.empty}>
         <p>
           {submittedAt
-            ? `Transmis le ${submittedAt}.`
-            : "Le questionnaire d’accueil a été transmis."}{" "}
+            ? `${french ? "Transmis le" : "Submitted on"} ${submittedAt}.`
+            : <UiText>{"Le questionnaire d’accueil a été transmis."}</UiText>}{" "}<UiText>
           Les réponses sont en lecture seule et restent distinctes de l’identité
           du compte et des données de la semaine zéro.
-        </p>
+        </UiText></p>
       </div>
       <div className={styles.onboardingSections}>
         {sections.map((section) => (

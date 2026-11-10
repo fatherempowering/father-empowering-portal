@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText } from "@/components/fe/ui-text";
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { AuthShell } from "@/components/fe/auth-shell";
@@ -82,17 +83,17 @@ export function ClientLoginCard() {
   return (
     <AuthShell>
       <p className="fe-kicker">The Legacy Protocol</p>
-      <h1 className="fe-title">Retrouve ton portail.</h1>
+      <h1 className="fe-title"><UiText>Retrouve ton portail.</UiText></h1>
       <p className="fe-intro">
-        {step === "EMAIL"
+        <UiText>{step === "EMAIL"
           ? "Reçois un code de connexion par courriel. Aucun mot de passe n’est requis."
-          : "Entre le code reçu par courriel pour ouvrir ton espace."}
+          : "Entre le code reçu par courriel pour ouvrir ton espace."}</UiText>
       </p>
       {step === "EMAIL" ? (
         <form className="fe-form" onSubmit={requestOtp} aria-busy={busy}>
-          <label className="fe-field">
+          <label className="fe-field"><UiText>
             Courriel
-            <input
+            </UiText><input
               name="email"
               type="email"
               autoComplete="email"
@@ -108,7 +109,7 @@ export function ClientLoginCard() {
             type="submit"
             disabled={busy}
           >
-            {busy ? "Envoi…" : "Envoyer mon code"}
+            <UiText>{busy ? "Envoi…" : "Envoyer mon code"}</UiText>
           </button>
         </form>
       ) : (
@@ -118,9 +119,9 @@ export function ClientLoginCard() {
           aria-busy={busy || step === "VERIFYING"}
         >
           <Feedback tone="info">
-            {resent
+            <UiText>{resent
               ? "Si ce compte est actif, un nouveau code a été envoyé."
-              : "Si ce compte est actif, le code a été envoyé."}
+              : "Si ce compte est actif, le code a été envoyé."}</UiText>
           </Feedback>
           <CodeInput
             value={otp}
@@ -135,7 +136,7 @@ export function ClientLoginCard() {
             type="submit"
             disabled={busy || step === "VERIFYING" || !/^\d{6}$/.test(otp)}
           >
-            {step === "VERIFYING" ? "Connexion…" : "Ouvrir mon portail"}
+            <UiText>{step === "VERIFYING" ? "Connexion…" : "Ouvrir mon portail"}</UiText>
           </button>
           <button
             className="fe-text-button"
@@ -143,7 +144,7 @@ export function ClientLoginCard() {
             onClick={() => void requestOtp()}
             disabled={busy || step === "VERIFYING"}
           >
-            {busy ? "Envoi…" : "Renvoyer le code"}
+            <UiText>{busy ? "Envoi…" : "Renvoyer le code"}</UiText>
           </button>
           <button
             className="fe-text-button"
@@ -155,13 +156,13 @@ export function ClientLoginCard() {
               setError(null);
               setResent(false);
             }}
-          >
+          ><UiText>
             Changer de courriel
-          </button>
+          </UiText></button>
         </form>
       )}
-      <p className="fe-auth-secondary">
-        Tu es coach ? <Link href="/login">Accéder à mon espace Coach</Link>
+      <p className="fe-auth-secondary"><UiText>
+        Tu es coach ? </UiText><Link href="/login"><UiText>Accéder à mon espace Coach</UiText></Link>
       </p>
     </AuthShell>
   );

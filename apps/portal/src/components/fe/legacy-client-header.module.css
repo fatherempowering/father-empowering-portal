@@ -1,4 +1,4 @@
-.frame { --fe-canvas: #f4f3ef; --fe-orange: #c85a00; --fe-ink: #1c1c1c; --fe-paper: #fff; --fe-muted: #666; --fe-line: #e4e2dc; color-scheme: light; background: #f4f3ef; color: #1c1c1c; font-family: "FE Sans", sans-serif; min-width: 0; }
+.frame { --fe-canvas: #f4f3ef; --fe-orange: #c85a00; --fe-ink: var(--portal-ink, #1c1c1c); --fe-paper: var(--portal-paper, #fff); --fe-muted: var(--portal-muted, #666); --fe-line: var(--portal-line, #e4e2dc); color-scheme: var(--portal-color-scheme, light); background: var(--portal-canvas, #f4f3ef); color: var(--portal-ink, #1c1c1c); font-family: "FE Sans", sans-serif; min-width: 0; }
 .frame :global(.fe-main) { max-width: none; padding: 0; margin: 0; }
 .frame :global(.fe-button-primary) { background: #c85a00; border-color: #c85a00; color: #fff; }
 .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 14px 18px 12px; background: #1c1c1c; color: #fff; border-bottom: 3px solid #c85a00; min-height: 110px; }

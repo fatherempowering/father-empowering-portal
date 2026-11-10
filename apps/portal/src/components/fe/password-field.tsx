@@ -1,14 +1,16 @@
 "use client";
 
+import { UiText, useUiCopy } from "@/components/fe/ui-text";
 import { useId, useState } from "react";
 import { Icon } from "./icon";
 
 export function PasswordField() {
+  const c = useUiCopy();
   const id = useId();
   const [visible, setVisible] = useState(false);
   return (
     <div className="fe-field">
-      <label htmlFor={id}>Mot de passe</label>
+      <label htmlFor={id}><UiText>Mot de passe</UiText></label>
       <div className="fe-password">
         <input
           id={id}
@@ -21,9 +23,7 @@ export function PasswordField() {
         <button
           className="fe-icon-button"
           type="button"
-          aria-label={
-            visible ? "Masquer le mot de passe" : "Afficher le mot de passe"
-          }
+          aria-label={c(visible ? "Masquer le mot de passe" : "Afficher le mot de passe")}
           aria-pressed={visible}
           onClick={() => setVisible(!visible)}
         >

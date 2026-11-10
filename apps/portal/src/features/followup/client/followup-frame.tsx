@@ -4,15 +4,12 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { AppShell } from "@/components/fe/app-shell";
 import { requestClientLogout } from "@/features/client/auth/request-client-logout";
 import styles from "./followup.module.css";
+import { usePortalLanguage } from "@/components/fe/portal-preferences";
 
 export function useFollowupLanguage() {
-  const [french, setFrench] = useState(true);
-  useEffect(() => { setFrench(new URLSearchParams(window.location.search).get("language") !== "en"); }, []);
+  const { french, setLanguage } = usePortalLanguage();
   function changeLanguage() {
-    const url = new URL(window.location.href);
-    url.searchParams.set("language", french ? "en" : "fr");
-    window.history.replaceState(window.history.state, "", url);
-    setFrench(!french);
+    setLanguage(french ? "en" : "fr");
   }
   return { french, changeLanguage };
 }

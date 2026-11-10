@@ -8,6 +8,8 @@ import { usePortalAccess } from "./portal-access-context";
 import { selectNumericInputOnFocus } from "./select-numeric-input";
 import { LegacyClientHeader } from "./legacy-client-header";
 import legacyStyles from "./legacy-client-header.module.css";
+import { usePortalLanguage } from "./portal-preferences";
+import { PortalSettings } from "./portal-settings";
 
 export function AppShell({
   children,
@@ -33,12 +35,12 @@ export function AppShell({
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const navId = useId();
-  const french = locale === "fr";
-  const spaceLabel = space === "coach" ? "Espace Coach" : "The Legacy Protocol";
+  const { french, language } = usePortalLanguage(locale);
+  const spaceLabel = space === "coach" ? french ? "Espace Coach" : "Coach portal" : "The Legacy Protocol";
   const identity =
     name ??
     (space === "coach"
-      ? "Espace Coach"
+      ? french ? "Espace Coach" : "Coach portal"
       : french
         ? "Espace Client"
         : "Client portal");
@@ -46,8 +48,8 @@ export function AppShell({
     space === "coach"
       ? [
           { href: "/coach", label: "Clients", icon: "users" as const, id: "clients" as const },
-          { href: "/coach/exercises", label: "Exercices", icon: "today" as const, id: "exercises" as const, document: true },
-          { href: "/coach/programs", label: "Programmes", icon: "today" as const, id: "programs" as const, document: true },
+          { href: "/coach/exercises", label: french ? "Exercices" : "Exercises", icon: "today" as const, id: "exercises" as const, document: true },
+          { href: "/coach/programs", label: french ? "Programmes" : "Programs", icon: "today" as const, id: "programs" as const, document: true },
         ]
       : [
           {
@@ -110,7 +112,7 @@ export function AppShell({
   }, [open, navId]);
 
   return (
-    <div className="fe-app-shell" data-menu-open={open} lang={locale}>
+    <div className="fe-app-shell" data-menu-open={open} lang={language}>
       <aside className="fe-sidebar" id={navId}>
         <Brand />
         <nav aria-label={french ? "Navigation principale" : "Main navigation"}>
@@ -165,6 +167,7 @@ export function AppShell({
             <Brand compact />
           </div>
           <span className="fe-desktop-identity">{identity}</span>
+          <PortalSettings client={space === "client"} />
           <button
             className="fe-menu-button"
             type="button"

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Icon } from "./icon";
+import { UiText } from "./ui-text";
 
 export function Feedback({
   children,
@@ -18,7 +19,7 @@ export function Feedback({
           tone === "success" ? "check" : tone === "error" ? "alert" : "clock"
         }
       />
-      <div>{children}</div>
+      <div><UiText>{children}</UiText></div>
     </div>
   );
 }
@@ -27,7 +28,7 @@ export function Loading({ children }: { children: ReactNode }) {
   return (
     <p className="fe-loading" role="status">
       <span className="fe-spinner" aria-hidden="true" />
-      {children}
+      <UiText>{children}</UiText>
     </p>
   );
 }

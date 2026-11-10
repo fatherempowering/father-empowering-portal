@@ -1,68 +1,28 @@
 /* eslint-disable @next/next/no-img-element -- preserve the approved picture sources and intrinsic dimensions exactly. */
+"use client";
 import Link from "next/link";
+import { useEffect } from "react";
+import { initializePortalLanguage, usePortalLanguage } from "../portal-preferences";
+import { LanguageControl } from "../preference-controls";
+import { landingCopy, type LandingLocale } from "./landing-copy";
+export { landingCopy, resolveLandingLocale } from "./landing-copy";
 
-import { LandingLanguage } from "./landing-language";
 import styles from "./landing-page.module.css";
 
-export type LandingLocale = "en" | "fr";
-
-export const landingCopy = {
-  en: {
-    brandName: "FATHER EMPOWERING",
-    protocol: "THE LEGACY PROTOCOL",
-    skip: "Skip to login options",
-    home: "Father Empowering — home",
-    headline: ["Same", "standards.", "Different", "day."],
-    enter: "Enter your space.",
-    coach: "Coach login",
-    client: "Client login",
-    pillars: ["Training", "Nutrition", "Progress", "Family"],
-    pillarsLabel: "Father Empowering pillars",
-    values: ["Structure", "Discipline", "Freedom"],
-    valuesLabel: "Our values",
-    promise: ["A stronger you.", "A brighter them."],
-    loginOptions: "Login options",
-    description:
-      "Father Empowering. Same standards. Different day. Enter your space.",
-  },
-  fr: {
-    brandName: "FATHER EMPOWERING",
-    protocol: "THE LEGACY PROTOCOL",
-    skip: "Aller aux options de connexion",
-    home: "Father Empowering — accueil",
-    headline: ["Mêmes", "standards.", "Nouveau", "jour."],
-    enter: "Entre dans ton espace.",
-    coach: "Connexion coach",
-    client: "Connexion client",
-    pillars: ["Entraînement", "Nutrition", "Progression", "Famille"],
-    pillarsLabel: "Piliers Father Empowering",
-    values: ["Structure", "Discipline", "Liberté"],
-    valuesLabel: "Nos valeurs",
-    promise: ["Plus fort pour toi.", "Plus loin pour eux."],
-    loginOptions: "Options de connexion",
-    description:
-      "Father Empowering. Mêmes standards. Nouveau jour. Entre dans ton espace.",
-  },
-} as const;
-
-export function resolveLandingLocale(
-  value: string | string[] | undefined,
-): LandingLocale {
-  return value === "fr" ? "fr" : "en";
-}
-
 export function LandingPage({ locale }: { locale: LandingLocale }) {
-  const copy = landingCopy[locale];
+  const { language } = usePortalLanguage(locale);
+  useEffect(() => { initializePortalLanguage(locale); }, [locale]);
+  const copy = landingCopy[language];
   return (
     <>
-      <LandingLanguage locale={locale} />
+      <div className="fe-landing-language"><LanguageControl fallback={locale} /></div>
       <a className={styles.skipLink} href="#entry">
         {copy.skip}
       </a>
       <div
         className={`${styles.landing} fe-public-landing`}
         data-fe-public-landing=""
-        lang={locale}
+        lang={language}
       >
         <picture className={styles.hero}>
           <source
@@ -85,7 +45,7 @@ export function LandingPage({ locale }: { locale: LandingLocale }) {
         <header className={styles.masthead}>
           <Link
             className={styles.brand}
-            href={`/?lang=${locale}`}
+            href={`/?lang=${language}`}
             aria-label={copy.home}
           >
             <img

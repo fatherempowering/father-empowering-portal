@@ -8,6 +8,7 @@ import Link from "next/link";
 import { AuthShell } from "@/components/fe/auth-shell";
 import { CodeInput } from "@/components/fe/code-input";
 import { Feedback, Loading } from "@/components/fe/feedback";
+import { useClientLanguage } from "@/components/fe/portal-preferences";
 
 type Step = "LOADING" | "READY" | "CODE_SENT" | "ACTIVATING" | "ERROR";
 
@@ -65,7 +66,7 @@ export function ClientActivationCard() {
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const locale = invitation?.locale === "en-CA" ? "en" : "fr";
+  const { language: locale } = useClientLanguage(invitation?.locale);
   const copy = COPY[locale];
 
   useEffect(() => {

@@ -1,5 +1,7 @@
 "use client";
 
+import { usePortalLanguage } from "@/components/fe/portal-preferences";
+import { UiText, useUiCopy } from "@/components/fe/ui-text";
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 import { Feedback, Loading } from "@/components/fe/feedback";
 import { Modal } from "@/components/fe/modal";
@@ -35,6 +37,8 @@ export function UnifiedExercisePicker({ onAdd, onClose }: {
   onAdd: (exercise: ExerciseSnapshot) => void;
   onClose?: () => void;
 }) {
+  const c = useUiCopy();
+  const { language } = usePortalLanguage();
   const id = useId();
   const [query, setQuery] = useState("");
   const [equipment, setEquipment] = useState("");
@@ -93,7 +97,7 @@ export function UnifiedExercisePicker({ onAdd, onClose }: {
   }, [filter, page, attempt]);
 
   function search(event: FormEvent) { event.preventDefault(); if (busy) return; setPage(0); setFilter({ query, equipment }); }
-  function name(result: Result) { return result.kind === "pilot" ? result.exercise.name.fr : result.exercise.pilot?.name.fr ?? result.exercise.name; }
+  function name(result: Result) { return result.kind === "pilot" ? result.exercise.name[language] : result.exercise.pilot?.name[language] ?? result.exercise.name; }
   function choose(result: Result) {
     if (busy || loading || failed || (result.kind === "pilot" && result.exercise.selection?.canSelect === false)) return;
     if (result.kind === "pilot") void select(result.exercise);
@@ -102,36 +106,36 @@ export function UnifiedExercisePicker({ onAdd, onClose }: {
   }
   const content = <>
     <header className="fe-dialog-header">
-      <div><h2 id={`${id}-title`}>Choisir un exercice</h2><p id={`${id}-description`}>Une recherche pour ta bibliothèque et le catalogue Legacy. Choisis un mouvement, puis règle sa prescription dans la séance.</p></div>
-      {onClose ? <button type="button" className="fe-icon-button" aria-label="Fermer le choix d’exercice" disabled={busy} onClick={onClose}><Icon name="close" /></button> : null}
+      <div><h2 id={`${id}-title`}><UiText>Choisir un exercice</UiText></h2><p id={`${id}-description`}><UiText>Une recherche pour ta bibliothèque et le catalogue Legacy. Choisis un mouvement, puis règle sa prescription dans la séance.</UiText></p></div>
+      {onClose ? <button type="button" className="fe-icon-button" aria-label={c("Fermer le choix d’exercice")} disabled={busy} onClick={onClose}><Icon name="close" /></button> : null}
     </header>
     <div className={`fe-dialog-content ${styles.picker}`}>
       <form className={styles.search} onSubmit={search}>
-        <label htmlFor={`${id}-query`}>Rechercher un exercice<input id={`${id}-query`} data-autofocus type="search" value={query} maxLength={120} disabled={busy} placeholder="Nom, muscle… ex. chest, pompes, haut du corps" onChange={event => setQuery(event.target.value)} /></label>
-        <div className={styles.field}><label htmlFor={`${id}-equipment`}>Équipement</label><select id={`${id}-equipment`} value={equipment} disabled={busy} onChange={event => setEquipment(event.target.value)}>
-          <option value="">Tous les équipements</option>{PILOT_EQUIPMENT.map(value => <option key={value} value={value}>{equipmentLabels[value]}</option>)}
+        <label htmlFor={`${id}-query`}><UiText>Rechercher un exercice</UiText><input id={`${id}-query`} data-autofocus type="search" value={query} maxLength={120} disabled={busy} placeholder={c("Nom, muscle… ex. chest, pompes, haut du corps")} onChange={event => setQuery(event.target.value)} /></label>
+        <div className={styles.field}><label htmlFor={`${id}-equipment`}><UiText>Équipement</UiText></label><select id={`${id}-equipment`} value={equipment} disabled={busy} onChange={event => setEquipment(event.target.value)}>
+          <option value=""><UiText>Tous les équipements</UiText></option>{PILOT_EQUIPMENT.map(value => <option key={value} value={value}>{equipmentLabels[value]}</option>)}
         </select></div>
-        <button type="submit" className="fe-button fe-button-primary" disabled={busy}>Rechercher</button>
+        <button type="submit" className="fe-button fe-button-primary" disabled={busy}><UiText>Rechercher</UiText></button>
       </form>
-      <p className={styles.help}>Noms français et anglais. Les muscles du catalogue sont indexés ; les exercices personnels sont retrouvés par leur nom et les familles de mouvements reconnues.</p>
+      <p className={styles.help}><UiText>Noms français et anglais. Les muscles du catalogue sont indexés ; les exercices personnels sont retrouvés par leur nom et les familles de mouvements reconnues.</UiText></p>
       {error ? <Feedback>{error}</Feedback> : null}
-      {loading ? <Loading>Recherche des exercices…</Loading> : failed ? <div><Feedback>La recherche n’a pas pu être chargée complètement. Aucun exercice n’a été ajouté et ton brouillon est conservé.</Feedback><button type="button" className="fe-button" onClick={() => setAttempt(value => value + 1)}>Réessayer la recherche</button></div> : <>
-        <p role="status">{results.length} exercice{results.length === 1 ? "" : "s"} affiché{results.length === 1 ? "" : "s"}{hasMore ? " · d’autres résultats sont disponibles" : ""}</p>
-        {!results.length ? <p>Aucun exercice pour ces critères. Essaie un autre nom ou enlève le filtre d’équipement.</p> : <ul className={styles.results} aria-label="Résultats des exercices">
+      {loading ? <Loading><UiText>Recherche des exercices…</UiText></Loading> : failed ? <div><Feedback><UiText>La recherche n’a pas pu être chargée complètement. Aucun exercice n’a été ajouté et ton brouillon est conservé.</UiText></Feedback><button type="button" className="fe-button" onClick={() => setAttempt(value => value + 1)}><UiText>Réessayer la recherche</UiText></button></div> : <>
+        <p role="status">{results.length}<UiText> exercice</UiText>{results.length === 1 ? "" : "s"}<UiText> affiché</UiText>{results.length === 1 ? "" : "s"}{hasMore ? <UiText>{" · d’autres résultats sont disponibles"}</UiText> : ""}</p>
+        {!results.length ? <p><UiText>Aucun exercice pour ces critères. Essaie un autre nom ou enlève le filtre d’équipement.</UiText></p> : <ul className={styles.results} aria-label={c("Résultats des exercices")}>
           {results.map(result => <li key={result.key}>
-            <div><h3>{name(result)}</h3><p>{result.kind === "pilot" ? `${result.exercise.equipment.labels.fr} · Catalogue staging` : `${result.exercise.equipment || "Équipement non précisé"}${result.exercise.pilot ? " · Catalogue staging" : " · Bibliothèque"}`}</p></div>
+            <div><h3>{name(result)}</h3><p>{result.kind === "pilot" ? `${result.exercise.equipment.labels[language]} · ${c("Catalogue staging")}` : `${result.exercise.equipment || c("Équipement non précisé")}${result.exercise.pilot ? ` · ${c("Catalogue staging")}` : ` · ${c("Bibliothèque")}`}`}</p></div>
             {result.kind === "pilot" && catalogueSelectionMessage(result.exercise) ? <p className={styles.help}>{catalogueSelectionMessage(result.exercise)}</p> : null}
-            <div className={styles.actions}><button type="button" className="fe-button" disabled={busy} onClick={() => setSelected(result)}>Consulter {name(result)}</button><button type="button" className="fe-button fe-button-primary" disabled={busy || (result.kind === "pilot" && result.exercise.selection?.canSelect === false)} onClick={() => choose(result)}>{busy ? "Préparation…" : `Choisir ${name(result)}`}</button></div>
+            <div className={styles.actions}><button type="button" className="fe-button" disabled={busy} onClick={() => setSelected(result)}><UiText>Consulter </UiText>{name(result)}</button><button type="button" className="fe-button fe-button-primary" disabled={busy || (result.kind === "pilot" && result.exercise.selection?.canSelect === false)} onClick={() => choose(result)}>{busy ? <UiText>{"Préparation…"}</UiText> : `Choisir ${name(result)}`}</button></div>
           </li>)}
         </ul>}
-        {hasMore ? <button type="button" className="fe-button" disabled={busy} onClick={() => setPage(value => value + 1)}>Afficher plus de résultats</button> : null}
-        {selected ? <section className={styles.detail} aria-label="Fiche de l’exercice sélectionné">
+        {hasMore ? <button type="button" className="fe-button" disabled={busy} onClick={() => setPage(value => value + 1)}><UiText>Afficher plus de résultats</UiText></button> : null}
+        {selected ? <section className={styles.detail} aria-label={c("Fiche de l’exercice sélectionné")}>
           <h3 ref={detail} tabIndex={-1}>{name(selected)}</h3>
-          {selected.kind === "pilot" ? <PilotExercisePreview exercise={selected.exercise} language="fr" /> : <p>{selected.exercise.cue.fr || selected.exercise.cue.en || "Aucune consigne enregistrée."}</p>}
-          {selected.kind === "pilot" && selected.exercise.machines.length ? <section aria-label="Modèles de machines à vérifier"><h4>Variantes de machines — non sélectionnables</h4><ul>
-            {selected.exercise.machines.map(machine => <li key={machine.id}><strong>{machine.manufacturer} · {machine.name}</strong><p>{machine.warning.fr}</p><p>Non disponible pour prescription · {machine.modelId} · version {machine.modelVersion}</p></li>)}
+          {selected.kind === "pilot" ? <PilotExercisePreview exercise={selected.exercise} language={language} /> : <p>{selected.exercise.cue[language] || selected.exercise.cue.fr || selected.exercise.cue.en || <UiText>{"Aucune consigne enregistrée."}</UiText>}</p>}
+          {selected.kind === "pilot" && selected.exercise.machines.length ? <section aria-label={c("Modèles de machines à vérifier")}><h4><UiText>Variantes de machines — non sélectionnables</UiText></h4><ul>
+            {selected.exercise.machines.map(machine => <li key={machine.id}><strong>{machine.manufacturer} · {machine.name}</strong><p>{machine.warning[language]}</p><p><UiText>Non disponible pour prescription · </UiText>{machine.modelId}<UiText> · version </UiText>{machine.modelVersion}</p></li>)}
           </ul></section> : null}
-          <button type="button" className="fe-button fe-button-primary" disabled={busy || (selected.kind === "pilot" && selected.exercise.selection?.canSelect === false)} onClick={() => choose(selected)}>{busy ? "Préparation…" : `Ajouter ${name(selected)} à la séance`}</button>
+          <button type="button" className="fe-button fe-button-primary" disabled={busy || (selected.kind === "pilot" && selected.exercise.selection?.canSelect === false)} onClick={() => choose(selected)}>{busy ? <UiText>{"Préparation…"}</UiText> : `Ajouter ${name(selected)} à la séance`}</button>
         </section> : null}
       </>}
     </div>

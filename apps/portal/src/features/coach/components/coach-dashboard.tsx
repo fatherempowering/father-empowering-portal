@@ -1,5 +1,7 @@
 "use client";
 
+import { usePortalLanguage } from "@/components/fe/portal-preferences";
+import { UiText } from "@/components/fe/ui-text";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -97,6 +99,7 @@ function toDashboardClient(
 }
 
 export function CoachDashboard() {
+  const { language, french } = usePortalLanguage(); void french;
   const [clients, setClients] = useState<CoachDashboardClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -259,10 +262,10 @@ export function CoachDashboard() {
       <header className="fe-page-heading">
         <div>
           <p className="fe-kicker">Father Empowering</p>
-          <h1 className="fe-title">Clients</h1>
-          <p className="fe-intro">
+          <h1 className="fe-title"><UiText>Clients</UiText></h1>
+          <p className="fe-intro"><UiText>
             Gère les invitations et suis l’activation des portails.
-          </p>
+          </UiText></p>
         </div>
         <div className="fe-page-actions">
           <button
@@ -271,7 +274,7 @@ export function CoachDashboard() {
             onClick={() => void signOut()}
             disabled={signingOut || busyKey !== null}
           >
-            {signingOut ? "Déconnexion…" : "Se déconnecter"}
+            {signingOut ? <UiText>{"Déconnexion…"}</UiText> : <UiText>{"Se déconnecter"}</UiText>}
           </button>
           <button
             className="fe-button fe-button-primary"
@@ -282,9 +285,9 @@ export function CoachDashboard() {
             }}
             disabled={signingOut || busyKey !== null}
           >
-            <Icon name="plus" />
+            <Icon name="plus" /><UiText>
             Ajouter un client
-          </button>
+          </UiText></button>
         </div>
       </header>
       {signOutError ? <Feedback>{signOutError}</Feedback> : null}
@@ -301,9 +304,9 @@ export function CoachDashboard() {
             }}
             type="button"
             disabled={busyKey !== null || loading}
-          >
+          ><UiText>
             Actualiser la liste
-          </button>
+          </UiText></button>
         </Feedback>
       ) : null}
       <section
@@ -314,43 +317,41 @@ export function CoachDashboard() {
         <header className="fe-panel-header">
           <h2 id="clients-title">
             {loading || (loadError && clients.length === 0)
-              ? "Liste des clients"
+              ? <UiText>{"Liste des clients"}</UiText>
               : `${clients.length} client${clients.length === 1 ? "" : "s"}`}
           </h2>
           {!loading && !(loadError && clients.length === 0) ? (
             <p>
-              {activeCount} actif{activeCount === 1 ? "" : "s"} · {invitedCount}{" "}
-              activation{invitedCount === 1 ? "" : "s"} en attente
-            </p>
+              {french ? `${activeCount} actif${activeCount === 1 ? "" : "s"} · ${invitedCount} activation${invitedCount === 1 ? "" : "s"} en attente` : `${activeCount} active · ${invitedCount} pending activation${invitedCount === 1 ? "" : "s"}`}</p>
           ) : null}
         </header>
         {loading ? (
-          <Loading>Chargement des clients…</Loading>
+          <Loading><UiText>Chargement des clients…</UiText></Loading>
         ) : clients.length === 0 ? (
           <div className="fe-empty">
             <h3>
               {loadError
-                ? "La liste n’a pas pu être chargée."
-                : "Ton premier client commence ici."}
+                ? <UiText>{"La liste n’a pas pu être chargée."}</UiText>
+                : <UiText>{"Ton premier client commence ici."}</UiText>}
             </h3>
             <p>
               {loadError
-                ? "Actualise la liste pour réessayer."
-                : "Crée sa fiche et prépare son invitation. Il deviendra actif après avoir ouvert son lien et validé son code courriel."}
+                ? <UiText>{"Actualise la liste pour réessayer."}</UiText>
+                : <UiText>{"Crée sa fiche et prépare son invitation. Il deviendra actif après avoir ouvert son lien et validé son code courriel."}</UiText>}
             </p>
           </div>
         ) : (
           <>
             <div className="fe-list-head" aria-hidden="true">
-              <span>Client</span>
-              <span>Accès au portail</span>
-              <span>Actions</span>
+              <span><UiText>Client</UiText></span>
+              <span><UiText>Accès au portail</UiText></span>
+              <span><UiText>Actions</UiText></span>
             </div>
             <ul className="fe-client-list">
               {clients.map((client) => {
                 const canResend = invitationCanResend(client);
                 const canRevoke = invitationCanRevoke(client);
-                const status = invitationPresentation(client, now);
+                const status = invitationPresentation(client, now, language);
                 const resendBusyKey = client.invitation
                   ? invitationMutationKey(
                       "resend",
@@ -366,7 +367,7 @@ export function CoachDashboard() {
                       </span>
                       <div>
                         <strong>
-                          {coachClientLabel(`${client.firstName} ${client.lastName}`, client.isOwnProfile)}
+                          {coachClientLabel(`${client.firstName} ${client.lastName}`, client.isOwnProfile, language)}
                         </strong>
                         <small>{client.email}</small>
                       </div>
@@ -384,9 +385,9 @@ export function CoachDashboard() {
                       <Link
                         className="fe-text-button"
                         href={`/coach/clients/${encodeURIComponent(client.id)}`}
-                      >
+                      ><UiText>
                         Voir le dossier
-                      </Link>
+                      </UiText></Link>
                       {canResend ? (
                         <button
                           className="fe-text-button"
@@ -396,7 +397,7 @@ export function CoachDashboard() {
                             void mutateInvitation(client, "resend")
                           }
                         >
-                          {busyKey === resendBusyKey ? "Renvoi…" : "Renvoyer"}
+                          {busyKey === resendBusyKey ? <UiText>{"Renvoi…"}</UiText> : <UiText>Renvoyer</UiText>}
                         </button>
                       ) : null}
                       {canRevoke ? (
@@ -408,9 +409,9 @@ export function CoachDashboard() {
                             setError(null);
                             setRevoking(client);
                           }}
-                        >
+                        ><UiText>
                           Révoquer
-                        </button>
+                        </UiText></button>
                       ) : null}
                     </div>
                   </li>
@@ -421,11 +422,11 @@ export function CoachDashboard() {
         )}
       </section>
       <section className="fe-activation-help">
-        <h2>Comment un client devient actif</h2>
+        <h2><UiText>Comment un client devient actif</UiText></h2>
         <ol>
-          <li>Il ouvre son invitation.</li>
-          <li>Il reçoit son code courriel.</li>
-          <li>Il valide son code et accède au portail.</li>
+          <li><UiText>Il ouvre son invitation.</UiText></li>
+          <li><UiText>Il reçoit son code courriel.</UiText></li>
+          <li><UiText>Il valide son code et accède au portail.</UiText></li>
         </ol>
       </section>
       <CreateClientDialog
@@ -456,13 +457,13 @@ export function CoachDashboard() {
       >
         <header className="fe-dialog-header">
           <div>
-            <p className="fe-kicker">Invitation</p>
-            <h2 id="revoke-title">Révoquer cette invitation ?</h2>
-            <p className="fe-intro" id="revoke-description">
-              Le lien de {revoking?.firstName} {revoking?.lastName} ne permettra
+            <p className="fe-kicker"><UiText>Invitation</UiText></p>
+            <h2 id="revoke-title"><UiText>Révoquer cette invitation ?</UiText></h2>
+            <p className="fe-intro" id="revoke-description"><UiText>
+              Le lien de </UiText>{revoking?.firstName} {revoking?.lastName}<UiText> ne permettra
               plus d’activer son portail. Tu pourras envoyer une nouvelle
               invitation.
-            </p>
+            </UiText></p>
           </div>
         </header>
         <div className="fe-dialog-content">
@@ -476,9 +477,9 @@ export function CoachDashboard() {
                 setRevoking(null);
                 setError(null);
               }}
-            >
+            ><UiText>
               Annuler
-            </button>
+            </UiText></button>
             <button
               className="fe-button fe-button-danger"
               type="button"
@@ -487,7 +488,7 @@ export function CoachDashboard() {
                 if (revoking) void mutateInvitation(revoking, "revoke");
               }}
             >
-              {busyKey !== null ? "Révocation…" : "Révoquer l’invitation"}
+              {busyKey !== null ? <UiText>{"Révocation…"}</UiText> : <UiText>{"Révoquer l’invitation"}</UiText>}
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText } from "@/components/fe/ui-text";
 import { useEffect, useId, useRef, useState } from "react";
 import { Modal } from "@/components/fe/modal";
 import styles from "./program-confirmation.module.css";
@@ -19,11 +20,11 @@ export function useProgramConfirmation() {
     return new Promise<boolean>((resolve) => { answer.current = resolve; });
   }
   const confirmation = question ? <Modal open busy={false} onClose={() => close(false)} labelledBy={titleId} describedBy={messageId}>
-    <header className="fe-dialog-header"><h2 id={titleId}>{question.title}</h2></header>
-    <div className="fe-dialog-content"><p id={messageId}>{question.message}</p></div>
+    <header className="fe-dialog-header"><h2 id={titleId}><UiText>{question.title}</UiText></h2></header>
+    <div className="fe-dialog-content"><p id={messageId}><UiText>{question.message}</UiText></p></div>
     <footer className={styles.actions}>
-      <button className="fe-button" type="button" data-autofocus onClick={() => close(false)}>Annuler</button>
-      <button className="fe-button fe-button-primary" type="button" onClick={() => close(true)}>{question.action}</button>
+      <button className="fe-button" type="button" data-autofocus onClick={() => close(false)}><UiText>Annuler</UiText></button>
+      <button className="fe-button fe-button-primary" type="button" onClick={() => close(true)}><UiText>{question.action}</UiText></button>
     </footer>
   </Modal> : null;
   return { confirm, confirmation };

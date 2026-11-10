@@ -11,13 +11,13 @@
 .week[aria-pressed="true"] { color: #fff; border-color: #c85a00; background: #c85a00; box-shadow: 0 8px 20px #c85a0033; }
 .week[aria-pressed="true"] span, .week[aria-pressed="true"] small { color: #fff; }
 .days { width: 100%; max-width: 900px; margin: 14px auto 0; padding: 12px 14px 10px; scrollbar-color: #b9b6ae #eeede8; }
-.day { width: 152px; min-height: 94px; padding: 12px; border: 1px solid #eeede8; border-radius: 12px; background: #fff; color: #1c1c1c; gap: 7px; box-shadow: 0 3px 12px #00000008; }
+.day { width: 152px; min-height: 94px; padding: 12px; border: 1px solid #eeede8; border-radius: 12px; background: var(--portal-paper, #fff); color: var(--portal-ink, #1c1c1c); gap: 7px; box-shadow: 0 3px 12px #00000008; }
 .day small { font: 400 12px "FE Display", sans-serif; letter-spacing: 1.1px; }
 .day strong { font: 400 18px/1.2 "FE Display", sans-serif; letter-spacing: 1px; }
-.day span { margin-top: auto; color: #666; font-size: 10px; }
+.day span { margin-top: auto; color: var(--portal-muted, #666); font-size: 10px; }
 .day[aria-pressed="true"] { background: #c85a00; border-color: #c85a00; color: #fff; }
 .day[aria-pressed="true"] span { color: #fff; }
-.day[data-empty-day] { background: #faf9f6; box-shadow: none; }
+.day[data-empty-day] { background: var(--portal-soft, #faf9f6); box-shadow: none; }
 .rail button:focus-visible, .rail a:focus-visible { outline: 3px solid #c85a00; outline-offset: -3px; }
 .weeks button:focus-visible, .weeks a:focus-visible { outline-color: #fff; }
 @media (min-width: 760px) { .day { width: 172px; } }

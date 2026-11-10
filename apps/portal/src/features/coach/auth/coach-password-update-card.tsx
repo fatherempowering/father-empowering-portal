@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText } from "@/components/fe/ui-text";
 import { useState, type FormEvent } from "react";
 
 import { AuthShell } from "@/components/fe/auth-shell";
@@ -48,16 +49,16 @@ export function CoachPasswordUpdateCard() {
 
   return (
     <AuthShell>
-      <p className="fe-kicker">Espace Coach</p>
-      <h1 className="fe-title">Choisis ton mot de passe.</h1>
-      <p className="fe-intro">
+      <p className="fe-kicker"><UiText>Espace Coach</UiText></p>
+      <h1 className="fe-title"><UiText>Choisis ton mot de passe.</UiText></h1>
+      <p className="fe-intro"><UiText>
         Utilise au moins 12 caractères. Toutes tes autres sessions seront
         fermées après la mise à jour.
-      </p>
+      </UiText></p>
       <form className="fe-form" onSubmit={submit} aria-busy={busy}>
-        <label className="fe-field">
+        <label className="fe-field"><UiText>
           Nouveau mot de passe
-          <input
+          </UiText><input
             name="password"
             type="password"
             autoComplete="new-password"
@@ -69,9 +70,9 @@ export function CoachPasswordUpdateCard() {
             disabled={busy}
           />
         </label>
-        <label className="fe-field">
+        <label className="fe-field"><UiText>
           Confirmer le mot de passe
-          <input
+          </UiText><input
             name="confirmation"
             type="password"
             autoComplete="new-password"
@@ -89,7 +90,7 @@ export function CoachPasswordUpdateCard() {
           type="submit"
           disabled={busy}
         >
-          {busy ? "Mise à jour…" : "Enregistrer mon mot de passe"}
+          <UiText>{busy ? "Mise à jour…" : "Enregistrer mon mot de passe"}</UiText>
         </button>
       </form>
     </AuthShell>

@@ -1,4 +1,7 @@
+"use client";
 import type { ReactNode } from "react";
+import { usePortalLanguage } from "./portal-preferences";
+import { LanguageControl } from "./preference-controls";
 import { Brand } from "./brand";
 
 export function AuthShell({
@@ -8,8 +11,9 @@ export function AuthShell({
   children: ReactNode;
   locale?: "fr" | "en";
 }) {
+  const { language } = usePortalLanguage(locale);
   return (
-    <div className="fe-auth-page" lang={locale}>
+    <div className="fe-auth-page" lang={language}>
       <div className="fe-auth-shell">
         <aside className="fe-auth-brand">
           <Brand />
@@ -21,6 +25,7 @@ export function AuthShell({
           <p className="fe-brand-footer">The Legacy Protocol</p>
         </aside>
         <main id="main-content" className="fe-auth-main">
+          <LanguageControl fallback={locale} />
           <div className="fe-auth-content">{children}</div>
         </main>
       </div>

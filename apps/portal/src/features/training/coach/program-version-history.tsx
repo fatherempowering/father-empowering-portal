@@ -1,4 +1,5 @@
 "use client";
+import { UiText, useUiCopy } from "@/components/fe/ui-text";
 import { useEffect, useRef, useState } from "react";
 import { Feedback } from "@/components/fe/feedback";
 import { programSnapshotSchema, type ProgramEditor, type ProgramSnapshot } from "@/lib/contracts/training-drafts";
@@ -8,6 +9,7 @@ export function ProgramVersionHistory({ snapshot, disabled, onRestore, onLoading
   snapshot: ProgramSnapshot; disabled: boolean; onRestore: (document: ProgramEditor, version: number) => void | Promise<void>;
   onLoading: (loading: boolean) => void;
 }) {
+  const c = useUiCopy();
   const [history, setHistory] = useState<ProgramHistory | null>(null);
   const [page, setPage] = useState(0); const [retry, setRetry] = useState(0);
   const [error, setError] = useState(false); const [loadingVersion, setLoadingVersion] = useState<number | null>(null);
@@ -48,20 +50,20 @@ export function ProgramVersionHistory({ snapshot, disabled, onRestore, onLoading
     } catch { if (request.current === controller && current.current.id === id) setError(true); }
     finally { clearTimeout(timeout); if (request.current === controller) { request.current = null; setLoadingVersion(null); loadingCallback.current(false); } }
   }
-  return <section aria-label="Versions enregistrées">
+  return <section aria-label={c("Versions enregistrées")}>
     <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap", alignItems: "center" }}>
-      <strong>Versions</strong>
+      <strong><UiText>Versions</UiText></strong>
       {history ? [...history.items].reverse().map((item) => <button type="button" className="fe-button" key={item.version}
         disabled={disabled || loadingVersion !== null || item.version === snapshot.version}
         aria-current={item.version === snapshot.version ? "true" : undefined}
         aria-label={item.version === snapshot.version ? `Version ${item.version} actuelle` : `Reprendre la version ${item.version}`}
-        onClick={() => void restore(item.version)}>V{item.version}</button>) : <span>{error ? "" : "Chargement…"}</span>}
+        onClick={() => void restore(item.version)}>V{item.version}</button>) : <span>{error ? "" : <UiText>{"Chargement…"}</UiText>}</span>}
     </div>
     {history && history.total > 20 ? <div>
-      <button type="button" className="fe-button" disabled={disabled || loadingVersion !== null || !page} onClick={() => setPage(page - 1)}>Versions plus récentes</button>
-      <button type="button" className="fe-button" disabled={disabled || loadingVersion !== null || (page + 1) * 20 >= history.total} onClick={() => setPage(page + 1)}>Versions plus anciennes</button>
+      <button type="button" className="fe-button" disabled={disabled || loadingVersion !== null || !page} onClick={() => setPage(page - 1)}><UiText>Versions plus récentes</UiText></button>
+      <button type="button" className="fe-button" disabled={disabled || loadingVersion !== null || (page + 1) * 20 >= history.total} onClick={() => setPage(page + 1)}><UiText>Versions plus anciennes</UiText></button>
     </div> : null}
-    {loadingVersion !== null ? <p role="status">Ouverture de V{loadingVersion}…</p> : null}
-    {error ? <Feedback>Impossible de lire cette sauvegarde. Ton brouillon est conservé. <button type="button" className="fe-button" onClick={() => setRetry(retry + 1)}>Réessayer les versions</button></Feedback> : null}
+    {loadingVersion !== null ? <p role="status"><UiText>Ouverture de V</UiText>{loadingVersion}…</p> : null}
+    {error ? <Feedback><UiText>Impossible de lire cette sauvegarde. Ton brouillon est conservé. </UiText><button type="button" className="fe-button" onClick={() => setRetry(retry + 1)}><UiText>Réessayer les versions</UiText></button></Feedback> : null}
   </section>;
 }

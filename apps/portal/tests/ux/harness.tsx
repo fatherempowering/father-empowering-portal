@@ -1,6 +1,7 @@
 // Isolated presentation harness. This is never an application route or an auth gate.
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
+import { PortalPreferenceEffects } from "../../src/components/fe/preference-controls";
 import { CoachDashboard } from "../../src/features/coach/components/coach-dashboard";
 import { ClientDashboard } from "../../src/features/client/dashboard/client-dashboard";
 import { ClientActivationCard } from "../../src/features/client/activation/client-activation-card";
@@ -1206,4 +1207,4 @@ function Harness() {
     </>
   );
 }
-createRoot(document.getElementById("root")!).render(<Harness />);
+createRoot(document.getElementById("root")!).render(<><PortalPreferenceEffects /><Harness /></>);

@@ -65,11 +65,12 @@ test("complete instructions and the approved per-arm count are explicit in Frenc
   await expect(detail.getByText("Comptage retenu : répétitions par bras", { exact: true })).toBeVisible();
   await expect(detail.getByText("Brouillon · consignes à valider", { exact: true })).toBeVisible();
   await page.getByLabel("Langue de la fiche", { exact: true }).selectOption("en");
-  await expect(detail.getByRole("heading", { name: "Setup", exact: true })).toBeVisible();
-  await expect(detail.getByRole("heading", { name: "Execution", exact: true })).toBeVisible();
-  await expect(detail.getByRole("heading", { name: "Finish", exact: true })).toBeVisible();
-  await expect(detail.getByText("Selected count: repetitions per arm", { exact: true })).toBeVisible();
-  await expect(detail.getByRole("heading", { name: "Alternating dumbbell curl", exact: true }).first()).toBeVisible();
+  const englishDetail = page.getByRole("region", { name: "Detailed record", exact: true });
+  await expect(englishDetail.getByRole("heading", { name: "Setup", exact: true })).toBeVisible();
+  await expect(englishDetail.getByRole("heading", { name: "Execution", exact: true })).toBeVisible();
+  await expect(englishDetail.getByRole("heading", { name: "Finish", exact: true })).toBeVisible();
+  await expect(englishDetail.getByText("Selected count: repetitions per arm", { exact: true })).toBeVisible();
+  await expect(englishDetail.getByRole("heading", { name: "Alternating dumbbell curl", exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: /ajouter|publier|valider|enregistrer/i })).toHaveCount(0);
   await expect(page.locator("img, video, iframe")).toHaveCount(0);
 });
@@ -94,12 +95,12 @@ test("return to results restores the selected button without losing filters or l
   await page.getByRole("button", { name: "Rechercher dans le catalogue", exact: true }).click();
   await page.getByRole("button", { name: "Consulter Curl alterné avec haltères", exact: true }).click();
   await page.getByLabel("Langue de la fiche", { exact: true }).selectOption("en");
-  await page.getByRole("button", { name: "Retour aux résultats", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Consulter Alternating dumbbell curl", exact: true })).toBeFocused();
-  await expect(page.getByLabel("Nom, muscle ou identifiant", { exact: true })).toHaveValue("DB_034");
-  await expect(page.getByLabel("Équipement", { exact: true })).toHaveValue("dumbbell");
-  await expect(page.getByLabel("Langue de la fiche", { exact: true })).toHaveValue("en");
-  await expect(page.getByText("1 fiche trouvée sur 15", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Back to results", exact: true }).click();
+  await expect(page.getByRole("button", { name: "View Alternating dumbbell curl", exact: true })).toBeFocused();
+  await expect(page.getByLabel("Name, muscle or ID", { exact: true })).toHaveValue("DB_034");
+  await expect(page.getByLabel("Equipment", { exact: true })).toHaveValue("dumbbell");
+  await expect(page.getByLabel("Record language", { exact: true })).toHaveValue("en");
+  await expect(page.getByText("1 record found out of 15", { exact: true })).toBeVisible();
 });
 
 for (const state of ["pilot-load-error", "pilot-malformed"]) {
