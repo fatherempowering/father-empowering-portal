@@ -1,0 +1,137 @@
+/** UI phrases only. Coach/client authored content is never machine-translated. */
+import { coachUiCopy } from "./coach-ui-copy";
+import { trainingUiCopy } from "./training-ui-copy";
+import { exerciseUiCopy } from "./exercise-ui-copy";
+import { followupUiCopy } from "./followup-ui-copy";
+import { clientFeedbackCopy } from "./client-feedback-copy";
+export const uiCopy: Record<string, string> = {
+  ...coachUiCopy,
+  ...trainingUiCopy,
+  ...exerciseUiCopy,
+  ...followupUiCopy,
+  ...clientFeedbackCopy,
+  "Actif": "Active",
+  "Suspendu": "Suspended",
+  "Renvoyer": "Resend",
+  "Semaines": "Weeks",
+  "Mesures": "Measurements",
+  "Niveau": "Level",
+  "Secondes": "Seconds",
+  "Consignes": "Instructions",
+  "Catalogue staging": "Staging catalogue",
+  "Choisir": "Choose",
+  "Intégrer": "Add",
+  "Note": "Note",
+  "Protocole": "Protocol",
+  "Estimation": "Estimate",
+  "Faible": "Low",
+  "Moyen": "Average",
+  "Ce plan ne sera plus actif pour le client. Les versions précédentes et les résultats enregistrés restent conservés dans l’historique. Le brouillon n’est pas supprimé.": "This plan will no longer be active for the client. Previous versions and saved results remain in history. The draft is not deleted.",
+  "Confirmer le retrait": "Confirm withdrawal",
+  "Ta connexion a expiré. Reconnecte-toi pour recevoir un nouveau code.": "Your session expired. Sign in again to receive a new code.",
+  "Tu viens de demander un code. Attends un moment, puis réessaie.": "You just requested a code. Wait a moment, then try again.",
+  "Nous n’avons pas pu envoyer le code. Réessaie dans quelques instants.": "We couldn’t send the code. Try again in a moment.",
+  "Nous n’avons pas pu envoyer le code. Vérifie ta connexion Internet et réessaie.": "We couldn’t send the code. Check your Internet connection and try again.",
+  "Ce code est invalide ou expiré. Utilise le courriel le plus récent, puis réessaie.": "This code is invalid or expired. Use the latest email, then try again.",
+  "Trop de tentatives. Attends quelques minutes, puis demande un nouveau code.": "Too many attempts. Wait a few minutes, then request a new code.",
+  "Impossible de vérifier le code. Réessaie dans quelques instants.": "Unable to verify the code. Try again in a moment.",
+  "Impossible de vérifier le code. Vérifie ta connexion Internet et réessaie.": "Unable to verify the code. Check your Internet connection and try again.",
+  "Impossible de changer de compte. Réessaie.": "Unable to switch accounts. Try again.",
+  "Espace Coach · Vérification": "Coach portal · Verification",
+  "Envoi du code…": "Sending your code…",
+  "Le code n’a pas pu être envoyé.": "The code couldn’t be sent.",
+  "Entre le code reçu par courriel.": "Enter the code you received by email.",
+  "Nous envoyons un nouveau code à": "We’re sending a new code to",
+  "Nous envoyons automatiquement un code à 6 chiffres à ton adresse courriel.": "We’re automatically sending a 6-digit code to your email address.",
+  "Nous avons envoyé un code à 6 chiffres à": "We sent a 6-digit code to",
+  "Réessaie l’envoi pour recevoir un code à 6 chiffres par courriel.": "Try again to receive a 6-digit code by email.",
+  "Cette vérification protège l’accès aux dossiers de tes clients.": "This verification protects access to your clients’ records.",
+  "Utilise le courriel le plus récent. Le code expire dans 10 minutes.": "Use the latest email. The code expires in 10 minutes.",
+  "Code à 6 chiffres": "6-digit code",
+  "Vérification…": "Verifying…",
+  "Envoi…": "Sending…",
+  "Changement de compte…": "Switching accounts…",
+  "Réessaie dans quelques instants.": "Try again in a moment.",
+  "Espace Coach": "Coach portal",
+  "Définir mon mot de passe.": "Set my password.",
+  "Reçois un lien sécurisé pour choisir un nouveau mot de passe.": "Receive a secure link to choose a new password.",
+  "Si ce compte est autorisé, un lien sécurisé vient d’être envoyé.": "If this account is authorized, a secure link has just been sent.",
+  "Courriel": "Email",
+  "Envoyer le lien sécurisé": "Send secure link",
+  "Retour à la connexion Coach": "Back to Coach sign-in",
+  "Le lien est invalide ou expiré.": "The link is invalid or expired.",
+  "Les mots de passe ne correspondent pas.": "The passwords don’t match.",
+  "Choisis ton mot de passe.": "Choose your password.",
+  "Utilise au moins 12 caractères. Toutes tes autres sessions seront fermées après la mise à jour.": "Use at least 12 characters. All your other sessions will be signed out after the update.",
+  "Nouveau mot de passe": "New password",
+  "Confirmer le mot de passe": "Confirm password",
+  "Mise à jour…": "Updating…",
+  "Enregistrer mon mot de passe": "Save my password",
+  "Le code est invalide ou expiré.": "The code is invalid or expired.",
+  "Retrouve ton portail.": "Return to your portal.",
+  "Reçois un code de connexion par courriel. Aucun mot de passe n’est requis.": "Receive a sign-in code by email. No password required.",
+  "Entre le code reçu par courriel pour ouvrir ton espace.": "Enter the code you received by email to open your portal.",
+  "Si ce compte est actif, un nouveau code a été envoyé.": "If this account is active, a new code has been sent.",
+  "Si ce compte est actif, le code a été envoyé.": "If this account is active, the code has been sent.",
+  "Connexion…": "Signing in…",
+  "Changer de courriel": "Change email",
+  "Tu es coach ?": "Are you a coach?",
+  "Accéder à mon espace Coach": "Open my Coach portal",
+  "Accède à ton espace Coach.": "Access your Coach portal.",
+  "Entre ton courriel et ton mot de passe.": "Enter your email and password.",
+  "Ton mot de passe est enregistré. Connecte-toi pour continuer.": "Your password is saved. Sign in to continue.",
+  "Le lien est invalide ou expiré. Demande un nouveau lien.": "The link is invalid or expired. Request a new link.",
+  "La connexion est momentanément indisponible. Réessaie dans quelques instants. Inutile de modifier ton mot de passe.": "Sign-in is temporarily unavailable. Try again in a moment. You don’t need to change your password.",
+  "Le courriel ou le mot de passe est invalide.": "The email or password is invalid.",
+  "Se connecter": "Sign in",
+  "Définir ou réinitialiser mon mot de passe": "Set or reset my password",
+  "Tu es client ?": "Are you a client?",
+  "Accéder à mon portail": "Open my portal",
+  "Mot de passe": "Password",
+  "Masquer le mot de passe": "Hide password",
+  "Afficher le mot de passe": "Show password",
+  "Ouvrir mon espace Coach": "Open my Coach portal",
+  "Se connecter avec une autre adresse": "Sign in with another email",
+  "Ouvrir mon portail": "Open my portal",
+  "Envoyer mon code": "Send my code",
+  "Renvoyer le code": "Resend code",
+  "Réessayer": "Try again",
+  "Déconnexion…": "Signing out…",
+  "Se déconnecter": "Sign out",
+  "Impossible de te déconnecter. Réessaie.": "Unable to sign out. Try again.",
+  "Ton portail est indisponible pour le moment": "Your portal is temporarily unavailable",
+  "Impossible de charger ton portail. Vérifie ta connexion et réessaie.": "Unable to load your portal. Check your connection and try again.",
+  "Ton portail s’ouvre…": "Opening your portal…",
+};
+
+const parameterizedCopy: ReadonlyArray<readonly [RegExp, string]> = [
+  [/^Série (\d+) ·$/, "Set $1 ·"],
+  [/^La fiche de (.+) est créée et l’invitation est en préparation\.$/, "$1’s record is created and the invitation is being prepared."],
+  [/^L’invitation de (.+) est en préparation\.$/, "$1’s invitation is being prepared."],
+  [/^Invitation révoquée pour (.+)\.$/, "Invitation revoked for $1."],
+  [/^Semaine (\d+) copiée vers (\d+) semaines?\. Enregistre ton brouillon pour conserver ces copies\. Rien n’a été publié\.$/, "Week $1 copied to $2 week(s). Save your draft to keep these copies. Nothing was published."],
+  [/^Reprendre la version (\d+)$/, "Restore version $1"],
+  [/^Reprendre les données de la version (\d+) dans ce brouillon \? La sauvegarde actuelle et les programmes publiés seront conservés\.$/, "Restore version $1 into this draft? The current saved version and published programs will be retained."],
+  [/^Reprendre les données de la version (\d+) dans ce brouillon \? Les modifications non enregistrées seront remplacées\. La sauvegarde actuelle et les programmes publiés seront conservés\.$/, "Restore version $1 into this draft? Unsaved changes will be replaced. The current saved version and published programs will be retained."],
+  [/^Publier « (.+) » pour (.+) \? Ce plan sera immédiatement visible dans son portail\.$/, "Publish “$1” for $2? This plan will immediately be visible in their portal."],
+  [/^Publier « (.+) » pour (.+) \? Ce plan sera immédiatement visible dans son portail\. Son programme actuel sera remplacé; la version précédente sera conservée\.$/, "Publish “$1” for $2? This plan will immediately be visible in their portal. Their current program will be replaced; its previous version will be retained."],
+  [/^Tu viens de demander un code\. Tu pourras en recevoir un autre dans (\d+) secondes\.$/, "You just requested a code. You can receive another one in $1 seconds."],
+  [/^Nouveau code envoyé à (.+)\.$/, "New code sent to $1."],
+  [/^Code envoyé à (.+)\.$/, "Code sent to $1."],
+  [/^Renvoyer dans (\d+) s$/, "Resend in $1 s"],
+];
+
+export function translateUi(text: string, language: "fr" | "en"): string {
+  const key = text.replace(/\s+/g, " ").trim();
+  if (language === "fr") {
+    const translated = reverseUiCopy.get(key);
+    return translated ? `${/^\s/.test(text) ? " " : ""}${translated}${/\s$/.test(text) ? " " : ""}` : text;
+  }
+  const translated = (Object.hasOwn(uiCopy, key) ? uiCopy[key] : undefined) ?? parameterizedCopy.find(([pattern]) => pattern.test(key))?.[1];
+  if (!translated) return text;
+  const entry = parameterizedCopy.find(([pattern]) => pattern.test(key));
+  const value = entry ? key.replace(entry[0], entry[1]) : translated;
+  return `${/^\s/.test(text) ? " " : ""}${value}${/\s$/.test(text) ? " " : ""}`;
+}
+
+const reverseUiCopy = new Map(Object.entries(uiCopy).map(([fr, en]) => [en, fr]));

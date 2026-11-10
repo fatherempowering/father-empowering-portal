@@ -31,6 +31,7 @@ import {
 } from "@/lib/contracts/week-zero";
 import { weekZeroCopyText, type WeekZeroCopyId } from "./week-zero-copy";
 import styles from "./week-zero.module.css";
+import { useClientLanguage } from "@/components/fe/portal-preferences";
 
 type Command = { fingerprint: string; key: string };
 type PhotoAttempt = {
@@ -231,7 +232,7 @@ export function ClientWeekZero() {
   const pendingFocus = useRef<string | null>(null);
   const [focusAttempt, setFocusAttempt] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
-  const french = client?.locale !== "en-CA";
+  const { french } = useClientLanguage(client?.locale);
   const t = (fr: string, en: string) => french ? fr : en;
   const submitted = assessment?.status === "SUBMITTED";
   const dirty = responses !== null && assessment !== null && JSON.stringify(responses) !== JSON.stringify(assessment.responses);

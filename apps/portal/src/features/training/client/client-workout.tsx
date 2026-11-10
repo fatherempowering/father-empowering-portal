@@ -1,4 +1,5 @@
 "use client";
+import { usePortalLanguage } from "@/components/fe/portal-preferences";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -75,7 +76,7 @@ export function ClientWorkout() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [french, setFrench] = useState(true);
+  const { french, setLanguage } = usePortalLanguage();
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const [conflict, setConflict] = useState(false);
@@ -131,7 +132,6 @@ export function ClientWorkout() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setFrench(params.get("language") !== "en");
     const parsed = workoutSelectorSchema.safeParse({
       publicationId: params.get("publicationId"),
       weekNumber: params.get("weekNumber"),
@@ -597,7 +597,7 @@ export function ClientWorkout() {
             <a className={styles.back} href={programHref}>← {t("Mon programme", "My program")}</a>
             <h1 className={styles.pageTitle}>{t("Ma séance.", "My workout.")}</h1>
           </div>
-          <button className="fe-button" type="button" onClick={() => setFrench(!french)}>
+          <button className="fe-button" type="button" onClick={() => setLanguage(french ? "en" : "fr")}>
             {french ? "English" : "Français"}
           </button>
         </div>

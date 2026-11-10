@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 
-import {
-  LandingPage,
-  landingCopy,
-  resolveLandingLocale,
-} from "@/components/fe/landing/landing-page";
+import { LandingPage } from "@/components/fe/landing/landing-page";
+import { landingCopy, resolveLandingLocale } from "@/components/fe/landing/landing-copy";
 
 type HomePageProps = Readonly<{
   searchParams: Promise<{ lang?: string | string[] }>;

@@ -7,6 +7,8 @@ import { ClientProgramAction } from "@/features/training/client/client-program";
 import { ClientFamilyPhoto, ClientVisualShell } from "./client-visual-shell";
 import type { ClientDashboard } from "./contracts";
 import styles from "./client-home-pilot.module.css";
+import { useClientLanguage } from "@/components/fe/portal-preferences";
+import { UiText } from "@/components/fe/ui-text";
 
 type ClientHomePilotProps = Readonly<{
   dashboard: ClientDashboard | null;
@@ -18,14 +20,14 @@ type ClientHomePilotProps = Readonly<{
 }>;
 
 export function ClientHomePilot({ dashboard, failed, signingOut, signOutError, onRetry, onSignOut }: ClientHomePilotProps) {
-  const french = dashboard?.locale !== "en-CA";
+  const { french } = useClientLanguage(dashboard?.locale);
   const t = (fr: string, en: string) => french ? fr : en;
   return <ClientVisualShell name={dashboard?.displayName} french={french} current="home" accountAction={
     <button className="fe-button" type="button" onClick={onSignOut} disabled={signingOut}>
       {signingOut ? t("Déconnexion…", "Signing out…") : t("Se déconnecter", "Sign out")}
     </button>
   }>
-    {signOutError ? <div className={styles.alert} role="alert"><Icon name="alert" />{signOutError}</div> : null}
+    {signOutError ? <div className={styles.alert} role="alert"><Icon name="alert" /><UiText>{signOutError}</UiText></div> : null}
     {dashboard && !failed ? <WeekZeroSubmittedNotice french={french} /> : null}
     <div data-pilot-state={failed ? "error" : dashboard ? "ready" : "loading"} aria-busy={!failed && !dashboard ? true : undefined}>
       <section className={styles.hero} data-pilot-hero="" aria-labelledby="pilot-title">

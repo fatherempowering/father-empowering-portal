@@ -296,7 +296,7 @@ test("Legacy history distinguishes saved work from completion and keeps the orig
   await expect(english.getByText(/Last saved:/)).toBeVisible();
   await expect(english.getByRole("link", { name: "View result", exact: true })).toHaveAccessibleDescription("Session A");
 
-  await page.goto("/?screen=client-program&state=workout-in-progress");
+  await page.goto("/?screen=client-program&state=workout-in-progress&language=fr");
   await expect(history.getByText("En cours", { exact: true })).toBeVisible();
   await expect(history.getByText("Terminée", { exact: true })).toHaveCount(0);
   await expect(history.getByRole("link", { name: "Reprendre", exact: true })).toHaveAttribute(

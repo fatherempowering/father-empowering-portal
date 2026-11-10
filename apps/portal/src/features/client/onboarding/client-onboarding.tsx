@@ -14,6 +14,7 @@ import type { ClientDashboard } from "@/features/client/dashboard/contracts";
 import { ONBOARDING_QUESTIONS, ONBOARDING_SECTIONS, type OnboardingCopy, type OnboardingQuestion, type OnboardingQuestionKey } from "@/lib/contracts/onboarding-definition";
 import { onboardingSnapshotSchema, completeOnboardingResponsesSchema, isOnboardingComplete, type OnboardingResponses, type OnboardingSnapshot } from "@/lib/contracts/onboarding";
 import styles from "./onboarding.module.css";
+import { useClientLanguage } from "@/components/fe/portal-preferences";
 
 type Command = { fingerprint: string; key: string };
 const REVIEW_STEP = ONBOARDING_SECTIONS.length;
@@ -52,7 +53,7 @@ export function ClientOnboarding({ reviewSubmittedResponses = false }: { reviewS
   const leavingIntentionally = useRef(false);
   const saveCommand = useRef<Command | null>(null);
   const submitCommand = useRef<Command | null>(null);
-  const french = client?.locale !== "en-CA";
+  const { french } = useClientLanguage(client?.locale);
   const t = (fr: string, en: string) => french ? fr : en;
   const copy = (text: OnboardingCopy) => french ? text.fr : text.en;
   const submitted = intake?.status === "SUBMITTED";

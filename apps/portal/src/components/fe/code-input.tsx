@@ -1,6 +1,8 @@
 "use client";
 
 import { useId, useRef } from "react";
+import { usePortalLanguage } from "./portal-preferences";
+import { UiText } from "./ui-text";
 
 export function CodeInput({
   value,
@@ -21,6 +23,7 @@ export function CodeInput({
   locale?: "fr" | "en";
   name?: string;
 }) {
+  const { language } = usePortalLanguage(locale);
   const id = useId();
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   // Preserve empty middle cells while editing: the submitted value is accepted
@@ -48,7 +51,7 @@ export function CodeInput({
   }
   return (
     <fieldset className="fe-code-field" disabled={disabled}>
-      <legend id={`${id}-label`}>{label}</legend>
+      <legend id={`${id}-label`}><UiText>{label}</UiText></legend>
       <div className="fe-code-inputs" aria-describedby={`${id}-hint`}>
         {slots.map((digit, index) => (
           <input
@@ -57,7 +60,7 @@ export function CodeInput({
               refs.current[index] = el;
             }}
             aria-label={
-              locale === "fr"
+              language === "fr"
                 ? `Chiffre ${index + 1} sur 6`
                 : `Digit ${index + 1} of 6`
             }
@@ -111,7 +114,7 @@ export function CodeInput({
       </div>
       <input type="hidden" name={name} value={value} />
       <p className="fe-hint" id={`${id}-hint`}>
-        {locale === "fr"
+        {language === "fr"
           ? "Tu peux aussi coller le code complet."
           : "You can also paste the entire code."}
       </p>

@@ -666,7 +666,7 @@ test("Submitted Client onboarding is read-only and returns to the portal without
   await expect(page.getByRole("link", { name: /bilan initial/i })).toHaveCount(0);
 });
 
-test("Client onboarding reflows without browser storage at narrow widths", async ({
+test("Client onboarding reflows and stores only its display preference at narrow widths", async ({
   page,
 }) => {
   for (const width of [390, 320]) {
@@ -683,10 +683,10 @@ test("Client onboarding reflows without browser storage at narrow widths", async
     ).toBe(true);
     expect(
       await page.evaluate(() => ({
-        local: window.localStorage.length,
+        local: Object.entries(window.localStorage),
         session: window.sessionStorage.length,
       })),
-    ).toEqual({ local: 0, session: 0 });
+    ).toEqual({ local: [["fe-language", "fr"]], session: 0 });
   }
 });
 

@@ -2,6 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import { Icon } from "./icon";
+import { UiText } from "./ui-text";
 
 export function SubmitButton({
   children,
@@ -18,7 +19,7 @@ export function SubmitButton({
       disabled={pending}
       aria-busy={pending}
     >
-      {pending ? pendingLabel : children}
+      <UiText>{pending ? pendingLabel : children}</UiText>
       <Icon name="arrow" />
     </button>
   );

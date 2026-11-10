@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText, useUiCopy } from "@/components/fe/ui-text";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
 import { AuthShell } from "@/components/fe/auth-shell";
@@ -88,6 +89,7 @@ export function CoachEmailVerificationCard({
 }: {
   requestTimeoutMs?: number;
 } = {}) {
+  const c = useUiCopy();
   const [requestState, setRequestState] = useState<RequestState>("SENDING");
   const [emailHint, setEmailHint] = useState("");
   const [code, setCode] = useState("");
@@ -262,34 +264,34 @@ export function CoachEmailVerificationCard({
 
   return (
     <AuthShell>
-      <p className="fe-kicker">Espace Coach · Vérification</p>
+      <p className="fe-kicker"><UiText>Espace Coach · Vérification</UiText></p>
       <h1 className="fe-title">
-        {requestState === "SENDING"
+        <UiText>{requestState === "SENDING"
           ? "Envoi du code…"
           : requestState === "ERROR" && !emailHint
             ? "Le code n’a pas pu être envoyé."
-            : "Entre le code reçu par courriel."}
+            : "Entre le code reçu par courriel."}</UiText>
       </h1>
       <p className="fe-intro">
-        {requestState === "SENDING" ? (
+        <UiText>{requestState === "SENDING" ? (
           emailHint ? (
             <>
-              Nous envoyons un nouveau code à <strong>{emailHint}</strong>.
+              <UiText>Nous envoyons un nouveau code à</UiText> <strong>{emailHint}</strong>.
             </>
           ) : (
             "Nous envoyons automatiquement un code à 6 chiffres à ton adresse courriel."
           )
         ) : emailHint ? (
           <>
-            Nous avons envoyé un code à 6 chiffres à <strong>{emailHint}</strong>.
+            <UiText>Nous avons envoyé un code à 6 chiffres à</UiText> <strong>{emailHint}</strong>.
           </>
         ) : (
           "Réessaie l’envoi pour recevoir un code à 6 chiffres par courriel."
-        )}
+        )}</UiText>
       </p>
-      <p className="fe-hint">
+      <p className="fe-hint"><UiText>
         Cette vérification protège l’accès aux dossiers de tes clients.
-      </p>
+      </UiText></p>
 
       {requestState === "SENT" ? (
         <form
@@ -299,16 +301,16 @@ export function CoachEmailVerificationCard({
           aria-busy={verifying}
         >
           {deliveryNotice ? <Feedback tone="success">{deliveryNotice}</Feedback> : null}
-          <p className="fe-hint">
+          <p className="fe-hint"><UiText>
             Utilise le courriel le plus récent. Le code expire dans 10 minutes.
-          </p>
+          </UiText></p>
           <CodeInput
             value={code}
             onChange={setCode}
             disabled={verifying || changingAccount}
             autoFocus
             invalid={Boolean(error)}
-            label="Code à 6 chiffres"
+            label={c("Code à 6 chiffres")}
             name="code"
           />
           {error ? <Feedback>{error}</Feedback> : null}
@@ -317,16 +319,16 @@ export function CoachEmailVerificationCard({
             type="submit"
             disabled={verifying || changingAccount || !/^\d{6}$/.test(code)}
           >
-            {verifying ? "Vérification…" : "Ouvrir mon espace Coach"}
+            <UiText>{verifying ? "Vérification…" : "Ouvrir mon espace Coach"}</UiText>
           </button>
         </form>
       ) : error ? (
         <Feedback>{error}</Feedback>
       ) : (
         <p className="fe-loading" role="status">
-          <span className="fe-spinner" aria-hidden="true" />
+          <span className="fe-spinner" aria-hidden="true" /><UiText>
           Envoi du code…
-        </p>
+        </UiText></p>
       )}
 
       <div className="fe-form">
@@ -336,11 +338,11 @@ export function CoachEmailVerificationCard({
           onClick={() => void requestCode(true)}
           disabled={resendDisabled}
         >
-          {requestState === "SENDING"
+          <UiText>{requestState === "SENDING"
             ? "Envoi…"
             : cooldown > 0
               ? `Renvoyer dans ${cooldown} s`
-              : "Renvoyer le code"}
+              : "Renvoyer le code"}</UiText>
         </button>
         <button
           className="fe-text-button"
@@ -348,7 +350,7 @@ export function CoachEmailVerificationCard({
           onClick={() => void changeAccount()}
           disabled={changingAccount || verifying}
         >
-          {changingAccount ? "Changement de compte…" : "Se connecter avec une autre adresse"}
+          <UiText>{changingAccount ? "Changement de compte…" : "Se connecter avec une autre adresse"}</UiText>
         </button>
       </div>
     </AuthShell>

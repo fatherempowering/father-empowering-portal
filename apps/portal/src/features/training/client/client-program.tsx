@@ -26,6 +26,7 @@ import styles from "./client-program.module.css";
 import { ProgramWeekDays, useProgramSelection } from "./program-week-days";
 import { ClientReferencePanel } from "./client-reference-panel";
 import { ClientTrainingMetrics } from "./client-training-metrics";
+import { usePortalLanguage } from "@/components/fe/portal-preferences";
 
 const REQUEST_TIMEOUT_MS = 8_000;
 
@@ -164,14 +165,11 @@ export function ClientProgram() {
   const [historyPage, setHistoryPage] = useState(0);
   const { program, history, loading, failed, retry } = useProgram(historyPage);
   const { week, session, choose } = useProgramSelection(program);
-  const [french, setFrench] = useState(true);
+  const { french, setLanguage } = usePortalLanguage();
   const [logoutError, setLogoutError] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const historyEntryHandled = useRef(false);
   const status = useSelectedWorkoutStatus(program?.id, week?.number, session?.id);
-  useEffect(() => {
-    setFrench(new URLSearchParams(window.location.search).get("language") !== "en");
-  }, []);
   useEffect(() => {
     // The History destination is inserted after the authenticated read finishes.
     // Honor its anchor once, without moving a reader on background refreshes.
@@ -218,7 +216,7 @@ export function ClientProgram() {
           </div>
           <div className={styles.headingTools}>
           {!loading && !failed ? <span className={styles.availability}>{program ? (french ? "TRAINING · PROGRAMME DISPONIBLE" : "TRAINING · PROGRAM AVAILABLE") : french ? "PROGRAMME EN PRÉPARATION" : "PROGRAM IN PREPARATION"}</span> : null}
-          <button className="fe-button" type="button" onClick={() => setFrench(!french)}>
+          <button className="fe-button" type="button" onClick={() => setLanguage(french ? "en" : "fr")}>
             {french ? "English" : "Français"}
           </button>
           </div>

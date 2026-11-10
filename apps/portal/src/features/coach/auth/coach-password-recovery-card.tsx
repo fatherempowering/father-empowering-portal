@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText } from "@/components/fe/ui-text";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
@@ -43,20 +44,20 @@ export function CoachPasswordRecoveryCard() {
 
   return (
     <AuthShell>
-      <p className="fe-kicker">Espace Coach</p>
-      <h1 className="fe-title">Définir mon mot de passe.</h1>
-      <p className="fe-intro">
+      <p className="fe-kicker"><UiText>Espace Coach</UiText></p>
+      <h1 className="fe-title"><UiText>Définir mon mot de passe.</UiText></h1>
+      <p className="fe-intro"><UiText>
         Reçois un lien sécurisé pour choisir un nouveau mot de passe.
-      </p>
+      </UiText></p>
       {accepted ? (
-        <Feedback tone="success">
+        <Feedback tone="success"><UiText>
           Si ce compte est autorisé, un lien sécurisé vient d’être envoyé.
-        </Feedback>
+        </UiText></Feedback>
       ) : (
         <form className="fe-form" onSubmit={submit} aria-busy={busy}>
-          <label className="fe-field">
+          <label className="fe-field"><UiText>
             Courriel
-            <input
+            </UiText><input
               name="email"
               type="email"
               autoComplete="email"
@@ -72,12 +73,12 @@ export function CoachPasswordRecoveryCard() {
             type="submit"
             disabled={busy}
           >
-            {busy ? "Envoi…" : "Envoyer le lien sécurisé"}
+            <UiText>{busy ? "Envoi…" : "Envoyer le lien sécurisé"}</UiText>
           </button>
         </form>
       )}
       <p className="fe-auth-secondary">
-        <Link href="/login">Retour à la connexion Coach</Link>
+        <Link href="/login"><UiText>Retour à la connexion Coach</UiText></Link>
       </p>
     </AuthShell>
   );

@@ -1,0 +1,27 @@
+.fe-settings-trigger,.fe-settings-close { display:inline-flex; align-items:center; justify-content:center; flex:0 0 44px; width:44px; height:44px; border-radius:12px; border:1px solid #777; background:#292929; color:#fff; cursor:pointer; }
+.fe-settings-trigger:hover,.fe-settings-close:hover { background:#463124; }
+.fe-settings-trigger:focus-visible,.fe-settings-close:focus-visible,.fe-language-control button:focus-visible { outline:3px solid #ef8a3a; outline-offset:3px; }
+.fe-settings-panel { padding:24px; color:var(--fe-ink); background:var(--fe-paper); }
+.fe-settings-panel header { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.fe-settings-panel h2 { margin:0; font:400 32px/1.1 "FE Display",sans-serif; }
+.fe-settings-panel h3 { font:400 23px/1.2 "FE Display",sans-serif; margin:0 0 8px; }
+.fe-settings-panel p { margin:8px 0 12px; line-height:1.5; font-size:15px; }
+.fe-settings-panel section { padding:20px 0; border-top:1px solid var(--fe-line); }
+.fe-settings-panel section:last-child { padding-bottom:0; }
+.fe-settings-panel .fe-button { color:var(--fe-ink); background:var(--fe-paper); border-color:var(--fe-line); }
+.fe-language-control { display:flex; flex-wrap:wrap; gap:8px; }
+.fe-language-control button { min-height:44px; padding:8px 16px; border:1px solid #777; border-radius:8px; background:#272727; color:#fff; font:600 15px/1.4 "FE Sans",sans-serif; cursor:pointer; }
+.fe-language-control button[aria-pressed="true"] { background:#c85a00; border-color:#c85a00; color:#fff; box-shadow:inset 0 0 0 1px #fff6; }
+.fe-auth-main > .fe-language-control { align-self:flex-end; justify-content:flex-end; margin-bottom:24px; }
+.fe-auth-main { flex-direction:column; }
+.fe-landing-language { position:absolute; right:24px; top:16px; z-index:5; }
+.fe-settings-about { margin-top:20px; }
+@media(max-width:600px) { .fe-settings-panel { padding:18px; } .fe-landing-language { right:12px; top:8px; } .fe-landing-language button { padding:8px 10px; } }
+
+/* Change reading surfaces, never invert photography, logos or dark brand headers. */
+:root[data-theme="dark"] { --portal-color-scheme:dark; }
+:root[data-theme="dark"] { color-scheme:dark; --fe-ink:#f2f2f2; --fe-canvas:#101416; --fe-paper:#1a2229; --fe-muted:#ced3d7; --fe-line:#52606a; --fe-orange:#ff8c35; --fe-orange-hover:#ffac68; --fe-success:#8fe6ad; --fe-success-bg:#173323; --fe-danger:#ffb4aa; --fe-danger-bg:#382321; --portal-canvas:#101416; --portal-paper:#1a2229; --portal-soft:#222d35; --portal-ink:#f2f2f2; --portal-muted:#ced3d7; --portal-line:#52606a; }
+:root[data-theme="dark"] :is(.fe-sidebar,.fe-auth-brand) { background:#1a1a1a; color:#fff; }
+:root[data-theme="dark"] :is(.fe-auth-shell,.fe-topbar,.fe-dialog,.fe-card,.fe-table-wrap,.fe-empty-state,.fe-button:not(.fe-button-primary),.fe-field input,.fe-field select,.fe-field textarea) { background:var(--fe-paper); color:var(--fe-ink); border-color:var(--fe-line); }
+:root[data-theme="dark"] .fe-button-primary { background:#b95000; border-color:#b95000; color:#fff; }
+:root[data-theme="dark"] :is(.fe-hint,.fe-intro,.fe-text-button,.fe-field input::placeholder) { color:var(--fe-muted); }

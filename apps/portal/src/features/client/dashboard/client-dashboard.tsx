@@ -15,6 +15,8 @@ import {
   formatClientToday,
 } from "./client-portal-presentation";
 import type { ClientDashboard as ClientDashboardData } from "./contracts";
+import { useClientLanguage } from "@/components/fe/portal-preferences";
+import { UiText } from "@/components/fe/ui-text";
 
 const CLIENT_DASHBOARD_TIMEOUT_MS = 8_000;
 
@@ -93,8 +95,9 @@ export function ClientDashboard({
     setSigningOut(false);
   }
 
-  const french = dashboard?.locale !== "en-CA";
-  const copy = dashboard ? clientPortalCopy(dashboard) : null;
+  const { french } = useClientLanguage(dashboard?.locale);
+  const displayed = dashboard ? { ...dashboard, locale: french ? "fr-CA" as const : "en-CA" as const } : null;
+  const copy = displayed ? clientPortalCopy(displayed) : null;
   if (view === "home") {
     return (
       <ClientHomePilot
@@ -120,27 +123,27 @@ export function ClientDashboard({
           onClick={() => void signOut()}
           disabled={signingOut}
         >
-          {signingOut
+          <UiText>{signingOut
             ? (copy?.signingOut ?? "Déconnexion…")
-            : (copy?.signOut ?? "Se déconnecter")}
+            : (copy?.signOut ?? "Se déconnecter")}</UiText>
         </button>
       }
     >
       {signOutError ? <Feedback>{signOutError}</Feedback> : null}
       {failed ? (
         <>
-          <h1 className="fe-title">{"Ton portail est indisponible pour le moment"}</h1>
+          <h1 className="fe-title"><UiText>Ton portail est indisponible pour le moment</UiText></h1>
           <Feedback>
             Impossible de charger ton portail. Vérifie ta connexion et réessaie.
           </Feedback>
           <button className="fe-button" type="button" onClick={retry}>
-            Réessayer
+            <UiText>Réessayer</UiText>
           </button>
         </>
       ) : !dashboard || signingOut ? (
         <Loading>{signingOut ? (copy?.signingOut ?? "Déconnexion…") : "Ton portail s’ouvre…"}</Loading>
       ) : (
-        <ClientPortalView dashboard={dashboard} view={view} />
+        <ClientPortalView dashboard={displayed!} view={view} />
       )}
     </AppShell>
   );

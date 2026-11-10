@@ -1,6 +1,7 @@
 import type { SVGProps } from "react";
 
 export type IconName =
+  | "settings"
   | "plus"
   | "check"
   | "clock"
@@ -20,6 +21,7 @@ export function Icon({
   ...props
 }: SVGProps<SVGSVGElement> & { name: IconName }) {
   const paths: Record<IconName, React.ReactNode> = {
+    settings: <><path d="m9 3-.5 2-2 1.2-2-.5-2 3.6L4 11v2l-1.5 1.7 2 3.6 2-.5 2 1.2.5 2h4l.5-2 2-1.2 2 .5 2-3.6L18 13v-2l1.5-1.7-2-3.6-2 .5-2-1.2-.5-2Z" /><circle cx="11" cy="12" r="3" /></>,
     plus: <path d="M12 5v14M5 12h14" />,
     check: <path d="m5 12 4 4L19 6" />,
     clock: (

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import styles from "./legacy-client-header.module.css";
+import { PortalSettings } from "./portal-settings";
 
 /** The Legacy navigation, backed only by routes implemented in this application. */
 export function LegacyClientHeader({ french, name, active, menu }: {
@@ -32,6 +33,7 @@ export function LegacyClientHeader({ french, name, active, menu }: {
       </div>
       <div className={styles.tools}>
         {now ? <div className={styles.clock}><time dateTime={now.toISOString()}>{now.toLocaleTimeString(french ? "fr-CA" : "en-CA", { hour: "2-digit", minute: "2-digit", hour12: false })}</time><span>{now.toLocaleDateString(french ? "fr-CA" : "en-CA", { weekday: "short", month: "short", day: "numeric" })}</span></div> : null}
+        <PortalSettings client />
         {menu}
       </div>
     </header>
@@ -40,7 +42,7 @@ export function LegacyClientHeader({ french, name, active, menu }: {
       <a href={`/client/program?language=${language}`} aria-current={active === "training" ? "page" : undefined}><span aria-hidden="true">⚒</span>{french ? "Entraînement" : "Training"}</a>
       <a href={`/client/nutrition?language=${language}`} aria-current={active === "nutrition" ? "page" : undefined}><span aria-hidden="true">♨</span>Nutrition</a>
       <a href={`/client/check-in?language=${language}`} aria-current={active === "check-in" ? "page" : undefined}><span aria-hidden="true">☷</span>Check-in</a>
-      <a href={`/client/progression?language=${language}`} aria-current={active === "progression" ? "page" : undefined}><span aria-hidden="true">▲</span>Progression</a>
+      <a href={`/client/progression?language=${language}`} aria-current={active === "progression" ? "page" : undefined}><span aria-hidden="true">▲</span>{french ? "Progression" : "Progress"}</a>
       <a href={`/client/program?language=${language}#workout-history-title`}><span aria-hidden="true">↻</span>{french ? "Historique" : "History"}</a>
     </nav>
   </>;
