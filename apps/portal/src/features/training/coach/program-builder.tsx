@@ -299,7 +299,16 @@ export function ProgramBuilder() {
         setSuccess(`Semaine ${weekIndex + 1} copiée vers ${count} semaine${count > 1 ? "s" : ""}. Enregistre ton brouillon pour conserver ces copies. Rien n’a été publié.`);
         setCopyingWeek(false);
       }} /> : null}
-    {pilotTarget ? <UnifiedExercisePicker onClose={() => setPilotTarget(null)} onAdd={(exercise) => {
+    {pilotTarget ? <UnifiedExercisePicker maxSelection={30 - (session?.blocks.find(block => block.id === pilotTarget.block)?.exercises.length ?? 0)} onAddMany={(exercises) => {
+      if (locked) return;
+      change((copy) => {
+        const target = copy.weeks.find(w => w.number === pilotTarget.week)?.sessions.find(s => s.id === pilotTarget.session)?.blocks.find(b => b.id === pilotTarget.block);
+        if (!target || target.exercises.length + exercises.length > 30) return;
+        const after = pilotTarget.afterExerciseId ? target.exercises.findIndex(item => item.id === pilotTarget.afterExerciseId) : target.exercises.length - 1;
+        target.exercises.splice(after + 1, 0, ...exercises.map(addLibraryExercise));
+      });
+      setPilotTarget(null);
+    }} onClose={() => setPilotTarget(null)} onAdd={(exercise) => {
       if (locked) return;
       change((copy) => {
         const target = copy.weeks.find((w) => w.number === pilotTarget.week)?.sessions.find((s) => s.id === pilotTarget.session)?.blocks.find((b) => b.id === pilotTarget.block);

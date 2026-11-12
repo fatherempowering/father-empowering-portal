@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EXERCISE_MUSCLE_GROUP_IDS } from "@/lib/training/exercise-picker-groups";
 
 import { uuidSchema } from "@/lib/contracts/m1";
 import { pilotProgramExerciseSchema, validatePilotPrescription } from "./training-pilot";
@@ -50,10 +51,14 @@ export const exerciseListQuerySchema = z.object({
   page: z.coerce.number().int().min(0).max(10_000).default(0),
   query: z.string().trim().max(120).default(""),
   archived: z.enum(["true", "false"]).default("false"),
+  muscleGroup: z.enum(EXERCISE_MUSCLE_GROUP_IDS).optional(),
+  sort: z.enum(["usage"]).optional(),
 }).strict();
 export type ExerciseListQuery = z.infer<typeof exerciseListQuerySchema>;
 export const exerciseListSchema = z.object({
   items: z.array(exerciseSnapshotSchema).max(50),
+  usageCounts: z.record(z.string(), z.number().int().nonnegative()).optional(),
+  usageAvailable: z.boolean().optional(),
   total: z.number().int().nonnegative(),
   page: z.number().int().nonnegative(),
   pageSize: z.literal(50),

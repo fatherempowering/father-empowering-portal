@@ -1,3 +1,5 @@
+import { matchesExerciseMuscleGroup } from "../exercise-picker-groups";
+import type { ExerciseUsageCounts } from "../exercise-usage";
 import { exercisePilotListSchema, exercisePilotQuerySchema, pilotExerciseSchema, type ExercisePilotQuery, type PilotExercise } from "@/lib/contracts/exercise-pilot";
 import { pilotProgramExerciseSchema, type PilotProgramExercise } from "@/lib/contracts/training-pilot";
 import { buildPilotCatalog, PILOT_IDS, type PilotSource } from "./model";
@@ -68,7 +70,7 @@ export function buildCatalogueIndex(source: CatalogueSource, legacy: PilotSource
 }
 
 const stopwords = new Set("a an the with of on au aux avec de des du en le la les pour sur un une et".split(" "));
-export function queryCatalogue(index: CatalogueIndex, input: ExercisePilotQuery) {
+export function queryCatalogue(index: CatalogueIndex, input: ExercisePilotQuery, usageCounts: ExerciseUsageCounts = {}) {
   const filters = exercisePilotQuerySchema.parse(input);
   const search = splitExerciseSearch(filters.query);
   const query = search.query;
@@ -92,6 +94,7 @@ export function queryCatalogue(index: CatalogueIndex, input: ExercisePilotQuery)
   const scored: { item: PilotExercise; score: number }[] = [];
   if (!conflictingEquipment) for (const row of index.rows) {
     const item = row.item;
+    if (!matchesExerciseMuscleGroup(item.muscles, filters.muscleGroup)) continue;
     if (equipment && !row.equipmentIds.includes(equipment)) continue;
     if (!query) { scored.push({ item, score: 0 }); continue; }
     const compactId = filters.query.trim().replace(/_/g, "").toUpperCase();
@@ -108,7 +111,9 @@ export function queryCatalogue(index: CatalogueIndex, input: ExercisePilotQuery)
       scored.push({ item, score: Object.values(item.name).some(name => normalizeExerciseSearch(name) === query) ? 80 : 20 });
     }
   }
-  const matches = scored.sort((a, b) => b.score - a.score || a.item.id.localeCompare(b.item.id));
+  const matches = scored.sort((a, b) => filters.sort === "usage"
+    ? (usageCounts[`pilot:${b.item.id}`] ?? 0) - (usageCounts[`pilot:${a.item.id}`] ?? 0) || b.score - a.score || a.item.name.fr.localeCompare(b.item.name.fr, "fr") || a.item.id.localeCompare(b.item.id)
+    : b.score - a.score || a.item.id.localeCompare(b.item.id));
   return exercisePilotListSchema.parse({
     ...index.metadata, items: matches.slice(offset, offset + limit).map(match => match.item), total: matches.length,
     pagination: { offset, limit, hasMore: offset + Math.min(limit, Math.max(0, matches.length - offset)) < matches.length },

@@ -88,3 +88,78 @@ test("unified picker keeps focus, machine warnings, consultation and a narrow mo
   await expect(dialog).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Ajouter un exercice", exact: true })).toBeFocused();
 });
+
+test("batch selection survives combined muscle/search filters and adds in selection order", async ({ page }) => {
+  const dialog = await open(page);
+  await dialog.getByRole("checkbox", { name: "Sélectionner Dumbbell Press", exact: true }).check();
+  await dialog.getByRole("button", { name: "Bras", exact: true }).click();
+  await expect(dialog.getByRole("button", { name: "Bras", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(dialog.getByRole("checkbox", { name: "Sélectionner Dumbbell Press", exact: true })).toHaveCount(0);
+  await dialog.getByRole("searchbox", { name: "Rechercher un exercice", exact: true }).fill("curl");
+  await dialog.getByRole("button", { name: "Rechercher", exact: true }).click();
+  await dialog.getByRole("checkbox", { name: "Sélectionner Curl alterné avec haltères", exact: true }).check();
+  await expect(dialog.getByRole("region", { name: "Exercices à ajouter" })).toContainText("Dumbbell Press");
+  await dialog.getByRole("button", { name: "Ajouter la sélection (2)", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole("article", { name: "Exercice 1", exact: true }).getByRole("heading", { name: "Dumbbell Press", exact: true })).toBeVisible();
+  await expect(page.getByRole("article", { name: "Exercice 2", exact: true }).getByRole("heading", { name: "Curl alterné avec haltères", exact: true })).toBeVisible();
+  await page.getByRole("article", { name: "Exercice 2", exact: true }).getByLabel("Répétitions", { exact: true }).fill("12");
+  await page.getByRole("button", { name: "Enregistrer le brouillon", exact: true }).click();
+  const saves = await page.evaluate(() => (window as unknown as { __programRequests: SaveProgramRequest[] }).__programRequests);
+  expect(saves[0].document.weeks[0].sessions[0].blocks[0].exercises.map(item => item.prescription.reps)).toEqual(["8-10", "12"]);
+});
+
+test("closing a basket changes nothing and reopening starts a new selection", async ({ page }) => {
+  const dialog = await open(page);
+  await dialog.getByRole("checkbox", { name: "Sélectionner Dumbbell Press", exact: true }).check();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole("article", { name: "Exercice 1", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Ajouter un exercice", exact: true }).click();
+  await expect(dialog.getByRole("checkbox", { name: "Sélectionner Dumbbell Press", exact: true })).not.toBeChecked();
+  await expect(dialog.getByRole("region", { name: "Exercices à ajouter" })).toHaveCount(0);
+});
+
+test("failed second protected import does not partially change draft and retry stays idempotent", async ({ page }) => {
+  const dialog = await open(page, "picker-batch-response-lost");
+  await dialog.getByRole("checkbox", { name: "Sélectionner Curl alterné avec haltères", exact: true }).check();
+  await dialog.getByRole("checkbox", { name: "Sélectionner Pompe au sol", exact: true }).check();
+  await dialog.getByRole("button", { name: "Ajouter la sélection (2)", exact: true }).click();
+  await expect(dialog.getByRole("alert")).toContainText("L’ajout n’a pas été confirmé");
+  await expect(page.getByRole("article", { name: "Exercice 1", exact: true })).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Ajouter la sélection (2)", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  const imports = await page.evaluate(() => (window as unknown as { __pilotSelectionRequests: unknown[] }).__pilotSelectionRequests);
+  expect(imports).toHaveLength(4); expect(imports[0]).toEqual(imports[2]); expect(imports[1]).toEqual(imports[3]);
+  await page.getByRole("button", { name: "Enregistrer le brouillon", exact: true }).click();
+  const saves = await page.evaluate(() => (window as unknown as { __programRequests: SaveProgramRequest[] }).__programRequests);
+  expect(saves[0].document.weeks[0].sessions[0].blocks[0].exercises).toHaveLength(2);
+});
+
+test("batch capacity cannot exceed the thirty exercise block limit", async ({ page }) => {
+  const dialog = await open(page, "picker-capacity");
+  await dialog.getByRole("searchbox", { name: "Rechercher un exercice", exact: true }).fill("Capacity");
+  await dialog.getByRole("button", { name: "Rechercher", exact: true }).click();
+  for (let i = 1; i <= 30; i++) await dialog.getByRole("checkbox", { name: `Sélectionner Capacity exercise ${String(i).padStart(2, "0")}`, exact: true }).check();
+  await expect(dialog.getByRole("checkbox", { name: "Sélectionner Capacity exercise 31", exact: true })).toBeDisabled();
+  await dialog.getByRole("button", { name: "Ajouter la sélection (30)", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole("article", { name: /^Exercice \d+$/ })).toHaveCount(30);
+  await expect(page.getByRole("button", { name: /^Ajouter un exercice/ })).toHaveCount(0);
+});
+
+test("usage ranking and its unavailable fallback are honest and mobile basket has no overflow", async ({ page }) => {
+  const dialog = await open(page, "picker-usage");
+  const results = dialog.getByRole("list", { name: "Résultats des exercices" });
+  await expect(results.getByRole("listitem").first()).toContainText("Curl alterné avec haltères");
+  await dialog.getByRole("checkbox", { name: "Sélectionner Curl alterné avec haltères", exact: true }).check();
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+  }
+  await page.goto("/?screen=program-builder&state=picker-usage-unavailable");
+  await page.getByRole("button", { name: "Ajouter une séance", exact: true }).click();
+  await page.getByRole("button", { name: "Ajouter un bloc", exact: true }).click();
+  await page.getByRole("button", { name: "Ajouter un exercice", exact: true }).click();
+  await expect(page.getByText("Tri alphabétique : l’historique d’utilisation n’est pas disponible.", { exact: true })).toBeVisible();
+});

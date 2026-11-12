@@ -33,7 +33,7 @@ export function usePilotSelection(onAdd: (exercise: ExerciseSnapshot) => void) {
       const exercise = exerciseSnapshotSchema.parse((await response.json()).data?.exercise);
       if (!exercise.pilot || exercise.pilot.sourceId !== source.id || exercise.pilot.sourceVersion !== source.sourceVersion ||
           exercise.pilot.usage !== "STAGING_TEST" || exercise.archived || exercise.canEdit) throw new Error("SELECTION_MISMATCH");
-      if (active.current) onAdd(exercise);
+      if (active.current) { onAdd(exercise); return exercise; }
     } catch {
       if (active.current) setError("L’ajout n’a pas été confirmé. Réessaie avec le même exercice : aucun doublon ne sera créé dans la banque. Ton brouillon est conservé.");
     } finally {

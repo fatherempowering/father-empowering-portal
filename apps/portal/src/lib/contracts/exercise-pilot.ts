@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EXERCISE_MUSCLE_GROUP_IDS } from "@/lib/training/exercise-picker-groups";
 
 // A separate review contract: these source IDs are deliberately NOT library UUIDs.
 const text = z.object({ fr: z.string().trim().min(1).max(2_000), en: z.string().trim().min(1).max(2_000) }).strict();
@@ -10,6 +11,8 @@ const pageInteger = z.union([z.number(), z.string().regex(/^\d+$/).transform(Num
 export const exercisePilotQuerySchema = z.object({
   query: z.string().trim().max(120).default(""),
   equipment: z.enum(["", ...PILOT_EQUIPMENT]).default(""),
+  muscleGroup: z.enum(EXERCISE_MUSCLE_GROUP_IDS).optional(),
+  sort: z.enum(["usage"]).optional(),
   stabilizers: z.enum(["true", "false"]).default("false"),
   offset: pageInteger.pipe(z.number().min(0).max(10_000)).optional(),
   limit: pageInteger.pipe(z.number().min(1).max(50)).optional(),
@@ -51,6 +54,8 @@ export const exercisePilotListSchema = z.object({
   sourceCatalogVersion: z.enum(["3.1.0-pilot.1", "4.0.0-unified.1", "4.1.0-coverage.1"]),
   integrationVersion: z.enum(["fe-pilot.1", "fe-catalogue.1", "fe-coverage.1"]),
   items: z.array(pilotExerciseSchema).max(50),
+  usageCounts: z.record(z.string(), z.number().int().nonnegative()).optional(),
+  usageAvailable: z.boolean().optional(),
   total: z.number().int().min(0).max(1_326),
   catalogSize: z.union([z.literal(15), z.literal(1_186), z.literal(1_326)]),
   equipmentOptions: z.array(label.extend({ id: z.enum(PILOT_EQUIPMENT) })).min(7).max(22),

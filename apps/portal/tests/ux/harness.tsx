@@ -14,6 +14,7 @@ import { createAcquisitionFixture } from "./week-zero-fixture";
 import { PersonalPortalSetup } from "../../src/features/coach/personal-portal/personal-portal-setup";
 import { ExerciseLibrary } from "../../src/features/training/coach/exercise-library";
 import { ExercisePilot } from "../../src/features/training/coach/exercise-pilot";
+import { matchesExerciseMuscleGroup, matchesLibraryMuscleGroup, type ExerciseMuscleGroup } from "../../src/lib/training/exercise-picker-groups";
 import { exercisePilotQuerySchema } from "../../src/lib/contracts/exercise-pilot";
 import { selectPilotExerciseRequestSchema, pilotDefaultUnit } from "../../src/lib/contracts/training-pilot";
 import { queryPilotCatalog } from "../../src/lib/training/pilot/model";
@@ -471,6 +472,11 @@ if (needsWorkoutPublication) {
 if (harnessParameters.get("screen") === "program-builder") {
   exerciseRecords.push({ id: "19000000-0000-4000-8000-000000000010", name: "Dumbbell Press", equipment: "Dumbbells", cue: { fr: "Contrôle", en: "Control" }, defaultUnit: "lb", archived: false, version: 1, createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString(), canEdit: true });
 }
+if (scenario === "picker-capacity") {
+  for (let i = 0; i < 31; i++) exerciseRecords.push({ id: `19000000-0000-4000-8000-${String(i + 100).padStart(12, "0")}`, name: `Capacity exercise ${String(i + 1).padStart(2, "0")}`, equipment: "Dumbbells", cue: { fr: "Contrôle", en: "Control" }, defaultUnit: "lb", archived: false, version: 1, createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString(), canEdit: true });
+}
+// Presentation fixtures only. Real usage aggregation and RLS are tested server-side.
+const pickerUsage = scenario === "picker-usage" ? { "pilot:DB_034": 8, "library:19000000-0000-4000-8000-000000000010": 3 } : {};
 let pilotAttempts = 0;
 let pilotSelectionLost = false;
 const pilotSelectionRequests: unknown[] = [];
@@ -490,7 +496,9 @@ window.fetch = async (url, init) => {
     if (scenario === "pilot-forbidden") return reply({ error: { code: "FORBIDDEN" } }, 403);
     const query = exercisePilotQuerySchema.parse(Object.fromEntries(pilotPath.searchParams));
     if (scenario === "catalogue-pagination") return reply({ data: catalogueFixture(query) });
-    return reply({ data: queryPilotCatalog(pilotSource, query) });
+    const result = queryPilotCatalog(pilotSource, query);
+    const items = result.items.filter(item => matchesExerciseMuscleGroup(item.muscles, query.muscleGroup));
+    return reply({ data: { ...result, items, total: items.length, ...(query.sort === "usage" ? { usageCounts: pickerUsage, usageAvailable: scenario !== "picker-usage-unavailable" } : {}) } });
   }
   if (pilotPath.pathname === "/api/v1/coach/exercise-pilot/select") {
     const input = selectPilotExerciseRequestSchema.parse(JSON.parse(String(init?.body)));
@@ -506,7 +514,7 @@ window.fetch = async (url, init) => {
         createdBy: "19000000-0000-4000-8000-000000000001", updatedAt: new Date(now).toISOString(), canEdit: false, pilot };
       pilotSelections.set(key, exercise); exerciseRecords.push(exercise);
     }
-    if (scenario === "pilot-select-response-lost" && !pilotSelectionLost) { pilotSelectionLost = true; throw new TypeError("Synthetic lost selection confirmation"); }
+    if ((scenario === "pilot-select-response-lost" || (scenario === "picker-batch-response-lost" && pilotSelectionRequests.length === 2)) && !pilotSelectionLost) { pilotSelectionLost = true; throw new TypeError("Synthetic lost selection confirmation"); }
     if (scenario === "pilot-select-mismatch") return reply({ data: { exercise: { ...exercise, pilot: { ...pilot, sourceId: input.sourceId === "DB_001" ? "DB_034" : "DB_001" } } } });
     return reply({ data: { exercise } });
   }
@@ -681,9 +689,9 @@ window.fetch = async (url, init) => {
     }
     const query = new URL(path, window.location.origin).searchParams;
     const filtered = exerciseRecords.filter((item) => item.archived === (query.get("archived") === "true") &&
-      item.name.toLowerCase().includes((query.get("query") ?? "").toLowerCase()));
+      item.name.toLowerCase().includes((query.get("query") ?? "").toLowerCase()) && matchesLibraryMuscleGroup(item.name, (query.get("muscleGroup") ?? "all") as ExerciseMuscleGroup));
     const page = Number(query.get("page") ?? 0);
-    return reply({ data: { items: filtered.slice(page * 50, page * 50 + 50), total: filtered.length, page, pageSize: 50 } });
+    return reply({ data: { items: filtered.slice(page * 50, page * 50 + 50), total: filtered.length, page, pageSize: 50, ...(query.get("sort") === "usage" ? { usageCounts: pickerUsage, usageAvailable: scenario !== "picker-usage-unavailable" } : {}) } });
   }
   if (scenario === "network") throw new TypeError("Network unavailable");
   if (
