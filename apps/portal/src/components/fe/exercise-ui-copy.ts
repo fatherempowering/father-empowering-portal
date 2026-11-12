@@ -117,6 +117,7 @@ export const exerciseUiCopy: Record<string, string> = {
   "Modèles de machines à vérifier": "Machine models to verify",
   "Variantes de machines — non sélectionnables": "Machine variants — not selectable",
   "Haltères": "Dumbbells",
+  "Autre équipement": "Other equipment",
   "Poids du corps": "Bodyweight",
   "Élastique": "Resistance band",
   "Médecine-ball": "Medicine ball",

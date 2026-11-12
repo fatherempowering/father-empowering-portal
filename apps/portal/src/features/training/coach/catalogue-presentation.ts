@@ -7,7 +7,7 @@ export const CATALOGUE_EQUIPMENT_LABELS: Record<string, string> = {
   suspension: "Sangles de suspension", plyometric: "Matériel pliométrique",
   battle_rope: "Cordes ondulatoires", ergometer: "Ergomètre",
   conditioning: "Conditionnement", chair: "Chaise", foam_roller: "Rouleau de massage",
-  massage_ball: "Balle de massage", yoga_mat: "Tapis", support_surface: "Surface d’appui", wall: "Mur",
+  massage_ball: "Balle de massage", yoga_mat: "Tapis", support_surface: "Surface d’appui", wall: "Mur", other: "Autre équipement",
 };
 
 export function catalogueSelectionMessage(exercise: PilotExercise, language: "fr" | "en" = "fr") {

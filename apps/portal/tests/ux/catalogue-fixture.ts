@@ -17,8 +17,8 @@ export function catalogueFixture(query: ExercisePilotQuery) {
   const matches = all.filter(item => !query.query || item.name.fr.toLowerCase().includes(query.query.toLowerCase()));
   const offset = query.offset ?? 0, limit = query.limit ?? 50;
   return exercisePilotListSchema.parse({
-    ...original, sourceCatalogVersion: "4.0.0-unified.1", integrationVersion: "fe-catalogue.1",
-    catalogSize: 1_186, total: matches.length, items: matches.slice(offset, offset + limit),
+    ...original, sourceCatalogVersion: "4.1.0-coverage.1", integrationVersion: "fe-coverage.1",
+    catalogSize: 1_326, total: matches.length, items: matches.slice(offset, offset + limit),
     equipmentOptions: PILOT_EQUIPMENT.map(id => ({ id, labels: { fr: id, en: id } })),
     pagination: { offset, limit, hasMore: offset + limit < matches.length },
   });

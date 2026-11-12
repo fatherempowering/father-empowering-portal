@@ -17,10 +17,10 @@ import { CATALOGUE_EQUIPMENT_LABELS as equipmentLabels, catalogueSelectionMessag
 type Result = { key: string; kind: "library"; exercise: ExerciseSnapshot } | { key: string; kind: "pilot"; exercise: PilotExercise };
 
 export function mergeExerciseSearchResults(library: ExerciseSnapshot[], pilots: PilotExercise[]): Result[] {
-  const matchingIds = new Set(pilots.map(item => item.id));
+  const matchingVersions = new Set(pilots.map(item => `${item.id}@${item.sourceVersion}`));
   const results = new Map<string, Result>();
   for (const exercise of library) {
-    if (exercise.archived || (exercise.pilot && !matchingIds.has(exercise.pilot.sourceId))) continue;
+    if (exercise.archived || (exercise.pilot && !matchingVersions.has(`${exercise.pilot.sourceId}@${exercise.pilot.sourceVersion}`))) continue;
     const key = exercise.pilot ? `pilot:${exercise.pilot.sourceId}@${exercise.pilot.sourceVersion}` : `library:${exercise.id}`;
     results.set(key, { key, kind: "library", exercise });
   }

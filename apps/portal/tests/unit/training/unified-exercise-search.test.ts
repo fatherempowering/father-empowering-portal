@@ -53,4 +53,16 @@ describe("one exercise search vocabulary", () => {
     expect(result.find(item => item.key === "pilot:DB_034@1.2.0")?.kind).toBe("pilot");
     expect(mergeExerciseSearchResults([{ ...manual, archived: true }], [])).toEqual([]);
   });
+  it("offers only the current catalog revision, even when an older imported revision was selectable", () => {
+    const exercise = pilotResultExercise();
+    const old: ExerciseSnapshot = { id: exercise.libraryExerciseId, name: exercise.name, equipment: "Haltères", cue: exercise.cue,
+      defaultUnit: "lb", archived: false, version: 1, createdBy: exercise.id, updatedAt: "2026-10-23T12:00:00Z", canEdit: false, pilot: exercise.pilot };
+    const latest = structuredClone(buildPilotCatalog(source).items.find(item => item.id === "DB_034")!);
+    latest.sourceVersion = "1.3.0";
+    latest.selection = { canSelect: false, reason: "AMBIGUOUS_COUNTING" };
+    const result = mergeExerciseSearchResults([old], [latest]);
+    expect(result).toEqual([{ key: "pilot:DB_034@1.3.0", kind: "pilot", exercise: latest }]);
+    expect(old.pilot?.sourceVersion).toBe("1.2.0");
+  });
+
 });

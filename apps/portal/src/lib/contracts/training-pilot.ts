@@ -7,7 +7,7 @@ import { uuidSchema } from "./m1";
 export const pilotProgramExerciseSchema = z.object({
   sourceId: pilotExerciseSchema.shape.id,
   sourceVersion: pilotExerciseSchema.shape.sourceVersion,
-  sourceCatalogVersion: z.enum(["3.1.0-pilot.1", "4.0.0-unified.1"]),
+  sourceCatalogVersion: z.enum(["3.1.0-pilot.1", "4.0.0-unified.1", "4.1.0-coverage.1"]),
   integrationVersion: z.literal("fe-program-pilot.1"),
   usage: z.literal("STAGING_TEST"),
   name: pilotExerciseSchema.shape.name,

@@ -10,35 +10,61 @@ export type CatalogueSource = {
   anatomyConcepts: { id: string; labels: Labels; anatomical_aliases: { fr: string[]; en: string[] } }[];
   searchGroups: { id: string; terms: string[]; target_concept_ids: string[]; coverage_sets?: string[][] }[];
   searchExpansions: { concept_id: string; include_ids: string[] }[];
-  exercises: { item: unknown; loadEntryBasis: string; searchTerms: string[]; equipmentIds: string[] }[];
+  exercises: { replacesSourceVersion?: string | null; item: unknown; loadEntryBasis: string; searchTerms: string[]; equipmentIds: string[] }[];
 };
 export type CatalogueIndex = ReturnType<typeof buildCatalogueIndex>;
 
 // Only server repositories import the data. The index itself is pure for the
 // isolated test harness and never grants an exercise-selection permission.
-export function buildCatalogueIndex(source: CatalogueSource, legacy: PilotSource) {
+export function buildCatalogueIndex(source: CatalogueSource, legacy: PilotSource, coverage?: Omit<CatalogueSource, "preservedPilotIds"> & { baseCatalogVersion: string }) {
   if (source.catalogVersion !== "4.0.0-unified.1" || source.integrationVersion !== "fe-catalogue.1" ||
       !/^[a-f0-9]{64}$/.test(source.sourceSha256) || source.exercises.length !== 1171 ||
       JSON.stringify(source.preservedPilotIds) !== JSON.stringify(PILOT_IDS)) throw new Error("INVALID_CATALOGUE_SCOPE");
   const old = buildPilotCatalog(legacy);
-  const rows = source.exercises.map(row => ({ ...row, item: pilotExerciseSchema.parse(row.item) }));
+  const rows = source.exercises.map(row => ({ ...row, sourceCatalogVersion: "4.0.0-unified.1" as "3.1.0-pilot.1" | "4.0.0-unified.1" | "4.1.0-coverage.1", item: pilotExerciseSchema.parse(row.item) }));
   for (const item of old.items) {
     const raw = legacy.exercises.find(x => x.id === item.id)!;
     rows.push({
-      item: { ...item, selection: { canSelect: true, reason: null } }, loadEntryBasis: raw.performance.load_entry_basis,
+      sourceCatalogVersion: "3.1.0-pilot.1", item: { ...item, selection: { canSelect: true, reason: null } }, loadEntryBasis: raw.performance.load_entry_basis,
       equipmentIds: [item.equipment.id],
       searchTerms: [item.id, ...Object.values(item.name), ...Object.values(raw.aliases).flat(), ...Object.values(item.equipment.labels), ...Object.values(raw.movement_family.labels), raw.movement_family.specific_family_fr],
     });
   }
   if (new Set(rows.map(row => row.item.id)).size !== 1186 || rows.some(row => !row.item.selection)) throw new Error("INVALID_CATALOGUE_IDENTITIES");
+  if (coverage) {
+    if (coverage.baseCatalogVersion !== source.catalogVersion || coverage.catalogVersion !== "4.1.0-coverage.1" || coverage.integrationVersion !== "fe-coverage.1" ||
+        !/^[a-f0-9]{64}$/.test(coverage.sourceSha256) || coverage.exercises.length !== 195) throw new Error("INVALID_COVERAGE_SCOPE");
+    const deltaIds = new Set<string>();
+    let additions = 0, revisions = 0;
+    for (const row of coverage.exercises) {
+      const item = pilotExerciseSchema.parse(row.item);
+      if (deltaIds.has(item.id) || !item.selection) throw new Error("COVERAGE_IDENTITY_CONFLICT");
+      deltaIds.add(item.id);
+      const previousIndex = rows.findIndex(existing => existing.item.id === item.id);
+      const next = { ...row, item, sourceCatalogVersion: "4.1.0-coverage.1" as const };
+      if (previousIndex >= 0) {
+        const previous = rows[previousIndex].item;
+        const before = previous.sourceVersion.split(".").map(Number);
+        const after = item.sourceVersion.split(".").map(Number);
+        const changedPart = after.findIndex((value, index) => value !== before[index]);
+        if (row.replacesSourceVersion !== previous.sourceVersion || changedPart < 0 || after[changedPart] < before[changedPart]) throw new Error("COVERAGE_REVISION_CONFLICT");
+        rows[previousIndex] = next; revisions++;
+      } else {
+        if (row.replacesSourceVersion !== null) throw new Error("COVERAGE_REVISION_CONFLICT");
+        rows.push(next); additions++;
+      }
+    }
+    if (additions !== 140 || revisions !== 55 || rows.length !== 1326) throw new Error("INVALID_COVERAGE_IDENTITIES");
+  }
+  const active = coverage ?? source;
   const indexed = rows.map(row => ({ ...row, searchTokens: new Set(canonicalExerciseSearch(row.searchTerms.join(" ")).split(" ")) }));
   // Also validates the equipment vocabulary without exporting every record.
   const empty = exercisePilotListSchema.parse({
-    sourceCatalogVersion: source.catalogVersion, integrationVersion: source.integrationVersion,
-    items: [], total: 0, catalogSize: 1186, equipmentOptions: source.equipmentOptions,
+    sourceCatalogVersion: active.catalogVersion, integrationVersion: active.integrationVersion,
+    items: [], total: 0, catalogSize: rows.length, equipmentOptions: active.equipmentOptions,
     pagination: { offset: 0, limit: 50, hasMore: false },
   });
-  return { rows: indexed, source, metadata: empty };
+  return { rows: indexed, source: active, metadata: empty };
 }
 
 const stopwords = new Set("a an the with of on au aux avec de des du en le la les pour sur un une et".split(" "));
@@ -90,9 +116,9 @@ export function queryCatalogue(index: CatalogueIndex, input: ExercisePilotQuery)
 }
 
 export function buildNewCatalogueProgramSnapshots(index: CatalogueIndex): PilotProgramExercise[] {
-  return index.rows.filter(row => !PILOT_IDS.includes(row.item.id as typeof PILOT_IDS[number]) && row.item.selection?.canSelect).map(row =>
+  return index.rows.filter(row => row.sourceCatalogVersion !== "3.1.0-pilot.1" && row.item.selection?.canSelect).map(row =>
     pilotProgramExerciseSchema.parse({
-      sourceId: row.item.id, sourceVersion: row.item.sourceVersion, sourceCatalogVersion: "4.0.0-unified.1",
+      sourceId: row.item.id, sourceVersion: row.item.sourceVersion, sourceCatalogVersion: row.sourceCatalogVersion,
       integrationVersion: "fe-program-pilot.1", usage: "STAGING_TEST", name: row.item.name,
       equipment: row.item.equipment, instructions: row.item.instructions,
       performance: { ...row.item.performance, loadEntryBasis: row.loadEntryBasis },

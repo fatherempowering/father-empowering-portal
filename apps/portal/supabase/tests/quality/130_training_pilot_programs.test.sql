@@ -20,7 +20,7 @@ select ok(not has_function_privilege('anon','public.provision_training_pilot_tes
 select ok(has_function_privilege('service_role','public.provision_training_pilot_test_access(uuid,uuid)','EXECUTE'),'server service role may provision an explicit test scope');
 select ok((select bool_and(app_private.training_pilot_valid(pilot)) from app_private.training_pilot_catalog),'all seeded templates satisfy the strict shape contract');
 select ok(not app_private.training_pilot_valid(jsonb_set(
-  (select pilot from app_private.training_pilot_catalog where source_id='DB_034'),string_to_array(path,','),'null'::jsonb
+  (select pilot from app_private.training_pilot_catalog where source_id='DB_034' and pilot->>'sourceCatalogVersion'='3.1.0-pilot.1'),string_to_array(path,','),'null'::jsonb
 )), 'JSON null fails closed for '||path)
 from unnest(array[
   'sourceId','sourceVersion','sourceCatalogVersion','integrationVersion','usage','name','name,fr','equipment','equipment,id',
@@ -28,10 +28,10 @@ from unnest(array[
   'performance','performance,measure','performance,counting','performance,countingDecision','performance,loadEntryBasis','performance,load','performance,notes'
 ]) path;
 select ok(not app_private.training_pilot_valid(
-  (select pilot from app_private.training_pilot_catalog where source_id='DB_034')-'instructions'
+  (select pilot from app_private.training_pilot_catalog where source_id='DB_034' and pilot->>'sourceCatalogVersion'='3.1.0-pilot.1')-'instructions'
 ),'missing instructions fail closed');
 select ok(not app_private.training_pilot_valid(
-  (select pilot from app_private.training_pilot_catalog where source_id='DB_034')||'{"approved":true}'
+  (select pilot from app_private.training_pilot_catalog where source_id='DB_034' and pilot->>'sourceCatalogVersion'='3.1.0-pilot.1')||'{"approved":true}'
 ),'unexpected approval metadata fails closed');
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at,confirmation_token,recovery_token,email_change,email_change_token_new)

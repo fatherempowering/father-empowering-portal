@@ -4,7 +4,7 @@ test("catalogue pages remain bounded, reset on search and clear stale details", 
   await page.goto("/?screen=exercise-pilot&state=catalogue-pagination");
   const results = page.getByRole("list", { name: "Résultats du catalogue", exact: true });
   await expect(results.getByRole("listitem")).toHaveCount(50);
-  await expect(page.getByText("65 fiches trouvées sur 1186", { exact: true })).toBeVisible();
+  await expect(page.getByText("65 fiches trouvées sur 1326", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Consulter Exercice catalogue 1", exact: true }).click();
   await expect(page.getByRole("region", { name: "Fiche détaillée" }).getByText(/plusieurs charges distinctes/)).toBeVisible();
   await page.getByRole("button", { name: "Page suivante", exact: true }).click();
