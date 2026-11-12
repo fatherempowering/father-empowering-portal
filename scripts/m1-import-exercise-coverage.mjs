@@ -184,6 +184,6 @@ const report = { sourceVersion: source.catalog_version, sourceSha256: output.sou
 if (process.argv.includes("--write")) {
   await writeFile(new URL("../apps/portal/src/lib/training/pilot/catalogue-coverage-source.json", import.meta.url), JSON.stringify(output)+"\n");
   await writeFile(new URL("../apps/portal/supabase/migrations/202611120001_training_catalogue_coverage.sql", import.meta.url), migration);
-  await writeFile(new URL("../docs/quality/CATALOGUE-COVERAGE-IMPORT.json", import.meta.url), JSON.stringify(report,null,2)+"\n");
+  await writeFile(new URL("../apps/portal/docs/quality/CATALOGUE-COVERAGE-IMPORT.json", import.meta.url), JSON.stringify(report,null,2)+"\n");
 }
 console.log(JSON.stringify({ ...report, revisedIdentities: revisions.length, currentVersions: Object.keys(report.currentVersions).length, mode: process.argv.includes("--write") ? "LOCAL_FILES_ONLY" : "PREVIEW" }));

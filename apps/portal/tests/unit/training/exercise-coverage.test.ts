@@ -62,7 +62,7 @@ describe("additive coverage without rewriting client exercise identities", () =>
   });
 
   it("reports revised pilot identities and preserves the per-arm product decision", () => {
-    const report = JSON.parse(readFileSync("../../docs/quality/CATALOGUE-COVERAGE-IMPORT.json", "utf8"));
+    const report = JSON.parse(readFileSync("docs/quality/CATALOGUE-COVERAGE-IMPORT.json", "utf8"));
     expect(report.revisedIdentities).toHaveLength(55);
     expect(Object.fromEntries(current.rows.map(row => [row.item.id, row.item.sourceVersion]))).toEqual(report.currentVersions);
     for (const item of pilot.exercises) expect(report.revisedIdentities.some((row: {id:string}) => row.id === item.id)).toBe(true);
