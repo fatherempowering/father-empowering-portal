@@ -7,6 +7,7 @@ import { publicationResponseSchema } from "../../src/lib/contracts/training-publ
 import { workoutSessionResponseSchema } from "../../src/lib/contracts/training-results";
 import { addLibraryExercise } from "../../src/lib/training/program-editor";
 import { PILOT_IDS } from "../../src/lib/training/pilot/model";
+import historicalPilotSource from "../../src/lib/training/pilot/source.json";
 import { createM1AdminClient, getM1TestEnvironment, seedStaffIdentity } from "../harness/m1-local-supabase";
 import { extractActivation, extractSixDigitOtp, waitForMail } from "../harness/mailpit";
 
@@ -114,7 +115,10 @@ test("verified Coach preserves fifteen pilots, adds catalogue mobility, publishe
     expect(catalogueResponse.status()).toBe(200);
     const catalogue = exercisePilotListSchema.parse((await catalogueResponse.json()).data);
     expect(catalogue.items).toHaveLength(50);
-    expect(catalogue.total).toBe(1186);
+    expect(catalogue.total).toBe(1326);
+    expect(catalogue.sourceCatalogVersion).toBe("4.1.0-coverage.1");
+    expect(catalogue.integrationVersion).toBe("fe-coverage.1");
+    expect(document.weeks[0].sessions[0].blocks[0].exercises[0].pilot).toMatchObject({ sourceId: "DB_034", sourceVersion: "1.3.0", sourceCatalogVersion: "4.1.0-coverage.1" });
     expect(catalogue.pagination).toEqual({ offset: 0, limit: 50, hasMore: true });
     const deniedAmbiguous = await page.request.post(`${environment.appUrl}/api/v1/coach/exercise-pilot/select`, {
       headers: originHeaders, data: { sourceId: "DB_002", sourceVersion: "1.2.0", clientMutationId: randomUUID() },
@@ -128,14 +132,30 @@ test("verified Coach preserves fifteen pilots, adds catalogue mobility, publishe
       expect(matches.items).toHaveLength(1);
       const source = matches.items[0];
       expect(source.id).toBe(sourceId);
-      expect(source.selection).toEqual({ canSelect: true, reason: null });
+      const historical = historicalPilotSource.exercises.find(item => item.id === sourceId);
+      // New choices use the current revision, while existing published plans
+      // must retain all fifteen historical pilots. Exercise both contracts.
+      const blockedCurrentReasons: Record<string, string> = {
+        BB_001: "MULTIPLE_LOAD_COMPONENTS", BB_012: "MULTIPLE_LOAD_COMPONENTS",
+        CA_001: "MULTIPLE_LOAD_COMPONENTS", CA_050: "UNSUPPORTED_CONFIGURATION",
+        MA_018: "AMBIGUOUS_LOAD_BASIS", MA_028: "AMBIGUOUS_LOAD_BASIS", MA_063: "AMBIGUOUS_LOAD_BASIS",
+      };
+      if (blockedCurrentReasons[sourceId]) {
+        expect(source.selection).toEqual({ canSelect: false, reason: blockedCurrentReasons[sourceId] });
+        const deniedCurrent = await page.request.post(`${environment.appUrl}/api/v1/coach/exercise-pilot/select`, {
+          headers: originHeaders, data: { sourceId: source.id, sourceVersion: source.sourceVersion, clientMutationId: randomUUID() },
+        });
+        expect(deniedCurrent.status()).toBe(400);
+      } else expect(source.selection).toEqual({ canSelect: true, reason: null });
+      const selectedVersion = historical?.version ?? source.sourceVersion;
       const selection = await page.request.post(`${environment.appUrl}/api/v1/coach/exercise-pilot/select`, {
-        headers: originHeaders, data: { sourceId: source.id, sourceVersion: source.sourceVersion, clientMutationId: randomUUID() },
+        headers: originHeaders, data: { sourceId: source.id, sourceVersion: selectedVersion, clientMutationId: randomUUID() },
       });
       expect(selection.status()).toBe(200);
       const exercise = exerciseSnapshotSchema.parse((await selection.json()).data.exercise);
       expect(exercise.canEdit).toBe(false);
       expect(exercise.pilot?.sourceId).toBe(source.id);
+      expect(exercise.pilot?.sourceVersion).toBe(selectedVersion);
       if (sourceId === "MO_001") {
         mobilityName = source.name.fr;
         expect(exercise.pilot?.sourceCatalogVersion).toBe("4.0.0-unified.1");
