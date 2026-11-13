@@ -102,8 +102,10 @@ export function UnifiedExercisePicker({ onAdd, onAddMany, maxSelection = 30, onC
         const rows = conflictingEquipment ? [] : pages.flatMap(value => value.items).filter(item =>
           item.pilot || (matchesLibrarySearch(item.name, filter.query) && matchesLibraryEquipment(item.equipment, effectiveEquipment)));
         if (!active || controller.signal.aborted) return;
-        setUsageCounts(previous => Object.assign({}, page ? previous : {}, nextPilots.usageCounts, ...pages.map(value => value.usageCounts)));
-        setUsageAvailable(nextPilots.usageAvailable === true && pages.every(value => value.usageAvailable === true));
+        const completeUsage = nextPilots.usageAvailable === true && pages.every(value => value.usageAvailable === true);
+        // Never rank using a partial/unavailable history while claiming an alphabetical fallback.
+        setUsageCounts(previous => completeUsage ? Object.assign({}, page ? previous : {}, nextPilots.usageCounts, ...pages.map(value => value.usageCounts)) : {});
+        setUsageAvailable(completeUsage);
         setLibrary(previous => [...new Map([...(page ? previous : []), ...rows].map(item => [item.id, item])).values()]);
         if (nextPilots.pagination && nextPilots.pagination.offset !== page * 50) throw new Error("CATALOGUE_PAGE_MISMATCH");
         setPilots(previous => [...new Map([...(page ? previous : []), ...nextPilots.items].map(item => [item.id, item])).values()]);
@@ -163,7 +165,7 @@ export function UnifiedExercisePicker({ onAdd, onAddMany, maxSelection = 30, onC
       <div className={styles.muscleTabs} role="group" aria-label={c("Groupes musculaires")}>
         {EXERCISE_MUSCLE_GROUPS.map(group => <button key={group.id} type="button" className="fe-button" aria-pressed={muscleGroup === group.id} disabled={busy} onClick={() => { setMuscleGroup(group.id); setPage(0); setFilter({ query, equipment, muscleGroup: group.id }); }}>{group.label[language]}</button>)}
       </div>
-      <p className={styles.help}>{usageAvailable ? c("Tes exercices les plus utilisés dans tes brouillons enregistrés apparaissent en premier.") : c("Tri selon l’utilisation disponible, puis par nom.")}</p>
+      <p className={styles.help}>{usageAvailable ? c("Tes exercices les plus utilisés dans tes brouillons enregistrés apparaissent en premier.") : c("Tri alphabétique : l’historique d’utilisation n’est pas disponible.")}</p>
       <p className={styles.help}><UiText>Noms français et anglais. Les muscles du catalogue sont indexés ; les exercices personnels sont retrouvés par leur nom et les familles de mouvements reconnues.</UiText></p>
       {onAddMany && basket.length ? <section className={styles.basket} aria-label={c("Exercices à ajouter")}>
         <p role="status">{basket.length} / {maxSelection} {c("exercices sélectionnés")}</p>

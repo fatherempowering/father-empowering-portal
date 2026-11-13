@@ -1,4 +1,6 @@
 export const exerciseUiCopy: Record<string, string> = {
+  "Tri alphabétique : l’historique d’utilisation n’est pas disponible.": "Alphabetical order: usage history is unavailable.",
+  "Tes exercices les plus utilisés dans tes brouillons enregistrés apparaissent en premier.": "Your most-used exercises in saved drafts appear first.",
   "Livres (lb)": "Pounds (lb)",
   "Kilogrammes (kg)": "Kilograms (kg)",
   "Configuration (sans conversion en poids)": "Setup (no weight conversion)",

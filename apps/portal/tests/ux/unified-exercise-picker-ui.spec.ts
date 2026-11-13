@@ -162,4 +162,7 @@ test("usage ranking and its unavailable fallback are honest and mobile basket ha
   await page.getByRole("button", { name: "Ajouter un bloc", exact: true }).click();
   await page.getByRole("button", { name: "Ajouter un exercice", exact: true }).click();
   await expect(page.getByText("Tri alphabétique : l’historique d’utilisation n’est pas disponible.", { exact: true })).toBeVisible();
+  const names = await page.getByRole("list", { name: "Résultats des exercices" }).getByRole("heading", { level: 3 }).allTextContents();
+  expect(names.length).toBeGreaterThan(1);
+  expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, "fr")));
 });
